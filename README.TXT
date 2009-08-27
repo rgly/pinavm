@@ -71,5 +71,5 @@ clearer.
 
 - Creating subdirectories (for instance, putting all constructs and
 handlers in a SCConstructs/ directory) would be nice, but my few tries
-were not successful and I decided not to waste time with that for ther
+were not successful and I decided not to waste time with that for the
 moment.
