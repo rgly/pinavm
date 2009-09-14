@@ -45,7 +45,7 @@ public:
   }
   
   bool runOnFunction(Function &F) {
-//     llvm::cout << "Function analysed : " << F.getName() << ".\n";
+    llvm::cout << "Function analysed : " << F.getName() << ".\n";
     
     for (Function::iterator bb = F.begin(), be = F.end(); bb != be; ++bb) { 
       llvm::cout << "  --> begin block.\n";
@@ -54,7 +54,6 @@ public:
       while (i != ie) {
 	llvm::cout << "  --> begin inst.\n";	
 	if (CallInst* callInst = dyn_cast<CallInst>(&*i)) {
-// 	  llvm::cout << "  try to handle...";
 	  sccfactory->handle(&F, &*bb, callInst);
 	}
 	llvm::cout << " Endings ? \n";
@@ -69,12 +68,12 @@ public:
       }
       llvm::cout << "  --> end block.\n";	
     }
-     llvm::cout << "end of analysis.\n";
+    llvm::cout << "end of analysis.\n";
     return false;
   }
 
   bool doFinalization(Module& mdl) {
-    llvm::cout << "-- End of pass.\n";
+    //    llvm::cout << "-- End of pass.\n";
     this->scjit->doFinalization();
     return true;
   }
