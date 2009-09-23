@@ -3,16 +3,18 @@
 
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
+#include <string>
 
 using namespace llvm;
+using namespace std;
 
 struct Event {
 protected:
-  char* eventName;
+  string eventName;
 
 public:
-  Event(char* eName);
-  char* toString();
+  Event(string eName);
+  string toString();
 };
 
 #endif

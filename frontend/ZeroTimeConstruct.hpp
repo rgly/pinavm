@@ -11,7 +11,7 @@ using namespace llvm;
 struct ZeroTimeConstruct : public TimeConstruct {  
 public:
   ZeroTimeConstruct();
-  char* toString();
+  string toString();
 };
 
 #endif

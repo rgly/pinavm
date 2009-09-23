@@ -5,11 +5,20 @@
 #include <iterator>
 #include <queue>
 #include <iostream>
+#include <algorithm>
+
 
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 
 #include "llvm/Analysis/Verifier.h"
+
+#include "llvm/Transforms/Utils/ValueMapper.h"
+#include "llvm/Transforms/Utils/Cloning.h"
+#include "llvm/Analysis/MemoryDependenceAnalysis.h"
+#include "llvm/Transforms/Scalar.h"
+
+#include "llvm/Target/TargetData.h"
 
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/Verifier.h"

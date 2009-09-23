@@ -23,7 +23,7 @@ NotifyConstruct::getNotifiedEvent()
   return this->event;
 }
 
-char*
+string
 NotifyConstruct::toString()
 {
   return "NOTIFY(event)";

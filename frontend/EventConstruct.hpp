@@ -8,6 +8,7 @@
 #include "Event.hpp"
 
 using namespace llvm;
+using namespace std;
 
 struct EventConstruct : public SCConstruct {  
 protected :
@@ -16,7 +17,7 @@ public:
   EventConstruct(Event* e);
   void setWaitedEvent(Event* e);
   Event* getWaitedEvent();
-  char* toString();
+  string toString();
 
 };
 

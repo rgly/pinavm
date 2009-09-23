@@ -10,7 +10,7 @@ SCConstruct::SCConstruct()
   this->threadName = "NYI: SCConstruct::threadName";  
 }
 
-char*
+string
 SCConstruct::getThreadName()
 {
   return this->threadName;

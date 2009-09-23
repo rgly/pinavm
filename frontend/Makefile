@@ -7,11 +7,11 @@
 # 
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../../local/download/llvm-2.4/objdir
+LEVEL = ../../../local/download/llvm-svn/objdir
 LIBRARYNAME = pinapa
 LOADABLE_MODULE = 1
 USEDLIBS =
-LINK_COMPONENTS=
+LINK_COMPONENTS=core
 KEEP_SYMBOLS=1
 CXXFLAGS=-g
 

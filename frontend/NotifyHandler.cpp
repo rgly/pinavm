@@ -1,9 +1,3 @@
-#include "llvm/ADT/StringExtras.h"
-#include "llvm/Support/Streams.h"
-
-#include "llvm/Function.h"
-#include "llvm/Instructions.h"
-
 #include "NotifyHandler.hpp"
 
 using namespace llvm;
@@ -11,8 +5,8 @@ using namespace llvm;
 SCConstruct*
 NotifyHandler::handle(Function* fct, BasicBlock* bb, CallInst* callInst)
 {
-  char* eventName = "eventName";
-  llvm::cout << " ---------------> Time : handling call to notify(event) performed in " << fct->getName() <<"\n";
+  string eventName = "eventName";
+  cout << " ---------------> Time : handling call to notify(event) performed in " << fct->getNameStr() <<"\n";
   return new NotifyConstruct(new Event(eventName));
 }
 

@@ -1,6 +1,3 @@
-#include "llvm/Function.h"
-#include "llvm/Instructions.h"
-
 #include "ReadHandler.hpp"
 
 using namespace llvm;
@@ -9,7 +6,7 @@ SCConstruct*
 ReadHandler::handle(Function* fct, BasicBlock* bb, CallInst* callInst)
 {
   Port* p = new Port("FAKE MODULE", "FAKE PORT");
-  llvm::cout << " ---------------> Time : handling call to read() performed in " << fct->getName() <<"\n";
+  cout << " ---------------> Time : handling call to read() performed in " << fct->getNameStr() <<"\n";
   return new ReadConstruct(p);
 }
 

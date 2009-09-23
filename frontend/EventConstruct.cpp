@@ -22,7 +22,7 @@ EventConstruct::getWaitedEvent()
   return this->event;
 }
 
-char*
+string
 EventConstruct::toString()
 {
   return "WAIT(event)";

@@ -1,12 +1,16 @@
 #ifndef PORT_HPP
 #define PORT_HPP
 
+#include <string>
+
+using namespace std;
+
 struct Port {
 private:
-  char* moduleName;
-  char* portName;
+  string moduleName;
+  string portName;
 public:
-  Port(char* module, char* port);
+  Port(string module, string port);
 }
 ;
 #endif

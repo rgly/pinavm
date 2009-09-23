@@ -5,12 +5,12 @@
 
 using namespace llvm;
 
-Event::Event(char* event) 
+Event::Event(string event) 
 {
   this->eventName = event;
 }
 
-char*
+string
 Event::toString()
 {
   return this->eventName;

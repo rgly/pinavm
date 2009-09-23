@@ -1,9 +1,3 @@
-#include "llvm/ADT/StringExtras.h"
-#include "llvm/Support/Streams.h"
-
-#include "llvm/Function.h"
-#include "llvm/Instructions.h"
-
 #include "ZeroTimeHandler.hpp"
 
 using namespace llvm;
@@ -11,7 +5,7 @@ using namespace llvm;
 SCConstruct*
 ZeroTimeHandler::handle(Function* fct, BasicBlock* bb, CallInst* callInst)
 {
-  llvm::cout << " ---------------> ZeroTime : handling call to wait() performed in " << fct->getName() <<"\n";
+  cout << " ---------------> ZeroTime : handling call to wait() performed in " << fct->getNameStr() <<"\n";
   return new ZeroTimeConstruct();
 }
 

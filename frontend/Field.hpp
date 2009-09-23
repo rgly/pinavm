@@ -1,23 +1,14 @@
-#ifndef _SCCONSTRUCTHANDLER_HPP
-#define _SCCONSTRUCTHANDLER_HPP
-
-#include "SCConstruct.hpp"
+#ifndef _FIELD_HPP
+#define _FIELD_HPP
 
 using namespace llvm;
 
 struct Field {
-protected:
-  SCConstructHandler(const char* functionName, Module& mdl, SCJit* jit);
-  Function* handledFct;
-  
+private:
+  string moduleName, className, fieldName;
+
 public:
-  Field(char* moduleName, char* className, char*);
-  Function* getHandledFct();  
-  void setHandledFct(Function* fct);
-  void initMap(const char* fctName,
-	       std::map<Function*, SCConstructHandler*> scchandlers,
-	       Module &mdl);
-  SCConstruct* handle(llvm::Function* fct, BasicBlock* bb, CallInst* callInst);
+  Field(string moduleName, string className, string fieldName);
 };
 
 #endif

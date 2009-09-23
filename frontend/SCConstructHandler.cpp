@@ -9,13 +9,13 @@ SCConstructHandler::SCConstructHandler(SCJit* jit) {
   this->scjit = jit;
 }
 
-void SCConstructHandler::insertInMap(std::map<Function*, SCConstructHandler*>* scchandlers, char* fctName)
+void SCConstructHandler::insertInMap(std::map<Function*, SCConstructHandler*>* scchandlers, string fctName)
 {
   Function *targetFct = this->scjit->getModule()->getFunction(fctName);
   if (!targetFct) {
-    llvm::cout << "Info: targetFct " << fctName << " not found\n" << std::endl;
+    cout << "Info: targetFct " << fctName << " not found\n" << std::endl;
   } else {
-    llvm::cout << "Function found: " << fctName << " Pointer: " << targetFct << std::endl;
+    cout << "Function found: " << fctName << " Pointer: " << targetFct << std::endl;
     scchandlers->insert(make_pair(targetFct, this));
   }
 }

@@ -30,6 +30,6 @@ SCCFactory::handle(llvm::Function* fct, BasicBlock* bb, CallInst* callInst)
   if (it != scchandlers.end()) {
     scch = it->second;
     this->scc[callInst] = scch->handle(fct, bb, callInst);
-    llvm::cout << "handling!\n";
+    cout << "handling!\n";
   }
 }

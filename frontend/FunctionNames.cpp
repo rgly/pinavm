@@ -12,8 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/StringExtras.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
 #include "llvm/Module.h"
@@ -45,35 +43,35 @@ public:
   }
   
   bool runOnFunction(Function &F) {
-    llvm::cout << "Function analysed : " << F.getName() << ".\n";
+    cout << "Function analysed : " << F.getNameStr() << ".\n";
     
     for (Function::iterator bb = F.begin(), be = F.end(); bb != be; ++bb) { 
-      llvm::cout << "  --> begin block.\n";
+      cout << "  --> begin block.\n";
       BasicBlock::iterator i = bb->begin(), ie = bb->end();
-      llvm::cout << "size of list = " << bb->getInstList().size() << "\n";
+      cout << "size of list = " << bb->getInstList().size() << "\n";
       while (i != ie) {
-	llvm::cout << "  --> begin inst.\n";	
+	cout << "  --> begin inst.\n";	
 	if (CallInst* callInst = dyn_cast<CallInst>(&*i)) {
 	  sccfactory->handle(&F, &*bb, callInst);
 	}
-	llvm::cout << " Endings ? \n";
-	llvm::cout << "size of list = " << bb->getInstList().size() << "\n";
+	cout << " Endings ? \n";
+	cout << "size of list = " << bb->getInstList().size() << "\n";
 	BasicBlock::iterator tmpend = bb->end();
 	if (tmpend != ie)
-	  llvm::cout << " Endings different !\n";
+	  cout << " Endings different !\n";
 	else
-	  llvm::cout << " Endings NOT different !\n";
+	  cout << " Endings NOT different !\n";
 	i++;
-	llvm::cout << "  --> end inst.\n";	
+	cout << "  --> end inst.\n";	
       }
-      llvm::cout << "  --> end block.\n";	
+      cout << "  --> end block.\n";	
     }
-    llvm::cout << "end of analysis.\n";
+    cout << "end of analysis.\n";
     return false;
   }
 
   bool doFinalization(Module& mdl) {
-    //    llvm::cout << "-- End of pass.\n";
+    //    cout << "-- End of pass.\n";
     this->scjit->doFinalization();
     return true;
   }

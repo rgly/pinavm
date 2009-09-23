@@ -1,13 +1,3 @@
-#include "llvm/Transforms/Utils/ValueMapper.h"
-#include "llvm/Transforms/Utils/Cloning.h"
-#include "llvm/Analysis/MemoryDependenceAnalysis.h"
-
-//#include "llvm/Target/MSIL/MSILWriter.h"
-
-#include "llvm/Transforms/Scalar.h"
-#include "llvm/Target/TargetData.h"
-
-#include <algorithm>
 #include "SCJit.hpp"
 
 using namespace std;
@@ -17,14 +7,14 @@ SCJit::SCJit(Module* mod)
 {
   this->mdl = mod;
   
-  llvm::cout << "creating llvm::ExecutionEngine... ";
+  cout << "creating llvm::ExecutionEngine... ";
   this->ee = llvm::ExecutionEngine::create(this->mdl);
   
   if (ee == NULL) {
-    llvm::cout << "Error : executionengine could not be created.\n";
+    cout << "Error : executionengine could not be created.\n";
     exit(1);
   }
-  llvm::cout << "done.\n";
+  cout << "done.\n";
 
   ee->runStaticConstructorsDestructors(false); 
 }
@@ -69,10 +59,10 @@ pushInst(Instruction* inst, vector<Instruction*>& temp_queue, vector<Instruction
 void
 buildFctToJit2(Function* fctToJit, Value* res)
 {
-  BasicBlock* block = BasicBlock::Create("entry", fctToJit);
+  BasicBlock *block = BasicBlock::Create(getGlobalContext(), "entry", fctToJit);
   IRBuilder<> builder(block);
-  AllocaInst * al = builder.CreateAlloca(IntegerType::get(32), 0, "myvar");
-  Constant* ci = ConstantInt::get(IntegerType::get(32), 42);
+  AllocaInst * al = builder.CreateAlloca(IntegerType::get(getGlobalContext(), 32), 0, "myvar");
+  Constant* ci = ConstantInt::get(IntegerType::get(getGlobalContext(), 32), 42);
   builder.CreateStore(ci, al);
   LoadInst* li = builder.CreateLoad(al);
   builder.CreateRet(li); 
@@ -89,7 +79,7 @@ getValue(std::map<std::string, Value*> namedValues, Value* arg)
     if(arg->hasName()) {
       return namedValues[arg->getName()];
     } else {
-      return inst->clone();
+      return inst->clone(getGlobalContext());
     }
   }
 }
@@ -154,7 +144,7 @@ SCJit::buildFctToJit(Function* origFct, Function* fctToJit, Value* res)
     }
   }
 
-  llvm::cout << "#### Useful basic blocks and instructions marked\n";
+  cout << "#### Useful basic blocks and instructions marked\n";
 
   /**************** Clone blocks *******************/
   DenseMap<const Value*, Value*> ValueMap;
@@ -166,15 +156,15 @@ SCJit::buildFctToJit(Function* origFct, Function* fctToJit, Value* res)
       continue;
 
     /*** Register the (new) basic block in the value map, set its (new) name ***/
-    BasicBlock *NewBB = BasicBlock::Create("", fctToJit);
+    BasicBlock *NewBB = BasicBlock::Create(getGlobalContext(), "", fctToJit);
     if (BB->hasName())
       NewBB->setName(BB->getName());
     
-    llvm::cout << "Cloned: " << NewBB->getName() << "\n";
+    cout << "Cloned: " << NewBB->getNameStr() << "\n";
     ValueMap[BB] = NewBB;
   }
 
-  llvm::cout << "#### Basic blocks cloned\n";
+  cout << "#### Basic blocks cloned\n";
   
   /****** Useful instructions are pushed in the list of *********/
   /************* instructions to be generated  ******************/
@@ -190,15 +180,16 @@ SCJit::buildFctToJit(Function* origFct, Function* fctToJit, Value* res)
   while(origbb != origbe) {
     BasicBlock::iterator origInstIt = origbb->begin(), origInstEnd = origbb->end();
     currentBlock = &*origbb++;
-    llvm::cout << "CURRENTBLOCK: "<< currentBlock->getName() << "\n";
+    cout << "CURRENTBLOCK: "<< currentBlock->getNameStr() << "\n";
 
     /*** ...get the corresponding block in the fctToJit if it exists ***/
     if (find(used_bb.begin(), used_bb.end(), currentBlock) == used_bb.end()) {
-      llvm::cout << "   NOT USEFUL\n";
+      cout << "   NOT USEFUL\n";
       continue;
+    } else {
+      NewBB = cast<BasicBlock>(ValueMap[currentBlock]);
     }
 
-    NewBB = cast<BasicBlock>(ValueMap[currentBlock]);
     /*** Add branch instruction from the previous block to the current one ***/
     if (oldCurrentBlock != NULL) {
       oldCurrentBlock->getInstList().push_back(BranchInst::Create(NewBB));
@@ -207,45 +198,48 @@ SCJit::buildFctToJit(Function* origFct, Function* fctToJit, Value* res)
 
     /*** For each instruction in the original basic block... ***/
     while(origInstIt != origInstEnd) {
-      llvm::cout << "  start inst loop\n";
+      cout << "  start inst loop\n";
       Instruction* origInst = &*origInstIt;
-      llvm::cout << "  origInst got\n";
+      cout << "  origInst got\n";
 
       /*** ...clone the instruction if it is useful ***/
       if (find(used_insts.begin(), used_insts.end(), origInst) != used_insts.end()) {
-	llvm::cout << "  found useful\n";
-	Instruction *NewInst = origInst->clone();
+	cout << "  found useful\n";
+	Instruction *NewInst = origInst->clone(getGlobalContext());
 	if (origInst->hasName())
 	  NewInst->setName(origInst->getName());
-	RemapInstruction(NewInst, ValueMap);         // Imporant: link the instruction to others (use-def chain)
-	llvm::cout << "Instruction remapped\n";
+	RemapInstruction(NewInst, ValueMap);         // Important: link the instruction to others (use-def chain)
+	cout << "Instruction remapped\n";
 	NewInst->dump();
 	NewBB->getInstList().push_back(NewInst);
-	ValueMap[origInst] = NewInst;                // Add instruction map to value.
+	/* Add instruction to ValueMap so that future calls to RemapInstruction() work. It works because: */
+	/* - all variables used are have been added in the ValueMap when thay have been defined           */
+	/* - the basic blocks are already in the ValueMap (necessary for branch instructions)             */
+	ValueMap[origInst] = NewInst;
 	lastInst = NewInst;	
       }
-      llvm::cout << "  end of inst loop\n";
+      cout << "  end of inst loop\n";
       origInstIt++;
     }
-    llvm::cout << "  end of bb loop\n";
+    cout << "  end of bb loop\n";
     oldCurrentBlock = NewBB;
   }
-  llvm::cout << "Before CreateRet\n";
+  cout << "Before CreateRet\n";
   IRBuilder<>(lastBlock).CreateRet(lastInst);
 
 //   while(origbb != origbe) {
 //     BasicBlock::iterator origInstIt = origbb->begin(), origInstEnd = origbb->end();
 //     currentBlock = &*clonebb;
-//     llvm::cout << "CURRENTBLOCK: "<< currentBlock->getName() << "\n";
+//     cout << "CURRENTBLOCK: "<< currentBlock->getNameStr() << "\n";
 //     while (! currentBlock->empty()) {
 //       (&(currentBlock->front()))->removeFromParent();
 //     }
 //     currentBlock->getInstList().erase(currentBlock->getInstList().begin(), currentBlock->getInstList().end());
 
 // //     while (! block->empty()) {
-// //       llvm::cout << "before erase\n";
+// //       cout << "before erase\n";
 // //       (&(block->front()))->eraseFromParent();
-// //       llvm::cout << "after erase\n";
+// //       cout << "after erase\n";
 // //     }
 
 //     builder = new IRBuilder<>(currentBlock);
@@ -256,32 +250,32 @@ SCJit::buildFctToJit(Function* origFct, Function* fctToJit, Value* res)
 //       if (find(used_insts.begin(), used_insts.end(), origInst) != used_insts.end()) {
 // 	lastValidBuilder = builder;
 // 	if (isa<AllocaInst>(origInst)) {
-// 	  llvm::cout << "ALLOCA\n";	  	  
+// 	  cout << "ALLOCA\n";	  	  
 // 	  AllocaInst* origAlloc = cast<AllocaInst>(origInst);
 // 	  string name = origAlloc->getNameStr();
 // 	  AllocaInst* alloc = builder->CreateAlloca(IntegerType::get(32), NULL, name.c_str());
 // 	  namedValues[name] = alloc;
 // 	  lastInst = alloc;
 // 	} else if (isa<LoadInst>(origInst)) {
-// 	  llvm::cout << "LOAD\n";  
+// 	  cout << "LOAD\n";  
 // 	  Value* op1 = getValue(namedValues, origInst->getOperand(0));
 // 	  Value* op2 = getValue(namedValues, origInst->getOperand(1));
-// 	  llvm::cout << "  op1: \n";
+// 	  cout << "  op1: \n";
 // 	  op1->dump();
-// 	  llvm::cout << "  op2: \n";
+// 	  cout << "  op2: \n";
 // 	  op2->dump();
 // 	  lastInst = builder->CreateLoad(op1, op2);
-// 	  llvm::cout << "LOAD DONE\n";  
+// 	  cout << "LOAD DONE\n";  
 // 	} else if(isa<StoreInst>(origInst)) {
-// 	  llvm::cout << "STORE\n";	  
+// 	  cout << "STORE\n";	  
 // 	  Value* op1 = getValue(namedValues, origInst->getOperand(0));
 // 	  Value* op2 = getValue(namedValues, origInst->getOperand(1));
-// 	  llvm::cout << "  op1: \n";
+// 	  cout << "  op1: \n";
 // 	  op1->dump();
-// 	  llvm::cout << "  op2: \n";
+// 	  cout << "  op2: \n";
 // 	  op2->dump();
 // 	  lastInst = builder->CreateStore(op1, op2);
-// 	  llvm::cout << "STORE DONE\n";	  	  
+// 	  cout << "STORE DONE\n";	  	  
 // 	}//  else {
 // // 	  for (User::op_iterator opit = origInst->op_begin(), opend = origInst->op_end(); opit != opend; ++opit) {
 // // 	    arg = *opit;
@@ -293,18 +287,18 @@ SCJit::buildFctToJit(Function* origFct, Function* fctToJit, Value* res)
 //     }
 //     origbb++;
 //     clonebb++;
-//     llvm::cout << "AFTER SIZE: " << currentBlock->getInstList().size() << "\n";
+//     cout << "AFTER SIZE: " << currentBlock->getInstList().size() << "\n";
 
 //     if (currentBlock->getInstList().size() == 0) {
 //       currentBlock->removeFromParent();
-//       llvm::cout << "BLOCK REMOVED\n" ;
+//       cout << "BLOCK REMOVED\n" ;
 //       //currentBlock->eraseFromParent();
 //     } else {
-//       llvm::cout << "BLOCK TREATED\n" ;
+//       cout << "BLOCK TREATED\n" ;
 //       currentBlock->dump();
 //     }
 //   }
-//   llvm::cout << "Before ret instruction\n" ;
+//   cout << "Before ret instruction\n" ;
 //   lastValidBuilder->CreateRet(lastInst);
   
 }
@@ -318,7 +312,7 @@ SCJit::jitInt(Function* f, Value* arg)
   GenericValue gvint;
   const std::vector<const Type*> argsType;
 
-  llvm::cout << "jitInt !\n";
+  cout << "jitInt !\n";
 
   /* TODO : delete args */
   /* TODO : support more-than-one-call to that function : second time, "fctToJit" will be found !! */
@@ -326,18 +320,18 @@ SCJit::jitInt(Function* f, Value* arg)
 // 				     IntegerType::get(32), /*ret type*/
 // 				     NULL);         /*varargs terminated with null*/
 
-  FunctionType* FT = FunctionType::get(Type::Int32Ty, argsType, false);
-  llvm::cout << "TY created\n";
+  FunctionType* FT = FunctionType::get(IntegerType::get(getGlobalContext(), 32), argsType, false);
+  cout << "TY created\n";
 
   fctToJit = Function::Create(FT, Function::ExternalLinkage, "fctToJit", this->mdl);
   fctToJit->setCallingConv(CallingConv::C);
 
   //  fctToJit = cast<Function>(c);
-  llvm::cout << "function inserted : " << fctToJit->getName() << "\n";
+  cout << "function inserted : " << fctToJit->getNameStr() << "\n";
 
   //  arg->dump();
   buildFctToJit(f, fctToJit, arg);
-  llvm::cout << "fctToJit built !\n";
+  cout << "fctToJit built !\n";
  
   //  args.push_back(PUSH_BACK() ARGS HERE);
   //  fctToJit->viewCFG();
@@ -351,7 +345,7 @@ SCJit::jitInt(Function* f, Value* arg)
    // Set up the optimizer pipeline.  Start with registering info about how the
    // target lays out data structures.
    TargetData* td = new TargetData(*this->ee->getTargetData());
-   llvm::cout << td->getStringRepresentation();
+   cout << td->getStringRepresentation();
    FPM.add(td);
    // Promote allocas to registers.
    //   FPM.add(createPromoteMemoryToRegisterPass());
@@ -373,7 +367,7 @@ SCJit::jitInt(Function* f, Value* arg)
   //  gvint = ee->runFunction(fctToJit, args);
   int (*fct)() = (int (*)()) ee->getPointerToFunction(fctToJit);
   int res = fct();
-  llvm::cout << "fctToJit executed !\n";
+  cout << "fctToJit executed !\n";
    
   return res;
 }
@@ -399,15 +393,15 @@ SCJit::jitInt(Function* f, Value* arg)
 //   }
     
 //   while (! temp_queue.empty()) {
-//     llvm::cout << "-- begin loop\n";
+//     cout << "-- begin loop\n";
 //     Instruction* inst = temp_queue.back();
-//     llvm::cout << "-- inst get\n";
+//     cout << "-- inst get\n";
 //     temp_queue.pop_back();
 
 //     pushInst(inst, temp_queue, inst_queue, false);
-//     llvm::cout << "************** INST *****************\n";
+//     cout << "************** INST *****************\n";
 //     inst->dump();
-//     llvm::cout << "*************************************\n";
+//     cout << "*************************************\n";
 
 //     for (User::op_iterator opit = inst->op_begin(), opend = inst->op_end(); opit != opend; ++opit) {
 //       arg = *opit;
@@ -415,44 +409,44 @@ SCJit::jitInt(Function* f, Value* arg)
 //       if (isa<Constant>(arg) || isa<Argument>(arg) || isa<GlobalValue>(arg))
 // 	continue;
 
-//       llvm::cout << "********** ARG " << arg << " " << opit << " ***************\n";
+//       cout << "********** ARG " << arg << " " << opit << " ***************\n";
 //       arg->dump();
-//       llvm::cout << "******************************\n";
+//       cout << "******************************\n";
 
 //       for (Value::use_iterator I = arg->use_begin(), E = arg->use_end(); I != E; ++I) {
 // 	Value* v = *I;
 // 	Instruction* iuse = cast<Instruction>(v);
 
-// 	llvm::cout << "------ USE " << iuse << " ------\n";
+// 	cout << "------ USE " << iuse << " ------\n";
 // 	iuse->dump();
-// 	llvm::cout << "-----------------\n";
+// 	cout << "-----------------\n";
 	
 // 	if (isa<BitCastInst>(iuse) || (int) iuse >= (int) inst)
 // 	  continue;
 // 	//	if (isa<StoreInst>(iuse) && iuse->getOperand(1) == arg) {
 	
 // 	pushInst(iuse, temp_queue, inst_queue, true);
-// 	llvm::cout << "---> Add it: " << iuse << "\n";
+// 	cout << "---> Add it: " << iuse << "\n";
 // 	  //	}
 //       }
 //       pushInst(cast<Instruction>(arg), temp_queue, inst_queue, true);
 //     }
 //   }
-//   llvm::cout << "-- Producing instructions : " << inst_queue.size() << "\n";
+//   cout << "-- Producing instructions : " << inst_queue.size() << "\n";
 //   Instruction* lastInst;
 //   while (! inst_queue.empty()) {
-//     llvm::cout << "-- BEGIN inst producing loop \n";    
+//     cout << "-- BEGIN inst producing loop \n";    
 //     Instruction* inst = inst_queue.back();
-//     llvm::cout << "get\n";
+//     cout << "get\n";
 //     inst_queue.pop_back();
-//     llvm::cout << "popped\n";
+//     cout << "popped\n";
 //     lastInst = inst->clone();
 //     lastInst->setName(inst->getName());
 //     inst->dump();
-//     llvm::cout << "?????????? " << inst->getName() << "\n";
+//     cout << "?????????? " << inst->getNameStr() << "\n";
 //     lastInst->dump();
 //     builder.Insert(lastInst);
-//     llvm::cout << "inserted\n";
+//     cout << "inserted\n";
 //   }
 //   builder.CreateRet(lastInst);
 // }

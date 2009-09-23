@@ -1,6 +1,6 @@
 #include "Port.hpp"
 
-Port::Port(char* module, char* port)
+Port::Port(string module, string port)
 {
   this->moduleName = module;
   this->portName = port;

@@ -7,7 +7,7 @@ using namespace llvm;
 
 ZeroTimeConstruct::ZeroTimeConstruct() : TimeConstruct(0) {}
 
-char*
+string
 ZeroTimeConstruct::toString()
 {
   return "WAIT()";

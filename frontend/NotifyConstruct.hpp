@@ -16,7 +16,7 @@ public:
   NotifyConstruct(Event* e);
   void setNotifiedEvent(Event* e);
   Event* getNotifiedEvent();
-  char* toString();
+  string toString();
 };
 
 #endif

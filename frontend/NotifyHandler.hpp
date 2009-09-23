@@ -1,3 +1,6 @@
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/raw_ostream.h"
+
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 
