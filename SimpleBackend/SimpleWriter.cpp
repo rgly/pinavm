@@ -1,6 +1,6 @@
 #include "SimpleWriter.h"
 
-#define PRINT_DEBUG_MSG 0
+#define PRINT_DEBUG_MSG 1
 
 #if PRINT_DEBUG_MSG
 #define DEBUG_MSG(STREAMS) Out << STREAMS; std::cout << STREAMS
@@ -1903,22 +1903,25 @@ SimpleWriter::printFunction(Function &F)
     
     if (!printedVar) {
       Out << "  ";
-      Out << "var ";      
+      Out << "var ";
     } 
 
     if (const AllocaInst *AI = isDirectAlloca(&*I)) {
-      if (printedVar) Out << ",     \n";
+      if (printedVar)
+	Out << "     ,\n";
       printType(Out, AI->getAllocatedType(), false, GetValueName(AI));
       //      Out << ";    /* Address-exposed local */\n";
       printedVar = true;
     } else if (I->getType() != Type::getVoidTy(F.getContext()) && 
                !isInlinableInst(*I)) {
-      if (printedVar) Out << ",     \n";
+      if (printedVar)
+	Out << "     ,\n";
       
       printType(Out, I->getType(), false, GetValueName(&*I));
 
       if (isa<PHINode>(*I)) {  // Print out PHI node temporaries as well...
-        Out << "  ";
+	if (printedVar)
+	  Out << "     ,";
         printType(Out, I->getType(), false,
                   GetValueName(&*I)+"__PHI_TEMPORARY");
       }
@@ -2627,7 +2630,11 @@ SimpleWriter::visitCallInst(CallInst &I)
       
   bool PrintedArg = false;
   for (; AI != AE; ++AI, ++ArgNo) {
-    if (PrintedArg) Out << ", ";
+    if (AI->getUser()->getNumUses() == 0) {
+      continue;
+    }
+    if (PrintedArg)
+      Out << ", ";
     if (ArgNo < NumDeclaredParams &&
         (*AI)->getType() != FTy->getParamType(ArgNo)) {
       Out << '(';
@@ -3226,31 +3233,31 @@ SimpleWriter::doInitialization(Module &M)
   // Loop over the symbol table, emitting all named constants...
   //   printModuleTypes(M.getTypeSymbolTable());
 
-  // Global variable declarations...
-  //   if (!M.global_empty()) {
-  //     Out << "\n/* External Global Variable Declarations */\n";
-  //     for (Module::global_iterator I = M.global_begin(), E = M.global_end();
-  //          I != E; ++I) {
+//   //  Global variable declarations...
+//     if (!M.global_empty()) {
+//       Out << "\n/* External Global Variable Declarations */\n";
+//       for (Module::global_iterator I = M.global_begin(), E = M.global_end();
+//            I != E; ++I) {
 
-  //       if (I->hasExternalLinkage() || I->hasExternalWeakLinkage() || 
-  //           I->hasCommonLinkage())
-  //         Out << "extern ";
-  //       else if (I->hasDLLImportLinkage())
-  //         Out << "__declspec(dllimport) ";
-  //       else
-  //         continue; // Internal Global
+//         if (I->hasExternalLinkage() || I->hasExternalWeakLinkage() || I->hasCommonLinkage()) {
+//           Out << "extern ";
+//         } else if (I->hasDLLImportLinkage()) {
+//           Out << "__declspec(dllimport) ";
+//         } else {
+//           continue; // Internal Global
+// 	}
 
-  //       // Thread Local Storage
-  //       if (I->isThreadLocal())
-  //         Out << "__thread ";
+//         // Thread Local Storage
+//         if (I->isThreadLocal())
+//           Out << "__thread ";
 
-  //       printType(Out, I->getType()->getElementType(), false, GetValueName(I));
+//         printType(Out, I->getType()->getElementType(), false, GetValueName(I));
 
-  //       if (I->hasExternalWeakLinkage())
-  //          Out << " __EXTERNAL_WEAK__";
-  //       Out << ";\n";
-  //     }
-  //   }
+//         if (I->hasExternalWeakLinkage())
+//            Out << " __EXTERNAL_WEAK__";
+//         Out << ";\n";
+//       }
+//     }
 
   // Function declarations
   //   Out << "\n/* Function Declarations */\n";
@@ -3284,40 +3291,40 @@ SimpleWriter::doInitialization(Module &M)
   //   }
 
   //   // Output the global variable declarations
-  //   if (!M.global_empty()) {
-  //     Out << "\n\n/* Global Variable Declarations */\n";
-  //     for (Module::global_iterator I = M.global_begin(), E = M.global_end();
-  //          I != E; ++I)
-  //       if (!I->isDeclaration()) {
-  //         // Ignore special globals, such as debug info.
-  //         if (getGlobalVariableClass(I))
-  //           continue;
+    if (!M.global_empty()) {
+      Out << "\n\n/* Global Variable Declarations */\n";
+      for (Module::global_iterator I = M.global_begin(), E = M.global_end();
+           I != E; ++I)
+        if (!I->isDeclaration()) {
+          // Ignore special globals, such as debug info.
+          if (getGlobalVariableClass(I))
+            continue;
 
-  //         if (I->hasLocalLinkage())
-  //           Out << "static ";
-  //         else
-  //           Out << "extern ";
+//           if (I->hasLocalLinkage())
+//             Out << "static ";
+//           else
+//             Out << "extern ";
 
-  //         // Thread Local Storage
-  //         if (I->isThreadLocal())
-  //           Out << "__thread ";
+          // Thread Local Storage
+          if (I->isThreadLocal())
+            Out << "__thread ";
 
-  //         printType(Out, I->getType()->getElementType(), false, 
-  //                   GetValueName(I));
+          printType(Out, I->getType()->getElementType(), false, 
+                    GetValueName(I));
 
-  //         if (I->hasLinkOnceLinkage())
-  //           Out << " __attribute__((common))";
-  //         else if (I->hasCommonLinkage())     // FIXME is this right?
-  //           Out << " __ATTRIBUTE_WEAK__";
-  //         else if (I->hasWeakLinkage())
-  //           Out << " __ATTRIBUTE_WEAK__";
-  //         else if (I->hasExternalWeakLinkage())
-  //           Out << " __EXTERNAL_WEAK__";
-  //         if (I->hasHiddenVisibility())
-  //           Out << " __HIDDEN__";
-  //         Out << ";\n";
-  //       }
-  //   }
+          if (I->hasLinkOnceLinkage())
+            Out << " __attribute__((common))";
+          else if (I->hasCommonLinkage())     // FIXME is this right?
+            Out << " __ATTRIBUTE_WEAK__";
+          else if (I->hasWeakLinkage())
+            Out << " __ATTRIBUTE_WEAK__";
+          else if (I->hasExternalWeakLinkage())
+            Out << " __EXTERNAL_WEAK__";
+          if (I->hasHiddenVisibility())
+            Out << " __HIDDEN__";
+          Out << ";\n";
+        }
+    }
 
   //   // Output the global variable definitions and contents...
   //   if (!M.global_empty()) {
