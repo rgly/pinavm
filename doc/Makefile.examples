@@ -1,0 +1,80 @@
+REQUIRESYSTEMC=ok
+TARGET_ARCH=linux
+
+ifndef SUF
+SUF=cpp
+endif
+
+ifndef COMP
+COMP=g++
+endif
+
+ifndef SRC
+SRC=${wildcard *.$(SUF)}
+endif
+
+ifndef LL
+LL=${patsubst %.$(SUF),%.ll,$(SRC)}
+endif
+
+ifndef EXE
+EXE=${patsubst %.$(SUF),%.exe,$(SRC)}
+endif
+
+ifdef REQUIRESYSTEMC
+CPPSCFLAGS=-I$(LLVMSYSTEMCROOT)/ -I$(LLVMSYSTEMCROOT)/include -I$(LLVMSYSTEMCROOT)/include/sysc
+endif
+
+ifndef LLVMGCCFLAGS
+LLVMGCCFLAGS=-fno-inline-functions $(CPPSCFLAGS)
+endif
+
+ifndef CPPFLAGS
+CPPFLAGS=-fno-inline-functions
+endif
+
+ifndef OPTFLAGS
+OPTFLAGS=-mem2reg -disable-opt
+endif
+
+GCC_SSA=${patsubst %.$(SUF),%.$(SUF).ssa,$(SRC)}
+LLOPT=${patsubst %.ll,%.opt.ll,$(LL)}
+
+
+ll: $(LL)
+llopt: $(LLOPT)
+exe: $(EXE)
+gcc-ssa: $(GCC_SSA)
+
+%.opt.sc.bc: %.opt.ll Makefile
+	llvm-link -f -o $@ $(LLVMSYSTEMCROOT)/lib-$(TARGET_ARCH)/libsystemc.a $*.opt.bc 
+
+%.opt.sc.ll: %.opt.sc.bc Makefile
+	llvm-dis -f $*.opt.sc.bc -o $@
+
+%.opt.bc: %.bc Makefile
+	opt -f $(OPTFLAGS) $*.bc -o $*.opt.bc
+
+%.opt.ll: %.opt.bc Makefile
+	llvm-dis -f $*.opt.bc -o $@
+
+%.ll: %.$(SUF) Makefile
+	llvm-$(COMP) $(LLVMGCCFLAGS) -emit-llvm -S $< -o $@ $(INCLUDE)
+
+%.bc: %.ll Makefile
+	llvm-as -f $*.ll -o $*.bc
+
+
+# -fdump-tree-ssa works only if -O is provided.
+%.$(SUF).ssa: %.$(SUF) Makefile ../include.mk
+	$(COMP) -O $(CPPFLAGS) -c -fdump-tree-ssa $(INCLUDE) $< -o /dev/null
+	mv $<.*.ssa $@
+
+%.exe: %.$(SUF) Makefile ../include.mk ../minilib/minilib.o
+	$(COMP) $< -o $@ ../minilib/minilib.o $(LIBS) $(INCLUDE)
+
+realclean: clean
+	$(RM) *~ 
+
+clean:
+	-$(RM) *.exe *.bc *.ssa *.o
