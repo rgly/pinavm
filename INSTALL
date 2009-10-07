@@ -1,0 +1,55 @@
+#################
+0) Set the PATH so that a good compiler is use, for instance gcc-4.2
+#################
+
+$ which g++
+/usr/local/soft/gcc/4.2.4/bin/g++
+
+ 
+##################
+1) llvm
+##################
+
+- export CXX=g++ 
+
+- svn co http://llvm.org/svn/llvm-project/llvm/trunk llvm-svn
+- cd llvm-svn
+- ../configure --prefix=/home/marquet/local/lib/llvm-svn --enable-checking --enable-bindings=none
+- make
+- make install
+- <add /home/marquet/local/lib/llvm-svn/bin to the PATH>
+
+##################
+2) llvm-gcc
+##################
+
+- svn co http://llvm.org/svn/llvm-project/llvm-gcc-4.2/trunk llvm-gcc
+- cd llvm-gcc
+- mkdir objdir
+- cd objdir
+- ../configure --prefix=/home/marquet/local/lib/llvm-gcc --program-prefix=llvm- --enable-llvm=/home/marquet/local/download/llvm-svn/objdir --enable-languages=c,c++
+- make LLVM_VERSION_INFO=r82534  # setting LLVM_VERSION_INFO is optional
+- make install
+
+- <add /home/marquet/local/lib/llvm-gcc/bin to the PATH>
+
+##################
+3) systemc (optional)
+##################
+
+- tar xzf systemc-2.2.0.tgz 
+- cd systemc-2.2.0
+- export CXX=g++
+- ../configure --prefix=/home/marquet/local/lib/systemc-2.2.0
+- make
+- make install
+
+##################
+4) systemc-llvm
+##################
+
+- <get systemc archive : systemc-2.2.0.tgz>
+- tar xzf systemc-2.2.0.tgz
+- <look and modify script 'ar2llvm.sh'>
+- <be sure of previous step, the script is not secure...>
+- ./ar2llvm.sh
