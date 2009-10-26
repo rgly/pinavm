@@ -55,9 +55,10 @@ very-similar-to-handlers tree:
      |- DefaultTimeConstruct
 
 These constructs use the classes:
-- Port
-- Event
-- Field
+- SCPort
+- SCEvent
+- SCModule
+
 which should be redefined with respect to ELAB.  
 
 ##############################################

@@ -1,17 +1,17 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 
-#include "Event.hpp"
+#include "SCEvent.hpp"
 
 using namespace llvm;
 
-Event::Event(string event) 
+SCEvent::Event(string event) 
 {
   this->eventName = event;
 }
 
 string
-Event::toString()
+SCEvent::toString()
 {
   return this->eventName;
 }
