@@ -1,5 +1,5 @@
-##===- lib/Transforms/Hello/Makefile -----------------------*- Makefile -*-===##
-# 
+##===- frontend/Makefile -----------------------------------*- Makefile -*-===##
+#
 #                     The LLVM Compiler Infrastructure
 #
 # This file is distributed under the University of Illinois Open Source
