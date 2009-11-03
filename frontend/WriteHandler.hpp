@@ -6,7 +6,7 @@
 
 #include "SCConstructHandler.hpp"
 #include "WriteConstruct.hpp"
-#include "Port.hpp"
+#include "SCPort.hpp"
 
 using namespace llvm;
 

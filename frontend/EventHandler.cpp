@@ -5,8 +5,8 @@ using namespace llvm;
 SCConstruct*
 EventHandler::handle(Function* fct, BasicBlock* bb, CallInst* callInst)
 {
-  cout << " ---------------> Event : handling call to wait(event) performed in " << fct->getNameStr() <<"\n";
-  return new EventConstruct(new Event("FAKE EVENT"));
+  std::cout << " ---------------> Event : handling call to wait(event) performed in " << fct->getNameStr() <<"\n";
+  return new EventConstruct(new SCEvent("FAKE EVENT"));
 }
 
 void

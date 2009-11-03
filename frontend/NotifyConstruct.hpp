@@ -5,17 +5,18 @@
 #include "llvm/Instructions.h"
 
 #include "SCConstruct.hpp"
-#include "Event.hpp"
+#include "SCEvent.hpp"
 
 using namespace llvm;
 
 struct NotifyConstruct : public SCConstruct {  
+
 protected :
-  Event* event;
+  SCEvent* event;
 public:
-  NotifyConstruct(Event* e);
-  void setNotifiedEvent(Event* e);
-  Event* getNotifiedEvent();
+  NotifyConstruct(SCEvent* e);
+  void setNotifiedEvent(SCEvent* e);
+  SCEvent* getNotifiedEvent();
   string toString();
 };
 

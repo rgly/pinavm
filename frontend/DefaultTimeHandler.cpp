@@ -7,12 +7,12 @@ SCConstruct*
 DefaultTimeHandler::handle(Function* fct, BasicBlock* bb, CallInst* callInst)
 {
   int time_waited = 42;
-  cout << " ---------------> DefaultTime : handling call to wait(int) performed in " << fct->getNameStr() <<"\n";
+  std::cout << " ---------------> DefaultTime : handling call to wait(int) performed in " << fct->getNameStr() <<"\n";
   Value* arg = callInst->getOperand(2);
   time_waited = this->scjit->jitInt(fct, arg);
   //  this->scjit->getModule(arg);
   //  arg = callInst->getOperand(2);
-  cout << "   time waited: " << time_waited << "\n";
+  std::cout << "   time waited: " << time_waited << "\n";
   return new DefaultTimeConstruct(time_waited);
 }
 

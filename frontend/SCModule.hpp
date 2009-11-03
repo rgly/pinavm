@@ -2,30 +2,36 @@
 #define _SCMODULE_HPP
 
 #include <string>
-#include <list>
+#include <vector>
 
-#include "llvm/GlobalVariable"
+#include "llvm/GlobalVariable.h"
+#include "llvm/Function.h"
 
+#include "SCPort.hpp"
+
+using namespace std;
 using namespace llvm;
+
+struct SCPort;
 
 struct SCModule {
 private:
   string name;
-  list<Function*> threads;
-  list<Function*> ports;
-  list<Function*> sharedVariables;
-
+  vector<Function* > threads;
+  vector<SCPort*> ports;
+  vector<GlobalVariable* > sharedVariables;
+  
 public:
   SCModule(string moduleName);
-
-  list<Function*>* getThreads();
+  
+  vector<Function*>* getThreads();
   void addThread(Function* mainFct);
-
-  list<SCPort*>* getPorts();
+  
+  vector<SCPort*>* getPorts();
   void addPort(SCPort* port);
-
-  list<GlobalVariable*>* getSharedVariables();
-  void addGlobalVariable(GlobalVariable* gv);
-}
+  
+  vector<GlobalVariable*>* getSharedVariables();
+  void addSharedVariable(GlobalVariable* gv);
+};
 
 #endif

@@ -11,7 +11,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
 
-#include "llvm/Analysis/Verifier.h"
+//#include "llvm/Analysis/Verifier.h"
 
 #include "llvm/Transforms/Utils/ValueMapper.h"
 #include "llvm/Transforms/Utils/Cloning.h"
@@ -19,6 +19,7 @@
 #include "llvm/Transforms/Scalar.h"
 
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetSelect.h"
 
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/Verifier.h"
@@ -35,8 +36,10 @@
 #include <llvm/Bitcode/ReaderWriter.h>
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include "llvm/Support/IRBuilder.h"
-#include <llvm/ExecutionEngine/GenericValue.h>
 #include "llvm/CallingConv.h"
+
+#include "llvm/ExecutionEngine/JIT.h"
+#include <llvm/ExecutionEngine/GenericValue.h>
 
 using namespace std;
 using namespace llvm;

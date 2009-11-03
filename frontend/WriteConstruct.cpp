@@ -1,17 +1,17 @@
 #include "WriteConstruct.hpp"
 
-WriteConstruct::WriteConstruct(Port* p)
+WriteConstruct::WriteConstruct(SCPort* p)
 {
   this->port = p;
 }
 
 void
-WriteConstruct::setPort(Port* p)
+WriteConstruct::setPort(SCPort* p)
 {
   this->port = p;
 }
 
-Port*
+SCPort*
 WriteConstruct::getPort()
 {
   return this->port;

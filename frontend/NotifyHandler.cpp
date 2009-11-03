@@ -6,8 +6,8 @@ SCConstruct*
 NotifyHandler::handle(Function* fct, BasicBlock* bb, CallInst* callInst)
 {
   string eventName = "eventName";
-  cout << " ---------------> Time : handling call to notify(event) performed in " << fct->getNameStr() <<"\n";
-  return new NotifyConstruct(new Event(eventName));
+  std::cout << " ---------------> Time : handling call to notify(event) performed in " << fct->getNameStr() <<"\n";
+  return new NotifyConstruct(new SCEvent(eventName));
 }
 
 void

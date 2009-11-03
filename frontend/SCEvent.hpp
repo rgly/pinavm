@@ -5,7 +5,7 @@
 
 using namespace std;
 
-struct Event {
+struct SCEvent {
 protected:
   string eventName;
 

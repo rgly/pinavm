@@ -5,7 +5,7 @@
 
 using namespace llvm;
 
-SCEvent::Event(string event) 
+SCEvent::SCEvent(string event) 
 {
   this->eventName = event;
 }

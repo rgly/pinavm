@@ -13,9 +13,9 @@ void SCConstructHandler::insertInMap(std::map<Function*, SCConstructHandler*>* s
 {
   Function *targetFct = this->scjit->getModule()->getFunction(fctName);
   if (!targetFct) {
-    cout << "Info: targetFct " << fctName << " not found\n" << std::endl;
+    std::cout << "Info: targetFct " << fctName << " not found\n" << std::endl;
   } else {
-    cout << "Function found: " << fctName << " Pointer: " << targetFct << std::endl;
+    std::cout << "Function found: " << fctName << " Pointer: " << targetFct << std::endl;
     scchandlers->insert(make_pair(targetFct, this));
   }
 }

@@ -1,23 +1,19 @@
-#include "llvm/Function.h"
-#include "llvm/Instructions.h"
-
-#include "SCConstruct.hpp"
 #include "NotifyConstruct.hpp"
 
 using namespace llvm;
 
-NotifyConstruct::NotifyConstruct(Event* e)
+NotifyConstruct::NotifyConstruct(SCEvent* e)
 {
   this->event = e;
 }
 
 void
-NotifyConstruct::setNotifiedEvent(Event* e)
+NotifyConstruct::setNotifiedEvent(SCEvent* e)
 {
   this->event = e;
 }
 
-Event*
+SCEvent*
 NotifyConstruct::getNotifiedEvent()
 {
   return this->event;

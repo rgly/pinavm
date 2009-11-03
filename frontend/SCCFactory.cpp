@@ -1,8 +1,5 @@
 #include "SCCFactory.hpp"
 
-using namespace std;
-using namespace llvm;
-
 SCCFactory::SCCFactory(SCJit* scjit)
 {
   /****** Time stuffff *******/
@@ -18,7 +15,7 @@ SCCFactory::SCCFactory(SCJit* scjit)
   (new ReadHandler(scjit))->insertInMap(&this->scchandlers);
 }
 
-void
+bool
 SCCFactory::handle(llvm::Function* fct, BasicBlock* bb, CallInst* callInst)
 {
   Function* calledFct;
@@ -29,7 +26,10 @@ SCCFactory::handle(llvm::Function* fct, BasicBlock* bb, CallInst* callInst)
   std::map<Function*,SCConstructHandler*>::iterator it = this->scchandlers.find(calledFct);
   if (it != scchandlers.end()) {
     scch = it->second;
+    std::cout << "handling!\n";
     this->scc[callInst] = scch->handle(fct, bb, callInst);
-    cout << "handling!\n";
+    return true;
+  } else {
+    return false;
   }
 }

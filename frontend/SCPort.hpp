@@ -3,23 +3,26 @@
 
 #include <string>
 
+#include "SCModule.hpp"
+
 using namespace std;
+using namespace llvm;
+
+struct SCModule;
 
 struct SCPort {
 private:
-  SCModule SCModule;
-  SCModule bindedSCModule;
-
+  SCModule* scModule;
+  SCModule* bindedSCModule;
+  
   string name;
-
+  
 public:
   SCPort(SCModule* module, string portName);
   SCModule* getSCModule();
-
   SCModule* getBindedModule();
-  void setBindedModule(SCModule*);
-
+  void setBindedModule(SCModule* mod);
   string getPortName();
-}
-;
+};
+
 #endif

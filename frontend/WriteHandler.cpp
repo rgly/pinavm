@@ -5,8 +5,8 @@ using namespace llvm;
 SCConstruct*
 WriteHandler::handle(Function* fct, BasicBlock* bb, CallInst* callInst)
 {
-  Port* p = new Port("FAKE MODULE", "FAKE PORT");
-  cout << " ---------------> Time : handling call to write() performed in " << fct->getNameStr() <<"\n";
+  SCPort* p = new SCPort(NULL, "FAKE PORT");
+  std::cout << " ---------------> Time : handling call to write() performed in " << fct->getNameStr() <<"\n";
   return new WriteConstruct(p);
 }
 

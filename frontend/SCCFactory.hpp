@@ -35,7 +35,7 @@ private:
   std::map<CallInst*, SCConstruct*> scc;
 public:
   SCCFactory(SCJit* jit);
-  void handle(llvm::Function* fct, BasicBlock* bb, CallInst* callInst);
+  bool handle(llvm::Function* fct, BasicBlock* bb, CallInst* callInst);
   
 };
 

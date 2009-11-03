@@ -1,14 +1,12 @@
 #include "SCModule.hpp"
 
-using namespace llvm;
-
 SCModule::SCModule(string moduleName)
 {
   this->name = moduleName;
 }
 
-/*** Threads ***/
-list<Function*>*
+/******** Threads ********/
+vector<Function*>*
 SCModule::getThreads()
 {
   return & this->threads;
@@ -21,8 +19,8 @@ SCModule::addThread(Function* mainFct)
 }
 
 
-/*** Ports ***/
-list<SCPort*>*
+/******** Ports ********/
+vector<SCPort*>*
 SCModule::getPorts()
 {
   return & this->ports;
@@ -35,15 +33,15 @@ SCModule::addPort(SCPort* port)
 }
 
 
-/*** Shared Variables ***/
-list<GlobalVariable*>*
+/******** Shared Variables ********/
+vector<GlobalVariable*>*
 SCModule::getSharedVariables()
 {
   return & this->sharedVariables;
 }
 
 void
-SCModule::addSharedVariable(GlobalVariable gv)
+SCModule::addSharedVariable(GlobalVariable* gv)
 {
   this->sharedVariables.push_back(gv);
 }

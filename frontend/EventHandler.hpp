@@ -9,7 +9,7 @@
 
 #include "SCConstructHandler.hpp"
 #include "EventConstruct.hpp"
-#include "Event.hpp"
+#include "SCEvent.hpp"
 
 using namespace llvm;
 

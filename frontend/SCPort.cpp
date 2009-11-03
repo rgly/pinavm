@@ -1,31 +1,31 @@
 #include "SCPort.hpp"
 
-Port::Port(SCModule module, string name)
+SCPort::SCPort(SCModule* module, string portName)
 {
-  this->moduleName = module;
-  this->name = port;
+  this->scModule = scModule;
+  this->name = portName;
 }
 
 SCModule*
-Port::getSCModule()
+SCPort::getSCModule()
 {
-  return this->SCModule
+  return this->scModule;
 }
 
 SCModule*
-Port::getBindedModule()
+SCPort::getBindedModule()
 {
   return this->bindedSCModule;
 }
 
 void
-Port::setBindedModule(SCModule* bindedModule)
+SCPort::setBindedModule(SCModule* bindedModule)
 {
   this->bindedSCModule = bindedModule;
 }
 
 string
-Port::getPortName()
+SCPort::getPortName()
 {
   return this->name;
 }

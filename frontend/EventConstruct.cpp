@@ -1,22 +1,19 @@
-#include "llvm/Function.h"
-#include "llvm/Instructions.h"
-
 #include "EventConstruct.hpp"
 
 using namespace llvm;
 
-EventConstruct::EventConstruct(Event* e)
+EventConstruct::EventConstruct(SCEvent* e)
 {
   this->event = e;
 }
 
 void
-EventConstruct::setWaitedEvent(Event* e)
+EventConstruct::setWaitedEvent(SCEvent* e)
 {
   this->event = e;
 }
 
-Event*
+SCEvent*
 EventConstruct::getWaitedEvent()
 {
   return this->event;
