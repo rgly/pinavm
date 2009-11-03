@@ -2,6 +2,7 @@
 #define SIMPLEWRITER_H
 
 #include "SimpleTargetMachine.h"
+
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -22,7 +23,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/MC/MCAsmInfo.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/CallSite.h"
@@ -58,7 +59,7 @@ class SimpleWriter : public FunctionPass, public InstVisitor<SimpleWriter> {
   Mangler *Mang;
   LoopInfo *LI;
   const Module *TheModule;
-  const MCAsmInfo* TAsm;
+  const TargetAsmInfo* TAsm;
   const TargetData* TD;
   std::map<const Type *, std::string> TypeNames;
   std::map<const ConstantFP *, unsigned> FPConstantMap;
@@ -132,6 +133,7 @@ public:
   void printFloatingPointConstants(Function &F);
   void printFloatingPointConstants(const Constant *C);
   void printFunctionSignature(const Function *F, bool Prototype);
+  void printReturnVariables(const Function* F);
 
   void printFunction(Function &);
   void printBasicBlock(BasicBlock *BB);

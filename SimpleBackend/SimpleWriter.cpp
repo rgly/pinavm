@@ -1761,109 +1761,221 @@ SimpleWriter::printContainedStructs(const Type *Ty,
 void
 SimpleWriter::printFunctionSignature(const Function *F, bool Prototype)
 {
-  /// isStructReturn - Should this function actually return a struct by-value?
-  bool isStructReturn = F->hasStructRetAttr();
+//   /// isStructReturn - Should this function actually return a struct by-value?
+//   bool isStructReturn = F->hasStructRetAttr();
+//   std::map<std:string, Type *>* returnVariables;
   
-  //   if (F->hasLocalLinkage()) Out << "static ";
-  //   if (F->hasDLLImportLinkage()) Out << "__declspec(dllimport) ";
-  //   if (F->hasDLLExportLinkage()) Out << "__declspec(dllexport) ";  
-  switch (F->getCallingConv()) {
-  case CallingConv::X86_StdCall:
-    triggerError("NYI : callingconv (stcall here)");
-    Out << "__attribute__((stdcall)) ";
-    break;
-  case CallingConv::X86_FastCall:
-    triggerError("NYI : callingconv (fastcall here)");
-    Out << "__attribute__((fastcall)) ";
-    break;
-  default:
-    break;
-  }
+//   //   if (F->hasLocalLinkage()) Out << "static ";
+//   //   if (F->hasDLLImportLinkage()) Out << "__declspec(dllimport) ";
+//   //   if (F->hasDLLExportLinkage()) Out << "__declspec(dllexport) ";  
+//   switch (F->getCallingConv()) {
+//   case CallingConv::X86_StdCall:
+//     triggerError("NYI : callingconv (stcall here)");
+//     Out << "__attribute__((stdcall)) ";
+//     break;
+//   case CallingConv::X86_FastCall:
+//     triggerError("NYI : callingconv (fastcall here)");
+//     Out << "__attribute__((fastcall)) ";
+//     break;
+//   default:
+//     break;
+//   }
   
-  // Loop over the arguments, printing them...
-  const FunctionType *FT = cast<FunctionType>(F->getFunctionType());
-  const AttrListPtr &PAL = F->getAttributes();
+//   // Loop over the arguments, printing them...
+//   const AttrListPtr &PAL = F->getAttributes();
+//   const FunctionType *FT = cast<FunctionType>(F->getFunctionType());
 
-  //  std::stringstream FunctionInnards;
+//   if (FT->isVarArg()) {
+//     triggerError("Error : not able to manage vararg functions\n");
+//   }  
 
-  // If the name of the function is "sc_main", let's start a thread -> simple signature
-  if (F->getName() == "_Z7executev") {
-    std::cout << "Function execute : " << F->getNameStr() << "\n";
-    Out << "Thread " << GetValueName(F) << ":";
-    return;
-  }
+//   //  std::stringstream FunctionInnards;
 
-  std::cout << "Function : " << F->getNameStr() << "\n";
+//   // If the name of the function is "sc_main", let's start a thread -> simple signature
+//   if (F->getName() == "_Z7executev") {
+//     std::cout << "Function execute : " << F->getNameStr() << "\n";
+//     Out << "Thread " << GetValueName(F) << ":";
+//     return;
+//   }
 
-  // Print out the name...
-  Out << "proc " << GetValueName(F) << '(';
+//   std::cout << "Function : " << F->getNameStr() << "\n";
 
-  bool PrintedArg = false;
-  if (!F->arg_empty()) {
-    Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
-    unsigned Idx = 1;
+//   // Print out the name...
+//   Out << "proc " << GetValueName(F) << '(';
+
+//   fillReturnVariables(F, returnVariables);
+
+//   bool PrintedArg = false;
+//   if (!F->arg_empty()) {
+//     Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
+//     unsigned Idx = 1;
     
-    // If this is a struct-return function, don't print the hidden
-    // struct-return argument.
-    if (isStructReturn) {
-      assert(I != E && "Invalid struct return function!");
-      ++I;
-      ++Idx;
-    }
+//     // If this is a struct-return function, don't print the hidden
+//     // struct-return argument.
+//     if (isStructReturn) {
+//       assert(I != E && "Invalid struct return function!");
+//       ++I;
+//       ++Idx;
+//     }
     
-    std::string ArgName;
-    for (; I != E; ++I) {
-      if (I->getNumUses() == 0) {
-	std::cout << "zapping " << GetValueName(I) << "\n";
-	continue;
-      }
-      if (PrintedArg) Out << ", ";
-      if (I->hasName() || !Prototype)
-	ArgName = GetValueName(I);
-      else {
-	triggerError("ERROR : arg without name");
-	//           ArgName = "";
-      }
-      const Type *ArgTy = I->getType();
-      if (PAL.paramHasAttr(Idx, Attribute::ByVal)) {
-	ArgTy = cast<PointerType>(ArgTy)->getElementType();
-	ByValParams.insert(I);
-      }
-      printType(Out, ArgTy,
-		/*isSigned=*/PAL.paramHasAttr(Idx, Attribute::SExt),
-		ArgName);
-      PrintedArg = true;
-      ++Idx;
-    }
-  }
+//     std::string ArgName;
+//     for (; I != E; ++I) {
+//       if (I->getNumUses() == 0) {
+// 	continue;
+//       }
+            
+//       if (PrintedArg) Out << ", ";
+//       if (I->hasName() || !Prototype)
+// 	ArgName = GetValueName(I);
+//       else {
+// 	triggerError("ERROR : arg without name");
+// 	//           ArgName = "";
+//       }
+//       const Type *ArgTy = I->getType();
+//       if (PAL.paramHasAttr(Idx, Attribute::ByVal)) {
+// 	ArgTy = cast<PointerType>(ArgTy)->getElementType();
+// 	ByValParams.insert(I);
+//       }
+//       printType(Out, ArgTy,
+// 		/*isSigned=*/PAL.paramHasAttr(Idx, Attribute::SExt),
+// 		ArgName);
+//       PrintedArg = true;
+//       ++Idx;
+//     }
+//   }
 
-  // Finish printing arguments... if this is a vararg function, print the ...,
-  // unless there are no known types, in which case, we just emit ().
-  //
-  if (FT->isVarArg() && PrintedArg) {
-    triggerError("Error : not able to manage vararg functions");
-  }
-  Out << ')';
+//   Out << ')';
+
+//   bool isStructReturn = F->hasStructRetAttr();
+//   if (!isStructReturn)
+//     RetTy = F->getReturnType();
+//   else
+//     RetTy = cast<PointerType>(FT->getParamType(0))->getElementType();
+      
+//   // Print out the return type and the signature built above.
+//   Out << " returns (";
   
-  // Get the return tpe for the function.
-  const Type *RetTy;
-  if (!isStructReturn)
-    RetTy = F->getReturnType();
-  else {
-    triggerError("NYI : function returning a struct");
-    // If this is a struct-return function, print the struct-return type.
-    RetTy = cast<PointerType>(FT->getParamType(0))->getElementType();
-  }
-    
-  // Print out the return type and the signature built above.
-  Out << " returns (";
-  printType(Out, RetTy, 
-            /*isSigned=*/PAL.paramHasAttr(0, Attribute::SExt),
-            "llvm_cbe_mrv_temp");
-  Out << ")";
+//   for (it = returnVariables.begin(); it != returnVariable.end(); it++) {
+//     printType(Out, it->second, 
+// 	      /*isSigned=*/PAL.paramHasAttr(0, Attribute::SExt),
+// 	      it->second);    
+//   }
+
+//   printType(Out, RetTy, 
+//             /*isSigned=*/PAL.paramHasAttr(0, Attribute::SExt),
+//             "llvm_cbe_mrv_temp");  
+//   Out << ")";
 }
 
 
+// /**** May be useful one day ****/
+// void
+// SimpleWriter::fillReturnVariables(const Function*, std:string prefix, std::map<std:string, Type *>* retVariables)
+// {
+//   // Get the return tpe for the function.
+//   const Type *RetTy;
+  
+//   if (!F->arg_empty()) {
+//     Function::const_arg_iterator argI = F->arg_begin(), argE = F->arg_end();
+//     unsigned Idx = 1;
+    
+//     // If this is a struct-return function, don't print the hidden
+//     // struct-return argument.
+//     if (isStructReturn) {
+//       assert(argI != argE && "Invalid struct return function!");
+//       ++argI;
+//       ++Idx;
+//     }
+    
+//     for (; argI != argE; ++argI) {
+//       Value* currentArg = &*argI;
+//       getVariableDependencyForValue(currentArg, prefix, retVariables);
+//     }
+//   }
+// }
+
+// void
+// insertAllFields(std::vector<std:string, Type*>* retVariables, std:string parentName, Type* structType)
+// {  
+//   unsigned int numFields = structType->getNumElements();
+//   for (unsigned int i = 0; i < numFields; i++) {
+//     fieldType = getElementType(i);
+//     fieldName = parentName + "-field" + i;
+//     if (isa<StructType>(fieldType)) {
+//       insertAllFields(retVariables, fieldName, fieldtype);
+//     } else if (find(retVariables->begin(), retVariables->end(), make_pair(fieldName, fieldType)) == retVariables->end()) {
+//       retVariables->push_back(make_pair(fieldName, fieldType));
+//     }
+//   }
+// }
+
+// void
+// getVariableDependencyForValue(Value* value, std:string prefix, std::map<std:string, Type *>* retVariables)
+// {
+//   pair <std:string, Type*> structPair;
+//   vector<pair <Value*, pair<std:string, Type*> > > structStack;
+  
+//   // ...for each parameter 
+//   if (value->getNumUses() == 0) {
+//     continue;
+//   }
+//   structStack.push_back(make_pair(value, make_pair(value->getNameStr(), value->getType())));
+  
+//   // Handle each Value pushed onto the stack for the current parameter
+//   while (! structStack.empty()) {
+    
+//     structPair = structStack.pop_back();
+//     std::string currentName = structPair.second.first;
+//     Value* currentValue = structPair.first;
+//     const Type *currentTy = structPair.second.second;
+    
+//     // for each use of the current value...
+//     for (Value::use_iterator useI = currentValue->use_begin(), useE = currentValue->use_end(); useI != useE; ++useI) {
+      
+//       Value* currentUse = &*useI;
+      
+//       if (isa<PointerType>(currentTy))
+// 	currentTy = currentTy->getElementType();	
+      
+//       // if the type of the currentValue is a StructType, we must generate the variables allowing to acces the fields, if they are used
+//       if (isa<StructType>(currentTy)) {
+// 	currentStructTy = cast<StructType>(currentTy);
+	
+// 	// if the current use is a getElementPointer instruction, let's see which field is accessed
+// 	if (GetElementPtr* getElPtrInst = dyn_cast<GetElementPtr>(currentUse)) {
+// 	  int numField = getNumField(getElPtrInst);
+// 	  Type* fieldType = parentType->getElementType(numField);
+// 	  name = parentName + "-" + currentStructType + ".field" + numField;
+// 	  structStack->push_back(make_pair(getEltPtrInst, make_pair(name, fieldType)));
+// 	} else if (StoreInst* storeInst = dyn_cast<StoreInst>(currentUse)) {
+// 	  Type* storeType = cast<Type>(storeInst->getOperand(0));
+// 	  Value* value = storeInst->getOperand(1);      
+// 	  insertAllFields(retVariables, value, storeType);
+// 	} else if (LoadInst* loadInst = dyn_cast<LoadInst>(currentUse)) {
+// 	  Type* loadType = cast<Type>(loadInst->getOperand(0));
+// 	  structStack->push_back(make_pair(currentName, loadInst));
+// 	} else if (CallInst* callInst = dyn_cast<CallInst>(currentUse)) {
+// 	  Function* fCalled = callInst->getCalledFunction();
+// 	  for (User::op_iterator opit = callInst->op_begin(), opend = callInst->op_end(); opit != opend; ++opit) {
+// 	    Value* op = *opit; 
+// 	    Function* calledFct = op->getCalledFunction();
+// 	    Function::const_arg_iterator argI = F->arg_begin(), argE = F->arg_end();
+	    
+// 	    for (Value::use_iterator searchingI = op->use_begin(), searchingE = op->use_end(); searchingI != searchingE; ++searchingI) {
+// 	      if (*searchingI == parentInst)
+// 		getVariableDependencyForValue(&*argI, currentName, retVariables);
+// 	      ++argI;
+// 	    }
+// 	  }
+// 	}
+//       } else {
+// 	if (find(used_bb.begin(), used_bb.end(), currentBlock) == used_bb.end())
+// 	  retVariables.insert(make_pair(currentName, currentTy));
+//       }
+//     }
+//   }
+// }
+    
 static inline bool isFPIntBitCast(const Instruction &I) {
   if (!isa<BitCastInst>(I))
     return false;
