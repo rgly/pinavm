@@ -21,8 +21,11 @@ $ ./install_pinapa.sh
 3) Compile and execute the front-end
 #################
 
+Set $INSTALL_PATH_SYSTEMC_GCC to the same value as the one in
+install_pinapa.sh.
+
 $ cd location-to-frontend
-$ g++ -g *.cpp `llvm-config --cxxflags --ldflags --libs jit bitreader bitwriter native` -I/your-location-tosystemc-2.2.0/include /your-location-tosystemc-2.2.0/lib-linux/libsystemc.a -shared -o libpinapa.so
+$ g++ -g *.cpp `llvm-config --cxxflags --ldflags --libs jit bitreader bitwriter native` -I$INSTALL_PATH_SYSTEMC_GCC/include -L $INSTALL_PATH_SYSTEMC_GCC/lib-linux -shared -o libpinapa.so
 
 #################
 4) Compile your example
