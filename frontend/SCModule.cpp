@@ -2,46 +2,40 @@
 
 SCModule::SCModule(string moduleName)
 {
-  this->name = moduleName;
+	this->name = moduleName;
 }
 
 /******** Threads ********/
-vector<Function*>*
-SCModule::getThreads()
+vector < Function * >*SCModule::getThreads()
 {
-  return & this->threads;
+	return &this->threads;
 }
 
-void
-SCModule::addThread(Function* mainFct)
+void SCModule::addThread(Function * mainFct)
 {
-  this->threads.push_back(mainFct);
+	this->threads.push_back(mainFct);
 }
 
 
 /******** Ports ********/
-vector<SCPort*>*
-SCModule::getPorts()
+vector < SCPort * >*SCModule::getPorts()
 {
-  return & this->ports;
+	return &this->ports;
 }
 
-void
-SCModule::addPort(SCPort* port)
+void SCModule::addPort(SCPort * port)
 {
-  this->ports.push_back(port);
+	this->ports.push_back(port);
 }
 
 
 /******** Shared Variables ********/
-vector<GlobalVariable*>*
-SCModule::getSharedVariables()
+vector < GlobalVariable * >*SCModule::getSharedVariables()
 {
-  return & this->sharedVariables;
+	return &this->sharedVariables;
 }
 
-void
-SCModule::addSharedVariable(GlobalVariable* gv)
+void SCModule::addSharedVariable(GlobalVariable * gv)
 {
-  this->sharedVariables.push_back(gv);
+	this->sharedVariables.push_back(gv);
 }

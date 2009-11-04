@@ -13,11 +13,13 @@
 
 using namespace llvm;
 
-struct EventHandler : public SCConstructHandler {  
-public:
-  EventHandler(SCJit* jit) : SCConstructHandler(jit) {}
-  SCConstruct* handle(Function* fct, BasicBlock* bb, CallInst* callInst);
-  void insertInMap(std::map<Function*, SCConstructHandler*>* scchandlers);
+struct EventHandler:public SCConstructHandler {
+      public:
+	EventHandler(SCJit * jit):SCConstructHandler(jit) {
+	} SCConstruct *handle(Function * fct, BasicBlock * bb,
+			      CallInst * callInst);
+	void insertInMap(std::map < Function *,
+			 SCConstructHandler * >*scchandlers);
 };
 
 #endif

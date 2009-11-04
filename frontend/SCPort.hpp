@@ -11,18 +11,18 @@ using namespace llvm;
 struct SCModule;
 
 struct SCPort {
-private:
-  SCModule* scModule;
-  SCModule* bindedSCModule;
-  
-  string name;
-  
-public:
-  SCPort(SCModule* module, string portName);
-  SCModule* getSCModule();
-  SCModule* getBindedModule();
-  void setBindedModule(SCModule* mod);
-  string getPortName();
+      private:
+	SCModule * scModule;
+	SCModule *bindedSCModule;
+
+	string name;
+
+      public:
+	 SCPort(SCModule * module, string portName);
+	SCModule *getSCModule();
+	SCModule *getBindedModule();
+	void setBindedModule(SCModule * mod);
+	string getPortName();
 };
 
 #endif

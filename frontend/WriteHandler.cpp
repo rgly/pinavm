@@ -2,17 +2,21 @@
 
 using namespace llvm;
 
-SCConstruct*
-WriteHandler::handle(Function* fct, BasicBlock* bb, CallInst* callInst)
+SCConstruct *WriteHandler::handle(Function * fct, BasicBlock * bb,
+				  CallInst * callInst)
 {
-  SCPort* p = new SCPort(NULL, "FAKE PORT");
-  std::cout << " ---------------> Time : handling call to write() performed in " << fct->getNameStr() <<"\n";
-  return new WriteConstruct(p);
+	SCPort *p = new SCPort(NULL, "FAKE PORT");
+	std::
+	    cout <<
+	    " ---------------> Time : handling call to write() performed in "
+	    << fct->getNameStr() << "\n";
+	return new WriteConstruct(p);
 }
 
 
-void
-WriteHandler::insertInMap(std::map<Function*, SCConstructHandler*>* scchandlers)
+void WriteHandler::insertInMap(std::map < Function *,
+			       SCConstructHandler * >*scchandlers)
 {
-  SCConstructHandler::insertInMap(scchandlers, "_ZN7sc_core8sc_inoutIbE5writeERKb");
+	SCConstructHandler::insertInMap(scchandlers,
+					"_ZN7sc_core8sc_inoutIbE5writeERKb");
 }

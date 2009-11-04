@@ -2,8 +2,7 @@
 
 using namespace llvm;
 
-string
-DefaultTimeConstruct::toString()
+string DefaultTimeConstruct::toString()
 {
-  return "WAIT(?)";
+	return "WAIT(?)";
 }

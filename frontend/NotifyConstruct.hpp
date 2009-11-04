@@ -9,15 +9,14 @@
 
 using namespace llvm;
 
-struct NotifyConstruct : public SCConstruct {  
+struct NotifyConstruct:public SCConstruct {
 
-protected :
-  SCEvent* event;
-public:
-  NotifyConstruct(SCEvent* e);
-  void setNotifiedEvent(SCEvent* e);
-  SCEvent* getNotifiedEvent();
-  string toString();
+	protected:SCEvent * event;
+      public:
+	NotifyConstruct(SCEvent * e);
+	void setNotifiedEvent(SCEvent * e);
+	SCEvent *getNotifiedEvent();
+	string toString();
 };
 
 #endif

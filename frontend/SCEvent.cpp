@@ -5,13 +5,12 @@
 
 using namespace llvm;
 
-SCEvent::SCEvent(string event) 
+SCEvent::SCEvent(string event)
 {
-  this->eventName = event;
+	this->eventName = event;
 }
 
-string
-SCEvent::toString()
+string SCEvent::toString()
 {
-  return this->eventName;
+	return this->eventName;
 }

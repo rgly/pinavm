@@ -6,12 +6,12 @@
 using namespace std;
 
 struct SCEvent {
-protected:
-  string eventName;
+      protected:
+	string eventName;
 
-public:
-  SCEvent(string eName);
-  string toString();
+      public:
+	SCEvent(string eName);
+	string toString();
 };
 
 #endif

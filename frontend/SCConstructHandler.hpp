@@ -13,14 +13,17 @@
 using namespace llvm;
 
 class SCConstructHandler {
-protected:
-  SCJit* scjit;
+      protected:
+	SCJit * scjit;
 
-public:
-  SCConstructHandler(SCJit* jit);
-  SCConstructHandler();
-  virtual SCConstruct* handle(llvm::Function* fct, BasicBlock* bb, CallInst* callInst) = 0;
-  void insertInMap(std::map<Function*, SCConstructHandler*>* scchandlers, string fctName);
+      public:
+	SCConstructHandler(SCJit * jit);
+	SCConstructHandler();
+	virtual SCConstruct *handle(llvm::Function * fct, BasicBlock * bb,
+				    CallInst * callInst) = 0;
+	void insertInMap(std::map < Function *,
+			 SCConstructHandler * >*scchandlers,
+			 string fctName);
 };
 
 #endif

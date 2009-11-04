@@ -4,11 +4,11 @@
 using namespace llvm;
 
 struct Field {
-private:
-  string moduleName, className, fieldName;
+      private:
+	string moduleName, className, fieldName;
 
-public:
-  Field(string moduleName, string className, string fieldName);
+      public:
+	Field(string moduleName, string className, string fieldName);
 };
 
 #endif

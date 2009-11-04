@@ -30,13 +30,14 @@
 
 struct SCCFactory {
 
-private:
-  std::map<Function*, SCConstructHandler*> scchandlers;
-  std::map<CallInst*, SCConstruct*> scc;
-public:
-  SCCFactory(SCJit* jit);
-  bool handle(llvm::Function* fct, BasicBlock* bb, CallInst* callInst);
-  
+      private:
+	std::map < Function *, SCConstructHandler * >scchandlers;
+	std::map < CallInst *, SCConstruct * >scc;
+      public:
+	SCCFactory(SCJit * jit);
+	bool handle(llvm::Function * fct, BasicBlock * bb,
+		    CallInst * callInst);
+
 };
 
 #endif

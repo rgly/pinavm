@@ -6,13 +6,12 @@
 
 using namespace llvm;
 
-struct ReadConstruct : public SCConstruct {  
-protected :
-  SCPort* port;
-public:
-  ReadConstruct(SCPort* p);
-  void setPort(SCPort* e);
-  SCPort* getPort();
+struct ReadConstruct:public SCConstruct {
+	protected:SCPort * port;
+      public:
+	ReadConstruct(SCPort * p);
+	void setPort(SCPort * e);
+	SCPort *getPort();
 };
 
 #endif

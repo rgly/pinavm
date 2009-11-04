@@ -45,17 +45,17 @@ using namespace std;
 using namespace llvm;
 
 struct SCJit {
-private:
-  Module* mdl;
-  ExecutionEngine* ee;
-  void buildFctToJit(Function* f, Function* fctToJit, Value* arg);
-  
-public:
-  SCJit(Module* mod);
-  void doFinalization();
-  void elaborate();  
-  int jitInt(Function* f, Value* arg);
-  Module* getModule();
+      private:
+	Module * mdl;
+	ExecutionEngine *ee;
+	void buildFctToJit(Function * f, Function * fctToJit, Value * arg);
+
+      public:
+	 SCJit(Module * mod);
+	void doFinalization();
+	void elaborate();
+	int jitInt(Function * f, Value * arg);
+	Module *getModule();
 };
 
 #endif

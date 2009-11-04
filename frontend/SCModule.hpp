@@ -15,23 +15,23 @@ using namespace llvm;
 struct SCPort;
 
 struct SCModule {
-private:
-  string name;
-  vector<Function* > threads;
-  vector<SCPort*> ports;
-  vector<GlobalVariable* > sharedVariables;
-  
-public:
-  SCModule(string moduleName);
-  
-  vector<Function*>* getThreads();
-  void addThread(Function* mainFct);
-  
-  vector<SCPort*>* getPorts();
-  void addPort(SCPort* port);
-  
-  vector<GlobalVariable*>* getSharedVariables();
-  void addSharedVariable(GlobalVariable* gv);
+      private:
+	string name;
+	vector < Function * >threads;
+	vector < SCPort * >ports;
+	vector < GlobalVariable * >sharedVariables;
+
+      public:
+	SCModule(string moduleName);
+
+	vector < Function * >*getThreads();
+	void addThread(Function * mainFct);
+
+	 vector < SCPort * >*getPorts();
+	void addPort(SCPort * port);
+
+	 vector < GlobalVariable * >*getSharedVariables();
+	void addSharedVariable(GlobalVariable * gv);
 };
 
 #endif

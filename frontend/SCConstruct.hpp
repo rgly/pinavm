@@ -11,14 +11,14 @@ using namespace llvm;
 using namespace std;
 
 struct SCConstruct {
-protected:
-  string constructName;
-  string threadName;
+      protected:
+	string constructName;
+	string threadName;
 
-public:
-  SCConstruct();
-  string toString();
-  string getThreadName();
+      public:
+	 SCConstruct();
+	string toString();
+	string getThreadName();
 };
 
 #endif
