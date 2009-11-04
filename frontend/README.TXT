@@ -2,16 +2,7 @@
 ####### BUILD and USE information ######
 ########################################
 
-1) Compile the opt tool with (put this in the llvm-2.4/tools/opt/Makefile file)
-LINK_COMPONENTS := bitreader bitwriter instrumentation scalaropts ipo executionengine engine jit
-2) Modify the LEVEL variable in the provided Makefile  
-3) To use the tool :
-opt -load $LLVM_INSTALL_PATH/lib/pinapa.so -pinapa < "file.bc"
-
-The name "pinapa" is just given not to offend Matthiew :p
-Changing it only requires to modify the last line of FunctionNames.cpp
-(for the name of the option) and the LIBRARYNAME variable in the
-Makefile (for... the name of the library).
+See the doc/INSTALL file
 
 ####################################
 ############# FILES ################

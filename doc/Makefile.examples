@@ -1,4 +1,3 @@
-REQUIRESYSTEMC=ok
 TARGET_ARCH=linux
 
 ifndef SUF
@@ -21,12 +20,12 @@ ifndef EXE
 EXE=${patsubst %.$(SUF),%.exe,$(SRC)}
 endif
 
-ifdef REQUIRESYSTEMC
-CPPSCFLAGS=-I$(LLVMSYSTEMCROOT)/ -I$(LLVMSYSTEMCROOT)/include -I$(LLVMSYSTEMCROOT)/include/sysc
+ifndef CPPLLVMSCFLAGS
+CPPLLVMSCFLAGS=-I$(LLVMSYSTEMCROOT)/ -I$(LLVMSYSTEMCROOT)/include -I$(LLVMSYSTEMCROOT)/include/sysc
 endif
 
 ifndef LLVMGCCFLAGS
-LLVMGCCFLAGS=-fno-inline-functions $(CPPSCFLAGS)
+LLVMGCCFLAGS=-fno-inline-functions $(CPPLLVMSCFLAGS)
 endif
 
 ifndef CPPFLAGS
@@ -37,13 +36,26 @@ ifndef OPTFLAGS
 OPTFLAGS=-mem2reg -disable-opt
 endif
 
+ifndef PINAPALIB
+PINAPALIB=/home/marquet/git/llvm-front-end/frontend/essai.so
+endif
+
+ifndef SYSTEMCLIB
+SYSTEMCLIB=$(SYSTEMCROOT)/lib-linux/libsystemc.a
+endif
+
+ifndef CPPSCFLAGS
+CPPSCFLAGS=-I$(SYSTEMCROOT)/ -I$(SYSTEMCROOT)/include -I$(SYSTEMCROOT)/include/sysc
+endif
+
+
 GCC_SSA=${patsubst %.$(SUF),%.$(SUF).ssa,$(SRC)}
 LLOPT=${patsubst %.ll,%.opt.ll,$(LL)}
 
 
 ll: $(LL)
 llopt: $(LLOPT)
-exe: $(EXE)
+
 gcc-ssa: $(GCC_SSA)
 
 %.opt.sc.bc: %.opt.ll Makefile
@@ -64,14 +76,13 @@ gcc-ssa: $(GCC_SSA)
 %.bc: %.ll Makefile
 	llvm-as -f $*.ll -o $*.bc
 
+%.exe: %.$(SUF) Makefile
+	$(COMP) $< -o $@ $(PINAPALIB) $(SYSTEMCLIB) $(CPPSCFLAGS)
 
 # -fdump-tree-ssa works only if -O is provided.
 %.$(SUF).ssa: %.$(SUF) Makefile ../include.mk
 	$(COMP) -O $(CPPFLAGS) -c -fdump-tree-ssa $(INCLUDE) $< -o /dev/null
 	mv $<.*.ssa $@
-
-%.exe: %.$(SUF) Makefile ../include.mk ../minilib/minilib.o
-	$(COMP) $< -o $@ ../minilib/minilib.o $(LIBS) $(INCLUDE)
 
 realclean: clean
 	$(RM) *~ 

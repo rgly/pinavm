@@ -1,55 +1,39 @@
 #################
-0) Set the PATH so that a good compiler is use, for instance gcc-4.2
+0) Set the PATH so that a good compiler is used, for instance gcc-4.2
 #################
 
 $ which g++
 /usr/local/soft/gcc/4.2.4/bin/g++
 
- 
-##################
-1) llvm
-##################
+#################
+1) Modify script "install_pinapa.sh"
+#################
 
-- export CXX=g++ 
+Environment variables to modify are in the top of the file.
 
-- svn co http://llvm.org/svn/llvm-project/llvm/trunk llvm-svn
-- cd llvm-svn
-- ../configure --prefix=/home/marquet/local/lib/llvm-svn --enable-checking --enable-bindings=none
-- make
-- make install
-- <add /home/marquet/local/lib/llvm-svn/bin to the PATH>
+#################
+2) Execute the script
+#################
 
-##################
-2) llvm-gcc
-##################
+$ ./install_pinapa.sh
 
-- svn co http://llvm.org/svn/llvm-project/llvm-gcc-4.2/trunk llvm-gcc
-- cd llvm-gcc
-- mkdir objdir
-- cd objdir
-- ../configure --prefix=/home/marquet/local/lib/llvm-gcc --program-prefix=llvm- --enable-llvm=/home/marquet/local/download/llvm-svn/objdir --enable-languages=c,c++
-- make LLVM_VERSION_INFO=r82534  # setting LLVM_VERSION_INFO is optional
-- make install
+#################
+3) Compile and execute the front-end
+#################
 
-- <add /home/marquet/local/lib/llvm-gcc/bin to the PATH>
+$ cd location-to-frontend
+$ g++ -g *.cpp `llvm-config --cxxflags --ldflags --libs jit bitreader bitwriter native` -I/your-location-tosystemc-2.2.0/include /your-location-tosystemc-2.2.0/lib-linux/libsystemc.a -shared -o libpinapa.so
 
-##################
-3) systemc (optional)
-##################
+#################
+4) Compile your example
+#################
 
-- tar xzf systemc-2.2.0.tgz 
-- cd systemc-2.2.0
-- export CXX=g++
-- ../configure --prefix=/home/marquet/local/lib/systemc-2.2.0
-- make
-- make install
+Use the file Makefile.examples and produce
+$ make example.exe
+$ make example.opt.bc
 
-##################
-4) systemc-llvm
-##################
+#################
+5) Run the analysis of your example 
+#################
 
-- <get systemc archive : systemc-2.2.0.tgz>
-- tar xzf systemc-2.2.0.tgz
-- <look and modify script 'ar2llvm.sh'>
-- <be sure of previous step, the script is not secure...>
-- ./ar2llvm.sh
+$ ./example.exe example.opt.bc
