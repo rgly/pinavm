@@ -5,11 +5,13 @@ trap 'echo "Error detected! End of script.";exit 1' ERR
 ##############################################
 ################ CONFIG  #####################
 ##############################################
-DOWNLOAD_AND_COMPILE_DIR=$HOME/local/test-llvm/download/essai3
-INSTALL_PATH_LLVM=$HOME/local/test-llvm/lib/llvm-2.6
-INSTALL_PATH_LLVMGCC=$HOME/local/test-llvm/lib/llvm-gcc
-INSTALL_PATH_SYSTEMC_LLVM=$HOME/local/test-llvm/lib/systemc-2.2.0-llvm
-INSTALL_PATH_SYSTEMC_GCC=$HOME/local/test-llvm/lib/systemc-2.2.0-gcc
+
+if [ -f ../config.sh ]; then
+    source ../config.sh
+else
+    echo "please, run the configure script"
+    exit 1
+fi
 
 # ##### INITIALIZATION #####
  test -d "$DOWNLOAD_AND_COMPILE_DIR" || \

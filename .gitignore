@@ -1,2 +1,6 @@
 *.o
 *.gch
+config.mk
+config.sh
+config.status
+configure

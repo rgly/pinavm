@@ -6,10 +6,13 @@ $ which g++
 /usr/local/soft/gcc/4.2.4/bin/g++
 
 #################
-1) Modify script "install_pinapa.sh"
+1) Modify script "autoconf.ac"
 #################
 
-Environment variables to modify are in the top of the file.
+Environment variables to modify are at the end of autoconf.ac.
+
+$ autoconf
+$ ./configure
 
 #################
 2) Execute the script
