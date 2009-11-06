@@ -101,7 +101,8 @@ install_systemc_gcc () {
     chmod +x ../configure
     ../configure --prefix="$INSTALL_PATH_SYSTEMC_GCC"
     make pthreads_debug
-    make install
+    # SystemC's configure.in is buggy, and seems not to obey --prefix correctly ...
+    make prefix="$INSTALL_PATH_SYSTEMC_GCC" install
 }
 
 ####################################################
