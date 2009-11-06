@@ -1,17 +1,14 @@
 #!/bin/sh
 
 trap 'echo "Error detected! End of script.";exit 1' ERR
+set -x
 
 ##############################################
 ################ CONFIG  #####################
 ##############################################
 
-if [ -f ../config.sh ]; then
-    source ../config.sh
-else
-    echo "please, run the configure script"
-    exit 1
-fi
+(cd .. && make config.sh)
+source ../config.sh
 
 # ##### INITIALIZATION #####
  test -d "$DOWNLOAD_AND_COMPILE_DIR" || \
