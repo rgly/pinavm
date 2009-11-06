@@ -32,11 +32,26 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 
-DOWNLOAD_AND_COMPILE_DIR=$HOME/local/test-llvm/download/essai3
-INSTALL_PATH_LLVM=$HOME/local/test-llvm/lib/llvm-2.6
-INSTALL_PATH_LLVMGCC=$HOME/local/test-llvm/lib/llvm-gcc
-INSTALL_PATH_SYSTEMC_LLVM=$HOME/local/test-llvm/lib/systemc-2.2.0-llvm
-INSTALL_PATH_SYSTEMC_GCC=$HOME/local/test-llvm/lib/systemc-2.2.0-gcc
+AC_ARG_WITH(tools-dir,
+	     AC_HELP_STRING([--with-tools-dir=...],
+                   [Directory where external tools (SystemC, LLVM, ...) should be downloaded and installed.]),
+	     [TOOLS_DIR="${withval}"],
+             [AC_MSG_ERROR([Please specify --with-tools-dir=...])])
+
+DOWNLOAD_AND_COMPILE_DIR="${TOOLS_DIR}/download"
+INSTALL_PATH_LLVM=${TOOLS_DIR}lib/llvm-2.6
+INSTALL_PATH_LLVMGCC=${TOOLS_DIR}lib/llvm-gcc
+INSTALL_PATH_SYSTEMC_LLVM=${TOOLS_DIR}lib/systemc-2.2.0-llvm
+INSTALL_PATH_SYSTEMC_GCC=${TOOLS_DIR}lib/systemc-2.2.0-gcc
+
+AC_MSG_NOTICE(Summary of variables:
+
+DOWNLOAD_AND_COMPILE_DIR: ${DOWNLOAD_AND_COMPILE_DIR}
+INSTALL_PATH_LLVM: ${INSTALL_PATH_LLVM}
+INSTALL_PATH_LLVMGCC: ${INSTALL_PATH_LLVMGCC}
+INSTALL_PATH_SYSTEMC_LLVM: ${INSTALL_PATH_SYSTEMC_LLVM}
+INSTALL_PATH_SYSTEMC_GCC: ${INSTALL_PATH_SYSTEMC_GCC}
+)
 
 AC_SUBST(DOWNLOAD_AND_COMPILE_DIR)
 AC_SUBST(INSTALL_PATH_LLVM)
