@@ -3,8 +3,8 @@
 
 using namespace llvm;
 
-SCConstruct*
-DefaultTimeHandler::handle(Function* fct, BasicBlock* bb, CallInst* callInst)
+SCConstruct *DefaultTimeHandler::handle(Function * fct, BasicBlock * bb,
+					CallInst * callInst)
 {
   TRACE_3("Handling call to wait(int)... ");
   Value* arg = callInst->getOperand(2);
@@ -22,9 +22,10 @@ DefaultTimeHandler::handle(Function* fct, BasicBlock* bb, CallInst* callInst)
   }
 }
 
-void
-DefaultTimeHandler::insertInMap(std::map<Function*, SCConstructHandler*>* scchandlers)
+void DefaultTimeHandler::insertInMap(std::map < Function *,
+				     SCConstructHandler * >*scchandlers)
 {
   SCConstructHandler::insertInMap(scchandlers, "_ZN7sc_core9sc_module4waitEi");
   SCConstructHandler::insertInMap(scchandlers, "_ZN7sc_core9sc_module4waitEdNS_12sc_time_unitE");
+
 }

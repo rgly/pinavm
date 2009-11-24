@@ -7,11 +7,10 @@ using namespace llvm;
 
 SCConstruct::SCConstruct()
 {
-  this->threadName = "NYI: SCConstruct::threadName";  
+	this->threadName = "NYI: SCConstruct::threadName";
 }
 
-string
-SCConstruct::getThreadName()
+string SCConstruct::getThreadName()
 {
-  return this->threadName;
+	return this->threadName;
 }

@@ -2,8 +2,8 @@
 
 using namespace llvm;
 
-SCConstruct*
-WriteHandler::handle(Function* fct, BasicBlock* bb, CallInst* callInst)
+SCConstruct *WriteHandler::handle(Function * fct, BasicBlock * bb,
+				  CallInst * callInst)
 {
   TRACE_3("Handling call to write()\n");
 
@@ -16,8 +16,9 @@ WriteHandler::handle(Function* fct, BasicBlock* bb, CallInst* callInst)
 }
 
 
-void
-WriteHandler::insertInMap(std::map<Function*, SCConstructHandler*>* scchandlers)
+void WriteHandler::insertInMap(std::map < Function *,
+			       SCConstructHandler * >*scchandlers)
 {
-  SCConstructHandler::insertInMap(scchandlers, "_ZN7sc_core8sc_inoutIbE5writeERKb");
+	SCConstructHandler::insertInMap(scchandlers,
+					"_ZN7sc_core8sc_inoutIbE5writeERKb");
 }

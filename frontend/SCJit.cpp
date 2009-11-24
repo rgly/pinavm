@@ -28,14 +28,14 @@ SCJit::~SCJit()
 }
 
 void
-SCJit::doFinalization()
+ SCJit::doFinalization()
 {
   ;
 }
 
-Module*
-SCJit::getModule() {
-  return this->mdl;
+Module *SCJit::getModule()
+{
+	return this->mdl;
 }
 
 SCElab*
@@ -48,7 +48,7 @@ SCJit::getElab()
 void
 SCJit::elaborate()
 {
-  /* TODO */
+	/* TODO */
 }
 
 void
@@ -66,49 +66,54 @@ SCJit::getCurrentProcess()
 void 
 pushInst(Instruction* inst, vector<Instruction*>& temp_queue, vector<Instruction*>& inst_queue, bool temp)
 {
-  if (temp) {
-    if (temp_queue.size() > 0) {
-      vector<Instruction*>::iterator invalid = remove(temp_queue.begin(), temp_queue.end(), inst);
-      temp_queue.erase(invalid, temp_queue.end());
-    }
-    temp_queue.push_back(inst);
-  }
-  
-  if (inst_queue.size() > 0) {
-    vector<Instruction*>::iterator invalid = remove(inst_queue.begin(), inst_queue.end(), inst);
-    inst_queue.erase(invalid, inst_queue.end());
-  }
-  
-  inst_queue.push_back(inst);
+	if (temp) {
+		if (temp_queue.size() > 0) {
+			vector < Instruction * >::iterator invalid =
+			    remove(temp_queue.begin(), temp_queue.end(),
+				   inst);
+			temp_queue.erase(invalid, temp_queue.end());
+		}
+		temp_queue.push_back(inst);
+	}
+
+	if (inst_queue.size() > 0) {
+		vector < Instruction * >::iterator invalid =
+		    remove(inst_queue.begin(), inst_queue.end(), inst);
+		inst_queue.erase(invalid, inst_queue.end());
+	}
+
+	inst_queue.push_back(inst);
 }
 
 
-void
-buildFctToJit2(Function* fctToJit, Value* res)
+void buildFctToJit2(Function * fctToJit, Value * res)
 {
-  BasicBlock *block = BasicBlock::Create(getGlobalContext(), "entry", fctToJit);
-  IRBuilder<> builder(block);
-  AllocaInst * al = builder.CreateAlloca(IntegerType::get(getGlobalContext(), 32), 0, "myvar");
-  Constant* ci = ConstantInt::get(IntegerType::get(getGlobalContext(), 32), 42);
-  builder.CreateStore(ci, al);
-  LoadInst* li = builder.CreateLoad(al);
-  builder.CreateRet(li); 
+	BasicBlock *block =
+	    BasicBlock::Create(getGlobalContext(), "entry", fctToJit);
+	IRBuilder <> builder(block);
+	AllocaInst *al =
+	    builder.CreateAlloca(IntegerType::get(getGlobalContext(), 32),
+				 0, "myvar");
+	Constant *ci =
+	    ConstantInt::get(IntegerType::get(getGlobalContext(), 32), 42);
+	builder.CreateStore(ci, al);
+	LoadInst *li = builder.CreateLoad(al);
+	builder.CreateRet(li);
 }
 
 
-Value*
-getValue(std::map<std::string, Value*> namedValues, Value* arg)
+Value *getValue(std::map < std::string, Value * >namedValues, Value * arg)
 {
-  if (isa<Constant>(arg)) {
-    return arg;
-  } else {
-    Instruction* inst = cast<Instruction>(arg);
-    if(arg->hasName()) {
-      return namedValues[arg->getName()];
-    } else {
-      return inst->clone(getGlobalContext());
-    }
-  }
+	if (isa < Constant > (arg)) {
+		return arg;
+	} else {
+		Instruction *inst = cast < Instruction > (arg);
+		if (arg->hasName()) {
+			return namedValues[arg->getName()];
+		} else {
+			return inst->clone(getGlobalContext());
+		}
+	}
 }
 
 Function*
@@ -183,8 +188,7 @@ SCJit::jitAddr(Function* f, Value* arg)
 }
 
 
-int
-SCJit::jitInt(Function* f, Value* arg)
+int SCJit::jitInt(Function * f, Value * arg)
 {
   Function* fctToJit;
   const std::vector<const Type*> argsType;

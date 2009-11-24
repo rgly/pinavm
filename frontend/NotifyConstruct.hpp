@@ -9,7 +9,7 @@
 
 using namespace llvm;
 
-struct NotifyConstruct : public SCConstruct {  
+struct NotifyConstruct:public SCConstruct {
 
 protected :
   Event* event;

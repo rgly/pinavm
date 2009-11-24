@@ -15,8 +15,8 @@ TimeConstruct::TimeConstruct(double t)
 
 TimeConstruct::TimeConstruct(double t, time_unit tunit)
 {
-  this->time = t;
-  this->tu = tu;
+	this->time = t;
+	this->tu = tu;
 }
 
 double
@@ -24,8 +24,7 @@ TimeConstruct::getTime() {
   return this->time;
 }
 
-time_unit
-TimeConstruct::getTimeUnit()
+time_unit TimeConstruct::getTimeUnit()
 {
-  return this->tu;
+	return this->tu;
 }

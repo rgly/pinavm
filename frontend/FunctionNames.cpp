@@ -39,15 +39,14 @@
 
 using namespace llvm;
 
-extern int
-launch_systemc( int argc, char* argv[] );
+extern int launch_systemc(int argc, char *argv[]);
 
 
-static cl::opt<std::string>
+static cl::opt < std::string >
 InputFilename(cl::Positional, cl::desc("<input bitcode file>"),
-    cl::init("-"), cl::value_desc("filename"));
+	      cl::init("-"), cl::value_desc("filename"));
 
-static cl::opt<std::string>
+static cl::opt < std::string >
 OutputFilename("o", cl::desc("Override output filename"),
                cl::value_desc("filename"), cl::init("-"));
 
@@ -233,9 +232,7 @@ pinapa_callback()
     delete Out;
 }
 
-
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
   
@@ -262,4 +259,4 @@ main(int argc, char **argv)
 }
 
 char FunctionNames::ID = 42;
-static RegisterPass<FunctionNames> X("pinapa", "Pinapa pass");
+static RegisterPass < FunctionNames > X("pinapa", "Pinapa pass");

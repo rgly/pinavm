@@ -8,10 +8,10 @@
 
 using namespace llvm;
 
-struct ZeroTimeConstruct : public TimeConstruct {  
-public:
-  ZeroTimeConstruct();
-  string toString();
+struct ZeroTimeConstruct:public TimeConstruct {
+      public:
+	ZeroTimeConstruct();
+	string toString();
 };
 
 #endif

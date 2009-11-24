@@ -1,18 +1,18 @@
 #include "SCCFactory.hpp"
 
-SCCFactory::SCCFactory(SCJit* scjit)
+SCCFactory::SCCFactory(SCJit * scjit)
 {
   /****** Time stuffff *******/
-  (new ZeroTimeHandler(scjit))->insertInMap(&this->scchandlers);
-  (new DefaultTimeHandler(scjit))->insertInMap(&this->scchandlers);
-  
+	(new ZeroTimeHandler(scjit))->insertInMap(&this->scchandlers);
+	(new DefaultTimeHandler(scjit))->insertInMap(&this->scchandlers);
+
   /****** Events stuff ******/
-  (new EventHandler(scjit))->insertInMap(&this->scchandlers);
-  (new NotifyHandler(scjit))->insertInMap(&this->scchandlers);
-  
+	(new EventHandler(scjit))->insertInMap(&this->scchandlers);
+	(new NotifyHandler(scjit))->insertInMap(&this->scchandlers);
+
   /***** Ports stuff ******/
-  (new WriteHandler(scjit))->insertInMap(&this->scchandlers);
-  (new ReadHandler(scjit))->insertInMap(&this->scchandlers);
+	(new WriteHandler(scjit))->insertInMap(&this->scchandlers);
+	(new ReadHandler(scjit))->insertInMap(&this->scchandlers);
 }
 
 SCCFactory::~SCCFactory()
@@ -34,10 +34,10 @@ SCCFactory::~SCCFactory()
 bool
 SCCFactory::handle(llvm::Function* fct, BasicBlock* bb, CallInst* callInst)
 {
-  Function* calledFct;
-  SCConstructHandler* scch;
-  
-  calledFct = callInst->getCalledFunction();
+	Function *calledFct;
+	SCConstructHandler *scch;
+
+	calledFct = callInst->getCalledFunction();
 
   std::map<Function*,SCConstructHandler*>::iterator it = this->scchandlers.find(calledFct);
   if (it != scchandlers.end()) {

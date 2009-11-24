@@ -3,13 +3,18 @@
 using namespace llvm;
 using namespace std;
 
-SCConstructHandler::SCConstructHandler() {}
-
-SCConstructHandler::SCConstructHandler(SCJit* jit) {
-  this->scjit = jit;
+SCConstructHandler::SCConstructHandler()
+{
 }
 
-void SCConstructHandler::insertInMap(std::map<Function*, SCConstructHandler*>* scchandlers, string fctName)
+SCConstructHandler::SCConstructHandler(SCJit * jit)
+{
+	this->scjit = jit;
+}
+
+void SCConstructHandler::insertInMap(std::map < Function *,
+				     SCConstructHandler * >*scchandlers,
+				     string fctName)
 {
   Function *targetFct = this->scjit->getModule()->getFunction(fctName);
   if (!targetFct) {

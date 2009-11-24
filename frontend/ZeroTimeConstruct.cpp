@@ -5,10 +5,11 @@
 
 using namespace llvm;
 
-ZeroTimeConstruct::ZeroTimeConstruct() : TimeConstruct(0) {}
-
-string
-ZeroTimeConstruct::toString()
+ZeroTimeConstruct::ZeroTimeConstruct():TimeConstruct(0)
 {
-  return "WAIT()";
+}
+
+string ZeroTimeConstruct::toString()
+{
+	return "WAIT()";
 }

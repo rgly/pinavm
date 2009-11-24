@@ -10,11 +10,14 @@
 
 using namespace llvm;
 
-struct ReadHandler : public SCConstructHandler {  
-public:
-  ReadHandler(SCJit* jit) : SCConstructHandler(jit) {};
-  SCConstruct* handle(Function* fct, BasicBlock* bb, CallInst* callInst);
-  void insertInMap(std::map<Function*, SCConstructHandler*>* scchandlers);
+struct ReadHandler:public SCConstructHandler {
+      public:
+	ReadHandler(SCJit * jit):SCConstructHandler(jit) {
+	};
+	SCConstruct *handle(Function * fct, BasicBlock * bb,
+			    CallInst * callInst);
+	void insertInMap(std::map < Function *,
+			 SCConstructHandler * >*scchandlers);
 };
 
 #endif

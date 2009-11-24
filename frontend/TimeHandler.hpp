@@ -12,13 +12,13 @@
 
 using namespace llvm;
 
-struct TimeHandler : public SCConstructHandler {  
-protected:
-  int time;
-  
-public:
-  TimeHandler(SCJit* jit) : SCConstructHandler(jit) {}
-  int getTime();
+struct TimeHandler:public SCConstructHandler {
+      protected:
+	int time;
+
+      public:
+	 TimeHandler(SCJit * jit):SCConstructHandler(jit) {
+	} int getTime();
 };
 
 #endif

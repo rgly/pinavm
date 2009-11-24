@@ -4,23 +4,22 @@ using namespace llvm;
 
 EventConstruct::EventConstruct(Event* e)
 {
-  this->event = e;
+	this->event = e;
 }
 
 void
 EventConstruct::setWaitedEvent(Event* e)
 {
-  this->event = e;
+	this->event = e;
 }
 
 Event*
 EventConstruct::getWaitedEvent()
 {
-  return this->event;
+	return this->event;
 }
 
-string
-EventConstruct::toString()
+string EventConstruct::toString()
 {
-  return "WAIT(event)";
+	return "WAIT(event)";
 }

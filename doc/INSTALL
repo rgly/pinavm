@@ -6,10 +6,13 @@ $ which g++
 /usr/local/soft/gcc/4.2.4/bin/g++
 
 #################
-1) Modify script "install_pinapa.sh"
+1) Modify script "autoconf.ac"
 #################
 
-Environment variables to modify are in the top of the file.
+Environment variables to modify are at the end of autoconf.ac.
+
+$ autoconf
+$ ./configure
 
 #################
 2) Execute the script
@@ -21,8 +24,11 @@ $ ./install_pinapa.sh
 3) Compile and execute the front-end
 #################
 
+Set $INSTALL_PATH_SYSTEMC_GCC to the same value as the one in
+install_pinapa.sh.
+
 $ cd location-to-frontend
-$ g++ -g *.cpp `llvm-config --cxxflags --ldflags --libs jit bitreader bitwriter native` -I/your-location-tosystemc-2.2.0/include /your-location-tosystemc-2.2.0/lib-linux/libsystemc.a -shared -o libpinapa.so
+$ g++ -g *.cpp `llvm-config --cxxflags --ldflags --libs jit bitreader bitwriter native` -I$INSTALL_PATH_SYSTEMC_GCC/include -L $INSTALL_PATH_SYSTEMC_GCC/lib-linux -shared -o libpinapa.so
 
 #################
 4) Compile your example

@@ -2,8 +2,8 @@
 
 using namespace llvm;
 
-SCConstruct*
-ReadHandler::handle(Function* fct, BasicBlock* bb, CallInst* callInst)
+SCConstruct *ReadHandler::handle(Function * fct, BasicBlock * bb,
+				 CallInst * callInst)
 {
   TRACE_3("Handling call to read()\n");
   Value* arg = callInst->getOperand(2);
@@ -15,8 +15,9 @@ ReadHandler::handle(Function* fct, BasicBlock* bb, CallInst* callInst)
 }
 
 
-void
-ReadHandler::insertInMap(std::map<Function*, SCConstructHandler*>* scchandlers)
+void ReadHandler::insertInMap(std::map < Function *,
+			      SCConstructHandler * >*scchandlers)
 {
-  SCConstructHandler::insertInMap(scchandlers, "_ZNK7sc_core5sc_inIbE4readEv");
+	SCConstructHandler::insertInMap(scchandlers,
+					"_ZNK7sc_core5sc_inIbE4readEv");
 }

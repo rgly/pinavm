@@ -18,7 +18,6 @@ public:
   void setWaitedEvent(Event* e);
   Event* getWaitedEvent();
   string toString();
-
 };
 
 #endif
