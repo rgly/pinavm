@@ -10,6 +10,8 @@
 #include "SCConstruct.hpp"
 #include "SCJit.hpp"
 
+#include "config.h"
+
 using namespace llvm;
 
 class SCConstructHandler {

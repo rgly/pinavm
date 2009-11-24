@@ -1,4 +1,4 @@
-#include <systemc.h>
+#include <systemc>
 
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/PassManager.h"
@@ -25,6 +25,17 @@
 
 #include "SCJit.hpp"
 #include "SCCFactory.hpp"
+#include "SCElab.h"
+#include "config.h"
+
+#include "sysc/kernel/sc_process_table.h"
+#include "sysc/kernel/sc_process_handle.h"
+#include "sysc/kernel/sc_simcontext.h"
+#include "sysc/kernel/sc_thread_process.h"
+#include "sysc/kernel/sc_module_registry.h"
+
+#include <iostream>
+#include <typeinfo>
 
 using namespace llvm;
 
@@ -43,52 +54,103 @@ OutputFilename("o", cl::desc("Override output filename"),
 struct FunctionNames : public ModulePass {
   SCJit* scjit;
   SCCFactory* sccfactory;
-  Function* mainFct;
 
 public:
   static char ID; // Pass identification, replacement for typeid
   FunctionNames() : ModulePass(&ID) { }
+
+  
+  ~FunctionNames()
+  {
+//     delete this->sccfactory;
+  }
   
   bool runOnModule(Module &M) {
-    Module* mod = &M;
+    Module* llvmMod = &M;
     Function* F;
+    sc_core::sc_thread_handle  thread_p;  // Pointer to thread process accessing.
 
-    
-    llvm::cout << "Pinapa --> do initialization\n";
-    llvm::cout << "\n";
+    TRACE_1("Getting ELAB\n");
 
-    llvm::cout << "Pinapa --> pinapa_callback\n";
-    
     // To call the "end_of_elaboration()" methods.
-    sc_get_curr_simcontext()->initialize(true);
-
-    this->scjit = new SCJit(mod);
-    this->sccfactory = new SCCFactory(scjit);
-    this->mainFct = mod->getFunction("main");
-
-    std::vector<Function*>* fctStack = new std::vector<Function*>();
-    fctStack->push_back(this->mainFct);
+    sc_core::sc_get_curr_simcontext()->initialize(true);
     
-    while (! fctStack->empty()) {
-      F = fctStack->back();
-      fctStack->pop_back();
+    SCElab* elab = new SCElab(llvmMod);
+    std::vector<Function*>* fctStack = new std::vector<Function*>();
+    
+    //------- Get modules and ports --------
+    vector<sc_core::sc_module*> modules = sc_core::sc_get_curr_simcontext()->get_module_registry()->m_module_vec;
+    vector<sc_core::sc_module*>::iterator modIt;
+    
+    for (modIt = modules.begin() ; modIt < modules.end() ; modIt++) {
+      sc_core::sc_module* mod = *modIt;
       
-      for (Function::iterator bb = F->begin(), be = F->end(); bb != be; ++bb) { 
-	BasicBlock::iterator i = bb->begin(), ie = bb->end();
-	while (i != ie) {
-	  CallInst* callInst = dyn_cast<CallInst>(&*i);
+      IRModule* m = elab->addModule(mod);
+      std::vector<sc_core::sc_port_base*>* ports = mod->m_port_vec;
+
+      vector<sc_core::sc_port_base*>::iterator it;
+      for (it = ports->begin() ; it < ports->end() ; it++) {
+	sc_core::sc_port_base* p = *it;
+	elab->addPort(m, p);
+      }
+    }
+    
+    //------- Get processes and events --------
+    sc_core::sc_process_table * processes = sc_core::sc_get_curr_simcontext()->m_process_table;
+    for ( thread_p = processes->thread_q_head(); 
+	  thread_p; thread_p = thread_p->next_exist() )
+      {
+	sc_core::sc_process_b* theProcess = thread_p;	
+	sc_core::sc_module* mod = (sc_core::sc_module*) thread_p->m_semantics_host_p;
+	IRModule* m = elab->getIRModule(mod);
+	Process* process = elab->addProcess(m, theProcess);
+	
+	std::vector<const sc_core::sc_event*> eventsVector = theProcess->m_static_events;
+	vector<const sc_core::sc_event*>::iterator it;
+	for (it = eventsVector.begin() ; it < eventsVector.end() ; it++) {
+	  sc_core::sc_event* ev = (sc_core::sc_event*) *it; 
+	  elab->addEvent(process, ev);
+	}
+      }
+    
+    this->scjit = new SCJit(llvmMod, elab);
+    this->sccfactory = new SCCFactory(scjit);
+    
+    TRACE_1("Analyzing code\n");
+    
+    // Walk through call graph and build intermediate representation
+    vector<Process*>::iterator processIt = elab->getProcesses()->begin();
+    vector<Process*>::iterator endIt = elab->getProcesses()->end();
+    
+    for(; processIt < endIt ; processIt++) {
+      Process* proc = *processIt;
+      fctStack->push_back(proc->getMainFct());
+      this->scjit->setCurrentProcess(proc);
+      while (! fctStack->empty()) {
+	F = fctStack->back();
+	fctStack->pop_back();
+	TRACE_3("Parsing Function : " << F->getNameStr() << "\n");
+	for (Function::iterator bb = F->begin(), be = F->end(); bb != be; ++bb) { 
+	  BasicBlock::iterator i = bb->begin(), ie = bb->end();
+	  while (i != ie) {
+	    CallInst* callInst = dyn_cast<CallInst>(&*i);
 	    if (callInst) {
 	      if (! sccfactory->handle(F, &*bb, callInst)) {
+		TRACE_4("Call not handled : " << callInst->getCalledFunction()->getNameStr() << "\n");
 		fctStack->push_back(callInst->getCalledFunction());
 	      }
 	    }
-	  BasicBlock::iterator tmpend = bb->end();
-	  i++;
+	    BasicBlock::iterator tmpend = bb->end();
+	    i++;
+	  }
 	}
       }
     }
-
+    
     this->scjit->doFinalization();
+    delete fctStack;
+    delete this->scjit;
+    delete elab;
     return false;
   }
   
@@ -100,30 +162,26 @@ public:
 void
 pinapa_callback()
 {
-  llvm::cout << "Entering Pinapa callback !\n";  
+  TRACE_1("Entering Pinapa, building module\n");  
+  Module* M;
 
   LLVMContext &Context = getGlobalContext();
-  // Allocate a full target machine description only if necessary.
-  // FIXME: The choice of target should be controllable on the command line.
-  std::auto_ptr<TargetMachine> target;
   
   std::string ErrorMessage;
   
   // Load the input module...
-  std::auto_ptr<Module> M;
+  //  Module* mod = new Module("Frontend");
+  //  std::auto_ptr<Module> M;
+  // Make the module, which holds all the code.
+
   if (MemoryBuffer *Buffer
       = MemoryBuffer::getFileOrSTDIN(InputFilename, &ErrorMessage)) {
-    M.reset(ParseBitcodeFile(Buffer, Context, &ErrorMessage));
+    M = ParseBitcodeFile(Buffer, Context, &ErrorMessage);
     delete Buffer;
+  } else {
+    ERROR("Not able to initialize module from bitcode\n");
   }
-  if (M.get() == 0) {
-    if (ErrorMessage.size())
-      errs() << ErrorMessage << "\n";
-    else
-      errs() << "bitcode didn't read correctly.\n";
-    exit(1);
-  }
-  
+    
   // Figure out what stream we are supposed to write to...
   // FIXME: outs() is not binary!
   raw_ostream *Out = &outs();  // Default to printing to stdout...
@@ -132,9 +190,8 @@ pinapa_callback()
     Out = new raw_fd_ostream(OutputFilename.c_str(), /*Binary=*/true,
 			     false, ErrorInfo);
     if (!ErrorInfo.empty()) {
-      errs() << ErrorInfo << '\n';
       delete Out;
-      exit(1);
+      ERROR(ErrorInfo << "\n");
     }
     
     // Make sure that the Output file gets unlinked from the disk if we get a
@@ -148,19 +205,28 @@ pinapa_callback()
   PassManager Passes;
   
   // Add an appropriate TargetData instance for this module...
-  Passes.add(new TargetData(M.get()));
+  TargetData* td = new TargetData(M);
+  Passes.add(td);
   
   // Check that the module is well formed on completion of optimization
-  Passes.add(createVerifierPass());
+  FunctionPass* vp = createVerifierPass();
+  Passes.add(vp);
   
   // Pinapa pass
-  Passes.add(new FunctionNames());
+  FunctionNames* fn = new FunctionNames();
+  Passes.add(fn);
   
   // Write bitcode out to disk or outs() as the last step...
   //Passes.add(createBitcodeWriterPass(*Out));
   
   // Now that we have all of the passes ready, run them.
-  Passes.run(*M.get());
+  Passes.run(*M);
+
+  TRACE_1("Shutdown\n");
+
+  llvm_shutdown();
+
+  //  delete M;
   
   // Delete the raw_fd_ostream.
   if (Out != &outs())
@@ -172,8 +238,6 @@ int
 main(int argc, char **argv)
 {
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
-
-  llvm::cout << "Starting\n";  
   
   try {
 
@@ -186,7 +250,7 @@ main(int argc, char **argv)
     
     sys::PrintStackTraceOnErrorSignal();
 
-    llvm::cout << "Starting SystemC elaboration...\n";  
+    TRACE_1("Executing SystemC elaboration\n");  
     launch_systemc(0, NULL);
   } catch (const std::string& msg) {
     errs() << argv[0] << ": " << msg << "\n";

@@ -1,18 +1,12 @@
-##===- frontend/Makefile -----------------------------------*- Makefile -*-===##
-#
-#                     The LLVM Compiler Infrastructure
-#
-# This file is distributed under the University of Illinois Open Source
-# License. See LICENSE.TXT for details.
-# 
-##===----------------------------------------------------------------------===##
+LLVM_CPPFLAGS = `llvm-config --cxxflags jit bitreader bitwriter native`
+LLVM_LDLIBS = `llvm-config --ldflags --libs jit bitreader bitwriter native` 
 
-LEVEL = ../../../local/download/llvm-svn/objdir
-LIBRARYNAME = pinapa
-LOADABLE_MODULE = 1
-USEDLIBS =
-LINK_COMPONENTS=core
-KEEP_SYMBOLS=1
-CXXFLAGS=-g
+MODULE = pinapa
 
-include $(LEVEL)/Makefile.common
+SRCS = ${wildcard *.cpp}
+TARGET = libpinapa.so
+
+include ./Makefile.common
+
+$(TARGET): $(OBJS)
+	g++ -shared $(OBJS) -o $@ $(SYSTEMCROOT)/lib-linux/libsystemc.a $(LDFLAGS) $(LDLIBS)

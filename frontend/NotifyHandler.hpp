@@ -6,7 +6,7 @@
 
 #include "SCConstructHandler.hpp"
 #include "NotifyConstruct.hpp"
-#include "SCEvent.hpp"
+#include "Event.hpp"
 
 using namespace llvm;
 

@@ -1,0 +1,70 @@
+.SUFFIXES:
+.SECONDARY:
+SHELL = /bin/sh
+
+ifndef SYSTEMCROOT
+   $(error Please set environment variable SYSTEMCROOT)
+endif
+SYSTEMC = $(SYSTEMCROOT)
+
+ifndef TLMOSCI
+   $(error Please set the environment variable TLMOSCI)
+endif
+TLM = $(TLMOSCI)
+
+ifndef TLM_BASIC
+   $(error Please set the environment variable TLM_BASIC)
+endif
+BASIC = $(TLM_BASIC)
+
+# guess target os name used by systemc's configure
+# translate it to what SystemC expects.
+ARCH = $(shell $(SYSTEMC)/config/config.guess | sed -e 's/x86_64-.*-linux-gnu/linux64/' -e 's/i.86-.*-linux-gnu/linux/')
+
+CXX = g++
+CPPFLAGS  = -I$(SYSTEMC)/include
+CPPFLAGS += $(LLVM_CPPFLAGS)
+CPPFLAGS += -MMD -MP -MF $(basename $@).d
+CXXFLAGS = -O3 -g -Wall -Wextra -Winvalid-pch
+
+CC = gcc
+CFLAGS = -O3 -g -Wall -Wextra
+
+LD = $(CXX)
+LDFLAGS = $(CXXFLAGS)
+LDLIBS  = -L/usr/X11R6/lib -lX11
+LDLIBS += $(LLVM_LDLIBS)
+
+RM = -rm -f
+
+OBJS = $(SRCS:%.cpp=%.o)
+DEPS = $(SRCS:%.cpp=%.d)
+
+.PHONY: $(MODULE)
+$(MODULE): $(TARGET)
+
+ifdef MODULE
+.PHONY: clean
+clean:
+	$(RM) *.d *.o $(TARGET)
+endif
+
+%.o: %.cpp $(filter-out %.d, $(MAKEFILE_LIST))
+	$(CXX) -c $< -o $@ $(CPPFLAGS) $(CXXFLAGS) $(CXXEXTRAFLAGS)
+
+# "user-friendly" output of make for commands the students may not
+# know:
+%.a: $(OBJS)
+	@echo "[$(MODULE)] creating static lib $@..."
+	@ar cru $@ $^
+	@ranlib $@
+
+%.gch: % $(filter-out %.d, $(MAKEFILE_LIST))
+	@echo "[$(MODULE)] pre-compiling $<..."
+	@$(RM) $@
+	@$(CXX) -x c++-header -c $< -o $@ $(CPPFLAGS) $(CXXFLAGS) $(CXXEXTRAFLAGS)
+
+%.d: ;
+
+# Include dependency files
+-include $(DEPS)

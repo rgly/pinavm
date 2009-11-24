@@ -5,7 +5,7 @@ using namespace llvm;
 SCConstruct*
 ZeroTimeHandler::handle(Function* fct, BasicBlock* bb, CallInst* callInst)
 {
-  std::cout << " ---------------> ZeroTime : handling call to wait() performed in " << fct->getNameStr() <<"\n";
+  TRACE_3("Handling call to wait()\n");
   return new ZeroTimeConstruct();
 }
 

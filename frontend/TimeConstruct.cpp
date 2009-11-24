@@ -2,17 +2,24 @@
 
 TimeConstruct::TimeConstruct(int t)
 {
+  this->time = (double) t;
+  this->tu = SC_MS;
+}
+
+TimeConstruct::TimeConstruct(double t)
+{
   this->time = t;
   this->tu = SC_MS;
 }
 
-TimeConstruct::TimeConstruct(int t, time_unit tunit)
+
+TimeConstruct::TimeConstruct(double t, time_unit tunit)
 {
   this->time = t;
   this->tu = tu;
 }
 
-int
+double
 TimeConstruct::getTime() {
   return this->time;
 }

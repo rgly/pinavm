@@ -5,18 +5,18 @@
 #include "llvm/Instructions.h"
 
 #include "SCConstruct.hpp"
-#include "SCEvent.hpp"
+#include "Event.hpp"
 
 using namespace llvm;
 using namespace std;
 
 struct EventConstruct : public SCConstruct {  
 protected :
-  SCEvent* event;
+  Event* event;
 public:
-  EventConstruct(SCEvent* e);
-  void setWaitedEvent(SCEvent* e);
-  SCEvent* getWaitedEvent();
+  EventConstruct(Event* e);
+  void setWaitedEvent(Event* e);
+  Event* getWaitedEvent();
   string toString();
 
 };

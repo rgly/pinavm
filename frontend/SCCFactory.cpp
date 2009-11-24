@@ -15,6 +15,22 @@ SCCFactory::SCCFactory(SCJit* scjit)
   (new ReadHandler(scjit))->insertInMap(&this->scchandlers);
 }
 
+SCCFactory::~SCCFactory()
+{
+  // for (map<Function*, SCConstructHandler*>::iterator it = this->scchandlers.begin(); it != this->scchandlers.end(); it++) {
+  while (! this->scchandlers.empty()) { 
+    SCConstructHandler* scch = this->scchandlers.begin()->second;
+    this->scchandlers.erase(this->scchandlers.begin());
+    delete scch;
+  }
+    
+  for (std::map<CallInst*, SCConstruct*>::iterator it = this->scc.begin(); it != this->scc.end(); it++) {
+    SCConstruct* construct = it->second;
+    this->scc.erase(it);
+    delete construct;
+  }
+}
+
 bool
 SCCFactory::handle(llvm::Function* fct, BasicBlock* bb, CallInst* callInst)
 {
@@ -26,7 +42,6 @@ SCCFactory::handle(llvm::Function* fct, BasicBlock* bb, CallInst* callInst)
   std::map<Function*,SCConstructHandler*>::iterator it = this->scchandlers.find(calledFct);
   if (it != scchandlers.end()) {
     scch = it->second;
-    std::cout << "handling!\n";
     this->scc[callInst] = scch->handle(fct, bb, callInst);
     return true;
   } else {

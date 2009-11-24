@@ -2,17 +2,17 @@
 #define _WRITECONSTRUCT_HPP
 
 #include "SCConstruct.hpp"
-#include "SCPort.hpp"
+#include "Port.hpp"
 
 using namespace llvm;
 
 struct WriteConstruct : public SCConstruct {  
 protected :
-  SCPort* port;
+  Port* port;
 public:
-  WriteConstruct(SCPort* p);
-  void setPort(SCPort* e);
-  SCPort* getPort();
+  WriteConstruct(Port* p);
+  void setPort(Port* e);
+  Port* getPort();
 };
 
 #endif

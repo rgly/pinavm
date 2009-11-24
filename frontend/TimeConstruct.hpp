@@ -19,13 +19,14 @@ typedef enum e_time_unit {
 
 struct TimeConstruct : public SCConstruct {  
 protected :
-  int time;
+  double time;
   time_unit tu;
   
 public:
   TimeConstruct(int t);
-  TimeConstruct(int t, time_unit tunit);
-  int getTime();
+  TimeConstruct(double t);
+  TimeConstruct(double t, time_unit tunit);
+  double getTime();
   time_unit getTimeUnit();
 };
 

@@ -6,8 +6,15 @@ SCConstruct*
 NotifyHandler::handle(Function* fct, BasicBlock* bb, CallInst* callInst)
 {
   string eventName = "eventName";
-  std::cout << " ---------------> Time : handling call to notify(event) performed in " << fct->getNameStr() <<"\n";
-  return new NotifyConstruct(new SCEvent(eventName));
+  TRACE_3("Handling call to notify(event)\n");
+
+  Value* arg = callInst->getOperand(1);
+  void* eventAddr = this->scjit->jitAddr(fct, arg);
+  TRACE_4("Address jitted : " << eventAddr << "\n"); 
+  Event* e = this->scjit->getElab()->getEvent(eventAddr);
+  TRACE_3("Event notified : " << (void*) e << "\n"); 
+  return new NotifyConstruct(e);
+
 }
 
 void

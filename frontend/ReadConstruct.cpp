@@ -1,17 +1,17 @@
 #include "ReadConstruct.hpp"
 
-ReadConstruct::ReadConstruct(SCPort* p)
+ReadConstruct::ReadConstruct(Port* p)
 {
   this->port = p;
 }
 
 void
-ReadConstruct::setPort(SCPort* p)
+ReadConstruct::setPort(Port* p)
 {
   this->port = p;
 }
 
-SCPort*
+Port*
 ReadConstruct::getPort()
 {
   return this->port;

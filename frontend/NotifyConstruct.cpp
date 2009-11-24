@@ -2,18 +2,18 @@
 
 using namespace llvm;
 
-NotifyConstruct::NotifyConstruct(SCEvent* e)
+NotifyConstruct::NotifyConstruct(Event* e)
 {
   this->event = e;
 }
 
 void
-NotifyConstruct::setNotifiedEvent(SCEvent* e)
+NotifyConstruct::setNotifiedEvent(Event* e)
 {
   this->event = e;
 }
 
-SCEvent*
+Event*
 NotifyConstruct::getNotifiedEvent()
 {
   return this->event;

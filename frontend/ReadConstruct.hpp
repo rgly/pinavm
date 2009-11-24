@@ -2,17 +2,17 @@
 #define _READCONSTRUCT_HPP
 
 #include "SCConstruct.hpp"
-#include "SCPort.hpp"
+#include "Port.hpp"
 
 using namespace llvm;
 
 struct ReadConstruct : public SCConstruct {  
 protected :
-  SCPort* port;
+  Port* port;
 public:
-  ReadConstruct(SCPort* p);
-  void setPort(SCPort* e);
-  SCPort* getPort();
+  ReadConstruct(Port* p);
+  void setPort(Port* e);
+  Port* getPort();
 };
 
 #endif

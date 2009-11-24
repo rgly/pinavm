@@ -1,16 +1,16 @@
-#ifndef _SCJIT_HPP
-#define _SCJIT_HPP
+#ifndef _FUNCTIONBUILDER_H
+#define _FUNCTIONBUILDER_H
 
 #include <string>
 #include <iterator>
 #include <queue>
 #include <iostream>
 #include <algorithm>
+#include <vector>
 
-#include "llvm/ADT/StringExtras.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/Transforms/Utils/ValueMapper.h"
+#include "llvm/Transforms/Utils/Cloning.h"
 
-//#include "llvm/Analysis/Verifier.h"
 
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
 #include "llvm/Transforms/Scalar.h"
@@ -36,39 +36,34 @@
 #include "llvm/CallingConv.h"
 #include "llvm/TypeSymbolTable.h"
 
-#include "llvm/ExecutionEngine/JIT.h"
-#include <llvm/ExecutionEngine/GenericValue.h>
-
-#include "SCElab.h"
-#include "FunctionBuilder.h"
 #include "Process.hpp"
+#include "FUtils.hpp"
 #include "config.h"
 
 using namespace std;
 using namespace llvm;
 
-struct SCJit {
-private:
-  Module* mdl;
-  SCElab* elab;
-  Process* currentProcess;
-  ExecutionEngine* ee;
-  ExistingModuleProvider* moduleProvider;
+class FunctionBuilder {
+ private:
+  vector<Instruction*> temp_queue;
+  vector<Instruction*> used_insts;
+  vector<BasicBlock*> used_bb;
+  DenseMap<const Value*, Value*> ValueMap;
 
-public:
-  SCJit(Module* mod, SCElab* scelab);
-  ~SCJit();
+  Process* proc;
+  Function* origFct;
+  Function* fctToJit;
+  Value* res;
 
-  void doFinalization();
-  void elaborate();  
-  SCElab* getElab();
-  void setCurrentProcess(Process* process);
-  Process* getCurrentProcess();
-  void* jitAddr(Function* f, Value* arg);
-  int jitInt(Function* f, Value* arg);
-  double jitDouble(Function* f, Value* arg);
-  Function* buildFct(Function* f, FunctionType* FT, Value* arg);
-  Module* getModule();
+  bool mark(Value* arg);
+  void markUsefulInstructions();
+  void cloneBlocks ();
+
+ public:
+  FunctionBuilder(Process* process, Function* origFunction, Function* functionToJit, Value* resValue);
+  ~FunctionBuilder();
+  Function* buildFct();
+
 };
 
 #endif

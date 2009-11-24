@@ -2,18 +2,18 @@
 
 using namespace llvm;
 
-EventConstruct::EventConstruct(SCEvent* e)
+EventConstruct::EventConstruct(Event* e)
 {
   this->event = e;
 }
 
 void
-EventConstruct::setWaitedEvent(SCEvent* e)
+EventConstruct::setWaitedEvent(Event* e)
 {
   this->event = e;
 }
 
-SCEvent*
+Event*
 EventConstruct::getWaitedEvent()
 {
   return this->event;
