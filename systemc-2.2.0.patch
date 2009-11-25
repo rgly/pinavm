@@ -1,0 +1,268 @@
+diff -x 'Makefile*' systemc-2.2.0/src/sysc/kernel/sc_cthread_process.cpp ../download/systemc-2.2.0/src/sysc/kernel/sc_cthread_process.cpp
+132c132
+< sc_cthread_process::sc_cthread_process( const char* name_p, 
+---
+>   sc_cthread_process::sc_cthread_process( const char* name_p, const char* type_p,
+136c136
+<     sc_thread_process(name_p, free_host, method_p, host_p, opt_p)
+---
+>   sc_thread_process(name_p, type_p, free_host, method_p, host_p, opt_p)
+diff -x 'Makefile*' systemc-2.2.0/src/sysc/kernel/sc_cthread_process.h ../download/systemc-2.2.0/src/sysc/kernel/sc_cthread_process.h
+116c116
+<     sc_cthread_process( const char* name_p, bool free_host,
+---
+>     sc_cthread_process( const char* name_p, const char* type_p, bool free_host,
+diff -x 'Makefile*' systemc-2.2.0/src/sysc/kernel/sc_event.h ../download/systemc-2.2.0/src/sysc/kernel/sc_event.h
+94,96c94,96
+< 	template<typename IF> friend class sc_signal;
+< 	friend class sc_signal<bool>;
+< 	friend class sc_signal<sc_dt::sc_logic>;
+---
+>     template<typename IF> friend class sc_signal;
+>     friend class sc_signal<bool>;
+>     friend class sc_signal<sc_dt::sc_logic>;
+343c343
+< private:
+---
+> public:
+diff -x 'Makefile*' systemc-2.2.0/src/sysc/kernel/sc_main.cpp ../download/systemc-2.2.0/src/sysc/kernel/sc_main.cpp
+50c50
+< main( int argc, char* argv[] )
+---
+> launch_systemc( int argc, char* argv[] )
+diff -x 'Makefile*' systemc-2.2.0/src/sysc/kernel/sc_method_process.cpp ../download/systemc-2.2.0/src/sysc/kernel/sc_method_process.cpp
+144c144
+< sc_method_process::sc_method_process( const char* name_p, 
+---
+>   sc_method_process::sc_method_process( const char* name_p, const char* type_p,
+149c149
+<         name_p && name_p[0] ? name_p : sc_gen_unique_name("method_p"), 
+---
+> 		 name_p && name_p[0] ? name_p : sc_gen_unique_name("method_p"), type_p, 
+diff -x 'Makefile*' systemc-2.2.0/src/sysc/kernel/sc_method_process.h ../download/systemc-2.2.0/src/sysc/kernel/sc_method_process.h
+124c124
+<     sc_method_process( const char* name_p, bool free_host,
+---
+>     sc_method_process( const char* name_p, const char* name_p, bool free_host,
+diff -x 'Makefile*' systemc-2.2.0/src/sysc/kernel/sc_module.h ../download/systemc-2.2.0/src/sysc/kernel/sc_module.h
+120a121,123
+> #include <iostream>
+> #include <typeinfo>
+> 
+377c380
+< private:
+---
+> public:
+476c479,480
+<     typedef user_module_name SC_CURRENT_USER_MODULE
+---
+>   typedef user_module_name SC_CURRENT_USER_MODULE;			\
+>   user_module_name* typeHelper;
+488c492
+< #define declare_method_process(handle, name, host_tag, func)        \
+---
+> #define declare_method_process(handle, name, type, host_tag, func)   \
+492c496
+< 		name,  false, SC_MAKE_FUNC_PTR( host_tag, func ), \
+---
+> 		name, type, false, SC_MAKE_FUNC_PTR( host_tag, func ), \
+499c503
+< #define declare_thread_process(handle, name, host_tag, func)        \
+---
+> #define declare_thread_process(handle, name, type, host_tag, func)   \
+503c507
+<                  name,  false,           \
+---
+> 		 name,  type, false, \
+510c514
+< #define declare_cthread_process(handle, name, host_tag, func, edge) \
+---
+> #define declare_cthread_process(handle, name, type, host_tag, func, edge) \
+514c518
+<             name,  false,          \
+---
+>             name, type, false,          \
+518a523,525
+> #define STRINGIFY(s) #s
+> #define TOSTRING(s) STRINGIFY(s)
+> 
+522c529,530
+<                              SC_CURRENT_USER_MODULE,                          \
+---
+> 			     SC_CURRENT_USER_MODULE,		\
+> 			     typeid(*typeHelper).name(),				\
+528a537
+> 			    typeid(*typeHelper).name(),		\
+531d539
+< 
+533c541,542
+<     declare_thread_process( func ## _handle,                                  \
+---
+>   typeHelper = this;\
+>   declare_thread_process( func ## _handle,				\
+534a544
+> 			    typeid(*typeHelper).name(),		      \
+diff -x 'Makefile*' systemc-2.2.0/src/sysc/kernel/sc_module_registry.h ../download/systemc-2.2.0/src/sysc/kernel/sc_module_registry.h
+97c97
+< private:
+---
+> public:
+diff -x 'Makefile*' systemc-2.2.0/src/sysc/kernel/sc_name_gen.h ../download/systemc-2.2.0/src/sysc/kernel/sc_name_gen.h
+71,72c71
+< private:
+< 
+---
+> public:
+diff -x 'Makefile*' systemc-2.2.0/src/sysc/kernel/sc_object.h ../download/systemc-2.2.0/src/sysc/kernel/sc_object.h
+131c131
+< private:
+---
+> public:
+diff -x 'Makefile*' systemc-2.2.0/src/sysc/kernel/sc_process.cpp ../download/systemc-2.2.0/src/sysc/kernel/sc_process.cpp
+257c257
+< sc_process_b::sc_process_b( const char* name_p, bool free_host,
+---
+>   sc_process_b::sc_process_b( const char* name_p, const char* type_p, bool free_host,
+288c288,289
+< 
+---
+>     this->type_process = type_p;
+>     this->func_process = name_p;
+diff -x 'Makefile*' systemc-2.2.0/src/sysc/kernel/sc_process.h ../download/systemc-2.2.0/src/sysc/kernel/sc_process.h
+293c293
+<     sc_process_b( const char* name_p, bool free_host,
+---
+>     sc_process_b( const char* name_p, const char* type_p, bool free_host,
+348c348
+<   protected:
+---
+>   public:
+373a374,377
+>  public:
+>     const char* func_process;
+>     const char* type_process;
+> 
+Only in ../download/systemc-2.2.0/src/sysc/kernel/: sc_process_table.h
+diff -x 'Makefile*' systemc-2.2.0/src/sysc/kernel/sc_runnable_int.h ../download/systemc-2.2.0/src/sysc/kernel/sc_runnable_int.h
+85c85
+<             new sc_method_process((const char*)0, true, (SC_ENTRY_FUNC)0, 0, 0);
+---
+> 	  new sc_method_process((const char*)0, (const char*)0, true, (SC_ENTRY_FUNC)0, 0, 0);
+95c95
+<             new sc_thread_process((const char*)0, true, (SC_ENTRY_FUNC)0, 0, 0);
+---
+> 	  new sc_thread_process((const char*)0, (const char*)0, true, (SC_ENTRY_FUNC)0, 0, 0);
+diff -x 'Makefile*' systemc-2.2.0/src/sysc/kernel/sc_simcontext.cpp ../download/systemc-2.2.0/src/sysc/kernel/sc_simcontext.cpp
+161a162,164
+> #include "sysc/kernel/sc_process_table.h"
+> 
+> extern void pinapa_callback();
+167,197d169
+< // ----------------------------------------------------------------------------
+< //  CLASS : sc_process_table
+< //
+< //  Container class that keeps track of all method processes,
+< //  thread processes, and cthread processes.
+< // ----------------------------------------------------------------------------
+< 
+< class sc_process_table
+< {
+<   public:
+< 
+<     sc_process_table();
+<     ~sc_process_table();
+<     void push_front( sc_method_handle );
+<     void push_front( sc_thread_handle );
+<     void push_front( sc_cthread_handle );
+<     sc_cthread_handle cthread_q_head();
+<     sc_method_handle method_q_head();
+<     sc_cthread_handle remove( sc_cthread_handle );
+<     sc_method_handle remove( sc_method_handle );
+<     sc_thread_handle remove( sc_thread_handle );
+<     sc_thread_handle thread_q_head();
+< 
+< 
+<   private:
+< 
+<     sc_cthread_handle m_cthread_q; // Queue of existing cthread processes.
+<     sc_method_handle  m_method_q;  // Queue of existing method processes.
+<     sc_thread_handle  m_thread_q;  // Queue of existing thread processes.
+< };
+< 
+1013c985
+<     const char* name_p, bool free_host, SC_ENTRY_FUNC method_p,         
+---
+>     const char* name_p, const char* type_p, bool free_host, SC_ENTRY_FUNC method_p,         
+1017c989
+<         new sc_cthread_process(name_p, free_host, method_p, host_p, opt_p);
+---
+>       new sc_cthread_process(name_p, type_p, free_host, method_p, host_p, opt_p);
+1030c1002
+<     const char* name_p, bool free_host, SC_ENTRY_FUNC method_p,         
+---
+>     const char* name_p, const char* type_p, bool free_host, SC_ENTRY_FUNC method_p,         
+1034c1006
+<         new sc_method_process(name_p, free_host, method_p, host_p, opt_p);
+---
+>       new sc_method_process(name_p, type_p, free_host, method_p, host_p, opt_p);
+1047,1048c1019
+< sc_simcontext::create_thread_process( 
+<     const char* name_p, bool free_host, SC_ENTRY_FUNC method_p,         
+---
+> sc_simcontext::create_thread_process(const char* name_p, const char* type_p, bool free_host, SC_ENTRY_FUNC method_p,         
+1052c1023
+<         new sc_thread_process(name_p, free_host, method_p, host_p, opt_p);
+---
+>       new sc_thread_process(name_p, type_p, free_host, method_p, host_p, opt_p);
+1319c1290,1292
+<     context->simulate( duration );
+---
+>     pinapa_callback();
+> 
+>     //    context->simulate( duration );
+diff -x 'Makefile*' systemc-2.2.0/src/sysc/kernel/sc_simcontext.h ../download/systemc-2.2.0/src/sysc/kernel/sc_simcontext.h
+231a232,233
+>     sc_process_table*           m_process_table;
+> 
+234c236
+< 	const char* name_p, bool free_host, SC_ENTRY_FUNC method_p, 
+---
+>         const char* name_p, const char* type_p, bool free_host, SC_ENTRY_FUNC method_p, 
+238c240
+< 	const char* name_p, bool free_host, SC_ENTRY_FUNC method_p, 
+---
+> 	const char* name_p, const char* type_p, bool free_host, SC_ENTRY_FUNC method_p, 
+242c244
+< 	const char* name_p, bool free_host, SC_ENTRY_FUNC method_p, 
+---
+> 	const char* name_p, const char* type_p, bool free_host, SC_ENTRY_FUNC method_p, 
+326d327
+<     sc_process_table*           m_process_table;
+diff -x 'Makefile*' systemc-2.2.0/src/sysc/kernel/sc_spawn.h ../download/systemc-2.2.0/src/sysc/kernel/sc_spawn.h
+136c136
+< 		    name_p, true,
+---
+> 	       name_p, (const char*) 0, true,
+145c145
+< 		    name_p, true,
+---
+> 	       name_p, (const char*) 0, true,
+diff -x 'Makefile*' systemc-2.2.0/src/sysc/kernel/sc_thread_process.cpp ../download/systemc-2.2.0/src/sysc/kernel/sc_thread_process.cpp
+173c173
+< sc_thread_process::sc_thread_process( const char* name_p, bool free_host,
+---
+>   sc_thread_process::sc_thread_process( const char* name_p, const char* type_p, bool free_host,
+178c178
+<         name_p && name_p[0] ? name_p : sc_gen_unique_name("thread_p"), 
+---
+> 		 name_p && name_p[0] ? name_p : sc_gen_unique_name("thread_p"), type_p,
+diff -x 'Makefile*' systemc-2.2.0/src/sysc/kernel/sc_thread_process.h ../download/systemc-2.2.0/src/sysc/kernel/sc_thread_process.h
+137c137
+<     sc_thread_process( const char* name_p, bool free_host,
+---
+>     sc_thread_process( const char* name_p, const char* type_p, bool free_host,
+146c146
+<   protected:
+---
+>   public:
+Common subdirectories: systemc-2.2.0/src/sysc/kernel/systemc-2.2.21jan07 and ../download/systemc-2.2.0/src/sysc/kernel/systemc-2.2.21jan07
