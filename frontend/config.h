@@ -5,6 +5,8 @@
 
 #define VERBOSE 7
 
+#define TRACE(Msg) llvm::cout << Msg
+
 #if VERBOSE >= 1
 #define TRACE_1(Msg) llvm::cout << "###> " << Msg
 #else

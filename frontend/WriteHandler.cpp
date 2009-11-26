@@ -1,4 +1,7 @@
 #include "WriteHandler.hpp"
+#include "SCJit.hpp"
+#include "Port.hpp"
+#include "WriteConstruct.hpp"
 
 using namespace llvm;
 

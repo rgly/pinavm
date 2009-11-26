@@ -25,10 +25,10 @@ CXX = g++
 CPPFLAGS  = -I$(SYSTEMC)/include
 CPPFLAGS += $(LLVM_CPPFLAGS)
 CPPFLAGS += -MMD -MP -MF $(basename $@).d
-CXXFLAGS = -O3 -g -Wall -Wextra -Winvalid-pch
+CXXFLAGS = -O3 -g -Wall -Winvalid-pch
 
 CC = gcc
-CFLAGS = -O3 -g -Wall -Wextra
+CFLAGS = -O3 -g -Wall
 
 LD = $(CXX)
 LDFLAGS = $(CXXFLAGS)

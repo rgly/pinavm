@@ -16,3 +16,9 @@ WriteConstruct::getPort()
 {
 	return this->port;
 }
+
+std::string
+WriteConstruct::toString()
+{
+  return "read(TODO : get value)";
+}

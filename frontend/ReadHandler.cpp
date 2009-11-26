@@ -1,4 +1,7 @@
+#include "SCJit.hpp"
 #include "ReadHandler.hpp"
+#include "Port.hpp"
+#include "ReadConstruct.hpp"
 
 using namespace llvm;
 

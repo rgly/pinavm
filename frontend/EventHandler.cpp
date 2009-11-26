@@ -1,4 +1,8 @@
+#include <string>
+
 #include "EventHandler.hpp"
+#include "EventConstruct.hpp"
+#include "SCJit.hpp"
 
 using namespace llvm;
 
@@ -19,5 +23,5 @@ void EventHandler::insertInMap(std::map < Function *,
 			       SCConstructHandler * >*scchandlers)
 {
 	SCConstructHandler::insertInMap(scchandlers,
-					"_ZN7sc_core9sc_module4waitERKNS_8sc_eventE");
+					(std::string) "_ZN7sc_core9sc_module4waitERKNS_8sc_eventE");
 }

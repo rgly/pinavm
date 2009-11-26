@@ -31,6 +31,13 @@ SCCFactory::~SCCFactory()
   }
 }
 
+std::map<CallInst*, SCConstruct*>*
+SCCFactory::getConstructs()
+{
+  return & this->scc;
+}
+
+
 bool
 SCCFactory::handle(llvm::Function* fct, BasicBlock* bb, CallInst* callInst)
 {

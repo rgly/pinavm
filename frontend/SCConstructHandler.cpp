@@ -1,4 +1,6 @@
 #include "SCConstructHandler.hpp"
+#include "SCConstruct.hpp"
+#include "SCJit.hpp"
 
 using namespace llvm;
 using namespace std;

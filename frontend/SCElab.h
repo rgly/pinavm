@@ -27,6 +27,9 @@
 
 #include "config.h"
 
+struct Process;
+struct Event;
+
 class SCElab {
  private:
   std::map<sc_core::sc_module*, IRModule*> modulesMap;
@@ -56,6 +59,8 @@ class SCElab {
   Process* getProcess(void* processAddr);
   Port* getPort(void* portAddr);
   Event* getEvent(void* eventAddr);
+
+  void printIR(SCCFactory* sccfactory);
 
   sc_core::sc_module* getSCModule(IRModule* irmod);
 

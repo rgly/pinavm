@@ -115,7 +115,16 @@ SCElab::getEvent(void* eventAddr)
 }
 
 
-
+void
+SCElab::printIR(SCCFactory* sccfactory)
+{
+  std::vector<Process*>::iterator itP;
+  for (itP = this->processes.begin() ; itP < this->processes.end() ; itP++) {
+    Process* p = *itP;
+    TRACE("############ IR for process " << p << "#############\n");
+    p->printIR(sccfactory);
+  }
+}
 
 
 std::vector<Process*>*

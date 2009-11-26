@@ -4,9 +4,9 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 
+struct SCJit;
+
 #include "SCConstructHandler.hpp"
-#include "ReadConstruct.hpp"
-#include "Port.hpp"
 
 using namespace llvm;
 

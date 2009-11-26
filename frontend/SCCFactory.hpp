@@ -1,5 +1,5 @@
-#ifndef SCCFACTORY_HPP
-#define SCCFACTORY_HPP
+#ifndef _SCCFACTORY_HPP
+#define _SCCFACTORY_HPP
 
 #include <map>
 
@@ -7,26 +7,13 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Instruction.h"
 
-#include "SCJit.hpp"
-
 #include "SCConstructHandler.hpp"
 #include "EventHandler.hpp"
 #include "DefaultTimeHandler.hpp"
 #include "NotifyHandler.hpp"
-#include "DefaultTimeHandler.hpp"
 #include "ZeroTimeHandler.hpp"
 #include "WriteHandler.hpp"
 #include "ReadHandler.hpp"
-
-#include "SCConstruct.hpp"
-#include "EventConstruct.hpp"
-#include "DefaultTimeConstruct.hpp"
-#include "NotifyConstruct.hpp"
-#include "DefaultTimeConstruct.hpp"
-#include "ZeroTimeConstruct.hpp"
-#include "WriteConstruct.hpp"
-#include "ReadConstruct.hpp"
-
 
 struct SCCFactory {
 
@@ -37,6 +24,7 @@ public:
   SCCFactory(SCJit* jit);
   ~SCCFactory();
   bool handle(llvm::Function* fct, BasicBlock* bb, CallInst* callInst);
+  std::map<CallInst*, SCConstruct*>* getConstructs();
 };
 
 #endif

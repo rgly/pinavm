@@ -5,15 +5,15 @@
 #include "llvm/Instructions.h"
 
 #include "SCConstructHandler.hpp"
-#include "WriteConstruct.hpp"
-#include "Port.hpp"
+
+struct Port;
+struct SCJit;
 
 using namespace llvm;
 
 struct WriteHandler:public SCConstructHandler {
       public:
-	WriteHandler(SCJit * jit):SCConstructHandler(jit) {
-	};
+	WriteHandler(SCJit * jit):SCConstructHandler(jit) { } 
 	SCConstruct *handle(Function * fct, BasicBlock * bb,
 			    CallInst * callInst);
 	void insertInMap(std::map < Function *,

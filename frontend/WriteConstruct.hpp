@@ -13,6 +13,7 @@ public:
   WriteConstruct(Port* p);
   void setPort(Port* e);
   Port* getPort();
+  std::string toString();
 };
 
 #endif

@@ -1,18 +1,25 @@
 #ifndef _PROCESS_HPP
 #define _PROCESS_HPP
 
+#include <map>
 #include <string>
 #include <vector>
 
+
+#include "llvm/InstrTypes.h"
+#include "llvm/Instructions.h"
+#include "llvm/BasicBlock.h"
 #include "llvm/Function.h"
-#include "Event.hpp"
-#include "IRModule.hpp"
+
+#include "config.h"
 
 using namespace llvm;
 using namespace std;
 
-struct Event;
+//struct Event;
 struct IRModule;
+struct Event;
+struct SCCFactory;
 
 struct Process {
 protected:
@@ -29,6 +36,7 @@ public:
   Function* getMainFct();
   IRModule* getModule();
   void addEvent(Event* ev);
+  void printIR(SCCFactory* sccfactory);
 
 };
 

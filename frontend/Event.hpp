@@ -4,11 +4,11 @@
 #include <string>
 
 #include "IRModule.hpp"
-#include "Process.hpp"
 
 using namespace std;
 
 struct IRModule;
+struct Process;
 
 struct Event {
 protected:

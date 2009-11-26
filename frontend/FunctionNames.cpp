@@ -145,6 +145,8 @@ public:
 	}
       }
     }
+
+    elab->printIR(sccfactory);
     
     this->scjit->doFinalization();
     delete fctStack;

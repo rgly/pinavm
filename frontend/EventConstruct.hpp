@@ -5,10 +5,11 @@
 #include "llvm/Instructions.h"
 
 #include "SCConstruct.hpp"
-#include "Event.hpp"
 
 using namespace llvm;
 using namespace std;
+
+struct Event;
 
 struct EventConstruct : public SCConstruct {  
 protected :

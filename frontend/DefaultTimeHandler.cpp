@@ -1,4 +1,7 @@
+#include "SCJit.hpp"
 #include "DefaultTimeHandler.hpp"
+#include "DefaultTimeConstruct.hpp"
+
 #include <ostream>
 
 using namespace llvm;

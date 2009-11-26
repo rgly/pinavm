@@ -17,7 +17,7 @@ struct SCConstruct {
 
       public:
 	 SCConstruct();
-	string toString();
+	virtual string toString() = 0;
 	string getThreadName();
 };
 
