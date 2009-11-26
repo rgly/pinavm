@@ -10,12 +10,6 @@
 #include <string>
 #include <sstream>
 
-#include "IRModule.hpp"
-#include "Process.hpp"
-#include "Port.hpp"
-#include "Event.hpp"
-#include "FUtils.hpp"
-
 #include "llvm/Module.h"
 
 #include "sysc/kernel/sc_module.h"
@@ -25,12 +19,19 @@
 #include "sysc/communication/sc_port.h"
 #include "sysc/kernel/sc_process_handle.h"
 
-#include "config.h"
+#include "FUtils.hpp"
+#include "ElabMember.hpp"
 
+struct SCCFactory;
+struct IRModule;
 struct Process;
+struct Port;
 struct Event;
 
-class SCElab {
+using namespace llvm;
+
+class SCElab : public ElabMember
+{
  private:
   std::map<sc_core::sc_module*, IRModule*> modulesMap;
   std::map<sc_core::sc_process_b*, Process*> processMap;
@@ -60,6 +61,7 @@ class SCElab {
   Port* getPort(void* portAddr);
   Event* getEvent(void* eventAddr);
 
+  void printElab(int sep, std::string prefix);
   void printIR(SCCFactory* sccfactory);
 
   sc_core::sc_module* getSCModule(IRModule* irmod);

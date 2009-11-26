@@ -11,33 +11,33 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Function.h"
 
+#include "ElabMember.hpp"
+
 #include "config.h"
 
 using namespace llvm;
-using namespace std;
 
-//struct Event;
 struct IRModule;
 struct Event;
 struct SCCFactory;
 
-struct Process {
+struct Process : public ElabMember {
 protected:
-  string processName;
+  std::string processName;
   IRModule* module;
-  string fctName;
+  std::string fctName;
   Function* mainFct;
   std::vector<Event*> events;
 
 public:
-  Process(IRModule* mod, Function* fct, string name, string fctName);
-  string getName();
-  string getFctName();
+  Process(IRModule* mod, Function* fct, std::string name, std::string fctName);
+  std::string getName();
+  std::string getFctName();
   Function* getMainFct();
   IRModule* getModule();
   void addEvent(Event* ev);
   void printIR(SCCFactory* sccfactory);
-
+  void printElab(int sep, std::string prefix);
 };
 
 #endif

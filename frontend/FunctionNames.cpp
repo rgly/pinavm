@@ -50,23 +50,71 @@ static cl::opt < std::string >
 OutputFilename("o", cl::desc("Override output filename"),
                cl::value_desc("filename"), cl::init("-"));
 
+static cl::opt < bool >
+PrintElab("print-elab", cl::desc("Print architecture after elaboration"));
+
+static cl::opt < bool>
+PrintIR("print-ir", cl::desc("Print Intermediate representation for all processes"));
+
 struct FunctionNames : public ModulePass {
   SCJit* scjit;
   SCCFactory* sccfactory;
+  SCElab* elab;
 
 public:
   static char ID; // Pass identification, replacement for typeid
-  FunctionNames() : ModulePass(&ID) { }
+  FunctionNames() : ModulePass(&ID) {
+    ;
+  }
 
-  
   ~FunctionNames()
   {
-//     delete this->sccfactory;
+    if (this->sccfactory)
+      delete this->sccfactory;
+
+    if (this->scjit) {
+      this->scjit->doFinalization();
+      delete this->scjit;
+    }
+
+    if (this->elab)
+      delete this->elab;
+
   }
   
-  bool runOnModule(Module &M) {
+  SCElab*
+  getElab()
+  {
+    return this->elab;
+  }
+  
+  void
+  printElab(string prefix)
+  {
+    TRACE("############### Printing ELAB ###############\n");
+    this->elab->printElab(0, prefix);
+    TRACE("\n");
+  }
+
+  void
+  printIR()
+  {
+    std::vector<Process*>* procs = this->elab->getProcesses();
+    std::vector<Process*>::iterator itP;
+
+    TRACE("############### Printing IR ###############\n");
+    
+    for (itP = procs->begin() ; itP < procs->end() ; itP++) {
+      Process* p = *itP;
+      TRACE("************ IR for process " << p << "*************\n");
+      p->printIR(this->sccfactory);
+    }
+    TRACE("\n");
+  }
+
+  bool
+  runOnModule(Module &M) {
     Module* llvmMod = &M;
-    Function* F;
     sc_core::sc_thread_handle  thread_p;  // Pointer to thread process accessing.
 
     TRACE_1("Getting ELAB\n");
@@ -74,7 +122,7 @@ public:
     // To call the "end_of_elaboration()" methods.
     sc_core::sc_get_curr_simcontext()->initialize(true);
     
-    SCElab* elab = new SCElab(llvmMod);
+    this->elab = new SCElab(llvmMod);
     std::vector<Function*>* fctStack = new std::vector<Function*>();
     
     //------- Get modules and ports --------
@@ -84,13 +132,13 @@ public:
     for (modIt = modules.begin() ; modIt < modules.end() ; modIt++) {
       sc_core::sc_module* mod = *modIt;
       
-      IRModule* m = elab->addModule(mod);
+      IRModule* m = this->elab->addModule(mod);
       std::vector<sc_core::sc_port_base*>* ports = mod->m_port_vec;
 
       vector<sc_core::sc_port_base*>::iterator it;
       for (it = ports->begin() ; it < ports->end() ; it++) {
 	sc_core::sc_port_base* p = *it;
-	elab->addPort(m, p);
+	this->elab->addPort(m, p);
       }
     }
     
@@ -101,14 +149,14 @@ public:
       {
 	sc_core::sc_process_b* theProcess = thread_p;	
 	sc_core::sc_module* mod = (sc_core::sc_module*) thread_p->m_semantics_host_p;
-	IRModule* m = elab->getIRModule(mod);
-	Process* process = elab->addProcess(m, theProcess);
+	IRModule* m = this->elab->getIRModule(mod);
+	Process* process = this->elab->addProcess(m, theProcess);
 	
 	std::vector<const sc_core::sc_event*> eventsVector = theProcess->m_static_events;
 	vector<const sc_core::sc_event*>::iterator it;
 	for (it = eventsVector.begin() ; it < eventsVector.end() ; it++) {
 	  sc_core::sc_event* ev = (sc_core::sc_event*) *it; 
-	  elab->addEvent(process, ev);
+	  this->elab->addEvent(process, ev);
 	}
       }
     
@@ -118,15 +166,15 @@ public:
     TRACE_1("Analyzing code\n");
     
     // Walk through call graph and build intermediate representation
-    vector<Process*>::iterator processIt = elab->getProcesses()->begin();
-    vector<Process*>::iterator endIt = elab->getProcesses()->end();
+    vector<Process*>::iterator processIt = this->elab->getProcesses()->begin();
+    vector<Process*>::iterator endIt = this->elab->getProcesses()->end();
     
     for(; processIt < endIt ; processIt++) {
       Process* proc = *processIt;
       fctStack->push_back(proc->getMainFct());
       this->scjit->setCurrentProcess(proc);
       while (! fctStack->empty()) {
-	F = fctStack->back();
+	Function* F = fctStack->back();
 	fctStack->pop_back();
 	TRACE_3("Parsing Function : " << F->getNameStr() << "\n");
 	for (Function::iterator bb = F->begin(), be = F->end(); bb != be; ++bb) { 
@@ -146,12 +194,7 @@ public:
       }
     }
 
-    elab->printIR(sccfactory);
-    
-    this->scjit->doFinalization();
-    delete fctStack;
-    delete this->scjit;
-    delete elab;
+    delete fctStack;    
     return false;
   }
   
@@ -222,6 +265,13 @@ pinapa_callback()
   
   // Now that we have all of the passes ready, run them.
   Passes.run(*M);
+
+  if (PrintIR) {
+    fn->printIR();
+  }
+  if (PrintElab) {
+    fn->printElab("");
+  }
 
   TRACE_1("Shutdown\n");
 

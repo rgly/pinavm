@@ -3,14 +3,13 @@
 
 #include <string>
 
-#include "IRModule.hpp"
+#include "ElabMember.hpp"
 
 using namespace std;
 
-struct IRModule;
 struct Process;
 
-struct Event {
+struct Event : public ElabMember {
 protected:
   string eventName;
   Process* process;
@@ -19,6 +18,7 @@ public:
   Event(Process* p, string eventName);
   string toString();
   Process* getProcess();
+  void printElab(int sep, string prefix);
 };
 
 #endif

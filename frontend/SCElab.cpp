@@ -1,4 +1,11 @@
+#include "IRModule.hpp"
+#include "Process.hpp"
+#include "Port.hpp"
+#include "Event.hpp"
+#include "FUtils.hpp"
+
 #include "SCElab.h"
+#include "config.h"
 
 SCElab::SCElab(Module* llvmModule)
 {
@@ -114,16 +121,15 @@ SCElab::getEvent(void* eventAddr)
   return this->eventsMap.find((sc_core::sc_event*) eventAddr)->second;
 }
 
-
 void
-SCElab::printIR(SCCFactory* sccfactory)
+SCElab::printElab(int sep, string prefix)
 {
-  std::vector<Process*>::iterator itP;
-  for (itP = this->processes.begin() ; itP < this->processes.end() ; itP++) {
-    Process* p = *itP;
-    TRACE("############ IR for process " << p << "#############\n");
-    p->printIR(sccfactory);
-  }
+  std::vector<IRModule*>::iterator itM;
+  this->printPrefix(sep, prefix);
+  for (itM = this->modules.begin() ; itM < this->modules.end() ; itM++) {
+    IRModule* m = *itM;
+    m->printElab(sep, prefix);
+  }  
 }
 
 

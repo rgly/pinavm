@@ -3,14 +3,14 @@
 
 #include <string>
 
-#include "IRModule.hpp"
+#include "ElabMember.hpp"
 
 using namespace std;
 using namespace llvm;
 
 struct IRModule;
 
-struct Port {
+struct Port : public ElabMember {
 private:
   IRModule* irModule;  
   string name;
@@ -19,6 +19,7 @@ public:
   Port(IRModule* module, string portName);
   IRModule* getModule();
   string getName();
+  void printElab(int sep, string prefix);
 };
 
 #endif

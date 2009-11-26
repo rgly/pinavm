@@ -1,44 +1,46 @@
 #ifndef _CONFIG_H
 #define _CONFIG_H
 
-#include "llvm/Support/Streams.h"
+#include <iostream>
+
+//#include "llvm/Support/Streams.h"
 
 #define VERBOSE 7
 
-#define TRACE(Msg) llvm::cout << Msg
+#define TRACE(Msg) std::cout << Msg
 
 #if VERBOSE >= 1
-#define TRACE_1(Msg) llvm::cout << "###> " << Msg
+#define TRACE_1(Msg) std::cout << "###> " << Msg
 #else
 #define TRACE_1(Msg)
 #endif
 
 #if VERBOSE >= 2
-#define TRACE_2(Msg) llvm::cout << "   **> " << Msg
+#define TRACE_2(Msg) std::cout << "   **> " << Msg
 #else
 #define TRACE_2(Msg)
 #endif
 
 #if VERBOSE >= 3
-#define TRACE_3(Msg) llvm::cout << "      -> " << Msg
+#define TRACE_3(Msg) std::cout << "      -> " << Msg
 #else
 #define TRACE_3(Msg)
 #endif
 
 #if VERBOSE >= 4
-#define TRACE_4(Msg) llvm::cout << "           " << Msg
+#define TRACE_4(Msg) std::cout << "           " << Msg
 #else
 #define TRACE_4(Msg)
 #endif
 
 #if VERBOSE >= 5
-#define TRACE_5(Msg) llvm::cout << "              " << Msg
+#define TRACE_5(Msg) std::cout << "              " << Msg
 #else
 #define TRACE_5(Msg)
 #endif
 
 #if VERBOSE >= 6
-#define TRACE_6(Msg) llvm::cout << "                 " << Msg
+#define TRACE_6(Msg) std::cout << "                 " << Msg
 #else
 #define TRACE_6(Msg)
 #endif
@@ -57,7 +59,7 @@
 #endif
 
 
-#define ERROR(Msg)    llvm::cout << Msg << "\n\n"; exit(1);
+#define ERROR(Msg)    std::cout << Msg << "\n\n"; exit(1);
 
 
 #endif

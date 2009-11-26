@@ -1,4 +1,10 @@
 #include "IRModule.hpp"
+#include "Process.hpp"
+#include "Port.hpp"
+#include "Event.hpp"
+
+using namespace std;
+using namespace llvm;
 
 IRModule::IRModule(string moduleType, string moduleName)
 {
@@ -70,4 +76,17 @@ string
 IRModule::getUniqueName()
 {
   return this->name;
+}
+
+/********** Pretty print **********/
+void
+IRModule::printElab(int sep, string prefix)
+{
+  std::vector<Process*>::iterator itP;
+  this->printPrefix(sep, prefix);
+  TRACE("Module : " << this << "\n");
+  for (itP = this->processes.begin() ; itP < this->processes.end() ; itP++) {
+    Process* p = *itP;
+    p->printElab(sep + 3, prefix);
+  }
 }

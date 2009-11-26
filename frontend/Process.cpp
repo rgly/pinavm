@@ -41,6 +41,20 @@ Process::addEvent(Event* ev)
   this->events.push_back(ev);
 }
 
+/********** Pretty print **********/
+void
+Process::printElab(int sep, string prefix)
+{
+  std::vector<Event*>::iterator itE;
+  this->printPrefix(sep, prefix);
+  TRACE(" process : " << this << "\n");
+  for (itE = this->events.begin() ; itE < this->events.end() ; itE++) {
+    Event* e = *itE;
+    e->printElab(sep + 3, prefix);
+  }
+}
+
+
 void
 Process::printIR(SCCFactory* sccfactory)
 {
