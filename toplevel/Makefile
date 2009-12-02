@@ -1,7 +1,8 @@
 SRCS = ${wildcard *.cpp}
 TARGET = libpinapa.so
 
-include ../Makefile.common
+ROOT=..
+include $(ROOT)/Makefile.common
 
 ALL_OBJS = $(OBJS) ${wildcard $(SYSTEMCFRONTEND)/*.o} ${wildcard $(LLVMBACKENDS)/Debug/*.o} $(SYSTEMCROOT)/lib-linux/libsystemc.a
 
