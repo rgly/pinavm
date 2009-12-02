@@ -23,16 +23,6 @@ ifndef SYSTEMCROOT
 endif
 SYSTEMC = $(SYSTEMCROOT)
 
-ifndef TLMOSCI
-   $(error Please set the environment variable TLMOSCI)
-endif
-TLM = $(TLMOSCI)
-
-ifndef TLM_BASIC
-   $(error Please set the environment variable TLM_BASIC)
-endif
-BASIC = $(TLM_BASIC)
-
 # guess target os name used by systemc's configure
 # translate it to what SystemC expects.
 ARCH = $(shell $(SYSTEMC)/config/config.guess | sed -e 's/x86_64-.*-linux-gnu/linux64/' -e 's/i.86-.*-linux-gnu/linux/')
