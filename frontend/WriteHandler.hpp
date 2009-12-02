@@ -13,9 +13,9 @@ using namespace llvm;
 
 struct WriteHandler:public SCConstructHandler {
       public:
-	WriteHandler(SCJit * jit):SCConstructHandler(jit) { } 
-	SCConstruct *handle(Function * fct, BasicBlock * bb,
-			    CallInst * callInst);
+	WriteHandler(SCJit * jit):SCConstructHandler(jit) {
+	} SCConstruct *handle(Function * fct, BasicBlock * bb,
+			      CallInst * callInst);
 	void insertInMap(std::map < Function *,
 			 SCConstructHandler * >*scchandlers);
 };

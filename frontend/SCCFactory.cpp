@@ -17,41 +17,43 @@ SCCFactory::SCCFactory(SCJit * scjit)
 
 SCCFactory::~SCCFactory()
 {
-  // for (map<Function*, SCConstructHandler*>::iterator it = this->scchandlers.begin(); it != this->scchandlers.end(); it++) {
-  while (! this->scchandlers.empty()) { 
-    SCConstructHandler* scch = this->scchandlers.begin()->second;
-    this->scchandlers.erase(this->scchandlers.begin());
-    delete scch;
-  }
-    
-  for (std::map<CallInst*, SCConstruct*>::iterator it = this->scc.begin(); it != this->scc.end(); it++) {
-    SCConstruct* construct = it->second;
-    this->scc.erase(it);
-    delete construct;
-  }
+	// for (map<Function*, SCConstructHandler*>::iterator it = this->scchandlers.begin(); it != this->scchandlers.end(); it++) {
+	while (!this->scchandlers.empty()) {
+		SCConstructHandler *scch =
+		    this->scchandlers.begin()->second;
+		this->scchandlers.erase(this->scchandlers.begin());
+		delete scch;
+	}
+
+	for (std::map < CallInst *, SCConstruct * >::iterator it =
+	     this->scc.begin(); it != this->scc.end(); it++) {
+		SCConstruct *construct = it->second;
+		this->scc.erase(it);
+		delete construct;
+	}
 }
 
-std::map<CallInst*, SCConstruct*>*
-SCCFactory::getConstructs()
+std::map < CallInst *, SCConstruct * >*SCCFactory::getConstructs()
 {
-  return & this->scc;
+	return &this->scc;
 }
 
 
-bool
-SCCFactory::handle(llvm::Function* fct, BasicBlock* bb, CallInst* callInst)
+bool SCCFactory::handle(llvm::Function * fct, BasicBlock * bb,
+			CallInst * callInst)
 {
 	Function *calledFct;
 	SCConstructHandler *scch;
 
 	calledFct = callInst->getCalledFunction();
 
-  std::map<Function*,SCConstructHandler*>::iterator it = this->scchandlers.find(calledFct);
-  if (it != scchandlers.end()) {
-    scch = it->second;
-    this->scc[callInst] = scch->handle(fct, bb, callInst);
-    return true;
-  } else {
-    return false;
-  }
+	std::map < Function *, SCConstructHandler * >::iterator it =
+	    this->scchandlers.find(calledFct);
+	if (it != scchandlers.end()) {
+		scch = it->second;
+		this->scc[callInst] = scch->handle(fct, bb, callInst);
+		return true;
+	} else {
+		return false;
+	}
 }

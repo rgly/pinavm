@@ -5,8 +5,8 @@ using namespace llvm;
 SCConstruct *ZeroTimeHandler::handle(Function * fct, BasicBlock * bb,
 				     CallInst * callInst)
 {
-  TRACE_3("Handling call to wait()\n");
-  return new ZeroTimeConstruct();
+	TRACE_3("Handling call to wait()\n");
+	return new ZeroTimeConstruct();
 }
 
 void ZeroTimeHandler::insertInMap(std::map < Function *,

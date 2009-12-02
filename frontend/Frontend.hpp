@@ -16,23 +16,23 @@ extern int launch_systemc(int argc, char *argv[]);
 
 class Frontend {
 
- private:
-  SCJit* scjit;
-  SCCFactory* sccfactory;
-  SCElab* elab;
-  Module* llvmMod;
+      private:
+	SCJit * scjit;
+	SCCFactory *sccfactory;
+	SCElab *elab;
+	Module *llvmMod;
 
- public:
-  Frontend(Module *M);
-  ~Frontend();
+      public:
+	 Frontend(Module * M);
+	~Frontend();
 
-  bool run();
-  SCElab* getElab();
-  void printElab(std::string prefix);
-  void printIR();
+	bool run();
+	SCElab *getElab();
+	void printElab(std::string prefix);
+	void printIR();
 
-  Module* getLLVMModule();
-  SCCFactory* getConstructs();
+	Module *getLLVMModule();
+	SCCFactory *getConstructs();
 };
 
 #endif

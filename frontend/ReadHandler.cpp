@@ -8,13 +8,13 @@ using namespace llvm;
 SCConstruct *ReadHandler::handle(Function * fct, BasicBlock * bb,
 				 CallInst * callInst)
 {
-  TRACE_3("Handling call to read()\n");
-  Value* arg = callInst->getOperand(2);
-  void* portAddr = this->scjit->jitAddr(fct, arg);
-  TRACE_4("Address jitted : " << portAddr << "\n"); 
-  Port* p = this->scjit->getElab()->getPort(portAddr);  
-  TRACE_3("Port read : " << p << "\n"); 
-  return new ReadConstruct(p);
+	TRACE_3("Handling call to read()\n");
+	Value *arg = callInst->getOperand(2);
+	void *portAddr = this->scjit->jitAddr(fct, arg);
+	TRACE_4("Address jitted : " << portAddr << "\n");
+	Port *p = this->scjit->getElab()->getPort(portAddr);
+	TRACE_3("Port read : " << p << "\n");
+	return new ReadConstruct(p);
 }
 
 

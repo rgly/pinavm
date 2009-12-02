@@ -9,28 +9,25 @@
 using namespace llvm;
 using namespace std;
 
-Event::Event(Process* p, string event) 
+Event::Event(Process * p, string event)
 {
-  this->process = p;
-  this->eventName = event;
+	this->process = p;
+	this->eventName = event;
 }
 
-string
-Event::toString()
+string Event::toString()
 {
-  return this->eventName;
+	return this->eventName;
 }
 
-Process*
-Event::getProcess()
+Process *Event::getProcess()
 {
-  return this->process;
+	return this->process;
 }
 
 /********** Pretty print **********/
-void
-Event::printElab(int sep, string prefix)
+void Event::printElab(int sep, string prefix)
 {
-  this->printPrefix(sep, prefix);
-  TRACE("Event : " << this << " (\"" << this->toString() << "\")\n");
+	this->printPrefix(sep, prefix);
+	TRACE("Event : " << this << " (\"" << this->toString() << "\")\n");
 }

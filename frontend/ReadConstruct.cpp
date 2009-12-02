@@ -1,24 +1,22 @@
 #include "ReadConstruct.hpp"
 
-ReadConstruct::ReadConstruct(Port* p)
+ReadConstruct::ReadConstruct(Port * p)
 {
 	this->port = p;
 }
 
 void
-ReadConstruct::setPort(Port* p)
+ ReadConstruct::setPort(Port * p)
 {
 	this->port = p;
 }
 
-Port*
-ReadConstruct::getPort()
+Port *ReadConstruct::getPort()
 {
 	return this->port;
 }
 
-std::string
-ReadConstruct::toString()
+std::string ReadConstruct::toString()
 {
-  return "read(TODO : get value)";
+	return "read(TODO : get value)";
 }

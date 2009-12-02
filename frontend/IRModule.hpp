@@ -15,35 +15,35 @@ struct Port;
 struct Event;
 struct Process;
 
-struct IRModule : public ElabMember {
-private:
-  std::string name;
-  std::string typeName;
-  std::vector<Process*> processes;
-  std::vector<Port*> ports;
-  std::vector<Event*> events;
+struct IRModule:public ElabMember {
+      private:
+	std::string name;
+	std::string typeName;
+	std::vector < Process * >processes;
+	std::vector < Port * >ports;
+	std::vector < Event * >events;
 
-  std::vector<GlobalVariable*> sharedVariables;
-  
-public:
-  IRModule(std::string typeName, std::string moduleName);
-  
-  std::vector<Process*>* getProcesses();
-  void addProcess(Process* process);
-  
-  std::vector<Port*>* getPorts();
-  void addPort(Port* port);
+	std::vector < GlobalVariable * >sharedVariables;
 
-  std::vector<Event*>* getEvents();
-  void addEvent(Event* event);
-  
-  std::vector<GlobalVariable*>* getSharedVariables();
-  void addSharedVariable(GlobalVariable* gv);
+      public:
+	IRModule(std::string typeName, std::string moduleName);
 
-  std::string getModuleType();
-  std::string getUniqueName();
+	std::vector < Process * >*getProcesses();
+	void addProcess(Process * process);
 
-  void printElab(int sep, std::string prefix);
+	 std::vector < Port * >*getPorts();
+	void addPort(Port * port);
+
+	 std::vector < Event * >*getEvents();
+	void addEvent(Event * event);
+
+	 std::vector < GlobalVariable * >*getSharedVariables();
+	void addSharedVariable(GlobalVariable * gv);
+
+	 std::string getModuleType();
+	 std::string getUniqueName();
+
+	void printElab(int sep, std::string prefix);
 };
 
 #endif

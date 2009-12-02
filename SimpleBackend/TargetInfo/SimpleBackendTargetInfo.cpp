@@ -8,9 +8,9 @@
 #include <iostream>
 
 namespace llvm {
-  Target TheSimpleBackendTarget;
-  
-  extern "C" void LLVMInitializeSimpleBackendTargetInfo() { 
-    RegisterTarget<> X(TheSimpleBackendTarget, "simple", "SIMPLE backend");
-  } 
-}
+	Target TheSimpleBackendTarget;
+
+	extern "C" void LLVMInitializeSimpleBackendTargetInfo() {
+		RegisterTarget <> X(TheSimpleBackendTarget, "simple",
+				    "SIMPLE backend");
+}}

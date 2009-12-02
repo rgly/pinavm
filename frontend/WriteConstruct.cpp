@@ -1,24 +1,22 @@
 #include "WriteConstruct.hpp"
 
-WriteConstruct::WriteConstruct(Port* p)
+WriteConstruct::WriteConstruct(Port * p)
 {
 	this->port = p;
 }
 
 void
-WriteConstruct::setPort(Port* p)
+ WriteConstruct::setPort(Port * p)
 {
 	this->port = p;
 }
 
-Port*
-WriteConstruct::getPort()
+Port *WriteConstruct::getPort()
 {
 	return this->port;
 }
 
-std::string
-WriteConstruct::toString()
+std::string WriteConstruct::toString()
 {
-  return "read(TODO : get value)";
+	return "read(TODO : get value)";
 }

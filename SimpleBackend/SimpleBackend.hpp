@@ -38,54 +38,56 @@
 
 using namespace llvm;
 
-void
-launch_simplebackend(Frontend* fe, std::string OutputFilename)
+void launch_simplebackend(Frontend * fe, std::string OutputFilename)
 {
-  Module* llvmMod = fe->getLLVMModule();
+	Module *llvmMod = fe->getLLVMModule();
 
-  // Figure out what stream we are supposed to write to...
-  // FIXME: outs() is not binary!
-  formatted_raw_ostream *Out = &fouts();
+	// Figure out what stream we are supposed to write to...
+	// FIXME: outs() is not binary!
+	formatted_raw_ostream *Out = &fouts();
 
-  if (OutputFilename != "-") {
+	if (OutputFilename != "-") {
 
-    std::string error;
-    raw_fd_ostream *FDOut = new raw_fd_ostream(OutputFilename.c_str(),
-                                               /*Binary=*/true, true, error);
-    if (!error.empty()) {
-      errs() << error << '\n';
-      delete FDOut;
-      return;
-    }
-    Out = new formatted_raw_ostream(*FDOut, formatted_raw_ostream::DELETE_STREAM);
+		std::string error;
+		raw_fd_ostream *FDOut =
+		    new raw_fd_ostream(OutputFilename.c_str(),
+				       /*Binary= */ true, true, error);
+		if (!error.empty()) {
+			errs() << error << '\n';
+			delete FDOut;
+			return;
+		}
+		Out =
+		    new formatted_raw_ostream(*FDOut,
+					      formatted_raw_ostream::
+					      DELETE_STREAM);
 
-    // Make sure that the Output file gets unlinked from the disk if we get a
-    // SIGINT
-    sys::RemoveFileOnSignal(sys::Path(OutputFilename));
-  }
-  
-  // Build up all of the passes that we want to do to the module.
-  PassManager Passes;
-  
-  ModulePass* simpleWriter = new SimpleWriter(fe, *Out);
+		// Make sure that the Output file gets unlinked from the disk if we get a
+		// SIGINT
+		sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+	}
+	// Build up all of the passes that we want to do to the module.
+	PassManager Passes;
 
-  Passes.add(new TargetData(llvmMod));
-  Passes.add(createVerifierPass());
-  Passes.add(createGCLoweringPass());
-  Passes.add(createLowerAllocationsPass(true));
-  Passes.add(createLowerInvokePass());
-  Passes.add(createCFGSimplificationPass());   // clean up after lower invoke.
-  Passes.add(new SimpleBackendNameAllUsedStructsAndMergeFunctions());
-  Passes.add(simpleWriter);
-  Passes.add(createGCInfoDeleter());
-  
-  Passes.run(*llvmMod);
-      
-  Out->flush();
-  
-  // Delete the raw_fd_ostream.
-  if (Out != &fouts())
-    delete Out;
+	ModulePass *simpleWriter = new SimpleWriter(fe, *Out);
+
+	Passes.add(new TargetData(llvmMod));
+	Passes.add(createVerifierPass());
+	Passes.add(createGCLoweringPass());
+	Passes.add(createLowerAllocationsPass(true));
+	Passes.add(createLowerInvokePass());
+	Passes.add(createCFGSimplificationPass());	// clean up after lower invoke.
+	Passes.add(new SimpleBackendNameAllUsedStructsAndMergeFunctions());
+	Passes.add(simpleWriter);
+	Passes.add(createGCInfoDeleter());
+
+	Passes.run(*llvmMod);
+
+	Out->flush();
+
+	// Delete the raw_fd_ostream.
+	if (Out != &fouts())
+		delete Out;
 }
 
 #endif

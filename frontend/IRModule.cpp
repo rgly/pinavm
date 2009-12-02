@@ -8,85 +8,75 @@ using namespace llvm;
 
 IRModule::IRModule(string moduleType, string moduleName)
 {
-  this->typeName = moduleType;
-  this->name = moduleName;
+	this->typeName = moduleType;
+	this->name = moduleName;
 }
 
 /******** Threads ********/
-vector<Process*>*
-IRModule::getProcesses()
+vector < Process * >*IRModule::getProcesses()
 {
-  return & this->processes;
+	return &this->processes;
 }
 
-void
-IRModule::addProcess(Process* process)
+void IRModule::addProcess(Process * process)
 {
-  this->processes.push_back(process);
+	this->processes.push_back(process);
 }
 
 
 /******** Ports ********/
-vector<Port*>*
-IRModule::getPorts()
+vector < Port * >*IRModule::getPorts()
 {
-  return & this->ports;
+	return &this->ports;
 }
 
-void
-IRModule::addPort(Port* port)
+void IRModule::addPort(Port * port)
 {
-  this->ports.push_back(port);
+	this->ports.push_back(port);
 }
 
 /******** Events ********/
-vector<Event*>*
-IRModule::getEvents()
+vector < Event * >*IRModule::getEvents()
 {
-  return & this->events;
+	return &this->events;
 }
 
-void
-IRModule::addEvent(Event* event)
+void IRModule::addEvent(Event * event)
 {
-  this->events.push_back(event);
+	this->events.push_back(event);
 }
 
 
 /******** Shared Variables ********/
-vector<GlobalVariable*>*
-IRModule::getSharedVariables()
+vector < GlobalVariable * >*IRModule::getSharedVariables()
 {
-  return & this->sharedVariables;
+	return &this->sharedVariables;
 }
 
-void
-IRModule::addSharedVariable(GlobalVariable* gv)
+void IRModule::addSharedVariable(GlobalVariable * gv)
 {
-  this->sharedVariables.push_back(gv);
+	this->sharedVariables.push_back(gv);
 }
 
-string
-IRModule::getModuleType()
+string IRModule::getModuleType()
 {
-  return this->typeName;
+	return this->typeName;
 }
 
-string
-IRModule::getUniqueName()
+string IRModule::getUniqueName()
 {
-  return this->name;
+	return this->name;
 }
 
 /********** Pretty print **********/
-void
-IRModule::printElab(int sep, string prefix)
+void IRModule::printElab(int sep, string prefix)
 {
-  std::vector<Process*>::iterator itP;
-  this->printPrefix(sep, prefix);
-  TRACE("Module : " << this << "\n");
-  for (itP = this->processes.begin() ; itP < this->processes.end() ; itP++) {
-    Process* p = *itP;
-    p->printElab(sep + 3, prefix);
-  }
+	std::vector < Process * >::iterator itP;
+	this->printPrefix(sep, prefix);
+	TRACE("Module : " << this << "\n");
+	for (itP = this->processes.begin(); itP < this->processes.end();
+	     itP++) {
+		Process *p = *itP;
+		p->printElab(sep + 3, prefix);
+	}
 }

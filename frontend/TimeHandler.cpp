@@ -1,7 +1,7 @@
 #include "TimeHandler.hpp"
 
 int
-TimeHandler::getTime()
+ TimeHandler::getTime()
 {
 	return this->time;
 }

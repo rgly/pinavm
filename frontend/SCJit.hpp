@@ -48,27 +48,27 @@ using namespace std;
 using namespace llvm;
 
 struct SCJit {
-private:
-  Module* mdl;
-  SCElab* elab;
-  Process* currentProcess;
-  ExecutionEngine* ee;
-  ExistingModuleProvider* moduleProvider;
+      private:
+	Module * mdl;
+	SCElab *elab;
+	Process *currentProcess;
+	ExecutionEngine *ee;
+	ExistingModuleProvider *moduleProvider;
 
-public:
-  SCJit(Module* mod, SCElab* scelab);
-  ~SCJit();
+      public:
+	 SCJit(Module * mod, SCElab * scelab);
+	~SCJit();
 
-  void doFinalization();
-  void elaborate();  
-  SCElab* getElab();
-  void setCurrentProcess(Process* process);
-  Process* getCurrentProcess();
-  void* jitAddr(Function* f, Value* arg);
-  int jitInt(Function* f, Value* arg);
-  double jitDouble(Function* f, Value* arg);
-  Function* buildFct(Function* f, FunctionType* FT, Value* arg);
-  Module* getModule();
+	void doFinalization();
+	void elaborate();
+	SCElab *getElab();
+	void setCurrentProcess(Process * process);
+	Process *getCurrentProcess();
+	void *jitAddr(Function * f, Value * arg);
+	int jitInt(Function * f, Value * arg);
+	double jitDouble(Function * f, Value * arg);
+	Function *buildFct(Function * f, FunctionType * FT, Value * arg);
+	Module *getModule();
 };
 
 #endif

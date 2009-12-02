@@ -6,16 +6,16 @@
 
 struct Frontend;
 
-class FrontendPass : public ModulePass {
-private:
-  Frontend* frontend;
+class FrontendPass:public ModulePass {
+      private:
+	Frontend * frontend;
 
-public:
-  static char ID; // Pass identification, replacement for typeid
-  FrontendPass();
-  Frontend* getFrontend();
-  bool runOnModule(Module &M);
-  void getAnalysisUsage(AnalysisUsage &AU) const;
+      public:
+	static char ID;		// Pass identification, replacement for typeid
+	 FrontendPass();
+	Frontend *getFrontend();
+	bool runOnModule(Module & M);
+	void getAnalysisUsage(AnalysisUsage & AU) const;
 };
 
 #endif

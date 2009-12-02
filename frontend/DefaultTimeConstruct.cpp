@@ -7,12 +7,12 @@ using namespace llvm;
 
 string DefaultTimeConstruct::toString()
 {
-  std::string s;
-  {
-    std::ostringstream oss;
-    oss << this->time;
-    s = oss.str();
-  }
-  
-  return "WAIT(" + s + ")\n";
+	std::string s;
+	{
+		std::ostringstream oss;
+		oss << this->time;
+		s = oss.str();
+	}
+
+	return "WAIT(" + s + ")\n";
 }

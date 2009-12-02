@@ -10,16 +10,16 @@ using namespace llvm;
 
 struct IRModule;
 
-struct Port : public ElabMember {
-private:
-  IRModule* irModule;  
-  string name;
-  
-public:
-  Port(IRModule* module, string portName);
-  IRModule* getModule();
-  string getName();
-  void printElab(int sep, string prefix);
+struct Port:public ElabMember {
+      private:
+	IRModule * irModule;
+	string name;
+
+      public:
+	 Port(IRModule * module, string portName);
+	IRModule *getModule();
+	string getName();
+	void printElab(int sep, string prefix);
 };
 
 #endif

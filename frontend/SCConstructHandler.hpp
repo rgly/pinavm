@@ -17,16 +17,17 @@ struct SCJit;
 struct SCConstruct;
 
 class SCConstructHandler {
-protected:
-  SCJit * scjit;
-  
-public:
-  SCConstructHandler(SCJit * jit);
-  SCConstructHandler();
-  virtual SCConstruct *handle(llvm::Function * fct, BasicBlock * bb,
-			      CallInst * callInst) = 0;
-  void insertInMap(std::map < Function *, SCConstructHandler * >* scchandlers,
-		   std::string fctName);
+      protected:
+	SCJit * scjit;
+
+      public:
+	SCConstructHandler(SCJit * jit);
+	SCConstructHandler();
+	virtual SCConstruct *handle(llvm::Function * fct, BasicBlock * bb,
+				    CallInst * callInst) = 0;
+	void insertInMap(std::map < Function *,
+			 SCConstructHandler * >*scchandlers,
+			 std::string fctName);
 };
 
 #endif

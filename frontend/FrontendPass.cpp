@@ -6,27 +6,26 @@
 
 using namespace llvm;
 
-FrontendPass::FrontendPass() : ModulePass(&ID) {
-  ;
-}
-
-bool
-FrontendPass::runOnModule(Module &M)
+FrontendPass::FrontendPass():ModulePass(&ID)
 {
-  this->frontend = new Frontend(&M);
-  return this->frontend->run();
-  
+	;
 }
 
-Frontend*
-FrontendPass::getFrontend()
+bool FrontendPass::runOnModule(Module & M)
 {
-  return this->frontend;
+	this->frontend = new Frontend(&M);
+	return this->frontend->run();
+
 }
 
-void
-FrontendPass::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.setPreservesAll();
+Frontend *FrontendPass::getFrontend()
+{
+	return this->frontend;
+}
+
+void FrontendPass::getAnalysisUsage(AnalysisUsage & AU) const const
+{
+	AU.setPreservesAll();
 }
 
 char FrontendPass::ID = 42;

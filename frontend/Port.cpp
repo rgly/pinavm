@@ -7,28 +7,25 @@
 
 using namespace std;
 
-Port::Port(IRModule* module, string portName)
+Port::Port(IRModule * module, string portName)
 {
-  this->irModule = module;
-  this->name = portName;
+	this->irModule = module;
+	this->name = portName;
 }
 
-IRModule*
-Port::getModule()
+IRModule *Port::getModule()
 {
-  return this->irModule;
+	return this->irModule;
 }
 
-string
-Port::getName()
+string Port::getName()
 {
-  return this->name;
+	return this->name;
 }
 
 /********** Pretty print **********/
-void
-Port::printElab(int sep, string prefix)
+void Port::printElab(int sep, string prefix)
 {
-  this->printPrefix(sep, prefix);
-  //  TRACE("Port : " << (void*) this << " (\"" << this->name() << "\")\n");
+	this->printPrefix(sep, prefix);
+	//  TRACE("Port : " << (void*) this << " (\"" << this->name() << "\")\n");
 }

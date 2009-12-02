@@ -10,14 +10,13 @@ using namespace llvm;
 
 struct Event;
 
-struct EventConstruct : public SCConstruct {  
-protected :
-  Event* event;
-public:
-  EventConstruct(Event* e);
-  void setWaitedEvent(Event* e);
-  Event* getWaitedEvent();
-  std::string toString();
+struct EventConstruct:public SCConstruct {
+	protected:Event * event;
+      public:
+	EventConstruct(Event * e);
+	void setWaitedEvent(Event * e);
+	Event *getWaitedEvent();
+	 std::string toString();
 };
 
 #endif

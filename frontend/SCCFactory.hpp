@@ -17,15 +17,16 @@
 
 struct SCCFactory {
 
-private:
-  std::map<Function*, SCConstructHandler*> scchandlers;
-  std::map<CallInst*, SCConstruct*> scc;
+      private:
+	std::map < Function *, SCConstructHandler * >scchandlers;
+	std::map < CallInst *, SCConstruct * >scc;
 
-public:
-  SCCFactory(SCJit* jit);
-  ~SCCFactory();
-  bool handle(llvm::Function* fct, BasicBlock* bb, CallInst* callInst);
-  std::map<CallInst*, SCConstruct*>* getConstructs();
+      public:
+	SCCFactory(SCJit * jit);
+	~SCCFactory();
+	bool handle(llvm::Function * fct, BasicBlock * bb,
+		    CallInst * callInst);
+	 std::map < CallInst *, SCConstruct * >*getConstructs();
 };
 
 #endif

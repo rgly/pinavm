@@ -17,17 +17,16 @@ typedef enum e_time_unit {
 } time_unit;
 
 
-struct TimeConstruct : public SCConstruct {  
-protected :
-  double time;
-  time_unit tu;
-  
-public:
-  TimeConstruct(int t);
-  TimeConstruct(double t);
-  TimeConstruct(double t, time_unit tunit);
-  double getTime();
-  time_unit getTimeUnit();
+struct TimeConstruct:public SCConstruct {
+	protected:double time;
+	time_unit tu;
+
+      public:
+	 TimeConstruct(int t);
+	 TimeConstruct(double t);
+	 TimeConstruct(double t, time_unit tunit);
+	double getTime();
+	time_unit getTimeUnit();
 };
 
 #endif
