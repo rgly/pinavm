@@ -20,6 +20,7 @@ struct SCCFactory {
 private:
   std::map<Function*, SCConstructHandler*> scchandlers;
   std::map<CallInst*, SCConstruct*> scc;
+
 public:
   SCCFactory(SCJit* jit);
   ~SCCFactory();

@@ -20,7 +20,7 @@ EventConstruct::getWaitedEvent()
 	return this->event;
 }
 
-string EventConstruct::toString()
+std::string EventConstruct::toString()
 {
-	return "WAIT(event)";
+  return "WAIT(" + this->event->toString() + ")";
 }

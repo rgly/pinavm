@@ -92,4 +92,10 @@ SimpleBackendNameAllUsedStructsAndMergeFunctions::runOnModule(Module &M)
   return Changed;
 }
 
+const char*
+SimpleBackendNameAllUsedStructsAndMergeFunctions::getPassName() const
+{
+  return "Simple backend type canonicalizer";
+}
+
 char SimpleBackendNameAllUsedStructsAndMergeFunctions::ID = 0;

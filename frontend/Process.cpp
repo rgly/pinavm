@@ -3,6 +3,11 @@
 #include "SCConstruct.hpp"
 #include "SCCFactory.hpp"
 
+#include <algorithm>
+#include <vector>
+
+using namespace std;
+
 Process::Process(IRModule* mod, Function* mainFunc, string name, string funcName)
 {
   this->module = mod;
@@ -91,4 +96,22 @@ Process::printIR(SCCFactory* sccfactory)
       }
     }
   }
+}
+
+std::vector<Function*>*
+Process::getUsedFunctions()
+{
+  return & this->usedFunctions;
+}
+
+void
+Process::addUsedFunction(Function* fct)
+{
+  this->usedFunctions.push_back(fct);
+}
+
+bool
+Process::isFunctionUsed(Function* fct)
+{
+  return find(this->usedFunctions.begin(), this->usedFunctions.end(), fct) != this->usedFunctions.end();
 }

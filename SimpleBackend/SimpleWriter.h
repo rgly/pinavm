@@ -37,11 +37,17 @@
 #include "llvm/System/Host.h"
 #include "llvm/Config/config.h"
 
+#include <map>
 #include <algorithm>
 #include <sstream>
 #include <string>
 #include <iostream>
 
+#include "SCElab.h"
+#include "SCCFactory.hpp"
+#include "Frontend.hpp"
+
+struct SCConstruct;
 using namespace llvm;
 
 enum SpecialGlobalClass {
@@ -50,10 +56,9 @@ enum SpecialGlobalClass {
   NotPrinted
 };
 
-
 /// SimpleWriter - This class is the main chunk of code that converts an LLVM
 /// module to a "Simple" translation unit.
-class SimpleWriter : public FunctionPass, public InstVisitor<SimpleWriter> {
+class SimpleWriter : public ModulePass, public InstVisitor<SimpleWriter> {
   formatted_raw_ostream &Out;
   IntrinsicLowering *IL;
   Mangler *Mang;
@@ -69,20 +74,27 @@ class SimpleWriter : public FunctionPass, public InstVisitor<SimpleWriter> {
   unsigned OpaqueCounter;
   DenseMap<const Value*, unsigned> AnonValueNumbers;
   unsigned NextAnonValueNumber;
-  
+  std::map<CallInst*, SCConstruct*>* scconstructs;
+  SCElab* elab;
+
 public:
   static char ID;
+  explicit SimpleWriter(Frontend* fe, formatted_raw_ostream &o)
+    : ModulePass(&ID), Out(o), IL(0), Mang(0), LI(0), 
+      TheModule(0), TAsm(0), TD(0), OpaqueCounter(0), NextAnonValueNumber(0) {
+    FPCounter = 0;
+    this->scconstructs = fe->getConstructs()->getConstructs();
+    this->elab = fe->getElab();
+  }
   explicit SimpleWriter(formatted_raw_ostream &o)
-    : FunctionPass(&ID), Out(o), IL(0), Mang(0), LI(0), 
+    : ModulePass(&ID), Out(o), IL(0), Mang(0), LI(0), 
       TheModule(0), TAsm(0), TD(0), OpaqueCounter(0), NextAnonValueNumber(0) {
     FPCounter = 0;
   }
-  
-  virtual const char *getPassName() const;
+
+  const char *getPassName() const;
   void getAnalysisUsage(AnalysisUsage &AU) const;
-  virtual bool doInitialization(Module &M);
-  bool runOnFunction(Function &F);
-  virtual bool doFinalization(Module &M);
+  bool runOnModule(Module &M);
 
   raw_ostream &printType(formatted_raw_ostream &Out,
 			 const Type *Ty, 

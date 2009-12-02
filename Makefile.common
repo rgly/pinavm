@@ -2,6 +2,18 @@
 .SECONDARY:
 SHELL = /bin/sh
 
+ifndef LLVMBACKENDSHEADERS
+   $(error Please set environment variable LLVMBACKENDSHEADERS)
+endif
+
+ifndef LLVMBACKENDS
+   $(error Please set environment variable LLVMBACKENDS)
+endif
+
+ifndef SYSTEMCFRONTEND
+   $(error Please set environment variable SYSTEMCFRONTEND)
+endif
+
 ifndef SYSTEMCROOT
    $(error Please set environment variable SYSTEMCROOT)
 endif
@@ -22,9 +34,7 @@ BASIC = $(TLM_BASIC)
 ARCH = $(shell $(SYSTEMC)/config/config.guess | sed -e 's/x86_64-.*-linux-gnu/linux64/' -e 's/i.86-.*-linux-gnu/linux/')
 
 CXX = g++
-CPPFLAGS  = -I$(SYSTEMC)/include
-CPPFLAGS += $(LLVM_CPPFLAGS)
-CPPFLAGS += -MMD -MP -MF $(basename $@).d
+CPPFLAGS = -MMD -MP -MF $(basename $@).d
 CXXFLAGS = -O3 -g -Wall -Winvalid-pch
 
 CC = gcc
@@ -33,7 +43,6 @@ CFLAGS = -O3 -g -Wall
 LD = $(CXX)
 LDFLAGS = $(CXXFLAGS)
 LDLIBS  = -L/usr/X11R6/lib -lX11
-LDLIBS += $(LLVM_LDLIBS)
 
 RM = -rm -f
 

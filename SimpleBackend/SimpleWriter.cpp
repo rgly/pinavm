@@ -1,4 +1,13 @@
+#include <map>
+
+#include "llvm/CallingConv.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/InstrTypes.h"
+#include "llvm/Instructions.h"
+
 #include "SimpleWriter.h"
+#include "SCConstruct.hpp"
+#include "Process.hpp"
 
 #define PRINT_DEBUG_MSG 1
 
@@ -2659,8 +2668,21 @@ SimpleWriter::lowerIntrinsics(Function &F)
 }
 
 void
+visitSCConstruct(SCConstruct* scc)
+{
+  ;
+}
+
+void
 SimpleWriter::visitCallInst(CallInst &I)
 {
+  std::map<CallInst*, SCConstruct*>::iterator itC;
+
+  if ((itC = this->scconstructs->find(&I)) != this->scconstructs->end()) {
+    SCConstruct* scc = itC->second;
+    return visitSCConstruct(scc);
+  }
+  
   if (isa<InlineAsm>(I.getOperand(0)))
     return visitInlineAsm(I);
 
@@ -3251,26 +3273,20 @@ SimpleWriter::visitExtractValueInst(ExtractValueInst &EVI)
 
 
 
-extern "C" void
-LLVMInitializeSimpleBackendTarget()
-{ 
-  // Register the target.
-  RegisterTargetMachine<SimpleTargetMachine> X(TheSimpleBackendTarget);
-}
+// extern "C" void
+// LLVMInitializeSimpleBackendTarget()
+// { 
+//   // Register the target.
+//   RegisterTargetMachine<SimpleTargetMachine> X(TheSimpleBackendTarget);
+// }
 
 /***************************************************************************
  ***************** Main functions ******************************************
  **************************************************************************/
 
-
 bool
-SimpleWriter::doInitialization(Module &M)
+SimpleWriter::runOnModule(Module &M)
 {
-  FunctionPass::doInitialization(M);
-  
-  // Initialize
-  TheModule = &M;
-
   TD = new TargetData(&M);
   IL = new IntrinsicLowering(*TD);
   IL->AddPrototypes(M);
@@ -3294,253 +3310,68 @@ SimpleWriter::doInitialization(Module &M)
       break;
     }
   }
+
+  if (!M.global_empty()) {
+    Out << "\n\n/* Global Variable Declarations */\n";
+    for (Module::global_iterator I = M.global_begin(), E = M.global_end();
+	 I != E; ++I)
+      if (!I->isDeclaration()) {
+	// Ignore special globals, such as debug info.
+	if (getGlobalVariableClass(I))
+	  continue;
+
+	//           if (I->hasLocalLinkage())
+	//             Out << "static ";
+	//           else
+	//             Out << "extern ";
+
+	// Thread Local Storage
+	if (I->isThreadLocal())
+	  Out << "__thread ";
+
+	printType(Out, I->getType()->getElementType(), false, 
+		  GetValueName(I));
+
+	if (I->hasLinkOnceLinkage())
+	  Out << " __attribute__((common))";
+	else if (I->hasCommonLinkage())     // FIXME is this right?
+	  Out << " __ATTRIBUTE_WEAK__";
+	else if (I->hasWeakLinkage())
+	  Out << " __ATTRIBUTE_WEAK__";
+	else if (I->hasExternalWeakLinkage())
+	  Out << " __EXTERNAL_WEAK__";
+	if (I->hasHiddenVisibility())
+	  Out << " __HIDDEN__";
+	Out << ";\n";
+      }
+  }
+
+  vector<Process*>::iterator processIt = this->elab->getProcesses()->begin();
+  vector<Process*>::iterator endIt = this->elab->getProcesses()->end();
   
-  // get declaration for alloca
-  //   Out << "/* Provide Declarations */\n";
-  //   Out << "#include <stdarg.h>\n";      // Varargs support
-  //   Out << "#include <setjmp.h>\n";      // Unwind support
-  //   generateCompilerSpecificCode(Out, TD);
-
-  // Provide a definition for `bool' if not compiling with a C++ compiler.
-  //   Out << "\n"
-  //       << "#ifndef __cplusplus\ntypedef unsigned char bool;\n#endif\n"
-
-  //       << "\n\n/* Support for floating point constants */\n"
-  //       << "typedef unsigned long long ConstantDoubleTy;\n"
-  //       << "typedef unsigned int        ConstantFloatTy;\n"
-  //       << "typedef struct { unsigned long long f1; unsigned short f2; "
-  //          "unsigned short pad[3]; } ConstantFP80Ty;\n"
-  //       // This is used for both kinds of 128-bit long double; meaning differs.
-  //       << "typedef struct { unsigned long long f1; unsigned long long f2; }"
-  //          " ConstantFP128Ty;\n"
-  //       << "\n\n/* Global Declarations */\n";
-
-  // First output all the declarations for the program, because C requires
-  // Functions & globals to be declared before they are used.
-  //
-  //   if (!M.getModuleInlineAsm().empty()) {
-  //     Out << "/* Module asm statements */\n"
-  //         << "asm(";
-
-  //     // Split the string into lines, to make it easier to read the .ll file.
-  //     std::string Asm = M.getModuleInlineAsm();
-  //     size_t CurPos = 0;
-  //     size_t NewLine = Asm.find_first_of('\n', CurPos);
-  //     while (NewLine != std::string::npos) {
-  //       // We found a newline, print the portion of the asm string from the
-  //       // last newline up to this newline.
-  //       Out << "\"";
-  //       PrintEscapedString(std::string(Asm.begin()+CurPos, Asm.begin()+NewLine),
-  //                          Out);
-  //       Out << "\\n\"\n";
-  //       CurPos = NewLine+1;
-  //       NewLine = Asm.find_first_of('\n', CurPos);
-  //     }
-  //     Out << "\"";
-  //     PrintEscapedString(std::string(Asm.begin()+CurPos, Asm.end()), Out);
-  //     Out << "\");\n"
-  //         << "/* End Module asm statements */\n";
-  //   }
-
-  // Loop over the symbol table, emitting all named constants...
-  //   printModuleTypes(M.getTypeSymbolTable());
-
-//   //  Global variable declarations...
-//     if (!M.global_empty()) {
-//       Out << "\n/* External Global Variable Declarations */\n";
-//       for (Module::global_iterator I = M.global_begin(), E = M.global_end();
-//            I != E; ++I) {
-
-//         if (I->hasExternalLinkage() || I->hasExternalWeakLinkage() || I->hasCommonLinkage()) {
-//           Out << "extern ";
-//         } else if (I->hasDLLImportLinkage()) {
-//           Out << "__declspec(dllimport) ";
-//         } else {
-//           continue; // Internal Global
-// 	}
-
-//         // Thread Local Storage
-//         if (I->isThreadLocal())
-//           Out << "__thread ";
-
-//         printType(Out, I->getType()->getElementType(), false, GetValueName(I));
-
-//         if (I->hasExternalWeakLinkage())
-//            Out << " __EXTERNAL_WEAK__";
-//         Out << ";\n";
-//       }
-//     }
-
-  // Function declarations
-  //   Out << "\n/* Function Declarations */\n";
-  //   Out << "double fmod(double, double);\n";   // Support for FP rem
-  //   Out << "float fmodf(float, float);\n";
-  //   Out << "long double fmodl(long double, long double);\n";
-  
-  //   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
-  //     // Don't print declarations for intrinsic functions.
-  //     if (!I->isIntrinsic() && I->getName() != "setjmp" &&
-  //         I->getName() != "longjmp" && I->getName() != "_setjmp") {
-  //       if (I->hasExternalWeakLinkage())
-  //         Out << "extern ";
-  //       printFunctionSignature(I, true);
-  //       if (I->hasWeakLinkage() || I->hasLinkOnceLinkage()) 
-  //         Out << " __ATTRIBUTE_WEAK__";
-  //       if (I->hasExternalWeakLinkage())
-  //         Out << " __EXTERNAL_WEAK__";
-  //       if (StaticCtors.count(I))
-  //         Out << " __ATTRIBUTE_CTOR__";
-  //       if (StaticDtors.count(I))
-  //         Out << " __ATTRIBUTE_DTOR__";
-  //       if (I->hasHiddenVisibility())
-  //         Out << " __HIDDEN__";
+  for(; processIt < endIt ; processIt++) {
+    Process* proc = *processIt;
+    std::vector<Function*>* usedFcts = proc->getUsedFunctions();
+    for (std::vector<Function*>::iterator itF = usedFcts->begin(); itF < usedFcts->end(); itF++) {
+      Function* F = *itF;
       
-  //       if (I->hasName() && I->getName()[0] == 1)
-  //         Out << " LLVM_ASM(\"" << I->getName().substr(1) << "\")";
-          
-  //       Out << ";\n";
-  //     }
-  //   }
+      // Do not codegen any 'available_externally' functions at all, they have
+      // definitions outside the translation unit.
+      if (F->hasAvailableExternallyLinkage())
+	continue;
+      
+      LI = &getAnalysis<LoopInfo>(*F);
 
-  //   // Output the global variable declarations
-    if (!M.global_empty()) {
-      Out << "\n\n/* Global Variable Declarations */\n";
-      for (Module::global_iterator I = M.global_begin(), E = M.global_end();
-           I != E; ++I)
-        if (!I->isDeclaration()) {
-          // Ignore special globals, such as debug info.
-          if (getGlobalVariableClass(I))
-            continue;
-
-//           if (I->hasLocalLinkage())
-//             Out << "static ";
-//           else
-//             Out << "extern ";
-
-          // Thread Local Storage
-          if (I->isThreadLocal())
-            Out << "__thread ";
-
-          printType(Out, I->getType()->getElementType(), false, 
-                    GetValueName(I));
-
-          if (I->hasLinkOnceLinkage())
-            Out << " __attribute__((common))";
-          else if (I->hasCommonLinkage())     // FIXME is this right?
-            Out << " __ATTRIBUTE_WEAK__";
-          else if (I->hasWeakLinkage())
-            Out << " __ATTRIBUTE_WEAK__";
-          else if (I->hasExternalWeakLinkage())
-            Out << " __EXTERNAL_WEAK__";
-          if (I->hasHiddenVisibility())
-            Out << " __HIDDEN__";
-          Out << ";\n";
-        }
+      // Get rid of intrinsics we can't handle.
+      lowerIntrinsics(*F);
+      
+      // Output all floating point constants that cannot be printed accurately.
+      printFloatingPointConstants(*F);
+      
+      printFunction(*F);
     }
-
-  //   // Output the global variable definitions and contents...
-  //   if (!M.global_empty()) {
-  //     Out << "\n\n/* Global Variable Definitions and Initialization */\n";
-  //     for (Module::global_iterator I = M.global_begin(), E = M.global_end(); 
-  //          I != E; ++I)
-  //       if (!I->isDeclaration()) {
-  //         // Ignore special globals, such as debug info.
-  //         if (getGlobalVariableClass(I))
-  //           continue;
-
-  //         if (I->hasLocalLinkage())
-  //           Out << "static ";
-  //         else if (I->hasDLLImportLinkage())
-  //           Out << "__declspec(dllimport) ";
-  //         else if (I->hasDLLExportLinkage())
-  //           Out << "__declspec(dllexport) ";
-
-  //         // Thread Local Storage
-  //         if (I->isThreadLocal())
-  //           Out << "__thread ";
-
-  //         printType(Out, I->getType()->getElementType(), false, 
-  //                   GetValueName(I));
-  //         if (I->hasLinkOnceLinkage())
-  //           Out << " __attribute__((common))";
-  //         else if (I->hasWeakLinkage())
-  //           Out << " __ATTRIBUTE_WEAK__";
-  //         else if (I->hasCommonLinkage())
-  //           Out << " __ATTRIBUTE_WEAK__";
-
-  //         if (I->hasHiddenVisibility())
-  //           Out << " __HIDDEN__";
-        
-  //         // If the initializer is not null, emit the initializer.  If it is null,
-  //         // we try to avoid emitting large amounts of zeros.  The problem with
-  //         // this, however, occurs when the variable has weak linkage.  In this
-  //         // case, the assembler will complain about the variable being both weak
-  //         // and common, so we disable this optimization.
-  //         // FIXME common linkage should avoid this problem.
-  //         if (!I->getInitializer()->isNullValue()) {
-  //           Out << " = " ;
-  //           writeOperand(I->getInitializer(), true);
-  //         } else if (I->hasWeakLinkage()) {
-  //           // We have to specify an initializer, but it doesn't have to be
-  //           // complete.  If the value is an aggregate, print out { 0 }, and let
-  //           // the compiler figure out the rest of the zeros.
-  //           Out << " = " ;
-  //           if (isa<StructType>(I->getInitializer()->getType()) ||
-  //               isa<VectorType>(I->getInitializer()->getType())) {
-  //             Out << "{ 0 }";
-  //           } else if (isa<ArrayType>(I->getInitializer()->getType())) {
-  //             // As with structs and vectors, but with an extra set of braces
-  //             // because arrays are wrapped in structs.
-  //             Out << "{ { 0 } }";
-  //           } else {
-  //             // Just print it out normally.
-  //             writeOperand(I->getInitializer(), true);
-  //           }
-  //         }
-  //         Out << ";\n";
-  //       }
-  //   }
-
-  //   if (!M.empty())
-  //     Out << "\n\n/* Function Bodies */\n";
-
-  //   // Emit some helper functions for dealing with FCMP instruction's 
-  //   // predicates
-  //   Out << "static inline int llvm_fcmp_ord(double X, double Y) { ";
-  //   Out << "return X == X && Y == Y; }\n";
-  //   Out << "static inline int llvm_fcmp_uno(double X, double Y) { ";
-  //   Out << "return X != X || Y != Y; }\n";
-  //   Out << "static inline int llvm_fcmp_ueq(double X, double Y) { ";
-  //   Out << "return X == Y || llvm_fcmp_uno(X, Y); }\n";
-  //   Out << "static inline int llvm_fcmp_une(double X, double Y) { ";
-  //   Out << "return X != Y; }\n";
-  //   Out << "static inline int llvm_fcmp_ult(double X, double Y) { ";
-  //   Out << "return X <  Y || llvm_fcmp_uno(X, Y); }\n";
-  //   Out << "static inline int llvm_fcmp_ugt(double X, double Y) { ";
-  //   Out << "return X >  Y || llvm_fcmp_uno(X, Y); }\n";
-  //   Out << "static inline int llvm_fcmp_ule(double X, double Y) { ";
-  //   Out << "return X <= Y || llvm_fcmp_uno(X, Y); }\n";
-  //   Out << "static inline int llvm_fcmp_uge(double X, double Y) { ";
-  //   Out << "return X >= Y || llvm_fcmp_uno(X, Y); }\n";
-  //   Out << "static inline int llvm_fcmp_oeq(double X, double Y) { ";
-  //   Out << "return X == Y ; }\n";
-  //   Out << "static inline int llvm_fcmp_one(double X, double Y) { ";
-  //   Out << "return X != Y && llvm_fcmp_ord(X, Y); }\n";
-  //   Out << "static inline int llvm_fcmp_olt(double X, double Y) { ";
-  //   Out << "return X <  Y ; }\n";
-  //   Out << "static inline int llvm_fcmp_ogt(double X, double Y) { ";
-  //   Out << "return X >  Y ; }\n";
-  //   Out << "static inline int llvm_fcmp_ole(double X, double Y) { ";
-  //   Out << "return X <= Y ; }\n";
-  //   Out << "static inline int llvm_fcmp_oge(double X, double Y) { ";
-  //   Out << "return X >= Y ; }\n";
-     return false;
-}
-
-
-bool
-SimpleWriter::doFinalization(Module &M)
-{
+  }
+  
   // Free memory...
   delete IL;
   delete TD;
@@ -3550,6 +3381,7 @@ SimpleWriter::doFinalization(Module &M)
   ByValParams.clear();
   intrinsicPrototypesAlreadyGenerated.clear();
   return false;
+
 }
 
 void
@@ -3557,26 +3389,6 @@ SimpleWriter::getAnalysisUsage(AnalysisUsage &AU) const
 {
   AU.addRequired<LoopInfo>();
   AU.setPreservesAll();
-}
-
-bool
-SimpleWriter::runOnFunction(Function &F)
-{
-  // Do not codegen any 'available_externally' functions at all, they have
-  // definitions outside the translation unit.
-  if (F.hasAvailableExternallyLinkage())
-    return false;
-  
-  LI = &getAnalysis<LoopInfo>();
-  
-  // Get rid of intrinsics we can't handle.
-  lowerIntrinsics(F);
-  
-  // Output all floating point constants that cannot be printed accurately.
-  printFloatingPointConstants(F);
-  
-  printFunction(F);
-  return false;
 }
 
 const char *

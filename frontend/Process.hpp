@@ -28,6 +28,7 @@ protected:
   std::string fctName;
   Function* mainFct;
   std::vector<Event*> events;
+  std::vector<Function*> usedFunctions;
 
 public:
   Process(IRModule* mod, Function* fct, std::string name, std::string fctName);
@@ -38,6 +39,9 @@ public:
   void addEvent(Event* ev);
   void printIR(SCCFactory* sccfactory);
   void printElab(int sep, std::string prefix);
+  std::vector<Function*>* getUsedFunctions();
+  void addUsedFunction(Function* fct);
+  bool isFunctionUsed(Function* fct);
 };
 
 #endif

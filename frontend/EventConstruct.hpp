@@ -7,7 +7,6 @@
 #include "SCConstruct.hpp"
 
 using namespace llvm;
-using namespace std;
 
 struct Event;
 
@@ -18,7 +17,7 @@ public:
   EventConstruct(Event* e);
   void setWaitedEvent(Event* e);
   Event* getWaitedEvent();
-  string toString();
+  std::string toString();
 };
 
 #endif

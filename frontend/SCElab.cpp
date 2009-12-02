@@ -49,8 +49,12 @@ SCElab::addProcess(IRModule* mod, sc_core::sc_process_b* process)
   string processName = moduleName + "::" + mainFctName;
   Function* mainFct = this->llvmMod->getFunction(mainFctName);
 
+//   Function* fct;
+//   const std::vector<const Type*> argsType;
+//   FunctionType* FT = FunctionType::get(Type::getVoidTy(getGlobalContext()), argsType, false);
+
   Process* p = new Process(mod, mainFct, processName, mainFctName);
-  TRACE_2("Add (sc_process_b) " << process << " -> (Process) " << p << "\n");
+  TRACE_2("Add (sc_process_b) " << process << " -> (Process) " << p << " ; Fonction : " << mainFctName << " " << mainFct << "\n");
 
   mod->addProcess(p);
   this->processes.push_back(p);
@@ -138,9 +142,6 @@ SCElab::getProcesses()
 {
   return &this->processes;
 }
-
-
-
 
 sc_core::sc_module*
 SCElab::getSCModule(IRModule* irmod)

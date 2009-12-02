@@ -29,7 +29,7 @@ namespace llvm {
 
   };
   
-  extern Target TheSimpleBackendTarget;
+  //  extern Target TheSimpleBackendTarget;
   
 } // End llvm namespace
 

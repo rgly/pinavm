@@ -4,5 +4,8 @@ config.mk
 config.sh
 config.status
 config.log
+configure.out
 configure
 autom4te.cache
+*.d
+*.so
