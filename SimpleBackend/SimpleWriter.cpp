@@ -4,6 +4,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Instructions.h"
+#include "llvm/Support/raw_ostream.h"
 
 #include "SimpleWriter.h"
 #include "SCConstruct.hpp"
@@ -19,15 +20,17 @@
 
 static std::stringstream ErrorMsg("");
 
-static void triggerError()
+static void triggerError(formatted_raw_ostream & Out)
 {
+	Out.flush();
+	delete &Out;
 	llvm_report_error(ErrorMsg.str());
 }
 
-static void triggerError(std::string msg)
+static void triggerError(formatted_raw_ostream & Out, std::string msg)
 {
 	ErrorMsg << msg;
-	triggerError();
+	triggerError(Out);
 }
 
 /***************************************************************************
@@ -180,7 +183,7 @@ raw_ostream &
 		return Out << "long double ";
 
 	case Type::VectorTyID:{
-			triggerError("NYI : Vector type");
+			triggerError(Out, "NYI : Vector type");
 			const VectorType *VTy = cast < VectorType > (Ty);
 			return printSimpleType(Out, VTy->getElementType(),
 					       isSigned,
@@ -233,7 +236,7 @@ std::ostream &
 		return Out << "long double ";
 
 	case Type::VectorTyID:{
-			triggerError("NYI : Vector type");
+			triggerError(this->Out, "NYI : Vector type");
 			const VectorType *VTy = cast < VectorType > (Ty);
 			return printSimpleType(Out, VTy->getElementType(),
 					       isSigned,
@@ -279,7 +282,7 @@ raw_ostream &
 			ErrorMsg <<
 			    "NYI : use of complex type : FunctionTy : " <<
 			    NameSoFar;
-			triggerError();
+			triggerError(Out);
 
 			const FunctionType *FTy =
 			    cast < FunctionType > (Ty);
@@ -377,7 +380,7 @@ raw_ostream &
 			ErrorMsg <<
 			    "NYI : use of complex type : ArrayTy : " <<
 			    NameSoFar;
-			triggerError();
+			triggerError(Out);
 
 			const ArrayType *ATy = cast < ArrayType > (Ty);
 			unsigned NumElements = ATy->getNumElements();
@@ -395,7 +398,7 @@ raw_ostream &
 			ErrorMsg <<
 			    "NYI : use of complex type : OpaqueTy : " <<
 			    NameSoFar;
-			triggerError();
+			triggerError(Out);
 
 			std::string TyName =
 			    "struct opaque_" + itostr(OpaqueCounter++);
@@ -435,10 +438,8 @@ std::ostream &
 
 	switch (Ty->getTypeID()) {
 	case Type::FunctionTyID:{
-			ErrorMsg <<
-			    "NYI : use of complex type : FunctionTy : " <<
-			    NameSoFar;
-			triggerError();
+			ErrorMsg << "NYI : use of complex type : FunctionTy : " << NameSoFar;
+			triggerError(this->Out);
 
 			const FunctionType *FTy =
 			    cast < FunctionType > (Ty);
@@ -537,7 +538,7 @@ std::ostream &
 			ErrorMsg <<
 			    "NYI : use of complex type : ArrayTy : " <<
 			    NameSoFar;
-			triggerError();
+			triggerError(this->Out);
 
 			const ArrayType *ATy = cast < ArrayType > (Ty);
 			unsigned NumElements = ATy->getNumElements();
@@ -555,7 +556,7 @@ std::ostream &
 			ErrorMsg <<
 			    "NYI : use of complex type : OpaqueTy : " <<
 			    NameSoFar;
-			triggerError();
+			triggerError(this->Out);
 
 			std::string TyName =
 			    "struct opaque_" + itostr(OpaqueCounter++);
@@ -1515,7 +1516,7 @@ void SimpleWriter::writeInstComputationInline(Instruction & I)
 /// isAddressExposed - Return true if the specified value's name needs to
 /// have its address taken in order to get a  value of the correct type.
 /// This happens for global variables, byval parameters, and direct allocas.
-bool SimpleWriter::isAddressExposed(const Value * V) const const
+bool SimpleWriter::isAddressExposed(const Value * V) const
 {
 	if (const Argument * A = dyn_cast < Argument > (V))
 		return ByValParams.count(A);
@@ -2085,11 +2086,11 @@ void SimpleWriter::printFunctionSignature(const Function * F,
 //   //   if (F->hasDLLExportLinkage()) Out << "__declspec(dllexport) ";  
 //   switch (F->getCallingConv()) {
 //   case CallingConv::X86_StdCall:
-//     triggerError("NYI : callingconv (stcall here)");
+//     triggerError(Out, "NYI : callingconv (stcall here)");
 //     Out << "__attribute__((stdcall)) ";
 //     break;
 //   case CallingConv::X86_FastCall:
-//     triggerError("NYI : callingconv (fastcall here)");
+//     triggerError(Out, "NYI : callingconv (fastcall here)");
 //     Out << "__attribute__((fastcall)) ";
 //     break;
 //   default:
@@ -2101,7 +2102,7 @@ void SimpleWriter::printFunctionSignature(const Function * F,
 //   const FunctionType *FT = cast<FunctionType>(F->getFunctionType());
 
 //   if (FT->isVarArg()) {
-//     triggerError("Error : not able to manage vararg functions\n");
+//     triggerError(Out, "Error : not able to manage vararg functions\n");
 //   }  
 
 //   //  std::stringstream FunctionInnards;
@@ -2143,7 +2144,7 @@ void SimpleWriter::printFunctionSignature(const Function * F,
 //       if (I->hasName() || !Prototype)
 //      ArgName = GetValueName(I);
 //       else {
-//      triggerError("ERROR : arg without name");
+//      triggerError(Out, "ERROR : arg without name");
 //      //           ArgName = "";
 //       }
 //       const Type *ArgTy = I->getType();
@@ -2312,7 +2313,7 @@ void SimpleWriter::printFunction(Function & F)
 
 	// If this is a struct return function, handle the result with magic.
 	if (isStructReturn) {
-		triggerError("NYI : function returning a struct.");
+		triggerError(Out, "NYI : function returning a struct.");
 		const Type *StructTy =
 		    cast < PointerType >
 		    (F.arg_begin()->getType())->getElementType();
@@ -2363,7 +2364,7 @@ void SimpleWriter::printFunction(Function & F)
 		// variable to hold the result of the BitCast. 
 		if (isFPIntBitCast(*I)) {
 			ErrorMsg << "NYI : bitcast ????";
-			triggerError();
+			triggerError(Out);
 			Out << "  llvmBitCastUnion " << GetValueName(&*I)
 			    << "__BITCAST_TEMPORARY;\n";
 			printedVar = true;
@@ -2953,7 +2954,7 @@ void SimpleWriter::visitCastInst(CastInst & I)
 void SimpleWriter::visitSelectInst(SelectInst & I)
 {
 	ErrorMsg << "NYI : SelectInst\n";
-	triggerError();
+	triggerError(Out);
 
 	Out << "((";
 	writeOperand(I.getCondition());
@@ -3385,7 +3386,7 @@ bool SimpleWriter::visitBuiltinCall(CallInst & I, Intrinsic::ID ID,
 //      handle communitivity
 void SimpleWriter::visitInlineAsm(CallInst & CI)
 {
-	triggerError("Cannot handle inline ASM\n");
+	triggerError(Out, "Cannot handle inline ASM\n");
 }
 
 void SimpleWriter::visitMallocInst(MallocInst & I)
@@ -3832,13 +3833,13 @@ bool SimpleWriter::runOnModule(Module & M)
 
 }
 
-void SimpleWriter::getAnalysisUsage(AnalysisUsage & AU) const const
+void SimpleWriter::getAnalysisUsage(AnalysisUsage & AU) const
 {
 	AU.addRequired < LoopInfo > ();
 	AU.setPreservesAll();
 }
 
-const char *SimpleWriter::getPassName() const const
+const char *SimpleWriter::getPassName() const
 {
 	return "Simple backend";
 }
