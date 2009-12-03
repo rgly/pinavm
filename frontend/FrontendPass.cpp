@@ -23,7 +23,7 @@ Frontend *FrontendPass::getFrontend()
 	return this->frontend;
 }
 
-void FrontendPass::getAnalysisUsage(AnalysisUsage & AU) const const
+void FrontendPass::getAnalysisUsage(AnalysisUsage & AU) const
 {
 	AU.setPreservesAll();
 }

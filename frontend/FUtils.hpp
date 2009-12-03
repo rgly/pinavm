@@ -5,18 +5,21 @@
 #include <string>
 
 class FUtils {
-      public:
-
-	template < class Element > inline static void
-	 deleteVector(std::vector < Element > *vec) {
+public:
+	static std::string tutos[];
+		
+	template < class Element >
+	inline static void
+	deleteVector(std::vector < Element > *vec) {
 		typename std::vector < Element >::iterator it;
 		while (!vec->empty()) {
 			Element e = *vec->begin();
-			 vec->erase(vec->begin());
+			vec->erase(vec->begin());
 			delete e;
 		}
 		//    delete vec; } static std::string tutos[];
+	}
 };
-
+	
 
 #endif

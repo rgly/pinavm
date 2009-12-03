@@ -1,8 +1,8 @@
 #include "SimpleBackendNameAllUsedStructsAndMergeFunctions.h"
 
 void
- SimpleBackendNameAllUsedStructsAndMergeFunctions::
-getAnalysisUsage(AnalysisUsage & AU) const const
+SimpleBackendNameAllUsedStructsAndMergeFunctions::
+getAnalysisUsage(AnalysisUsage & AU) const
 {
 	AU.addRequired < FindUsedTypes > ();
 }
@@ -109,7 +109,7 @@ runOnModule(Module & M)
 	return Changed;
 }
 
-const char *SimpleBackendNameAllUsedStructsAndMergeFunctions::getPassName() const const
+const char *SimpleBackendNameAllUsedStructsAndMergeFunctions::getPassName() const
 {
 	return "Simple backend type canonicalizer";
 }
