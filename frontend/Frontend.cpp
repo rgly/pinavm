@@ -78,6 +78,20 @@ void Frontend::printIR()
 	TRACE("\n");
 }
 
+void
+Frontend::fillGlobalVars(Instruction* inst)
+{
+	User::op_iterator opit = inst->op_begin();
+	User::op_iterator opend = inst->op_end();
+	for (; opit != opend; ++opit) {
+		Value* op = *opit;
+		if (isa<GlobalVariable>(op)) {
+			GlobalValue* opcast = dyn_cast<GlobalVariable>(op);
+			this->elab->addGlobalVariable(opcast);
+		}
+	}
+}
+
 bool Frontend::run()
 {
 	sc_core::sc_thread_handle thread_p;	// Pointer to thread process accessing.
@@ -92,12 +106,10 @@ bool Frontend::run()
 	    new std::vector < Function * >();
 
 	//------- Get modules and ports --------
-	vector < sc_core::sc_module * >modules =
-	    sc_core::sc_get_curr_simcontext()->get_module_registry()->
-	    m_module_vec;
+	vector < sc_core::sc_module * >modules = sc_core::sc_get_curr_simcontext()->get_module_registry()->m_module_vec;
 	vector < sc_core::sc_module * >::iterator modIt;
 
-	for (modIt = modules.begin(); modIt < modules.end(); modIt++) {
+	for (modIt = modules.begin(); modIt < modules.end(); ++modIt) {
 		sc_core::sc_module * mod = *modIt;
 
 		IRModule *m = this->elab->addModule(mod);
@@ -105,15 +117,14 @@ bool Frontend::run()
 		    mod->m_port_vec;
 
 		vector < sc_core::sc_port_base * >::iterator it;
-		for (it = ports->begin(); it < ports->end(); it++) {
+		for (it = ports->begin(); it < ports->end(); ++it) {
 			sc_core::sc_port_base * p = *it;
 			this->elab->addPort(m, p);
 		}
 	}
 
 	//------- Get processes and events --------
-	sc_core::sc_process_table * processes =
-	    sc_core::sc_get_curr_simcontext()->m_process_table;
+	sc_core::sc_process_table * processes = sc_core::sc_get_curr_simcontext()->m_process_table;
 	for (thread_p = processes->thread_q_head(); thread_p;
 	     thread_p = thread_p->next_exist()) {
 		sc_core::sc_process_b * theProcess = thread_p;
@@ -139,52 +150,32 @@ bool Frontend::run()
 	TRACE_1("Analyzing code\n");
 
 	// Walk through call graph and build intermediate representation
-	vector < Process * >::iterator processIt =
-	    this->elab->getProcesses()->begin();
-	vector < Process * >::iterator endIt =
-	    this->elab->getProcesses()->end();
+	vector < Process * >::iterator processIt = this->elab->getProcesses()->begin();
+	vector < Process * >::iterator endIt = this->elab->getProcesses()->end();
 
 	for (; processIt < endIt; processIt++) {
 		Process *proc = *processIt;
 		fctStack->push_back(proc->getMainFct());
+		proc->addUsedFunction(proc->getMainFct());
 		this->scjit->setCurrentProcess(proc);
 		while (!fctStack->empty()) {
 			Function *F = fctStack->back();
 			fctStack->pop_back();
-			TRACE_3("Parsing Function : " << F->
-				getNameStr() << "\n");
-			for (Function::iterator bb = F->begin(), be =
-			     F->end(); bb != be; ++bb) {
-				BasicBlock::iterator i = bb->begin(), ie =
-				    bb->end();
+			TRACE_3("Parsing Function : " << F->getNameStr() << "\n");
+			for (Function::iterator bb = F->begin(), be = F->end(); bb != be; ++bb) {
+				BasicBlock::iterator i = bb->begin(), ie = bb->end();
 				while (i != ie) {
-					CallInst *callInst =
-					    dyn_cast < CallInst > (&*i);
+					CallInst *callInst = dyn_cast < CallInst > (&*i);
 					if (callInst) {
-						if (!sccfactory->
-						    handle(F, &*bb,
-							   callInst)
-						    && !proc->
-						    isFunctionUsed(F)) {
-							TRACE_4
-							    ("Call not handled : "
-							     << callInst->
-							     getCalledFunction
-							     ()->
-							     getNameStr()
-							     << "\n");
-							fctStack->
-							    push_back
-							    (callInst->
-							     getCalledFunction
-							     ());
-							proc->
-							    addUsedFunction
-							    (F);
+						if (! sccfactory->handle(F, &*bb, callInst)) {
+							TRACE_4("Call not handled : " << callInst->getCalledFunction()->getNameStr() << "\n");
+							fctStack->push_back(callInst->getCalledFunction());
+							proc->addUsedFunction(F);
 						}
+					} else {
+						fillGlobalVars(&*i);
 					}
-					BasicBlock::iterator tmpend =
-					    bb->end();
+					BasicBlock::iterator tmpend = bb->end();
 					i++;
 				}
 			}

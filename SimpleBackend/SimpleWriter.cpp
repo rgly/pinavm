@@ -1,22 +1,20 @@
+#include <string>
 #include <map>
 
+#include "llvm/GlobalValue.h"
 #include "llvm/CallingConv.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Support/raw_ostream.h"
 
+#include "SCCFactory.hpp"
+#include "SCElab.h"
 #include "SimpleWriter.h"
 #include "SCConstruct.hpp"
 #include "Process.hpp"
 
-#define PRINT_DEBUG_MSG 1
-
-#if PRINT_DEBUG_MSG
-#define DEBUG_MSG(STREAMS) Out << STREAMS; std::cout << STREAMS
-#else
-#define DEBUG_MSG(STREAMS)
-#endif
+#include "config.h"
 
 static std::stringstream ErrorMsg("");
 
@@ -60,25 +58,25 @@ static bool isInlinableInst(const Instruction & I)
 	// Must be an expression, must be used exactly once.  If it is dead, we
 	// emit it inline where it would go.
 	if (I.getType() == Type::getVoidTy(I.getContext())
-	    || !I.hasOneUse() || isa < TerminatorInst > (I)
-	    || isa < CallInst > (I) || isa < PHINode > (I)
-	    || isa < LoadInst > (I) || isa < VAArgInst > (I)
-	    || isa < InsertElementInst > (I)
-	    || isa < InsertValueInst > (I))
+		|| !I.hasOneUse() || isa < TerminatorInst > (I)
+		|| isa < CallInst > (I) || isa < PHINode > (I)
+		|| isa < LoadInst > (I) || isa < VAArgInst > (I)
+		|| isa < InsertElementInst > (I)
+		|| isa < InsertValueInst > (I))
 		// Don't inline a load across a store or other bad things!
 		return false;
 
 	// Must not be used in inline asm, extractelement, or shufflevector.
 	if (I.hasOneUse()) {
 		const Instruction & User =
-		    cast < Instruction > (*I.use_back());
+			cast < Instruction > (*I.use_back());
 		if (isInlineAsm(User) || isa < ExtractElementInst > (User)
-		    || isa < ShuffleVectorInst > (User))
+			|| isa < ShuffleVectorInst > (User))
 			return false;
 	}
 	// Only inline instruction it if it's use is in the same BB as the inst.
 	return I.getParent() == cast < Instruction >
-	    (I.use_back())->getParent();
+		(I.use_back())->getParent();
 }
 
 // isDirectAlloca - Define fixed sized allocas in the entry block as direct
@@ -93,7 +91,7 @@ static const AllocaInst *isDirectAlloca(const Value * V)
 	if (AI->isArrayAllocation())
 		return 0;	// FIXME: we can also inline fixed size array allocas!
 	if (AI->getParent() !=
-	    &AI->getParent()->getParent()->getEntryBlock())
+		&AI->getParent()->getParent()->getEntryBlock())
 		return 0;
 	return AI;
 }
@@ -108,19 +106,19 @@ static const AllocaInst *isDirectAlloca(const Value * V)
 /// print it as "Struct (*)(...)", for struct return functions.
 void SimpleWriter::
 printStructReturnPointerFunctionType(formatted_raw_ostream & Out,
-				     const AttrListPtr & PAL,
-				     const PointerType * TheTy)
+				const AttrListPtr & PAL,
+				const PointerType * TheTy)
 {
 	const FunctionType *FTy =
-	    cast < FunctionType > (TheTy->getElementType());
+		cast < FunctionType > (TheTy->getElementType());
 	std::stringstream FunctionInnards;
 	FunctionInnards << " (*) (";
 	bool PrintedType = false;
 
 	FunctionType::param_iterator I = FTy->param_begin(), E =
-	    FTy->param_end();
+		FTy->param_end();
 	const Type *RetTy =
-	    cast < PointerType > (I->get())->getElementType();
+		cast < PointerType > (I->get())->getElementType();
 	unsigned Idx = 1;
 	for (++I, ++Idx; I != E; ++I, ++Idx) {
 		if (PrintedType)
@@ -129,12 +127,12 @@ printStructReturnPointerFunctionType(formatted_raw_ostream & Out,
 		if (PAL.paramHasAttr(Idx, Attribute::ByVal)) {
 			assert(isa < PointerType > (ArgTy));
 			ArgTy =
-			    cast < PointerType > (ArgTy)->getElementType();
+				cast < PointerType > (ArgTy)->getElementType();
 		}
 		printType(FunctionInnards, ArgTy,
-			  /*isSigned= */ PAL.paramHasAttr(Idx,
-							  Attribute::SExt),
-			  "");
+			/*isSigned= */ PAL.paramHasAttr(Idx,
+							Attribute::SExt),
+			"");
 		PrintedType = true;
 	}
 	if (FTy->isVarArg()) {
@@ -146,18 +144,18 @@ printStructReturnPointerFunctionType(formatted_raw_ostream & Out,
 	FunctionInnards << ')';
 	std::string tstr = FunctionInnards.str();
 	printType(Out, RetTy,
-		  /*isSigned= */ PAL.paramHasAttr(0, Attribute::SExt),
-		  tstr);
+		/*isSigned= */ PAL.paramHasAttr(0, Attribute::SExt),
+		tstr);
 }
 
 raw_ostream &
-    SimpleWriter::printSimpleType(formatted_raw_ostream & Out,
-				  const Type * Ty, bool isSigned,
-				  const std::string & NameSoFar)
+SimpleWriter::printSimpleType(formatted_raw_ostream & Out,
+			const Type * Ty, bool isSigned,
+			const std::string & NameSoFar)
 {
 	assert((Ty->isPrimitiveType() || Ty->isInteger()
-		|| isa < VectorType > (Ty))
-	       && "Invalid type for printSimpleType");
+			|| isa < VectorType > (Ty))
+		&& "Invalid type for printSimpleType");
 
 	if (NameSoFar != "")
 		Out << NameSoFar << " : ";
@@ -166,11 +164,11 @@ raw_ostream &
 	case Type::VoidTyID:
 		return Out << "void ";
 	case Type::IntegerTyID:{
-			unsigned NumBits =
-			    cast < IntegerType > (Ty)->getBitWidth();
-			return Out << (isSigned ? " sint" : " uint") << "["
-			    << NumBits << "]";
-		}
+		unsigned NumBits =
+			cast < IntegerType > (Ty)->getBitWidth();
+		return Out << (isSigned ? " sint" : " uint") << "["
+			   << NumBits << "]";
+	}
 	case Type::FloatTyID:
 		return Out << "float ";
 	case Type::DoubleTyID:
@@ -183,17 +181,17 @@ raw_ostream &
 		return Out << "long double ";
 
 	case Type::VectorTyID:{
-			triggerError(Out, "NYI : Vector type");
-			const VectorType *VTy = cast < VectorType > (Ty);
-			return printSimpleType(Out, VTy->getElementType(),
-					       isSigned,
-					       " __attribute__((vector_size("
-					       +
-					       utostr(TD->
-						      getTypeAllocSize
-						      (VTy)) + " ))) " +
-					       NameSoFar);
-		}
+		triggerError(Out, "NYI : Vector type");
+		const VectorType *VTy = cast < VectorType > (Ty);
+		return printSimpleType(Out, VTy->getElementType(),
+				isSigned,
+				" __attribute__((vector_size("
+				+
+				utostr(TD->
+					getTypeAllocSize
+					(VTy)) + " ))) " +
+				NameSoFar);
+	}
 
 	default:
 #ifndef NDEBUG
@@ -204,13 +202,13 @@ raw_ostream &
 }
 
 std::ostream &
-    SimpleWriter::printSimpleType(std::ostream & Out, const Type * Ty,
-				  bool isSigned,
-				  const std::string & NameSoFar)
+SimpleWriter::printSimpleType(std::ostream & Out, const Type * Ty,
+			bool isSigned,
+			const std::string & NameSoFar)
 {
 	assert((Ty->isPrimitiveType() || Ty->isInteger()
-		|| isa < VectorType > (Ty))
-	       && "Invalid type for printSimpleType");
+			|| isa < VectorType > (Ty))
+		&& "Invalid type for printSimpleType");
 
 	if (NameSoFar != "")
 		Out << NameSoFar << " : ";
@@ -219,11 +217,11 @@ std::ostream &
 	case Type::VoidTyID:
 		return Out << "void ";
 	case Type::IntegerTyID:{
-			unsigned NumBits =
-			    cast < IntegerType > (Ty)->getBitWidth();
-			return Out << (isSigned ? "sint" : "uint") << "["
-			    << NumBits << "]";
-		}
+		unsigned NumBits =
+			cast < IntegerType > (Ty)->getBitWidth();
+		return Out << (isSigned ? "sint" : "uint") << "["
+			   << NumBits << "]";
+	}
 	case Type::FloatTyID:
 		return Out << "float ";
 	case Type::DoubleTyID:
@@ -236,16 +234,16 @@ std::ostream &
 		return Out << "long double ";
 
 	case Type::VectorTyID:{
-			triggerError(this->Out, "NYI : Vector type");
-			const VectorType *VTy = cast < VectorType > (Ty);
-			return printSimpleType(Out, VTy->getElementType(),
-					       isSigned,
-					       " __attribute__((vector_size("
-					       +
-					       utostr(TD->
-						      getTypeAllocSize
-						      (VTy)) + " ))) ");
-		}
+		triggerError(this->Out, "NYI : Vector type");
+		const VectorType *VTy = cast < VectorType > (Ty);
+		return printSimpleType(Out, VTy->getElementType(),
+				isSigned,
+				" __attribute__((vector_size("
+				+
+				utostr(TD->
+					getTypeAllocSize
+					(VTy)) + " ))) ");
+	}
 
 	default:
 #ifndef NDEBUG
@@ -259,153 +257,152 @@ std::ostream &
 // declaration.
 //
 raw_ostream &
-    SimpleWriter::printType(formatted_raw_ostream & Out,
-			    const Type * Ty,
-			    bool isSigned, const std::string & NameSoFar,
-			    bool IgnoreName, const AttrListPtr & PAL)
+SimpleWriter::printType(formatted_raw_ostream & Out,
+			const Type * Ty,
+			bool isSigned, const std::string & NameSoFar,
+			bool IgnoreName, const AttrListPtr & PAL)
 {
 	if (Ty->isPrimitiveType() || Ty->isInteger()
-	    || isa < VectorType > (Ty)) {
+		|| isa < VectorType > (Ty)) {
 		printSimpleType(Out, Ty, isSigned, NameSoFar);
 		return Out;
 	}
 	// Check to see if the type is named.
 	if (!IgnoreName || isa < OpaqueType > (Ty)) {
 		std::map < const Type *, std::string >::iterator I =
-		    TypeNames.find(Ty);
+			TypeNames.find(Ty);
 		if (I != TypeNames.end())
 			return Out << I->second << ' ' << NameSoFar;
 	}
 
 	switch (Ty->getTypeID()) {
 	case Type::FunctionTyID:{
-			ErrorMsg <<
-			    "NYI : use of complex type : FunctionTy : " <<
-			    NameSoFar;
-			triggerError(Out);
+		ErrorMsg <<
+			"NYI : use of complex type : FunctionTy : " <<
+			NameSoFar;
+		triggerError(Out);
 
-			const FunctionType *FTy =
-			    cast < FunctionType > (Ty);
-			std::stringstream FunctionInnards;
-			FunctionInnards << " (" << NameSoFar << ") (";
-			unsigned Idx = 1;
-			for (FunctionType::param_iterator I =
+		const FunctionType *FTy =
+			cast < FunctionType > (Ty);
+		std::stringstream FunctionInnards;
+		FunctionInnards << " (" << NameSoFar << ") (";
+		unsigned Idx = 1;
+		for (FunctionType::param_iterator I =
 			     FTy->param_begin(), E = FTy->param_end();
-			     I != E; ++I) {
-				const Type *ArgTy = *I;
-				if (PAL.
-				    paramHasAttr(Idx, Attribute::ByVal)) {
-					assert(isa < PointerType >
-					       (ArgTy));
-					ArgTy =
-					    cast < PointerType >
-					    (ArgTy)->getElementType();
-				}
-				if (I != FTy->param_begin())
-					FunctionInnards << ", ";
-				printType(FunctionInnards, ArgTy,
-					  /*isSigned= */
-					  PAL.paramHasAttr(Idx,
-							   Attribute::
-							   SExt), "");
-				++Idx;
+		     I != E; ++I) {
+			const Type *ArgTy = *I;
+			if (PAL.
+				paramHasAttr(Idx, Attribute::ByVal)) {
+				assert(isa < PointerType >
+					(ArgTy));
+				ArgTy =
+					cast < PointerType >
+					(ArgTy)->getElementType();
 			}
-			if (FTy->isVarArg()) {
-				if (FTy->getNumParams())
-					FunctionInnards << ", ...";
-			} else if (!FTy->getNumParams()) {
-				FunctionInnards << "void";
-			}
-			FunctionInnards << ')';
-			std::string tstr = FunctionInnards.str();
-			printType(Out, FTy->getReturnType(),
-				  /*isSigned= */ PAL.paramHasAttr(0,
-								  Attribute::
-								  SExt),
-				  tstr);
-			return Out;
+			if (I != FTy->param_begin())
+				FunctionInnards << ", ";
+			printType(FunctionInnards, ArgTy,
+				/*isSigned= */
+				PAL.paramHasAttr(Idx,
+						Attribute::
+						SExt), "");
+			++Idx;
 		}
+		if (FTy->isVarArg()) {
+			if (FTy->getNumParams())
+				FunctionInnards << ", ...";
+		} else if (!FTy->getNumParams()) {
+			FunctionInnards << "void";
+		}
+		FunctionInnards << ')';
+		std::string tstr = FunctionInnards.str();
+		printType(Out, FTy->getReturnType(),
+			/*isSigned= */ PAL.paramHasAttr(0,
+							Attribute::
+							SExt),
+			tstr);
+		return Out;
+	}
 	case Type::StructTyID:{
-			const StructType *STy = cast < StructType > (Ty);
-			DEBUG_MSG
-			    ("/**** Handling StructTy type in printType() ****/\n");
+		const StructType *STy = cast < StructType > (Ty);
+		TRACE_4("/**** Handling StructTy type in printType() ****/\n");
 //     Out << NameSoFar + " {\n";
-			unsigned Idx = 0;
-			bool fieldPrinted = false;
-			for (StructType::element_iterator I =
+		unsigned Idx = 0;
+		bool fieldPrinted = false;
+		for (StructType::element_iterator I =
 			     STy->element_begin(), E = STy->element_end();
-			     I != E; ++I) {
-				DEBUG_MSG
-				    ("\n/**** Dumping struct element in printType() ****/\n");
-				if (fieldPrinted)
-					Out << " , ";
-				else
-					Out << " ";
-				printType(Out, *I, false,
-					  NameSoFar + "-field" +
-					  utostr(Idx++));
+		     I != E; ++I) {
+			TRACE_4
+				("\n/**** Dumping struct element in printType() ****/\n");
+			if (fieldPrinted)
+				Out << " , ";
+			else
+				Out << " ";
+			printType(Out, *I, false,
+				NameSoFar + "-field" +
+				utostr(Idx++));
 //       Out << ";\n";
-				fieldPrinted = true;
-			}
-			DEBUG_MSG
-			    ("\n/**** struct elements printed ****/\n");
+			fieldPrinted = true;
+		}
+		TRACE_4
+			("\n/**** struct elements printed ****/\n");
 //     Out << '}';
 //     if (STy->isPacked())
 //       Out << " __attribute__ ((packed))";
-			return Out;
-		}
+		return Out;
+	}
 
 	case Type::PointerTyID:{
-			const PointerType *PTy = cast < PointerType > (Ty);
-			std::string ptrName = NameSoFar;
+		const PointerType *PTy = cast < PointerType > (Ty);
+		std::string ptrName = NameSoFar;
 
-			DEBUG_MSG
-			    ("/**** Handling PointerTy type in printType() ****/\n");
+		TRACE_4
+			("/**** Handling PointerTy type in printType() ****/\n");
 
-			if (isa < ArrayType > (PTy->getElementType()) ||
-			    isa < VectorType > (PTy->getElementType()))
-				ptrName = "(" + ptrName + ")";
+		if (isa < ArrayType > (PTy->getElementType()) ||
+			isa < VectorType > (PTy->getElementType()))
+			ptrName = "(" + ptrName + ")";
 
-			if (!PAL.isEmpty())
-				// Must be a function ptr cast!
-				return printType(Out,
-						 PTy->getElementType(),
-						 false, ptrName, true,
-						 PAL);
-			return printType(Out, PTy->getElementType(), false,
-					 ptrName);
-		}
+		if (!PAL.isEmpty())
+			// Must be a function ptr cast!
+			return printType(Out,
+					PTy->getElementType(),
+					false, ptrName, true,
+					PAL);
+		return printType(Out, PTy->getElementType(), false,
+				ptrName);
+	}
 
 	case Type::ArrayTyID:{
-			ErrorMsg <<
-			    "NYI : use of complex type : ArrayTy : " <<
-			    NameSoFar;
-			triggerError(Out);
+		ErrorMsg <<
+			"NYI : use of complex type : ArrayTy : " <<
+			NameSoFar;
+		triggerError(Out);
 
-			const ArrayType *ATy = cast < ArrayType > (Ty);
-			unsigned NumElements = ATy->getNumElements();
-			if (NumElements == 0)
-				NumElements = 1;
-			// Arrays are wrapped in structs to allow them to have normal
-			// value semantics (avoiding the array "decay").
-			Out << NameSoFar << " { ";
-			printType(Out, ATy->getElementType(), false,
-				  "array[" + utostr(NumElements) + "]");
-			return Out << "; }";
-		}
+		const ArrayType *ATy = cast < ArrayType > (Ty);
+		unsigned NumElements = ATy->getNumElements();
+		if (NumElements == 0)
+			NumElements = 1;
+		// Arrays are wrapped in structs to allow them to have normal
+		// value semantics (avoiding the array "decay").
+		Out << NameSoFar << " { ";
+		printType(Out, ATy->getElementType(), false,
+			"array[" + utostr(NumElements) + "]");
+		return Out << "; }";
+	}
 
 	case Type::OpaqueTyID:{
-			ErrorMsg <<
-			    "NYI : use of complex type : OpaqueTy : " <<
-			    NameSoFar;
-			triggerError(Out);
+		ErrorMsg <<
+			"NYI : use of complex type : OpaqueTy : " <<
+			NameSoFar;
+		triggerError(Out);
 
-			std::string TyName =
-			    "struct opaque_" + itostr(OpaqueCounter++);
-			assert(TypeNames.find(Ty) == TypeNames.end());
-			TypeNames[Ty] = TyName;
-			return Out << TyName << ' ' << NameSoFar;
-		}
+		std::string TyName =
+			"struct opaque_" + itostr(OpaqueCounter++);
+		assert(TypeNames.find(Ty) == TypeNames.end());
+		TypeNames[Ty] = TyName;
+		return Out << TyName << ' ' << NameSoFar;
+	}
 	default:
 		llvm_unreachable("Unhandled case in getTypeProps!");
 	}
@@ -418,152 +415,152 @@ raw_ostream &
 // declaration.
 //
 std::ostream &
-    SimpleWriter::printType(std::ostream & Out,
-			    const Type * Ty,
-			    bool isSigned, const std::string & NameSoFar,
-			    bool IgnoreName, const AttrListPtr & PAL)
+SimpleWriter::printType(std::ostream & Out,
+			const Type * Ty,
+			bool isSigned, const std::string & NameSoFar,
+			bool IgnoreName, const AttrListPtr & PAL)
 {
 	if (Ty->isPrimitiveType() || Ty->isInteger()
-	    || isa < VectorType > (Ty)) {
+		|| isa < VectorType > (Ty)) {
 		printSimpleType(Out, Ty, isSigned, NameSoFar);
 		return Out;
 	}
 	// Check to see if the type is named.
 	if (!IgnoreName || isa < OpaqueType > (Ty)) {
 		std::map < const Type *, std::string >::iterator I =
-		    TypeNames.find(Ty);
+			TypeNames.find(Ty);
 		if (I != TypeNames.end())
 			return Out << I->second << ' ' << NameSoFar;
 	}
 
 	switch (Ty->getTypeID()) {
 	case Type::FunctionTyID:{
-			ErrorMsg << "NYI : use of complex type : FunctionTy : " << NameSoFar;
-			triggerError(this->Out);
+		ErrorMsg << "NYI : use of complex type : FunctionTy : " << NameSoFar;
+		triggerError(this->Out);
 
-			const FunctionType *FTy =
-			    cast < FunctionType > (Ty);
-			std::stringstream FunctionInnards;
-			FunctionInnards << " (" << NameSoFar << ") (";
-			unsigned Idx = 1;
-			for (FunctionType::param_iterator I =
+		const FunctionType *FTy =
+			cast < FunctionType > (Ty);
+		std::stringstream FunctionInnards;
+		FunctionInnards << " (" << NameSoFar << ") (";
+		unsigned Idx = 1;
+		for (FunctionType::param_iterator I =
 			     FTy->param_begin(), E = FTy->param_end();
-			     I != E; ++I) {
-				const Type *ArgTy = *I;
-				if (PAL.
-				    paramHasAttr(Idx, Attribute::ByVal)) {
-					assert(isa < PointerType >
-					       (ArgTy));
-					ArgTy =
-					    cast < PointerType >
-					    (ArgTy)->getElementType();
-				}
-				if (I != FTy->param_begin())
-					FunctionInnards << ", ";
-				printType(FunctionInnards, ArgTy,
-					  /*isSigned= */
-					  PAL.paramHasAttr(Idx,
-							   Attribute::
-							   SExt), "");
-				++Idx;
+		     I != E; ++I) {
+			const Type *ArgTy = *I;
+			if (PAL.
+				paramHasAttr(Idx, Attribute::ByVal)) {
+				assert(isa < PointerType >
+					(ArgTy));
+				ArgTy =
+					cast < PointerType >
+					(ArgTy)->getElementType();
 			}
-			if (FTy->isVarArg()) {
-				if (FTy->getNumParams())
-					FunctionInnards << ", ...";
-			} else if (!FTy->getNumParams()) {
-				FunctionInnards << "void";
-			}
-			FunctionInnards << ')';
-			std::string tstr = FunctionInnards.str();
-			printType(Out, FTy->getReturnType(),
-				  /*isSigned= */ PAL.paramHasAttr(0,
-								  Attribute::
-								  SExt),
-				  tstr);
-			return Out;
+			if (I != FTy->param_begin())
+				FunctionInnards << ", ";
+			printType(FunctionInnards, ArgTy,
+				/*isSigned= */
+				PAL.paramHasAttr(Idx,
+						Attribute::
+						SExt), "");
+			++Idx;
 		}
+		if (FTy->isVarArg()) {
+			if (FTy->getNumParams())
+				FunctionInnards << ", ...";
+		} else if (!FTy->getNumParams()) {
+			FunctionInnards << "void";
+		}
+		FunctionInnards << ')';
+		std::string tstr = FunctionInnards.str();
+		printType(Out, FTy->getReturnType(),
+			/*isSigned= */ PAL.paramHasAttr(0,
+							Attribute::
+							SExt),
+			tstr);
+		return Out;
+	}
 	case Type::StructTyID:{
-			const StructType *STy = cast < StructType > (Ty);
-			DEBUG_MSG
-			    ("/**** Handling StructTy type in printType() ****/\n");
+		const StructType *STy = cast < StructType > (Ty);
+		TRACE_4
+			("/**** Handling StructTy type in printType() ****/\n");
 //     Out << NameSoFar + " {\n";
-			unsigned Idx = 0;
-			bool fieldPrinted = false;
-			for (StructType::element_iterator I =
+		unsigned Idx = 0;
+		bool fieldPrinted = false;
+		for (StructType::element_iterator I =
 			     STy->element_begin(), E = STy->element_end();
-			     I != E; ++I) {
-				DEBUG_MSG
-				    ("\n/**** dump struct element ****/\n");
-				if (fieldPrinted)
-					Out << " , ";
-				else
-					Out << " ";
-				printType(Out, *I, false,
-					  NameSoFar + "-field" +
-					  utostr(Idx++));
+		     I != E; ++I) {
+			TRACE_4
+				("\n/**** dump struct element ****/\n");
+			if (fieldPrinted)
+				Out << " , ";
+			else
+				Out << " ";
+			printType(Out, *I, false,
+				NameSoFar + "-field" +
+				utostr(Idx++));
 //       Out << ";\n";
-				fieldPrinted = true;
-			}
-			DEBUG_MSG
-			    ("\n/**** struct elements printed ****/\n");
+			fieldPrinted = true;
+		}
+		TRACE_4
+			("\n/**** struct elements printed ****/\n");
 
 //     Out << '}';
 //     if (STy->isPacked())
 //       Out << " __attribute__ ((packed))";
-			return Out;
-		}
+		return Out;
+	}
 
 	case Type::PointerTyID:{
-			const PointerType *PTy = cast < PointerType > (Ty);
-			std::string ptrName = "*" + NameSoFar;
+		const PointerType *PTy = cast < PointerType > (Ty);
+		std::string ptrName = "*" + NameSoFar;
 
-			DEBUG_MSG
-			    ("/**** Handling PointerTy type in printType() ****/\n");
+		TRACE_4
+			("/**** Handling PointerTy type in printType() ****/\n");
 
-			if (isa < ArrayType > (PTy->getElementType()) ||
-			    isa < VectorType > (PTy->getElementType()))
-				ptrName = "(" + ptrName + ")";
+		if (isa < ArrayType > (PTy->getElementType()) ||
+			isa < VectorType > (PTy->getElementType()))
+			ptrName = "(" + ptrName + ")";
 
-			if (!PAL.isEmpty())
-				// Must be a function ptr cast!
-				return printType(Out,
-						 PTy->getElementType(),
-						 false, ptrName, true,
-						 PAL);
-			return printType(Out, PTy->getElementType(), false,
-					 ptrName);
-		}
+		if (!PAL.isEmpty())
+			// Must be a function ptr cast!
+			return printType(Out,
+					PTy->getElementType(),
+					false, ptrName, true,
+					PAL);
+		return printType(Out, PTy->getElementType(), false,
+				ptrName);
+	}
 
 	case Type::ArrayTyID:{
-			ErrorMsg <<
-			    "NYI : use of complex type : ArrayTy : " <<
-			    NameSoFar;
-			triggerError(this->Out);
+		ErrorMsg <<
+			"NYI : use of complex type : ArrayTy : " <<
+			NameSoFar;
+		triggerError(this->Out);
 
-			const ArrayType *ATy = cast < ArrayType > (Ty);
-			unsigned NumElements = ATy->getNumElements();
-			if (NumElements == 0)
-				NumElements = 1;
-			// Arrays are wrapped in structs to allow them to have normal
-			// value semantics (avoiding the array "decay").
-			Out << NameSoFar << " { ";
-			printType(Out, ATy->getElementType(), false,
-				  "array[" + utostr(NumElements) + "]");
-			return Out << "; }";
-		}
+		const ArrayType *ATy = cast < ArrayType > (Ty);
+		unsigned NumElements = ATy->getNumElements();
+		if (NumElements == 0)
+			NumElements = 1;
+		// Arrays are wrapped in structs to allow them to have normal
+		// value semantics (avoiding the array "decay").
+		Out << NameSoFar << " { ";
+		printType(Out, ATy->getElementType(), false,
+			"array[" + utostr(NumElements) + "]");
+		return Out << "; }";
+	}
 
 	case Type::OpaqueTyID:{
-			ErrorMsg <<
-			    "NYI : use of complex type : OpaqueTy : " <<
-			    NameSoFar;
-			triggerError(this->Out);
+		ErrorMsg <<
+			"NYI : use of complex type : OpaqueTy : " <<
+			NameSoFar;
+		triggerError(this->Out);
 
-			std::string TyName =
-			    "struct opaque_" + itostr(OpaqueCounter++);
-			assert(TypeNames.find(Ty) == TypeNames.end());
-			TypeNames[Ty] = TyName;
-			return Out << TyName << ' ' << NameSoFar;
-		}
+		std::string TyName =
+			"struct opaque_" + itostr(OpaqueCounter++);
+		assert(TypeNames.find(Ty) == TypeNames.end());
+		TypeNames[Ty] = TyName;
+		return Out << TyName << ' ' << NameSoFar;
+	}
 	default:
 		llvm_unreachable("Unhandled case in getTypeProps!");
 	}
@@ -573,7 +570,7 @@ std::ostream &
 
 
 void
- SimpleWriter::printConstantArray(ConstantArray * CPA, bool Static)
+SimpleWriter::printConstantArray(ConstantArray * CPA, bool Static)
 {
 
 	// As a special case, print the array as a string if it is an array of
@@ -581,12 +578,12 @@ void
 	//
 	const Type *ETy = CPA->getType()->getElementType();
 	bool isString = (ETy == Type::getInt8Ty(CPA->getContext()) ||
-			 ETy == Type::getInt8Ty(CPA->getContext()));
+			ETy == Type::getInt8Ty(CPA->getContext()));
 
 	// Make sure the last character is a null char, as automatically added by C
 	if (isString && (CPA->getNumOperands() == 0 ||
-			 !cast < Constant >
-			 (*(CPA->op_end() - 1))->isNullValue()))
+				!cast < Constant >
+				(*(CPA->op_end() - 1))->isNullValue()))
 		isString = false;
 
 	if (isString) {
@@ -598,8 +595,8 @@ void
 		for (unsigned i = 0, e = CPA->getNumOperands() - 1; i != e;
 		     ++i) {
 			unsigned char C =
-			    cast < ConstantInt >
-			    (CPA->getOperand(i))->getZExtValue();
+				cast < ConstantInt >
+				(CPA->getOperand(i))->getZExtValue();
 
 			// Print it out literally if it is a printable character.  The only thing
 			// to be careful about is when the last letter output was a hex escape
@@ -640,15 +637,15 @@ void
 				default:
 					Out << "\\x";
 					Out << (char) ((C / 16 < 10)
-						       ? (C / 16 +
-							  '0') : (C / 16 -
-								  10 +
-								  'A'));
+						? (C / 16 +
+							'0') : (C / 16 -
+								10 +
+								'A'));
 					Out << (char) (((C & 15) < 10)
-						       ? ((C & 15) +
-							  '0') : ((C & 15)
-								  - 10 +
-								  'A'));
+						? ((C & 15) +
+							'0') : ((C & 15)
+								- 10 +
+								'A'));
 					LastWasHex = true;
 					break;
 				}
@@ -660,13 +657,13 @@ void
 		if (CPA->getNumOperands()) {
 			Out << ' ';
 			printConstant(cast < Constant >
-				      (CPA->getOperand(0)), Static);
+				(CPA->getOperand(0)), Static);
 			for (unsigned i = 1, e = CPA->getNumOperands();
 			     i != e; ++i) {
 				Out << ", ";
 				printConstant(cast < Constant >
-					      (CPA->getOperand(i)),
-					      Static);
+					(CPA->getOperand(i)),
+					Static);
 			}
 		}
 		Out << " }";
@@ -679,11 +676,11 @@ void SimpleWriter::printConstantVector(ConstantVector * CP, bool Static)
 	if (CP->getNumOperands()) {
 		Out << ' ';
 		printConstant(cast < Constant > (CP->getOperand(0)),
-			      Static);
+			Static);
 		for (unsigned i = 1, e = CP->getNumOperands(); i != e; ++i) {
 			Out << ", ";
 			printConstant(cast < Constant >
-				      (CP->getOperand(i)), Static);
+				(CP->getOperand(i)), Static);
 		}
 	}
 	Out << " }";
@@ -702,17 +699,17 @@ static bool isFPCSafeToPrint(const ConstantFP * CFP)
 	bool ignored;
 	// Do long doubles in hex for now.
 	if (CFP->getType() != Type::getFloatTy(CFP->getContext()) &&
-	    CFP->getType() != Type::getDoubleTy(CFP->getContext()))
+		CFP->getType() != Type::getDoubleTy(CFP->getContext()))
 		return false;
 	APFloat APF = APFloat(CFP->getValueAPF());	// copy
 	if (CFP->getType() == Type::getFloatTy(CFP->getContext()))
 		APF.convert(APFloat::IEEEdouble,
-			    APFloat::rmNearestTiesToEven, &ignored);
+			APFloat::rmNearestTiesToEven, &ignored);
 #if HAVE_PRINTF_A && ENABLE_CBE_PRINTF_A
 	char Buffer[100];
 	sprintf(Buffer, "%a", APF.convertToDouble());
 	if (!strncmp(Buffer, "0x", 2) ||
-	    !strncmp(Buffer, "-0x", 3) || !strncmp(Buffer, "+0x", 3))
+		!strncmp(Buffer, "-0x", 3) || !strncmp(Buffer, "+0x", 3))
 		return APF.bitwiseIsEqual(APFloat(atof(Buffer)));
 	return false;
 #else
@@ -724,8 +721,8 @@ static bool isFPCSafeToPrint(const ConstantFP * CFP)
 	// Check to make sure that the stringized number is not some string like "Inf"
 	// or NaN.  Check that the string matches the "[-+]?[0-9]" regex.
 	if ((StrVal[0] >= '0' && StrVal[0] <= '9') ||
-	    ((StrVal[0] == '-' || StrVal[0] == '+') &&
-	     (StrVal[1] >= '0' && StrVal[1] <= '9')))
+		((StrVal[0] == '-' || StrVal[0] == '+') &&
+			(StrVal[1] >= '0' && StrVal[1] <= '9')))
 		// Reparse stringized version!
 		return APF.bitwiseIsEqual(APFloat(atof(StrVal.c_str())));
 	return false;
@@ -736,7 +733,7 @@ static bool isFPCSafeToPrint(const ConstantFP * CFP)
 /// necessary for conversion to the destination type, if necessary. 
 /// @brief Print a cast
 void SimpleWriter::printCast(unsigned opc, const Type * SrcTy,
-			     const Type * DstTy)
+			const Type * DstTy)
 {
 	// Print the destination type cast
 	switch (opc) {
@@ -803,7 +800,7 @@ void SimpleWriter::printCast(unsigned opc, const Type * SrcTy,
 // printConstant - The LLVM Constant to Simple Constant converter.
 void SimpleWriter::printConstant(Constant * CPV, bool Static)
 {
-	DEBUG_MSG("/**** Printing constant ****/\n");
+	TRACE_4("/**** Printing constant ****/\n");
 
 	if (const ConstantExpr * CE = dyn_cast < ConstantExpr > (CPV)) {
 		switch (CE->getOpcode()) {
@@ -821,22 +818,22 @@ void SimpleWriter::printConstant(Constant * CPV, bool Static)
 		case Instruction::BitCast:
 			Out << "(";
 			printCast(CE->getOpcode(),
-				  CE->getOperand(0)->getType(),
-				  CE->getType());
+				CE->getOperand(0)->getType(),
+				CE->getType());
 			if (CE->getOpcode() == Instruction::SExt
-			    && CE->getOperand(0)->getType() ==
-			    Type::getInt1Ty(CPV->getContext())) {
+				&& CE->getOperand(0)->getType() ==
+				Type::getInt1Ty(CPV->getContext())) {
 				// Make sure we really sext from bool here by subtracting from 0
 				Out << "0-";
 			}
 			printConstant(CE->getOperand(0), Static);
 			if (CE->getType() ==
-			    Type::getInt1Ty(CPV->getContext())
-			    && (CE->getOpcode() == Instruction::Trunc
-				|| CE->getOpcode() == Instruction::FPToUI
-				|| CE->getOpcode() == Instruction::FPToSI
-				|| CE->getOpcode() ==
-				Instruction::PtrToInt)) {
+				Type::getInt1Ty(CPV->getContext())
+				&& (CE->getOpcode() == Instruction::Trunc
+					|| CE->getOpcode() == Instruction::FPToUI
+					|| CE->getOpcode() == Instruction::FPToSI
+					|| CE->getOpcode() ==
+					Instruction::PtrToInt)) {
 				// Make sure we really truncate to bool here by anding with 1
 				Out << "&1u";
 			}
@@ -846,8 +843,8 @@ void SimpleWriter::printConstant(Constant * CPV, bool Static)
 		case Instruction::GetElementPtr:
 			Out << "(";
 			printGEPExpression(CE->getOperand(0),
-					   gep_type_begin(CPV),
-					   gep_type_end(CPV), Static);
+					gep_type_begin(CPV),
+					gep_type_end(CPV), Static);
 			Out << ")";
 			return;
 		case Instruction::Select:
@@ -878,179 +875,179 @@ void SimpleWriter::printConstant(Constant * CPV, bool Static)
 		case Instruction::Shl:
 		case Instruction::LShr:
 		case Instruction::AShr:
-			{
-				Out << '(';
-				bool NeedsClosingParens =
-				    printConstExprCast(CE, Static);
-				printConstantWithCast(CE->getOperand(0),
-						      CE->getOpcode());
-				switch (CE->getOpcode()) {
-				case Instruction::Add:
-				case Instruction::FAdd:
-					Out << " + ";
+		{
+			Out << '(';
+			bool NeedsClosingParens =
+				printConstExprCast(CE, Static);
+			printConstantWithCast(CE->getOperand(0),
+					CE->getOpcode());
+			switch (CE->getOpcode()) {
+			case Instruction::Add:
+			case Instruction::FAdd:
+				Out << " + ";
+				break;
+			case Instruction::Sub:
+			case Instruction::FSub:
+				Out << " - ";
+				break;
+			case Instruction::Mul:
+			case Instruction::FMul:
+				Out << " * ";
+				break;
+			case Instruction::URem:
+			case Instruction::SRem:
+			case Instruction::FRem:
+				Out << " % ";
+				break;
+			case Instruction::UDiv:
+			case Instruction::SDiv:
+			case Instruction::FDiv:
+				Out << " / ";
+				break;
+			case Instruction::And:
+				Out << " & ";
+				break;
+			case Instruction::Or:
+				Out << " | ";
+				break;
+			case Instruction::Xor:
+				Out << " ^ ";
+				break;
+			case Instruction::Shl:
+				Out << " << ";
+				break;
+			case Instruction::LShr:
+			case Instruction::AShr:
+				Out << " >> ";
+				break;
+			case Instruction::ICmp:
+				switch (CE->getPredicate()) {
+				case ICmpInst::ICMP_EQ:
+					Out << " == ";
 					break;
-				case Instruction::Sub:
-				case Instruction::FSub:
-					Out << " - ";
+				case ICmpInst::ICMP_NE:
+					Out << " != ";
 					break;
-				case Instruction::Mul:
-				case Instruction::FMul:
-					Out << " * ";
+				case ICmpInst::ICMP_SLT:
+				case ICmpInst::ICMP_ULT:
+					Out << " < ";
 					break;
-				case Instruction::URem:
-				case Instruction::SRem:
-				case Instruction::FRem:
-					Out << " % ";
+				case ICmpInst::ICMP_SLE:
+				case ICmpInst::ICMP_ULE:
+					Out << " <= ";
 					break;
-				case Instruction::UDiv:
-				case Instruction::SDiv:
-				case Instruction::FDiv:
-					Out << " / ";
+				case ICmpInst::ICMP_SGT:
+				case ICmpInst::ICMP_UGT:
+					Out << " > ";
 					break;
-				case Instruction::And:
-					Out << " & ";
-					break;
-				case Instruction::Or:
-					Out << " | ";
-					break;
-				case Instruction::Xor:
-					Out << " ^ ";
-					break;
-				case Instruction::Shl:
-					Out << " << ";
-					break;
-				case Instruction::LShr:
-				case Instruction::AShr:
-					Out << " >> ";
-					break;
-				case Instruction::ICmp:
-					switch (CE->getPredicate()) {
-					case ICmpInst::ICMP_EQ:
-						Out << " == ";
-						break;
-					case ICmpInst::ICMP_NE:
-						Out << " != ";
-						break;
-					case ICmpInst::ICMP_SLT:
-					case ICmpInst::ICMP_ULT:
-						Out << " < ";
-						break;
-					case ICmpInst::ICMP_SLE:
-					case ICmpInst::ICMP_ULE:
-						Out << " <= ";
-						break;
-					case ICmpInst::ICMP_SGT:
-					case ICmpInst::ICMP_UGT:
-						Out << " > ";
-						break;
-					case ICmpInst::ICMP_SGE:
-					case ICmpInst::ICMP_UGE:
-						Out << " >= ";
-						break;
-					default:
-						llvm_unreachable
-						    ("Illegal ICmp predicate");
-					}
+				case ICmpInst::ICMP_SGE:
+				case ICmpInst::ICMP_UGE:
+					Out << " >= ";
 					break;
 				default:
 					llvm_unreachable
-					    ("Illegal opcode here!");
+						("Illegal ICmp predicate");
 				}
-				printConstantWithCast(CE->getOperand(1),
-						      CE->getOpcode());
-				if (NeedsClosingParens)
-					Out << "))";
-				Out << ')';
-				return;
+				break;
+			default:
+				llvm_unreachable
+					("Illegal opcode here!");
 			}
+			printConstantWithCast(CE->getOperand(1),
+					CE->getOpcode());
+			if (NeedsClosingParens)
+				Out << "))";
+			Out << ')';
+			return;
+		}
 		case Instruction::FCmp:{
-				Out << '(';
-				bool NeedsClosingParens =
-				    printConstExprCast(CE, Static);
-				if (CE->getPredicate() ==
-				    FCmpInst::FCMP_FALSE)
-					Out << "0";
-				else if (CE->getPredicate() ==
-					 FCmpInst::FCMP_TRUE)
-					Out << "1";
-				else {
-					const char *op = 0;
-					switch (CE->getPredicate()) {
-					default:
-						llvm_unreachable
-						    ("Illegal FCmp predicate");
-					case FCmpInst::FCMP_ORD:
-						op = "ord";
-						break;
-					case FCmpInst::FCMP_UNO:
-						op = "uno";
-						break;
-					case FCmpInst::FCMP_UEQ:
-						op = "ueq";
-						break;
-					case FCmpInst::FCMP_UNE:
-						op = "une";
-						break;
-					case FCmpInst::FCMP_ULT:
-						op = "ult";
-						break;
-					case FCmpInst::FCMP_ULE:
-						op = "ule";
-						break;
-					case FCmpInst::FCMP_UGT:
-						op = "ugt";
-						break;
-					case FCmpInst::FCMP_UGE:
-						op = "uge";
-						break;
-					case FCmpInst::FCMP_OEQ:
-						op = "oeq";
-						break;
-					case FCmpInst::FCMP_ONE:
-						op = "one";
-						break;
-					case FCmpInst::FCMP_OLT:
-						op = "olt";
-						break;
-					case FCmpInst::FCMP_OLE:
-						op = "ole";
-						break;
-					case FCmpInst::FCMP_OGT:
-						op = "ogt";
-						break;
-					case FCmpInst::FCMP_OGE:
-						op = "oge";
-						break;
-					}
-					Out << "llvm_fcmp_" << op << "(";
-					printConstantWithCast(CE->
-							      getOperand
-							      (0),
-							      CE->
-							      getOpcode());
-					Out << ", ";
-					printConstantWithCast(CE->
-							      getOperand
-							      (1),
-							      CE->
-							      getOpcode());
-					Out << ")";
+			Out << '(';
+			bool NeedsClosingParens =
+				printConstExprCast(CE, Static);
+			if (CE->getPredicate() ==
+				FCmpInst::FCMP_FALSE)
+				Out << "0";
+			else if (CE->getPredicate() ==
+				FCmpInst::FCMP_TRUE)
+				Out << "1";
+			else {
+				const char *op = 0;
+				switch (CE->getPredicate()) {
+				default:
+					llvm_unreachable
+						("Illegal FCmp predicate");
+				case FCmpInst::FCMP_ORD:
+					op = "ord";
+					break;
+				case FCmpInst::FCMP_UNO:
+					op = "uno";
+					break;
+				case FCmpInst::FCMP_UEQ:
+					op = "ueq";
+					break;
+				case FCmpInst::FCMP_UNE:
+					op = "une";
+					break;
+				case FCmpInst::FCMP_ULT:
+					op = "ult";
+					break;
+				case FCmpInst::FCMP_ULE:
+					op = "ule";
+					break;
+				case FCmpInst::FCMP_UGT:
+					op = "ugt";
+					break;
+				case FCmpInst::FCMP_UGE:
+					op = "uge";
+					break;
+				case FCmpInst::FCMP_OEQ:
+					op = "oeq";
+					break;
+				case FCmpInst::FCMP_ONE:
+					op = "one";
+					break;
+				case FCmpInst::FCMP_OLT:
+					op = "olt";
+					break;
+				case FCmpInst::FCMP_OLE:
+					op = "ole";
+					break;
+				case FCmpInst::FCMP_OGT:
+					op = "ogt";
+					break;
+				case FCmpInst::FCMP_OGE:
+					op = "oge";
+					break;
 				}
-				if (NeedsClosingParens)
-					Out << "))";
-				Out << ')';
-				return;
+				Out << "llvm_fcmp_" << op << "(";
+				printConstantWithCast(CE->
+						getOperand
+						(0),
+						CE->
+						getOpcode());
+				Out << ", ";
+				printConstantWithCast(CE->
+						getOperand
+						(1),
+						CE->
+						getOpcode());
+				Out << ")";
 			}
+			if (NeedsClosingParens)
+				Out << "))";
+			Out << ')';
+			return;
+		}
 		default:
 #ifndef NDEBUG
 			errs() <<
-			    "SimpleWriter Error: Unhandled constant expression: "
-			    << *CE << "\n";
+				"SimpleWriter Error: Unhandled constant expression: "
+			       << *CE << "\n";
 #endif
 			llvm_unreachable(0);
 		}
 	} else if (isa < UndefValue > (CPV)
-		   && CPV->getType()->isSingleValueType()) {
+		&& CPV->getType()->isSingleValueType()) {
 		Out << "((";
 		printType(Out, CPV->getType());	// sign doesn't matter
 		Out << ")/*UNDEF*/";
@@ -1088,116 +1085,116 @@ void SimpleWriter::printConstant(Constant * CPV, bool Static)
 	case Type::X86_FP80TyID:
 	case Type::PPC_FP128TyID:
 	case Type::FP128TyID:{
-			ConstantFP *FPC = cast < ConstantFP > (CPV);
-			std::map < const ConstantFP *,
-			    unsigned >::iterator I =
-			    FPConstantMap.find(FPC);
-			if (I != FPConstantMap.end()) {
-				// Because of FP precision problems we must load from a stack allocated
-				// value that holds the value in hex.
-				Out << "(*(" << (FPC->getType() ==
-						 Type::getFloatTy(CPV->
-								  getContext
-								  ())?
-						 "float" : FPC->
-						 getType() ==
-						 Type::getDoubleTy(CPV->
-								   getContext
-								   ())?
-						 "double" : "long double")
-				    << "*)&FPConstant" << I->second << ')';
-			} else {
-				double V;
-				if (FPC->getType() ==
-				    Type::getFloatTy(CPV->getContext()))
-					V = FPC->getValueAPF().
-					    convertToFloat();
-				else if (FPC->getType() ==
-					 Type::getDoubleTy(CPV->
-							   getContext()))
-					V = FPC->getValueAPF().
-					    convertToDouble();
-				else {
-					// Long double.  Convert the number to double, discarding precision.
-					// This is not awesome, but it at least makes the CBE output somewhat
-					// useful.
-					APFloat Tmp = FPC->getValueAPF();
-					bool LosesInfo;
-					Tmp.convert(APFloat::IEEEdouble,
-						    APFloat::rmTowardZero,
-						    &LosesInfo);
-					V = Tmp.convertToDouble();
-				}
-
-				if (IsNAN(V)) {
-					// The value is NaN
-
-					// FIXME the actual NaN bits should be emitted.
-					// The prefix for a quiet NaN is 0x7FF8. For a signalling NaN,
-					// it's 0x7ff4.
-					const unsigned long QuietNaN =
-					    0x7ff8UL;
-					//const unsigned long SignalNaN = 0x7ff4UL;
-
-					// We need to grab the first part of the FP #
-					char Buffer[100];
-
-					uint64_t ll = DoubleToBits(V);
-					sprintf(Buffer, "0x%llx",
-						static_cast <
-						long long >(ll));
-
-					std::string Num(&Buffer[0],
-							&Buffer[6]);
-					unsigned long Val =
-					    strtoul(Num.c_str(), 0, 16);
-
-					if (FPC->getType() ==
-					    Type::getFloatTy(FPC->
-							     getContext()))
-						Out << "LLVM_NAN" << (Val
-								      ==
-								      QuietNaN
-								      ? ""
-								      :
-								      "S")
-						    << "F(\"" << Buffer <<
-						    "\") /*nan*/ ";
-					else
-						Out << "LLVM_NAN" << (Val
-								      ==
-								      QuietNaN
-								      ? ""
-								      :
-								      "S")
-						    << "(\"" << Buffer <<
-						    "\") /*nan*/ ";
-				} else if (IsInf(V)) {
-					// The value is Inf
-					if (V < 0)
-						Out << '-';
-					Out << "LLVM_INF" <<
-					    (FPC->getType() ==
-					     Type::getFloatTy(FPC->
-							      getContext
-							      ())? "F" :
-					     "")
-					    << " /*inf*/ ";
-				} else {
-					std::string Num;
-#if HAVE_PRINTF_A && ENABLE_CBE_PRINTF_A
-					// Print out the constant as a floating point number.
-					char Buffer[100];
-					sprintf(Buffer, "%a", V);
-					Num = Buffer;
-#else
-					Num = ftostr(FPC->getValueAPF());
-#endif
-					Out << Num;
-				}
+		ConstantFP *FPC = cast < ConstantFP > (CPV);
+		std::map < const ConstantFP *,
+				unsigned >::iterator I =
+			FPConstantMap.find(FPC);
+		if (I != FPConstantMap.end()) {
+			// Because of FP precision problems we must load from a stack allocated
+			// value that holds the value in hex.
+			Out << "(*(" << (FPC->getType() ==
+					Type::getFloatTy(CPV->
+							getContext
+							())?
+					"float" : FPC->
+					getType() ==
+					Type::getDoubleTy(CPV->
+							getContext
+							())?
+					"double" : "long double")
+			    << "*)&FPConstant" << I->second << ')';
+		} else {
+			double V;
+			if (FPC->getType() ==
+				Type::getFloatTy(CPV->getContext()))
+				V = FPC->getValueAPF().
+					convertToFloat();
+			else if (FPC->getType() ==
+				Type::getDoubleTy(CPV->
+						getContext()))
+				V = FPC->getValueAPF().
+					convertToDouble();
+			else {
+				// Long double.  Convert the number to double, discarding precision.
+				// This is not awesome, but it at least makes the CBE output somewhat
+				// useful.
+				APFloat Tmp = FPC->getValueAPF();
+				bool LosesInfo;
+				Tmp.convert(APFloat::IEEEdouble,
+					APFloat::rmTowardZero,
+					&LosesInfo);
+				V = Tmp.convertToDouble();
 			}
-			break;
+
+			if (IsNAN(V)) {
+				// The value is NaN
+
+				// FIXME the actual NaN bits should be emitted.
+				// The prefix for a quiet NaN is 0x7FF8. For a signalling NaN,
+				// it's 0x7ff4.
+				const unsigned long QuietNaN =
+					0x7ff8UL;
+				//const unsigned long SignalNaN = 0x7ff4UL;
+
+				// We need to grab the first part of the FP #
+				char Buffer[100];
+
+				uint64_t ll = DoubleToBits(V);
+				sprintf(Buffer, "0x%llx",
+					static_cast <
+					long long >(ll));
+
+				std::string Num(&Buffer[0],
+						&Buffer[6]);
+				unsigned long Val =
+					strtoul(Num.c_str(), 0, 16);
+
+				if (FPC->getType() ==
+					Type::getFloatTy(FPC->
+							getContext()))
+					Out << "LLVM_NAN" << (Val
+							==
+							QuietNaN
+							? ""
+							:
+							"S")
+					    << "F(\"" << Buffer <<
+						"\") /*nan*/ ";
+				else
+					Out << "LLVM_NAN" << (Val
+							==
+							QuietNaN
+							? ""
+							:
+							"S")
+					    << "(\"" << Buffer <<
+						"\") /*nan*/ ";
+			} else if (IsInf(V)) {
+				// The value is Inf
+				if (V < 0)
+					Out << '-';
+				Out << "LLVM_INF" <<
+					(FPC->getType() ==
+						Type::getFloatTy(FPC->
+								getContext
+								())? "F" :
+						"")
+				    << " /*inf*/ ";
+			} else {
+				std::string Num;
+#if HAVE_PRINTF_A && ENABLE_CBE_PRINTF_A
+				// Print out the constant as a floating point number.
+				char Buffer[100];
+				sprintf(Buffer, "%a", V);
+				Num = Buffer;
+#else
+				Num = ftostr(FPC->getValueAPF());
+#endif
+				Out << Num;
+			}
 		}
+		break;
+	}
 
 	case Type::ArrayTyID:
 		// Use C99 compound expression literal initializer syntax.
@@ -1211,19 +1208,19 @@ void SimpleWriter::printConstant(Constant * CPV, bool Static)
 			printConstantArray(CA, Static);
 		} else {
 			assert(isa < ConstantAggregateZero > (CPV)
-			       || isa < UndefValue > (CPV));
+				|| isa < UndefValue > (CPV));
 			const ArrayType *AT =
-			    cast < ArrayType > (CPV->getType());
+				cast < ArrayType > (CPV->getType());
 			Out << '{';
 			if (AT->getNumElements()) {
 				Out << ' ';
 				Constant *CZ =
-				    Constant::getNullValue(AT->
-							   getElementType
-							   ());
+					Constant::getNullValue(AT->
+							getElementType
+							());
 				printConstant(CZ, Static);
 				for (unsigned i = 1, e =
-				     AT->getNumElements(); i != e; ++i) {
+					     AT->getNumElements(); i != e; ++i) {
 					Out << ", ";
 					printConstant(CZ, Static);
 				}
@@ -1241,16 +1238,16 @@ void SimpleWriter::printConstant(Constant * CPV, bool Static)
 			Out << ")";
 		}
 		if (ConstantVector * CV =
-		    dyn_cast < ConstantVector > (CPV)) {
+			dyn_cast < ConstantVector > (CPV)) {
 			printConstantVector(CV, Static);
 		} else {
 			assert(isa < ConstantAggregateZero > (CPV)
-			       || isa < UndefValue > (CPV));
+				|| isa < UndefValue > (CPV));
 			const VectorType *VT =
-			    cast < VectorType > (CPV->getType());
+				cast < VectorType > (CPV->getType());
 			Out << "{ ";
 			Constant *CZ =
-			    Constant::getNullValue(VT->getElementType());
+				Constant::getNullValue(VT->getElementType());
 			printConstant(CZ, Static);
 			for (unsigned i = 1, e = VT->getNumElements();
 			     i != e; ++i) {
@@ -1269,24 +1266,24 @@ void SimpleWriter::printConstant(Constant * CPV, bool Static)
 			Out << ")";
 		}
 		if (isa < ConstantAggregateZero > (CPV)
-		    || isa < UndefValue > (CPV)) {
+			|| isa < UndefValue > (CPV)) {
 			const StructType *ST =
-			    cast < StructType > (CPV->getType());
+				cast < StructType > (CPV->getType());
 			Out << '{';
 			if (ST->getNumElements()) {
 				Out << ' ';
 				printConstant(Constant::
-					      getNullValue(ST->
-							   getElementType
-							   (0)), Static);
+					getNullValue(ST->
+						getElementType
+						(0)), Static);
 				for (unsigned i = 1, e =
-				     ST->getNumElements(); i != e; ++i) {
+					     ST->getNumElements(); i != e; ++i) {
 					Out << ", ";
 					printConstant(Constant::
-						      getNullValue(ST->
-								   getElementType
-								   (i)),
-						      Static);
+						getNullValue(ST->
+							getElementType
+							(i)),
+						Static);
 				}
 			}
 			Out << " }";
@@ -1295,14 +1292,14 @@ void SimpleWriter::printConstant(Constant * CPV, bool Static)
 			if (CPV->getNumOperands()) {
 				Out << ' ';
 				printConstant(cast < Constant >
-					      (CPV->getOperand(0)),
-					      Static);
+					(CPV->getOperand(0)),
+					Static);
 				for (unsigned i = 1, e =
-				     CPV->getNumOperands(); i != e; ++i) {
+					     CPV->getNumOperands(); i != e; ++i) {
 					Out << ", ";
 					printConstant(cast < Constant >
-						      (CPV->getOperand(i)),
-						      Static);
+						(CPV->getOperand(i)),
+						Static);
 				}
 			}
 			Out << " }";
@@ -1316,7 +1313,7 @@ void SimpleWriter::printConstant(Constant * CPV, bool Static)
 			Out << ")/*NULL*/0)";
 			break;
 		} else if (GlobalValue * GV =
-			   dyn_cast < GlobalValue > (CPV)) {
+			dyn_cast < GlobalValue > (CPV)) {
 			writeOperand(GV, Static);
 			break;
 		}
@@ -1379,7 +1376,7 @@ bool SimpleWriter::printConstExprCast(const ConstantExpr * CE, bool Static)
 	if (NeedsExplicitCast) {
 		Out << "((";
 		if (Ty->isInteger()
-		    && Ty != Type::getInt1Ty(Ty->getContext()))
+			&& Ty != Type::getInt1Ty(Ty->getContext()))
 			printSimpleType(Out, Ty, TypeIsSigned);
 		else
 			printType(Out, Ty);	// not integer, sign doesn't matter
@@ -1462,8 +1459,8 @@ std::string SimpleWriter::GetValueName(const Value * Operand)
 		char ch = *I;
 
 		if (!
-		    ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')
-		     || (ch >= '0' && ch <= '9') || ch == '_')) {
+			((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')
+				|| (ch >= '0' && ch <= '9') || ch == '_')) {
 			char buffer[5];
 			sprintf(buffer, "_%x_", ch);
 			VarName += buffer;
@@ -1482,32 +1479,32 @@ void SimpleWriter::writeInstComputationInline(Instruction & I)
 	// Validate this.
 	const Type *Ty = I.getType();
 	if (Ty->isInteger() && (Ty != Type::getInt1Ty(I.getContext()) &&
-				Ty != Type::getInt8Ty(I.getContext()) &&
-				Ty != Type::getInt16Ty(I.getContext()) &&
-				Ty != Type::getInt32Ty(I.getContext()) &&
-				Ty != Type::getInt64Ty(I.getContext()))) {
+					Ty != Type::getInt8Ty(I.getContext()) &&
+					Ty != Type::getInt16Ty(I.getContext()) &&
+					Ty != Type::getInt32Ty(I.getContext()) &&
+					Ty != Type::getInt64Ty(I.getContext()))) {
 		llvm_report_error
-		    ("The Simple backend does not currently support integer "
-		     "types of widths other than 1, 8, 16, 32, 64.\n"
-		     "This is being tracked as PR 4158.");
+			("The Simple backend does not currently support integer "
+				"types of widths other than 1, 8, 16, 32, 64.\n"
+				"This is being tracked as PR 4158.");
 	}
 	// If this is a non-trivial bool computation, make sure to truncate down to
 	// a 1 bit value.  This is important because we want "add i1 x, y" to return
 	// "0" when x and y are true, not "2" for example.
 	bool NeedBoolTrunc = false;
 	if (I.getType() == Type::getInt1Ty(I.getContext()) &&
-	    !isa < ICmpInst > (I) && !isa < FCmpInst > (I))
+		!isa < ICmpInst > (I) && !isa < FCmpInst > (I))
 		NeedBoolTrunc = true;
 
 	if (NeedBoolTrunc)
 		Out << "((";
 
-	DEBUG_MSG("\n /***** Visiting " << I.
-		  getOpcodeName() <<
-		  " ( writeInstComputationInline() ) ******/ \n");
+	TRACE_4("\n /***** Visiting " << I.
+		getOpcodeName() <<
+		" ( writeInstComputationInline() ) ******/ \n");
 	visit(I);
-	DEBUG_MSG("\n /***** Visited " << I.
-		  getOpcodeName() << "******/ \n");
+	TRACE_4("\n /***** Visited " << I.
+		getOpcodeName() << "******/ \n");
 
 	if (NeedBoolTrunc)
 		Out << ")&1)";
@@ -1561,7 +1558,7 @@ void SimpleWriter::writeOperandInternal(Value * Operand, bool Static)
 
 void SimpleWriter::writeOperand(Value * Operand, bool Static)
 {
-	DEBUG_MSG("/**** writeOperand() ****/\n");
+	TRACE_4("/**** writeOperand() ****/\n");
 
 //   bool isAddressImplicit = isAddressExposed(Operand);
 //   if (isAddressImplicit)
@@ -1697,7 +1694,7 @@ void SimpleWriter::writeOperandWithCast(Value * Operand,
 // directives to cater to specific compilers as need be.
 //
 static void generateCompilerSpecificCode(formatted_raw_ostream & Out,
-					 const TargetData * TD)
+					const TargetData * TD)
 {
 	// Alloca is hard to get, and we don't want to include stdlib.h here.
 	Out << "/* get a declaration for alloca */\n"
@@ -1717,16 +1714,16 @@ static void generateCompilerSpecificCode(formatted_raw_ostream & Out,
 	    << "#endif\n"
 	    << "#define alloca(x) __builtin_alloca(x)\n"
 	    <<
-	    "#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__arm__)\n"
+		"#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__arm__)\n"
 	    << "#define alloca(x) __builtin_alloca(x)\n" <<
-	    "#elif defined(_MSC_VER)\n" << "#define inline _inline\n" <<
-	    "#define alloca(x) _alloca(x)\n" << "#else\n" <<
-	    "#include <alloca.h>\n" << "#endif\n\n";
+		"#elif defined(_MSC_VER)\n" << "#define inline _inline\n" <<
+		"#define alloca(x) _alloca(x)\n" << "#else\n" <<
+		"#include <alloca.h>\n" << "#endif\n\n";
 
 	// We output GCC specific attributes to preserve 'linkonce'ness on globals.
 	// If we aren't being compiled with GCC, just drop these attributes.
 	Out <<
-	    "#ifndef __GNUC__  /* Can only support \"linkonce\" vars with GCC */\n"
+		"#ifndef __GNUC__  /* Can only support \"linkonce\" vars with GCC */\n"
 	    << "#define __attribute__(X)\n" << "#endif\n\n";
 
 	// On Mac OS X, "external weak" is spelled "__attribute__((weak_import))".
@@ -1746,7 +1743,7 @@ static void generateCompilerSpecificCode(formatted_raw_ostream & Out,
 	// Add hidden visibility support. FIXME: APPLE_CC?
 	Out << "#if defined(__GNUC__)\n"
 	    <<
-	    "#define __HIDDEN__ __attribute__((visibility(\"hidden\")))\n"
+		"#define __HIDDEN__ __attribute__((visibility(\"hidden\")))\n"
 	    << "#endif\n\n";
 
 	// Define NaN and Inf as GCC builtins if using GCC, as 0 otherwise
@@ -1782,38 +1779,38 @@ static void generateCompilerSpecificCode(formatted_raw_ostream & Out,
 	// Similar to __builtin_inf, except the return type is float.
 	Out << "#ifdef __GNUC__\n"
 	    <<
-	    "#define LLVM_NAN(NanStr)   __builtin_nan(NanStr)   /* Double */\n"
+		"#define LLVM_NAN(NanStr)   __builtin_nan(NanStr)   /* Double */\n"
 	    <<
-	    "#define LLVM_NANF(NanStr)  __builtin_nanf(NanStr)  /* Float */\n"
+		"#define LLVM_NANF(NanStr)  __builtin_nanf(NanStr)  /* Float */\n"
 	    <<
-	    "#define LLVM_NANS(NanStr)  __builtin_nans(NanStr)  /* Double */\n"
+		"#define LLVM_NANS(NanStr)  __builtin_nans(NanStr)  /* Double */\n"
 	    <<
-	    "#define LLVM_NANSF(NanStr) __builtin_nansf(NanStr) /* Float */\n"
+		"#define LLVM_NANSF(NanStr) __builtin_nansf(NanStr) /* Float */\n"
 	    <<
-	    "#define LLVM_INF           __builtin_inf()         /* Double */\n"
+		"#define LLVM_INF           __builtin_inf()         /* Double */\n"
 	    <<
-	    "#define LLVM_INFF          __builtin_inff()        /* Float */\n"
+		"#define LLVM_INFF          __builtin_inff()        /* Float */\n"
 	    << "#define LLVM_PREFETCH(addr,rw,locality) "
-	    "__builtin_prefetch(addr,rw,locality)\n" <<
-	    "#define __ATTRIBUTE_CTOR__ __attribute__((constructor))\n" <<
-	    "#define __ATTRIBUTE_DTOR__ __attribute__((destructor))\n" <<
-	    "#define LLVM_ASM           __asm__\n" << "#else\n" <<
-	    "#define LLVM_NAN(NanStr)   ((double)0.0)           /* Double */\n"
+		"__builtin_prefetch(addr,rw,locality)\n" <<
+		"#define __ATTRIBUTE_CTOR__ __attribute__((constructor))\n" <<
+		"#define __ATTRIBUTE_DTOR__ __attribute__((destructor))\n" <<
+		"#define LLVM_ASM           __asm__\n" << "#else\n" <<
+		"#define LLVM_NAN(NanStr)   ((double)0.0)           /* Double */\n"
 	    <<
-	    "#define LLVM_NANF(NanStr)  0.0F                    /* Float */\n"
+		"#define LLVM_NANF(NanStr)  0.0F                    /* Float */\n"
 	    <<
-	    "#define LLVM_NANS(NanStr)  ((double)0.0)           /* Double */\n"
+		"#define LLVM_NANS(NanStr)  ((double)0.0)           /* Double */\n"
 	    <<
-	    "#define LLVM_NANSF(NanStr) 0.0F                    /* Float */\n"
+		"#define LLVM_NANSF(NanStr) 0.0F                    /* Float */\n"
 	    <<
-	    "#define LLVM_INF           ((double)0.0)           /* Double */\n"
+		"#define LLVM_INF           ((double)0.0)           /* Double */\n"
 	    <<
-	    "#define LLVM_INFF          0.0F                    /* Float */\n"
+		"#define LLVM_INFF          0.0F                    /* Float */\n"
 	    <<
-	    "#define LLVM_PREFETCH(addr,rw,locality)            /* PREFETCH */\n"
+		"#define LLVM_PREFETCH(addr,rw,locality)            /* PREFETCH */\n"
 	    << "#define __ATTRIBUTE_CTOR__\n" <<
-	    "#define __ATTRIBUTE_DTOR__\n" << "#define LLVM_ASM(X)\n" <<
-	    "#endif\n\n";
+		"#define __ATTRIBUTE_DTOR__\n" << "#define LLVM_ASM(X)\n" <<
+		"#endif\n\n";
 
 	Out << "#if __GNUC__ < 4 /* Old GCC's, or compilers not GCC */ \n"
 	    << "#define __builtin_stack_save() 0   /* not implemented */\n"
@@ -1830,23 +1827,23 @@ static void generateCompilerSpecificCode(formatted_raw_ostream & Out,
 
 	// Output target-specific code that should be inserted into main.
 	Out <<
-	    "#define CODE_FOR_MAIN() /* Any target-specific code for main()*/\n";
+		"#define CODE_FOR_MAIN() /* Any target-specific code for main()*/\n";
 }
 
 /// FindStaticTors - Given a static ctor/dtor list, unpack its contents into
 /// the StaticTors set.
 static void FindStaticTors(GlobalVariable * GV,
-			   std::set < Function * >&StaticTors)
+			std::set < Function * >&StaticTors)
 {
 	ConstantArray *InitList =
-	    dyn_cast < ConstantArray > (GV->getInitializer());
+		dyn_cast < ConstantArray > (GV->getInitializer());
 	if (!InitList)
 		return;
 
 	for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i)
 		if (ConstantStruct * CS =
-		    dyn_cast < ConstantStruct >
-		    (InitList->getOperand(i))) {
+			dyn_cast < ConstantStruct >
+			(InitList->getOperand(i))) {
 			if (CS->getNumOperands() != 2)
 				return;	// Not array of 2-element structs.
 
@@ -1854,7 +1851,7 @@ static void FindStaticTors(GlobalVariable * GV,
 				return;	// Found a null terminator, exit printing.
 			Constant *FP = CS->getOperand(1);
 			if (ConstantExpr * CE =
-			    dyn_cast < ConstantExpr > (FP))
+				dyn_cast < ConstantExpr > (FP))
 				if (CE->isCast())
 					FP = CE->getOperand(0);
 			if (Function * F = dyn_cast < Function > (FP))
@@ -1884,7 +1881,7 @@ static SpecialGlobalClass getGlobalVariableClass(const GlobalVariable * GV)
 // PrintEscapedString - Print each character of the specified string, escaping
 // it if it is not printable or if it is an escape char.
 static void PrintEscapedString(const char *Str, unsigned Length,
-			       raw_ostream & Out)
+			raw_ostream & Out)
 {
 	for (unsigned i = 0; i != Length; ++i) {
 		unsigned char C = Str[i];
@@ -1898,7 +1895,7 @@ static void PrintEscapedString(const char *Str, unsigned Length,
 			Out << "\\t";
 		else
 			Out << "\\x" << hexdigit(C >> 4) << hexdigit(C &
-								     0x0F);
+								0x0F);
 	}
 }
 
@@ -1919,7 +1916,7 @@ void SimpleWriter::printFloatingPointConstants(Function & F)
 	// precision.
 	//
 	for (constant_iterator I = constant_begin(&F), E =
-	     constant_end(&F); I != E; ++I)
+		     constant_end(&F); I != E; ++I)
 		printFloatingPointConstants(*I);
 
 	Out << '\n';
@@ -1936,10 +1933,10 @@ void SimpleWriter::printFloatingPointConstants(const Constant * C)
 	// Otherwise, check for a FP constant that we need to print.
 	const ConstantFP *FPC = dyn_cast < ConstantFP > (C);
 	if (FPC == 0 ||
-	    // Do not put in FPConstantMap if safe.
-	    isFPCSafeToPrint(FPC) ||
-	    // Already printed this constant?
-	    FPConstantMap.count(FPC))
+		// Do not put in FPConstantMap if safe.
+		isFPCSafeToPrint(FPC) ||
+		// Already printed this constant?
+		FPConstantMap.count(FPC))
 		return;
 
 	FPConstantMap[FPC] = FPCounter;	// Number the FP constants
@@ -1947,35 +1944,35 @@ void SimpleWriter::printFloatingPointConstants(const Constant * C)
 	if (FPC->getType() == Type::getDoubleTy(FPC->getContext())) {
 		double Val = FPC->getValueAPF().convertToDouble();
 		uint64_t i =
-		    FPC->getValueAPF().bitcastToAPInt().getZExtValue();
+			FPC->getValueAPF().bitcastToAPInt().getZExtValue();
 		Out << "static const ConstantDoubleTy FPConstant" <<
-		    FPCounter++ << " = 0x" << utohexstr(i)
+			FPCounter++ << " = 0x" << utohexstr(i)
 		    << "ULL;    /* " << Val << " */\n";
 	} else if (FPC->getType() == Type::getFloatTy(FPC->getContext())) {
 		float Val = FPC->getValueAPF().convertToFloat();
 		uint32_t i =
-		    (uint32_t) FPC->getValueAPF().
-		    bitcastToAPInt().getZExtValue();
+			(uint32_t) FPC->getValueAPF().
+			bitcastToAPInt().getZExtValue();
 		Out << "static const ConstantFloatTy FPConstant" <<
-		    FPCounter++ << " = 0x" << utohexstr(i)
+			FPCounter++ << " = 0x" << utohexstr(i)
 		    << "U;    /* " << Val << " */\n";
 	} else if (FPC->getType() ==
-		   Type::getX86_FP80Ty(FPC->getContext())) {
+		Type::getX86_FP80Ty(FPC->getContext())) {
 		// api needed to prevent premature destruction
 		APInt api = FPC->getValueAPF().bitcastToAPInt();
 		const uint64_t *p = api.getRawData();
 		Out << "static const ConstantFP80Ty FPConstant" <<
-		    FPCounter++ << " = { 0x" << utohexstr(p[0])
+			FPCounter++ << " = { 0x" << utohexstr(p[0])
 		    << "ULL, 0x" << utohexstr((uint16_t) p[1]) <<
-		    ",{0,0,0}" << "}; /* Long double constant */\n";
+			",{0,0,0}" << "}; /* Long double constant */\n";
 	} else if (FPC->getType() ==
-		   Type::getPPC_FP128Ty(FPC->getContext())
-		   || FPC->getType() ==
-		   Type::getFP128Ty(FPC->getContext())) {
+		Type::getPPC_FP128Ty(FPC->getContext())
+		|| FPC->getType() ==
+		Type::getFP128Ty(FPC->getContext())) {
 		APInt api = FPC->getValueAPF().bitcastToAPInt();
 		const uint64_t *p = api.getRawData();
 		Out << "static const ConstantFP128Ty FPConstant" <<
-		    FPCounter++ << " = { 0x" << utohexstr(p[0]) << ", 0x"
+			FPCounter++ << " = { 0x" << utohexstr(p[0]) << ", 0x"
 		    << utohexstr(p[1])
 		    << "}; /* Long double constant */\n";
 
@@ -2011,7 +2008,7 @@ void SimpleWriter::printModuleTypes(const TypeSymbolTable & TST)
 	Out << "/* Structure forward decls */\n";
 	for (; I != End; ++I) {
 		std::string Name =
-		    "struct l_" + Mang->makeNameProper(I->first);
+			"struct l_" + Mang->makeNameProper(I->first);
 		Out << Name << ";\n";
 		TypeNames.insert(std::make_pair(I->second, Name));
 	}
@@ -2039,7 +2036,7 @@ void SimpleWriter::printModuleTypes(const TypeSymbolTable & TST)
 	Out << "/* Structure contents */\n";
 	for (I = TST.begin(); I != End; ++I)
 		if (isa < StructType > (I->second)
-		    || isa < ArrayType > (I->second))
+			|| isa < ArrayType > (I->second))
 			// Only print out used types!
 			printContainedStructs(I->second, StructPrinted);
 }
@@ -2050,17 +2047,17 @@ void SimpleWriter::printModuleTypes(const TypeSymbolTable & TST)
 // TODO:  Make this work properly with vector types
 //
 void SimpleWriter::printContainedStructs(const Type * Ty,
-					 std::set <
-					 const Type * >&StructPrinted)
+					std::set <
+					const Type * >&StructPrinted)
 {
 	// Don't walk through pointers.
 	if (isa < PointerType > (Ty) || Ty->isPrimitiveType()
-	    || Ty->isInteger())
+		|| Ty->isInteger())
 		return;
 
 	// Print all contained types first.
 	for (Type::subtype_iterator I = Ty->subtype_begin(),
-	     E = Ty->subtype_end(); I != E; ++I)
+		     E = Ty->subtype_end(); I != E; ++I)
 		printContainedStructs(*I, StructPrinted);
 
 	if (isa < StructType > (Ty) || isa < ArrayType > (Ty)) {
@@ -2075,222 +2072,294 @@ void SimpleWriter::printContainedStructs(const Type * Ty,
 }
 
 void SimpleWriter::printFunctionSignature(const Function * F,
-					  bool Prototype)
+					bool Prototype)
 {
-//   /// isStructReturn - Should this function actually return a struct by-value?
-//   bool isStructReturn = F->hasStructRetAttr();
-//   std::map<std:string, Type *>* returnVariables;
+	TRACE_5("SimpleWriter > printing function signature\n");
 
-//   //   if (F->hasLocalLinkage()) Out << "static ";
-//   //   if (F->hasDLLImportLinkage()) Out << "__declspec(dllimport) ";
-//   //   if (F->hasDLLExportLinkage()) Out << "__declspec(dllexport) ";  
-//   switch (F->getCallingConv()) {
-//   case CallingConv::X86_StdCall:
-//     triggerError(Out, "NYI : callingconv (stcall here)");
-//     Out << "__attribute__((stdcall)) ";
-//     break;
-//   case CallingConv::X86_FastCall:
-//     triggerError(Out, "NYI : callingconv (fastcall here)");
-//     Out << "__attribute__((fastcall)) ";
-//     break;
-//   default:
-//     break;
-//   }
+	/// isStructReturn - Should this function actually return a struct by-value?
+	bool isStructReturn = F->hasStructRetAttr();
+	
+	//   if (F->hasLocalLinkage()) Out << "static ";
+	//   if (F->hasDLLImportLinkage()) Out << "__declspec(dllimport) ";
+	//   if (F->hasDLLExportLinkage()) Out << "__declspec(dllexport) ";  
+	switch (F->getCallingConv()) {
+	case CallingConv::X86_StdCall:
+		triggerError(Out, "NYI : callingconv (stcall here)");
+		Out << "__attribute__((stdcall)) ";
+		break;
+	case CallingConv::X86_FastCall:
+		triggerError(Out, "NYI : callingconv (fastcall here)");
+		Out << "__attribute__((fastcall)) ";
+		break;
+	default:
+		break;
+	}
+	
+	// Loop over the arguments, printing them...
+//	const AttrListPtr &PAL = F->getAttributes();
+	const FunctionType *FT = cast<FunctionType>(F->getFunctionType());
+	
+	if (FT->isVarArg()) {
+		triggerError(Out, "Error : not able to manage vararg functions\n");
+	}  
+		
+	// If the name of the function is "sc_main", let's start a thread -> simple signature
+	if (F->getName() == "_Z7executev") {
+		Out << "Thread " << GetValueName(F) << ":";
+		return;
+	}
+		
+	// Print out the name...
+	Out << "proc " << GetValueName(F) << '(';
+	
+	std::vector<pair<std::string, const Type*> >* args = new std::vector<pair<std::string, const Type*> >();
+	std::vector<pair<std::string, const Type*> >* ret = new std::vector<pair<std::string, const Type*> >();
 
-//   // Loop over the arguments, printing them...
-//   const AttrListPtr &PAL = F->getAttributes();
-//   const FunctionType *FT = cast<FunctionType>(F->getFunctionType());
+	fillDependencies(F, string(""), args, ret);
+	
+	bool PrintedArg = false;
+	if (!args->empty()) {
+		std::vector<pair<std::string, const Type*> >::iterator itArgs;
+		
+		for (itArgs = args->begin(); itArgs != args->end(); itArgs++) {
+			std::string ArgName = itArgs->first;
+			TRACE_7("PRINTING ARG : " << ArgName << "\n");
+			const Type* ArgTy = itArgs->second;
+			printType(Out, ArgTy, true, ArgName);
+			PrintedArg = true;
+		}		
+	}
+	
+	Out << ')';
+	const Type *RetTy;
 
-//   if (FT->isVarArg()) {
-//     triggerError(Out, "Error : not able to manage vararg functions\n");
-//   }  
-
-//   //  std::stringstream FunctionInnards;
-
-//   // If the name of the function is "sc_main", let's start a thread -> simple signature
-//   if (F->getName() == "_Z7executev") {
-//     std::cout << "Function execute : " << F->getNameStr() << "\n";
-//     Out << "Thread " << GetValueName(F) << ":";
-//     return;
-//   }
-
-//   std::cout << "Function : " << F->getNameStr() << "\n";
-
-//   // Print out the name...
-//   Out << "proc " << GetValueName(F) << '(';
-
-//   fillReturnVariables(F, returnVariables);
-
-//   bool PrintedArg = false;
-//   if (!F->arg_empty()) {
-//     Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
-//     unsigned Idx = 1;
-
-//     // If this is a struct-return function, don't print the hidden
-//     // struct-return argument.
-//     if (isStructReturn) {
-//       assert(I != E && "Invalid struct return function!");
-//       ++I;
-//       ++Idx;
-//     }
-
-//     std::string ArgName;
-//     for (; I != E; ++I) {
-//       if (I->getNumUses() == 0) {
-//      continue;
-//       }
-
-//       if (PrintedArg) Out << ", ";
-//       if (I->hasName() || !Prototype)
-//      ArgName = GetValueName(I);
-//       else {
-//      triggerError(Out, "ERROR : arg without name");
-//      //           ArgName = "";
-//       }
-//       const Type *ArgTy = I->getType();
-//       if (PAL.paramHasAttr(Idx, Attribute::ByVal)) {
-//      ArgTy = cast<PointerType>(ArgTy)->getElementType();
-//      ByValParams.insert(I);
-//       }
-//       printType(Out, ArgTy,
-//              /*isSigned=*/PAL.paramHasAttr(Idx, Attribute::SExt),
-//              ArgName);
-//       PrintedArg = true;
-//       ++Idx;
-//     }
-//   }
-
-//   Out << ')';
-
-//   bool isStructReturn = F->hasStructRetAttr();
-//   if (!isStructReturn)
-//     RetTy = F->getReturnType();
-//   else
-//     RetTy = cast<PointerType>(FT->getParamType(0))->getElementType();
-
-//   // Print out the return type and the signature built above.
-//   Out << " returns (";
-
-//   for (it = returnVariables.begin(); it != returnVariable.end(); it++) {
-//     printType(Out, it->second, 
-//            /*isSigned=*/PAL.paramHasAttr(0, Attribute::SExt),
-//            it->second);    
-//   }
-
-//   printType(Out, RetTy, 
-//             /*isSigned=*/PAL.paramHasAttr(0, Attribute::SExt),
-//             "llvm_cbe_mrv_temp");  
-//   Out << ")";
+	if (!isStructReturn)
+		RetTy = F->getReturnType();
+	else
+		RetTy = cast<PointerType>(FT->getParamType(0))->getElementType();
+	
+	// Print out the return type and the signature built above.
+	Out << " returns (";
+	
+	std::vector<pair<std::string, const Type*> >::iterator itRet;
+	for (itRet = ret->begin(); itRet != ret->end(); itRet++) {
+		printType(Out, itRet->second, true, itRet->first);    
+	}
+	
+	printType(Out, RetTy, true, "llvm_cbe_mrv_temp");  
+	Out << ")";
 }
 
+void
+SimpleWriter::addVectors(std::vector<pair<std::string, const Type*> >* from,
+			std::vector<pair<std::string, const Type*> >* to)
+{
+	std::vector<pair<std::string, const Type*> >::iterator itFrom;
+	for (itFrom = from->begin(); itFrom != from->end(); ++itFrom) {
+		to->push_back(*itFrom);
+	}
+}
 
-// /**** May be useful one day ****/
-// void
-// SimpleWriter::fillReturnVariables(const Function*, std:string prefix, std::map<std:string, Type *>* retVariables)
-// {
-//   // Get the return tpe for the function.
-//   const Type *RetTy;
+void
+SimpleWriter::fillDependencies(const Function* F,
+			std::string prefix,
+			std::vector<pair<std::string, const Type*> >* args,
+			std::vector<pair<std::string, const Type*> >* ret)
+{
+	TRACE_6("SimpleWriter > fillDependencies\n");
 
-//   if (!F->arg_empty()) {
-//     Function::const_arg_iterator argI = F->arg_begin(), argE = F->arg_end();
-//     unsigned Idx = 1;
+	if (!F->arg_empty()) {
+		Function::const_arg_iterator argI = F->arg_begin(), argE = F->arg_end();
+		unsigned Idx = 1;
 
-//     // If this is a struct-return function, don't print the hidden
-//     // struct-return argument.
-//     if (isStructReturn) {
-//       assert(argI != argE && "Invalid struct return function!");
-//       ++argI;
-//       ++Idx;
-//     }
+		// If this is a struct-return function, don't print the hidden
+		// struct-return argument.
+		if (F->hasStructRetAttr()) {
+			assert(argI != argE && "Invalid struct return function!");
+			++argI;
+			++Idx;
+		}
+		std::map<Value*, std::string>* allDepsByValue = new std::map<Value*, std::string>();
+		std::map<std::string, const Type*>* allDepsByName = new std::map<std::string, const Type*>;
 
-//     for (; argI != argE; ++argI) {
-//       Value* currentArg = &*argI;
-//       getVariableDependencyForValue(currentArg, prefix, retVariables);
-//     }
-//   }
-// }
+		for (; argI != argE; ++argI) {
+			const Value* currentArg = &*argI;
+			std::vector<pair<std::string, const Type*> >* argDeps = new std::vector<pair<std::string, const Type*> >();
+			
+			// Get the memory locations accessed through this prarameter 			
+			getValueDependencies((Value*) currentArg, prefix, argDeps, ret, allDepsByValue, allDepsByName);
+			addVectors(argDeps, args);
+		}
+	}
+	
+	TRACE_7("RESULT of fillDependencies() :\n");
+	TRACE_7(" ARGS :\n");
 
-// void
-// insertAllFields(std::vector<std:string, Type*>* retVariables, std:string parentName, Type* structType)
-// {  
-//   unsigned int numFields = structType->getNumElements();
-//   for (unsigned int i = 0; i < numFields; i++) {
-//     fieldType = getElementType(i);
-//     fieldName = parentName + "-field" + i;
-//     if (isa<StructType>(fieldType)) {
-//       insertAllFields(retVariables, fieldName, fieldtype);
-//     } else if (find(retVariables->begin(), retVariables->end(), make_pair(fieldName, fieldType)) == retVariables->end()) {
-//       retVariables->push_back(make_pair(fieldName, fieldType));
-//     }
-//   }
-// }
+	std::vector<pair<std::string, const Type*> >::iterator itArgs = args->begin();
+	std::vector<pair<std::string, const Type*> >::iterator itE = args->end();
+	for (; itArgs != itE ; ++itArgs) {
+		TRACE_7(itArgs->first);
+		TRACE_7("\n");
+	}
+	TRACE_7(" RETURNS :\n");
+	std::vector<pair<std::string, const Type*> >::iterator itRet = ret->begin();
+	itE = ret->end();
+	for (; itRet != itE ; ++itRet) {
+		TRACE_7(itRet->first);
+		TRACE_7("\n");
+	}
+}
 
-// void
-// getVariableDependencyForValue(Value* value, std:string prefix, std::map<std:string, Type *>* retVariables)
-// {
-//   pair <std:string, Type*> structPair;
-//   vector<pair <Value*, pair<std:string, Type*> > > structStack;
+void
+SimpleWriter::insertAllFields(std::vector<pair<std::string, const Type*> >* deps,
+			std::map<std::string, const Type*>* allDepsByName,
+			std::string parentName,
+			const StructType* structType)
+{  
+	int numFields = structType->getNumElements();
+	TRACE_7("InsertAllFields()\n");
+	for (int i = 0; i < numFields; i++) {
+		const Type* fieldType = structType->getElementType(i);
+		std::stringstream ss;
+		ss << i;
+		std::string fieldName = parentName + std::string("-field") + ss.str();
+		if (isa<StructType>(fieldType)) {
+			const StructType* structTy = cast<const StructType>(fieldType);
+			insertAllFields(deps, allDepsByName, fieldName, structTy);
+		} else if (allDepsByName->find(fieldName) == allDepsByName->end()) {
+			(*allDepsByName)[fieldName] = fieldType;
+			deps->push_back(pair<std::string, const Type*>(fieldName, fieldType));
+			TRACE_7("Adding field to deps : " << fieldName << "\n");
+		} else {
+			TRACE_7("Field already in deps : " << fieldName << "\n");
+		}
+	}
+}
 
-//   // ...for each parameter 
-//   if (value->getNumUses() == 0) {
-//     continue;
-//   }
-//   structStack.push_back(make_pair(value, make_pair(value->getNameStr(), value->getType())));
+int
+SimpleWriter::getNumField(GetElementPtrInst* inst)
+{
+	int res = 0;
+	User::op_iterator AI = inst->op_begin() + 2, AE = inst->op_end();
+	for ( ; AI != AE ; ++AI) {
+		res += (int) cast<ConstantInt>(*AI)->getSExtValue();
+	}
+	return res;
+}
 
-//   // Handle each Value pushed onto the stack for the current parameter
-//   while (! structStack.empty()) {
+void
+SimpleWriter::getValueDependencies(Value* value,
+				std::string prefix,
+				std::vector<pair<std::string, const Type*> >* args,
+				std::vector<pair<std::string, const Type*> >* ret,
+				std::map<Value*, std::string>* allDepsByValue,
+				std::map<std::string, const Type*>* allDepsByName)
+{
+	std::vector<Value*> visited;
+	pair <std::string, const Type*> structPair;
+	std::vector<Value*>::iterator itVisited;
+	
+	TRACE_6("SimpleWriter > getValueDependencies() ");
+	value->dump();
+	TRACE_6("\n");
 
-//     structPair = structStack.pop_back();
-//     std::string currentName = structPair.second.first;
-//     Value* currentValue = structPair.first;
-//     const Type *currentTy = structPair.second.second;
+	if (value->getNumUses() == 0) {
+		return;
+	}
+	
+	visited.push_back(value);
+	(*allDepsByValue)[value] = value->getNameStr();
+	(*allDepsByName)[value->getNameStr()] = value->getType();
+	TRACE_7("Added to visited : " << value << "   " << value->getNameStr() << "\n");
 
-//     // for each use of the current value...
-//     for (Value::use_iterator useI = currentValue->use_begin(), useE = currentValue->use_end(); useI != useE; ++useI) {
+	// Handle each Value pushed onto the stack for the current parameter
+	while (visited.begin() != visited.end()) {
+		Value* currentValue = *(visited.begin());
+		std::string currentName = (*allDepsByValue)[currentValue];
+		const Type *currentTy = (*allDepsByName)[currentName];
+		if (isa<PointerType>(currentTy)) {
+			currentTy = cast<PointerType>(currentTy)->getElementType();        
+		}
+		
+		TRACE_7("Current value is : " << currentValue << "\n");
+		currentValue->dump();
+		TRACE_7("\n");
+		
+		Value* currentUse;
+		Value::use_iterator useI = currentValue->use_begin(), useE = currentValue->use_end();
+		
+		// for each use of the current value...
+		for (; useI != useE; ++useI) {
+			std::string name;
+			
+			currentUse = *useI;
+			TRACE_7("Current use is : ");
+			currentUse->dump();
+			TRACE_7("\n");			
+			
+			// if the current use is a getElementPointer instruction, let's see which field is accessed
+			if (GetElementPtrInst* getEltPtrInst = dyn_cast<GetElementPtrInst>(currentUse)) {
+				int numField = getNumField(getEltPtrInst);
+				if (numField < 0) {
+					insertAllFields(args, allDepsByName, currentName, currentStructTy);
+				} else {
+					const Type* fieldType = currentStructTy->getElementType(numField);
+					std::string fieldName = (*allDepsByValue)[getEltPtrInst->getOperand(1)];
+					TRACE_7("Treating Geteltptr > adding " << fieldName << "to deps\n");
+					
+					std::stringstream ss;
+					ss << numField;
+					name = fieldName + "-field" + ss.str();
+					
+					if (allDepsByName->find(name) == allDepsByName->end()) {
+						(*allDepsByValue)[getEltPtrInst] = name;
+						(*allDepsByName)[name] = fieldType;
+						visited.push_back(getEltPtrInst);
+						
+						TRACE_7("Added to visited : " << getEltPtrInst << "  " << name << "\n");
+					} else {
+						TRACE_7("Already visited : " << getEltPtrInst << "  " << name << "\n");
+					}
+				}				
+			} else if (dyn_cast<StoreInst>(currentUse)) {
+				Type* storeType = cast<Type>(storeInst->getOperand(1));
+				StructType* StructStoreType = cast<Type>(storeInst->getOperand(1));
 
-//       Value* currentUse = &*useI;
-
-//       if (isa<PointerType>(currentTy))
-//      currentTy = currentTy->getElementType();        
-
-//       // if the type of the currentValue is a StructType, we must generate the variables allowing to acces the fields, if they are used
-//       if (isa<StructType>(currentTy)) {
-//      currentStructTy = cast<StructType>(currentTy);
-
-//      // if the current use is a getElementPointer instruction, let's see which field is accessed
-//      if (GetElementPtr* getElPtrInst = dyn_cast<GetElementPtr>(currentUse)) {
-//        int numField = getNumField(getElPtrInst);
-//        Type* fieldType = parentType->getElementType(numField);
-//        name = parentName + "-" + currentStructType + ".field" + numField;
-//        structStack->push_back(make_pair(getEltPtrInst, make_pair(name, fieldType)));
-//      } else if (StoreInst* storeInst = dyn_cast<StoreInst>(currentUse)) {
-//        Type* storeType = cast<Type>(storeInst->getOperand(0));
-//        Value* value = storeInst->getOperand(1);      
-//        insertAllFields(retVariables, value, storeType);
-//      } else if (LoadInst* loadInst = dyn_cast<LoadInst>(currentUse)) {
-//        Type* loadType = cast<Type>(loadInst->getOperand(0));
-//        structStack->push_back(make_pair(currentName, loadInst));
-//      } else if (CallInst* callInst = dyn_cast<CallInst>(currentUse)) {
-//        Function* fCalled = callInst->getCalledFunction();
-//        for (User::op_iterator opit = callInst->op_begin(), opend = callInst->op_end(); opit != opend; ++opit) {
-//          Value* op = *opit; 
-//          Function* calledFct = op->getCalledFunction();
-//          Function::const_arg_iterator argI = F->arg_begin(), argE = F->arg_end();
-
-//          for (Value::use_iterator searchingI = op->use_begin(), searchingE = op->use_end(); searchingI != searchingE; ++searchingI) {
-//            if (*searchingI == parentInst)
-//              getVariableDependencyForValue(&*argI, currentName, retVariables);
-//            ++argI;
-//          }
-//        }
-//      }
-//       } else {
-//      if (find(used_bb.begin(), used_bb.end(), currentBlock) == used_bb.end())
-//        retVariables.insert(make_pair(currentName, currentTy));
-//       }
-//     }
-//   }
-// }
+				if (isa<PointerType>(storeType)) {
+					storeType = cast<PointerType>(currentTy)->getElementType();        
+				}
+				if (StructStoreType = cast<const StructType>(storeType)) {
+					insertAllFields(ret, allDepsByName, currentName, StructStoreType);
+				} else {
+					ret->push_back(pair<std::string, const Type*>(currentName, storeType));
+				}
+			} else if (CallInst* callInst = dyn_cast<CallInst>(currentUse)) {
+				Function* fCalled = callInst->getCalledFunction();
+				if (! this->sccfactory->handlerExists(fCalled, callInst->getParent(), callInst)) {
+					for (User::op_iterator opit = callInst->op_begin(), opend = callInst->op_end(); opit != opend; ++opit) {
+						Value* op = *opit; 
+						Function::arg_iterator argI = fCalled->arg_begin(), argE = fCalled->arg_end();
+						if (op == currentValue) {
+							getValueDependencies(&*argI, currentName, args, ret, allDepsByValue, allDepsByName);
+						}
+						argI++;
+					}
+				}
+			} else if (isa<StructType>(currentTy)) {
+//				if (LoadInst* loadInst = dyn_cast<LoadInst>(currentUse)) {
+				const StructType* currentStructTy = cast<const StructType>(currentTy);
+				name = currentName;
+				(*allDepsByValue)[currentUse] = name;
+				visited.push_back(currentUse);
+				TRACE_7("Added to visited : " << cast<Instruction>(currentUse) << "  " << name << "\n");
+			} else {
+				args->push_back(pair<std::string, const Type*>(currentName, currentTy));							
+			}
+			TRACE_7("Not a Struct type\n");
+		}
+		visited.erase(visited.begin());
+	}
+}
 
 static inline bool isFPIntBitCast(const Instruction & I)
 {
@@ -2299,7 +2368,7 @@ static inline bool isFPIntBitCast(const Instruction & I)
 	const Type *SrcTy = I.getOperand(0)->getType();
 	const Type *DstTy = I.getType();
 	return (SrcTy->isFloatingPoint() && DstTy->isInteger()) ||
-	    (DstTy->isFloatingPoint() && SrcTy->isInteger());
+		(DstTy->isFloatingPoint() && SrcTy->isInteger());
 }
 
 void SimpleWriter::printFunction(Function & F)
@@ -2315,17 +2384,20 @@ void SimpleWriter::printFunction(Function & F)
 	if (isStructReturn) {
 		triggerError(Out, "NYI : function returning a struct.");
 		const Type *StructTy =
-		    cast < PointerType >
-		    (F.arg_begin()->getType())->getElementType();
+			cast < PointerType >
+			(F.arg_begin()->getType())->getElementType();
 		Out << "  ";
 		printType(Out, StructTy, false, "StructReturn");
 		Out << ";  /* Struct return temporary */\n";
 
 		Out << "  ";
 		printType(Out, F.arg_begin()->getType(), false,
-			  GetValueName(F.arg_begin()));
+			GetValueName(F.arg_begin()));
 		Out << " = &StructReturn;\n";
 	}
+
+	TRACE_5("SimpleWriter > printing locals\n");
+
 	// print local variable information for the function
 	for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E;
 	     ++I) {
@@ -2339,23 +2411,23 @@ void SimpleWriter::printFunction(Function & F)
 			if (printedVar)
 				Out << "     ,\n";
 			printType(Out, AI->getAllocatedType(), false,
-				  GetValueName(AI));
+				GetValueName(AI));
 			//      Out << ";    /* Address-exposed local */\n";
 			printedVar = true;
 		} else if (I->getType() != Type::getVoidTy(F.getContext())
-			   && !isInlinableInst(*I)) {
+			&& !isInlinableInst(*I)) {
 			if (printedVar)
 				Out << "     ,\n";
 
 			printType(Out, I->getType(), false,
-				  GetValueName(&*I));
+				GetValueName(&*I));
 
 			if (isa < PHINode > (*I)) {	// Print out PHI node temporaries as well...
 				if (printedVar)
 					Out << "     ,";
 				printType(Out, I->getType(), false,
-					  GetValueName(&*I) +
-					  "__PHI_TEMPORARY");
+					GetValueName(&*I) +
+					"__PHI_TEMPORARY");
 			}
 			printedVar = true;
 		}
@@ -2378,11 +2450,12 @@ void SimpleWriter::printFunction(Function & F)
 
 	Out << "begin\n";
 
+	TRACE_5("SimpleWriter > printing basic blocks\n");
 	// print the basic blocks
 	for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
 		if (Loop * L = LI->getLoopFor(BB)) {
 			if (L->getHeader() == BB
-			    && L->getParentLoop() == 0)
+				&& L->getParentLoop() == 0)
 				printLoop(L);
 		} else {
 			printBasicBlock(BB);
@@ -2404,7 +2477,7 @@ void SimpleWriter::printLoop(Loop * L)
 		if (BBLoop == L)
 			printBasicBlock(BB);
 		else if (BB == BBLoop->getHeader()
-			 && BBLoop->getParentLoop() == L)
+			&& BBLoop->getParentLoop() == L)
 			printLoop(BBLoop);
 	}
 //   Out << "  done; /* end of syntactic loop '"
@@ -2413,6 +2486,8 @@ void SimpleWriter::printLoop(Loop * L)
 
 void SimpleWriter::printBasicBlock(BasicBlock * BB)
 {
+	TRACE_6("SimpleWriter > printing basic block : " << BB->getNameStr() << "\n");
+
 	// Don't print the label for the basic block if there are no uses, or if
 	// the only terminator use is the predecessor basic block's terminator.
 	// We have to scan the use list because PHI nodes use basic blocks too but
@@ -2434,26 +2509,26 @@ void SimpleWriter::printBasicBlock(BasicBlock * BB)
 	     II != E; ++II) {
 		if (!isInlinableInst(*II) && !isDirectAlloca(II)) {
 			if (II->getType() !=
-			    Type::getVoidTy(BB->getContext())
-			    && !isInlineAsm(*II)) {
-//        DEBUG_MSG("\n/**** before outputLValue ****/\n");
+				Type::getVoidTy(BB->getContext())
+				&& !isInlineAsm(*II)) {
+//        TRACE_4("\n/**** before outputLValue ****/\n");
 				outputLValue(II);
 			} else {
 				Out << "  ";
 			}
-			DEBUG_MSG("\n/**** before writeInst ****/\n");
+			TRACE_4("\n/**** before writeInst ****/\n");
 			writeInstComputationInline(*II);
-			DEBUG_MSG("\n/**** after writeInst ****/\n");
+			TRACE_4("\n/**** after writeInst ****/\n");
 
 			Out << ";\n";
 		}
 	}
 
-	DEBUG_MSG("/***** visit terminator : " << *BB->getTerminator()->
-		  getOpcodeName() << "*****/\n");
+	TRACE_4("/***** visit terminator : " << *BB->getTerminator()->
+		getOpcodeName() << "*****/\n");
 	// Don't emit prefix or suffix for the terminator.
 	visit(*BB->getTerminator());
-	DEBUG_MSG("/***** visited terminator ****/\n");
+	TRACE_4("/***** visited terminator ****/\n");
 
 }
 
@@ -2463,11 +2538,11 @@ void SimpleWriter::printBasicBlock(BasicBlock * BB)
 //
 void SimpleWriter::visitReturnInst(ReturnInst & I)
 {
-	DEBUG_MSG("/***** Visiting return inst ****/\n");
+	TRACE_4("/***** Visiting return inst ****/\n");
 
 	// If this is a struct return function, return the temporary struct.
 	bool isStructReturn =
-	    I.getParent()->getParent()->hasStructRetAttr();
+		I.getParent()->getParent()->hasStructRetAttr();
 
 	if (isStructReturn) {
 		Out << "  return StructReturn;\n";
@@ -2475,13 +2550,13 @@ void SimpleWriter::visitReturnInst(ReturnInst & I)
 	}
 	// Don't output a void return if this is the last basic block in the function
 	if (I.getNumOperands() == 0 &&
-	    &*--I.getParent()->getParent()->end() == I.getParent() &&
-	    !I.getParent()->size() == 1) {
+		&*--I.getParent()->getParent()->end() == I.getParent() &&
+		!I.getParent()->size() == 1) {
 		return;
 	}
 
-	DEBUG_MSG("/**** Nb operands : " << I.
-		  getNumOperands() << "****/\n");
+	TRACE_4("/**** Nb operands : " << I.
+		getNumOperands() << "****/\n");
 
 	if (I.getNumOperands() >= 1) {
 //     Out << "  {\n";
@@ -2515,11 +2590,11 @@ void SimpleWriter::visitSwitchInst(SwitchInst & SI)
 		writeOperand(SI.getOperand(i));
 		Out << ":\n";
 		BasicBlock *Succ =
-		    cast < BasicBlock > (SI.getOperand(i + 1));
+			cast < BasicBlock > (SI.getOperand(i + 1));
 		printPHICopiesForSuccessor(SI.getParent(), Succ, 2);
 		printBranchToBlock(SI.getParent(), Succ, 2);
 		if (Function::iterator(Succ) ==
-		    next(Function::iterator(SI.getParent())))
+			next(Function::iterator(SI.getParent())))
 			Out << "    break;\n";
 	}
 	Out << "  }\n";
@@ -2569,8 +2644,8 @@ bool SimpleWriter::isGotoCodeNecessary(BasicBlock * From, BasicBlock * To)
 }
 
 void SimpleWriter::printPHICopiesForSuccessor(BasicBlock * CurBlock,
-					      BasicBlock * Successor,
-					      unsigned Indent)
+					BasicBlock * Successor,
+					unsigned Indent)
 {
 	for (BasicBlock::iterator I = Successor->begin();
 	     isa < PHINode > (I); ++I) {
@@ -2580,7 +2655,7 @@ void SimpleWriter::printPHICopiesForSuccessor(BasicBlock * CurBlock,
 		if (!isa < UndefValue > (IV)) {
 			Out << std::string(Indent, ' ');
 			Out << "  " << GetValueName(I) <<
-			    "__PHI_TEMPORARY = ";
+				"__PHI_TEMPORARY = ";
 			writeOperand(IV);
 			Out << ";   /* for PHI node */\n";
 		}
@@ -2588,7 +2663,7 @@ void SimpleWriter::printPHICopiesForSuccessor(BasicBlock * CurBlock,
 }
 
 void SimpleWriter::printBranchToBlock(BasicBlock * CurBB,
-				      BasicBlock * Succ, unsigned Indent)
+				BasicBlock * Succ, unsigned Indent)
 {
 	if (isGotoCodeNecessary(CurBB, Succ)) {
 		Out << std::string(Indent, ' ') << "  goto ";
@@ -2614,19 +2689,19 @@ void SimpleWriter::visitBranchInst(BranchInst & I)
 			Out << " \n  then\n    ";
 
 			printPHICopiesForSuccessor(I.getParent(),
-						   I.getSuccessor(0), 2);
+						I.getSuccessor(0), 2);
 			printBranchToBlock(I.getParent(),
-					   I.getSuccessor(0), 2);
+					I.getSuccessor(0), 2);
 
 			if (isGotoCodeNecessary
-			    (I.getParent(), I.getSuccessor(1))) {
+				(I.getParent(), I.getSuccessor(1))) {
 				Out << "   else\n    ";
 				printPHICopiesForSuccessor(I.getParent(),
-							   I.
-							   getSuccessor(1),
-							   2);
+							I.
+							getSuccessor(1),
+							2);
 				printBranchToBlock(I.getParent(),
-						   I.getSuccessor(1), 2);
+						I.getSuccessor(1), 2);
 			}
 		} else {
 			// First goto not necessary, assume second one is...
@@ -2635,15 +2710,15 @@ void SimpleWriter::visitBranchInst(BranchInst & I)
 			Out << "  \n  then\n    ";
 
 			printPHICopiesForSuccessor(I.getParent(),
-						   I.getSuccessor(1), 2);
+						I.getSuccessor(1), 2);
 			printBranchToBlock(I.getParent(),
-					   I.getSuccessor(1), 2);
+					I.getSuccessor(1), 2);
 		}
 
 		Out << "  endif;\n";
 	} else {
 		printPHICopiesForSuccessor(I.getParent(),
-					   I.getSuccessor(0), 0);
+					I.getSuccessor(0), 0);
 		printBranchToBlock(I.getParent(), I.getSuccessor(0), 0);
 	}
 	Out << "\n";
@@ -2663,7 +2738,7 @@ void SimpleWriter::visitBinaryOperator(Instruction & I)
 {
 	// binary instructions, shift instructions, setCond instructions.
 	assert(!isa < PointerType > (I.getType()));
-	DEBUG_MSG("/**** visitBinaryOperator() ****/\n");
+	TRACE_4("/**** visitBinaryOperator() ****/\n");
 
 	// We must cast the results of binary operations which might be promoted.
 //   bool needsCast = false;
@@ -2681,13 +2756,13 @@ void SimpleWriter::visitBinaryOperator(Instruction & I)
 	if (BinaryOperator::isNeg(&I)) {
 		Out << "-(";
 		writeOperand(BinaryOperator::
-			     getNegArgument(cast < BinaryOperator > (&I)));
+			getNegArgument(cast < BinaryOperator > (&I)));
 		Out << ")";
 	} else if (BinaryOperator::isFNeg(&I)) {
 		Out << "-(";
 		writeOperand(BinaryOperator::
-			     getFNegArgument(cast < BinaryOperator >
-					     (&I)));
+			getFNegArgument(cast < BinaryOperator >
+					(&I)));
 		Out << ")";
 	} else if (I.getOpcode() == Instruction::FRem) {
 		// Output a call to fmod/fmodf instead of emitting a%b
@@ -2903,13 +2978,13 @@ static const char *getFloatBitCastField(const Type * Ty)
 	case Type::DoubleTyID:
 		return "Double";
 	case Type::IntegerTyID:{
-			unsigned NumBits =
-			    cast < IntegerType > (Ty)->getBitWidth();
-			if (NumBits <= 32)
-				return "Int32";
-			else
-				return "Int64";
-		}
+		unsigned NumBits =
+			cast < IntegerType > (Ty)->getBitWidth();
+		if (NumBits <= 32)
+			return "Int32";
+		else
+			return "Int64";
+	}
 	}
 }
 
@@ -2935,16 +3010,16 @@ void SimpleWriter::visitCastInst(CastInst & I)
 
 	// Make a sext from i1 work by subtracting the i1 from 0 (an int).
 	if (SrcTy == Type::getInt1Ty(I.getContext()) &&
-	    I.getOpcode() == Instruction::SExt)
+		I.getOpcode() == Instruction::SExt)
 		Out << "0-";
 
 	writeOperand(I.getOperand(0));
 
 	if (DstTy == Type::getInt1Ty(I.getContext()) &&
-	    (I.getOpcode() == Instruction::Trunc ||
-	     I.getOpcode() == Instruction::FPToUI ||
-	     I.getOpcode() == Instruction::FPToSI ||
-	     I.getOpcode() == Instruction::PtrToInt)) {
+		(I.getOpcode() == Instruction::Trunc ||
+			I.getOpcode() == Instruction::FPToUI ||
+			I.getOpcode() == Instruction::FPToSI ||
+			I.getOpcode() == Instruction::PtrToInt)) {
 		// Make sure we really get a trunc to bool by anding the operand with 1 
 		Out << "&1u";
 	}
@@ -3005,7 +3080,7 @@ void SimpleWriter::lowerIntrinsics(Function & F)
 						// If this is an intrinsic that directly corresponds to a GCC
 						// builtin, we handle it.
 						const char *BuiltinName =
-						    "";
+							"";
 #define GET_GCC_BUILTIN_NAME
 #include "llvm/Intrinsics.gen"
 #undef GET_GCC_BUILTIN_NAME
@@ -3017,9 +3092,9 @@ void SimpleWriter::lowerIntrinsics(Function & F)
 						Instruction *Before = 0;
 						if (CI != &BB->front())
 							Before =
-							    prior
-							    (BasicBlock::
-							     iterator(CI));
+								prior
+								(BasicBlock::
+									iterator(CI));
 
 						IL->LowerIntrinsicCall(CI);
 						if (Before) {	// Move iterator to instruction after call
@@ -3032,19 +3107,19 @@ void SimpleWriter::lowerIntrinsics(Function & F)
 						// a definition then we need to make sure its prototype is emitted
 						// before any calls to it.
 						if (CallInst * Call =
-						    dyn_cast < CallInst >
-						    (I))
+							dyn_cast < CallInst >
+							(I))
 							if (Function *
-							    NewF =
-							    Call->
-							    getCalledFunction
-							    ())
+								NewF =
+								Call->
+								getCalledFunction
+								())
 								if (!NewF->
-								    isDeclaration
-								    ())
+									isDeclaration
+									())
 									prototypesToGen.
-									    push_back
-									    (NewF);
+										push_back
+										(NewF);
 
 						break;
 					}
@@ -3071,8 +3146,7 @@ void SimpleWriter::visitCallInst(CallInst & I)
 {
 	std::map < CallInst *, SCConstruct * >::iterator itC;
 
-	if ((itC =
-	     this->scconstructs->find(&I)) != this->scconstructs->end()) {
+	if ((itC = this->sccfactory->getConstructs()->find(&I)) != this->sccfactory->getConstructs()->end()) {
 		SCConstruct *scc = itC->second;
 		return visitSCConstruct(scc);
 	}
@@ -3092,7 +3166,7 @@ void SimpleWriter::visitCallInst(CallInst & I)
 
 	const PointerType *PTy = cast < PointerType > (Callee->getType());
 	const FunctionType *FTy =
-	    cast < FunctionType > (PTy->getElementType());
+		cast < FunctionType > (PTy->getElementType());
 
 	// If this is a call to a struct-return function, assign to the first
 	// parameter instead of passing it to the call.
@@ -3111,7 +3185,7 @@ void SimpleWriter::visitCallInst(CallInst & I)
 		// If this is an indirect call to a struct return function, we need to cast
 		// the pointer. Ditto for indirect calls with byval arguments.
 		bool NeedsCast = (hasByVal || isStructRet)
-		    && !isa < Function > (Callee);
+			&& !isa < Function > (Callee);
 
 		// GCC is a real PITA.  It does not permit codegening casts of functions to
 		// function pointers if they are in a call (it generates a trap instruction
@@ -3128,8 +3202,8 @@ void SimpleWriter::visitCallInst(CallInst & I)
 		if (ConstantExpr * CE = dyn_cast < ConstantExpr > (Callee))
 			if (CE->isCast())
 				if (Function * RF =
-				    dyn_cast < Function >
-				    (CE->getOperand(0))) {
+					dyn_cast < Function >
+					(CE->getOperand(0))) {
 					NeedsCast = true;
 					Callee = RF;
 				}
@@ -3139,22 +3213,22 @@ void SimpleWriter::visitCallInst(CallInst & I)
 			Out << "((";
 			if (isStructRet)
 				printStructReturnPointerFunctionType(Out,
-								     PAL,
-								     cast <
-								     PointerType
-								     >
-								     (I.
-								      getCalledValue
-								      ()->
-								      getType
-								      ()));
+								PAL,
+								cast <
+								PointerType
+								>
+								(I.
+									getCalledValue
+									()->
+									getType
+									()));
 			else if (hasByVal)
 				printType(Out,
-					  I.getCalledValue()->getType(),
-					  false, "", true, PAL);
+					I.getCalledValue()->getType(),
+					false, "", true, PAL);
 			else
 				printType(Out,
-					  I.getCalledValue()->getType());
+					I.getCalledValue()->getType());
 			Out << ")(void*)";
 		}
 		writeOperand(Callee);
@@ -3181,12 +3255,12 @@ void SimpleWriter::visitCallInst(CallInst & I)
 		if (PrintedArg)
 			Out << ", ";
 		if (ArgNo < NumDeclaredParams &&
-		    (*AI)->getType() != FTy->getParamType(ArgNo)) {
+			(*AI)->getType() != FTy->getParamType(ArgNo)) {
 			Out << '(';
 			printType(Out, FTy->getParamType(ArgNo),
-				  /*isSigned= */
-				  PAL.paramHasAttr(ArgNo + 1,
-						   Attribute::SExt));
+				/*isSigned= */
+				PAL.paramHasAttr(ArgNo + 1,
+						Attribute::SExt));
 			Out << ')';
 		}
 		// Check if the argument is expected to be passed by value.
@@ -3203,24 +3277,24 @@ void SimpleWriter::visitCallInst(CallInst & I)
 /// if the entire call is handled, return false it it wasn't handled, and
 /// optionally set 'WroteCallee' if the callee has already been printed out.
 bool SimpleWriter::visitBuiltinCall(CallInst & I, Intrinsic::ID ID,
-				    bool & WroteCallee)
+				bool & WroteCallee)
 {
 	switch (ID) {
 	default:{
-			// If this is an intrinsic that directly corresponds to a GCC
-			// builtin, we emit it here.
-			const char *BuiltinName = "";
-			Function *F = I.getCalledFunction();
+		// If this is an intrinsic that directly corresponds to a GCC
+		// builtin, we emit it here.
+		const char *BuiltinName = "";
+		Function *F = I.getCalledFunction();
 #define GET_GCC_BUILTIN_NAME
 #include "llvm/Intrinsics.gen"
 #undef GET_GCC_BUILTIN_NAME
-			assert(BuiltinName[0]
-			       && "Unknown LLVM intrinsic!");
+		assert(BuiltinName[0]
+			&& "Unknown LLVM intrinsic!");
 
-			Out << BuiltinName;
-			WroteCallee = true;
-			return false;
-		}
+		Out << BuiltinName;
+		WroteCallee = true;
+		return false;
+	}
 	case Intrinsic::memory_barrier:
 		Out << "__sync_synchronize()";
 		return true;
@@ -3235,9 +3309,9 @@ bool SimpleWriter::visitBuiltinCall(CallInst & I, Intrinsic::ID ID,
 			std::string msg;
 			raw_string_ostream Msg(msg);
 			Msg <<
-			    "The C backend does not currently support zero "
+				"The C backend does not currently support zero "
 			    << "argument varargs functions, such as '" <<
-			    I.getParent()->getParent()->getName() << "'!";
+				I.getParent()->getParent()->getName() << "'!";
 			llvm_report_error(Msg.str());
 		}
 		writeOperand(--I.getParent()->getParent()->arg_end());
@@ -3305,18 +3379,18 @@ bool SimpleWriter::visitBuiltinCall(CallInst & I, Intrinsic::ID ID,
 		    << ") = __builtin_stack_save()";
 		return true;
 	case Intrinsic::dbg_stoppoint:{
-			// If we use writeOperand directly we get a "u" suffix which is rejected
-			// by gcc.
-			DbgStopPointInst & SPI =
-			    cast < DbgStopPointInst > (I);
-			std::string dir;
-			GetConstantStringInfo(SPI.getDirectory(), dir);
-			std::string file;
-			GetConstantStringInfo(SPI.getFileName(), file);
-			Out << "\n#line " << SPI.getLine()
-			    << " \"" << dir << '/' << file << "\"\n";
-			return true;
-		}
+		// If we use writeOperand directly we get a "u" suffix which is rejected
+		// by gcc.
+		DbgStopPointInst & SPI =
+			cast < DbgStopPointInst > (I);
+		std::string dir;
+		GetConstantStringInfo(SPI.getDirectory(), dir);
+		std::string file;
+		GetConstantStringInfo(SPI.getFileName(), file);
+		Out << "\n#line " << SPI.getLine()
+		    << " \"" << dir << '/' << file << "\"\n";
+		return true;
+	}
 	case Intrinsic::x86_sse_cmp_ss:
 	case Intrinsic::x86_sse_cmp_ps:
 	case Intrinsic::x86_sse2_cmp_sd:
@@ -3355,12 +3429,12 @@ bool SimpleWriter::visitBuiltinCall(CallInst & I, Intrinsic::ID ID,
 			break;
 		}
 		if (ID == Intrinsic::x86_sse_cmp_ps
-		    || ID == Intrinsic::x86_sse2_cmp_pd)
+			|| ID == Intrinsic::x86_sse2_cmp_pd)
 			Out << 'p';
 		else
 			Out << 's';
 		if (ID == Intrinsic::x86_sse_cmp_ss
-		    || ID == Intrinsic::x86_sse_cmp_ps)
+			|| ID == Intrinsic::x86_sse_cmp_ps)
 			Out << 's';
 		else
 			Out << 'd';
@@ -3414,9 +3488,9 @@ void SimpleWriter::visitFreeInst(FreeInst & I)
 }
 
 void SimpleWriter::printGEPExpression(Value * Ptr, gep_type_iterator I,
-				      gep_type_iterator E, bool Static)
+				gep_type_iterator E, bool Static)
 {
-	DEBUG_MSG("/**** printGEPExpression() ****/\n");
+	TRACE_4("/**** printGEPExpression() ****/\n");
 
 	// If there are no indices, just print out the pointer.
 	if (I == E) {
@@ -3430,7 +3504,7 @@ void SimpleWriter::printGEPExpression(Value * Ptr, gep_type_iterator I,
 	{
 		for (gep_type_iterator TmpI = I; TmpI != E; ++TmpI)
 			LastIndexIsVector =
-			    dyn_cast < VectorType > (*TmpI);
+				dyn_cast < VectorType > (*TmpI);
 	}
 
 	Out << "(";
@@ -3441,8 +3515,8 @@ void SimpleWriter::printGEPExpression(Value * Ptr, gep_type_iterator I,
 	if (LastIndexIsVector) {
 		Out << "((";
 		printType(Out,
-			  PointerType::getUnqual(LastIndexIsVector->
-						 getElementType()));
+			PointerType::getUnqual(LastIndexIsVector->
+					getElementType()));
 		Out << ")(";
 	}
 //   Out << '&';
@@ -3451,32 +3525,32 @@ void SimpleWriter::printGEPExpression(Value * Ptr, gep_type_iterator I,
 	// simplifications to clean up the code.
 	Value *FirstOp = I.getOperand();
 	if (!isa < Constant > (FirstOp)
-	    || !cast < Constant > (FirstOp)->isNullValue()) {
-		DEBUG_MSG("/****  first index is not 0 ****/\n");
+		|| !cast < Constant > (FirstOp)->isNullValue()) {
+		TRACE_4("/****  first index is not 0 ****/\n");
 		// First index isn't simple, print it the hard way.
 		writeOperand(Ptr);
 	} else {
 		++I;		// Skip the zero index.
 
-		DEBUG_MSG("/****  first index is 0 ****/\n");
+		TRACE_4("/****  first index is 0 ****/\n");
 
 		// Okay, emit the first operand. If Ptr is something that is already address
 		// exposed, like a global, avoid emitting (&foo)[0], just emit foo instead.
 		if (isAddressExposed(Ptr)) {
-			DEBUG_MSG("   /**** address is exposed ****/\n");
+			TRACE_4("   /**** address is exposed ****/\n");
 			writeOperandInternal(Ptr, Static);
 		} else if (I != E && isa < StructType > (*I)) {
-			DEBUG_MSG("/**** struct type ****/\n");
+			TRACE_4("/**** struct type ****/\n");
 			// If we didn't already emit the first operand, see if we can print it as
 			// P->f instead of "P[0].f"
 			writeOperand(Ptr);
 			Out << "-field" << cast < ConstantInt >
-			    (I.getOperand())->getZExtValue();
+				(I.getOperand())->getZExtValue();
 
 //       Out << "->field" << cast<ConstantInt>(I.getOperand())->getZExtValue();
 			++I;	// eat the struct index as well.
 		} else {
-			DEBUG_MSG("/**** else case... ****/\n");
+			TRACE_4("/**** else case... ****/\n");
 
 			// Instead of emitting P[0][1], emit (*P)[1], which is more idiomatic.
 			Out << "(*";
@@ -3488,31 +3562,31 @@ void SimpleWriter::printGEPExpression(Value * Ptr, gep_type_iterator I,
 	for (; I != E; ++I) {
 		if (isa < StructType > (*I)) {
 			Out << ".field" << cast < ConstantInt >
-			    (I.getOperand())->getZExtValue();
+				(I.getOperand())->getZExtValue();
 		} else if (isa < ArrayType > (*I)) {
 			Out << ".array[";
 //       writeOperandWithCast(I.getOperand(), Instruction::GetElementPtr);
 			writeOperand(I.getOperand(),
-				     Instruction::GetElementPtr);
+				Instruction::GetElementPtr);
 			Out << ']';
 		} else if (!isa < VectorType > (*I)) {
 			Out << '[';
 //       writeOperandWithCast(I.getOperand(), Instruction::GetElementPtr);
 			writeOperand(I.getOperand(),
-				     Instruction::GetElementPtr);
+				Instruction::GetElementPtr);
 			Out << ']';
 		} else {
 			// If the last index is into a vector, then print it out as "+j)".  This
 			// works with the 'LastIndexIsVector' code above.
 			if (isa < Constant > (I.getOperand()) &&
-			    cast < Constant >
-			    (I.getOperand())->isNullValue()) {
+				cast < Constant >
+				(I.getOperand())->isNullValue()) {
 				Out << "))";	// avoid "+0".
 			} else {
 				Out << ")+(";
 //         writeOperandWithCast(I.getOperand(), Instruction::GetElementPtr);
 				writeOperand(I.getOperand(),
-					     Instruction::GetElementPtr);
+					Instruction::GetElementPtr);
 				Out << "))";
 			}
 		}
@@ -3521,8 +3595,8 @@ void SimpleWriter::printGEPExpression(Value * Ptr, gep_type_iterator I,
 }
 
 void SimpleWriter::writeMemoryAccess(Value * Operand,
-				     const Type * OperandType,
-				     bool IsVolatile, unsigned Alignment)
+				const Type * OperandType,
+				bool IsVolatile, unsigned Alignment)
 {
 //   bool IsUnaligned = Alignment &&
 //     Alignment < TD->getABITypeAlignment(OperandType);
@@ -3554,20 +3628,20 @@ void SimpleWriter::writeMemoryAccess(Value * Operand,
 void SimpleWriter::visitLoadInst(LoadInst & I)
 {
 	writeMemoryAccess(I.getOperand(0), I.getType(), I.isVolatile(),
-			  I.getAlignment());
+			I.getAlignment());
 
 }
 
 void SimpleWriter::visitStoreInst(StoreInst & I)
 {
 	writeMemoryAccess(I.getPointerOperand(),
-			  I.getOperand(0)->getType(), I.isVolatile(),
-			  I.getAlignment());
+			I.getOperand(0)->getType(), I.isVolatile(),
+			I.getAlignment());
 	Out << " = ";
 	Value *Operand = I.getOperand(0);
 	Constant *BitMask = 0;
 	if (const IntegerType * ITy =
-	    dyn_cast < IntegerType > (Operand->getType())) {
+		dyn_cast < IntegerType > (Operand->getType())) {
 		if (!ITy->isPowerOf2ByteWidth()) {
 			// We have a bit width that doesn't match an even power-of-2 byte
 			// size. Consequently we must & the value with the type's bit mask
@@ -3587,7 +3661,7 @@ void SimpleWriter::visitStoreInst(StoreInst & I)
 void SimpleWriter::visitGetElementPtrInst(GetElementPtrInst & I)
 {
 	printGEPExpression(I.getPointerOperand(), gep_type_begin(I),
-			   gep_type_end(I), false);
+			gep_type_end(I), false);
 }
 
 void SimpleWriter::visitVAArgInst(VAArgInst & I)
@@ -3618,8 +3692,8 @@ void SimpleWriter::visitExtractElementInst(ExtractElementInst & I)
 	// We know that our operand is not inlined.
 	Out << "((";
 	const Type *EltTy =
-	    cast < VectorType >
-	    (I.getOperand(0)->getType())->getElementType();
+		cast < VectorType >
+		(I.getOperand(0)->getType())->getElementType();
 	printType(Out, PointerType::getUnqual(EltTy));
 	Out << ")(&" << GetValueName(I.getOperand(0)) << "))[";
 	writeOperand(I.getOperand(1));
@@ -3643,24 +3717,24 @@ void SimpleWriter::visitShuffleVectorInst(ShuffleVectorInst & SVI)
 			Out << " 0/*undef*/ ";
 		} else {
 			Value *Op =
-			    SVI.getOperand((unsigned) SrcVal >= NumElts);
+				SVI.getOperand((unsigned) SrcVal >= NumElts);
 			if (isa < Instruction > (Op)) {
 				// Do an extractelement of this value from the appropriate input.
 				Out << "((";
 				printType(Out,
-					  PointerType::getUnqual(EltTy));
+					PointerType::getUnqual(EltTy));
 				Out << ")(&" << GetValueName(Op)
 				    << "))[" << (SrcVal & (NumElts - 1)) <<
-				    "]";
+					"]";
 			} else if (isa < ConstantAggregateZero > (Op)
-				   || isa < UndefValue > (Op)) {
+				|| isa < UndefValue > (Op)) {
 				Out << "0";
 			} else {
 				printConstant(cast < ConstantVector >
-					      (Op)->
-					      getOperand(SrcVal &
-							 (NumElts - 1)),
-					      false);
+					(Op)->
+					getOperand(SrcVal &
+						(NumElts - 1)),
+					false);
 			}
 		}
 	}
@@ -3672,14 +3746,14 @@ void SimpleWriter::visitInsertValueInst(InsertValueInst & IVI)
 	// Start by copying the entire aggregate value into the result variable.
 	writeOperand(IVI.getOperand(0));
 	Out << ";\n  ";
-
+	
 	// Then do the insert to update the field.
 	Out << GetValueName(&IVI);
 	for (const unsigned *b = IVI.idx_begin(), *i = b, *e =
-	     IVI.idx_end(); i != e; ++i) {
+		     IVI.idx_end(); i != e; ++i) {
 		const Type *IndexedTy =
-		    ExtractValueInst::getIndexedType(IVI.getOperand(0)->
-						     getType(), b, i + 1);
+			ExtractValueInst::getIndexedType(IVI.getOperand(0)->
+							getType(), b, i + 1);
 		if (isa < ArrayType > (IndexedTy))
 			Out << ".array[" << *i << "]";
 		else
@@ -3699,13 +3773,13 @@ void SimpleWriter::visitExtractValueInst(ExtractValueInst & EVI)
 	} else {
 		Out << GetValueName(EVI.getOperand(0));
 		for (const unsigned *b = EVI.idx_begin(), *i = b, *e =
-		     EVI.idx_end(); i != e; ++i) {
+			     EVI.idx_end(); i != e; ++i) {
 			const Type *IndexedTy =
-			    ExtractValueInst::getIndexedType(EVI.
-							     getOperand
-							     (0)->
-							     getType(), b,
-							     i + 1);
+				ExtractValueInst::getIndexedType(EVI.
+								getOperand
+								(0)->
+								getType(), b,
+								i + 1);
 			if (isa < ArrayType > (IndexedTy))
 				Out << ".array[" << *i << "]";
 			else
@@ -3740,69 +3814,81 @@ bool SimpleWriter::runOnModule(Module & M)
 
 	// Keep track of which functions are static ctors/dtors so they can have
 	// an attribute added to their prototypes.
-	std::set < Function * >StaticCtors, StaticDtors;
-	for (Module::global_iterator I = M.global_begin(), E =
-	     M.global_end(); I != E; ++I) {
-		switch (getGlobalVariableClass(I)) {
-		default:
-			break;
-		case GlobalCtors:
-			FindStaticTors(I, StaticCtors);
-			break;
-		case GlobalDtors:
-			FindStaticTors(I, StaticDtors);
-			break;
-		}
+// 	std::set < Function * >StaticCtors, StaticDtors;
+// 	for (Module::global_iterator I = M.global_begin(), E =
+// 	     M.global_end(); I != E; ++I) {
+// 		switch (getGlobalVariableClass(I)) {
+// 		default:
+// 			break;
+// 		case GlobalCtors:
+// 			FindStaticTors(I, StaticCtors);
+// 			break;
+// 		case GlobalDtors:
+// 			FindStaticTors(I, StaticDtors);
+// 			break;
+// 		}
+// 	}
+
+// 	if (!M.global_empty()) {
+// 		Out << "\n\n/* Global Variable Declarations */\n";
+// 		for (Module::global_iterator I = M.global_begin(), E =
+// 		     M.global_end(); I != E; ++I)
+// 			if (!I->isDeclaration()) {
+// 				// Ignore special globals, such as debug info.
+// 				if (getGlobalVariableClass(I))
+// 					continue;
+
+// 				//           if (I->hasLocalLinkage())
+// 				//             Out << "static ";
+// 				//           else
+// 				//             Out << "extern ";
+
+// 				// Thread Local Storage
+// 				if (I->isThreadLocal())
+// 					Out << "__thread ";
+
+// 				I->dump();
+// // 				printType(Out,
+// // 					  I->getType()->getElementType(),
+// // 					  false, GetValueName(I));
+
+// 				if (I->hasLinkOnceLinkage())
+// 					Out << " __attribute__((common))";
+// 				else if (I->hasCommonLinkage())	// FIXME is this right?
+// 					Out << " __ATTRIBUTE_WEAK__";
+// 				else if (I->hasWeakLinkage())
+// 					Out << " __ATTRIBUTE_WEAK__";
+// 				else if (I->hasExternalWeakLinkage())
+// 					Out << " __EXTERNAL_WEAK__";
+// 				if (I->hasHiddenVisibility())
+// 					Out << " __HIDDEN__";
+// 				Out << ";\n";
+// 			}
+// 	}
+
+
+	vector < GlobalValue * >::iterator globalIt = this->elab->getGlobalVariables()->begin();
+	vector < GlobalValue * >::iterator globalEnd = this->elab->getGlobalVariables()->end();
+	TRACE_2("SimpleWriter > Emitting Global variables\n");
+	for (; globalIt < globalEnd; ++globalIt) {
+		GlobalValue* gv = *globalIt;
+		printType(Out, gv->getType(), false, Mang->getMangledName(gv));
 	}
 
-	if (!M.global_empty()) {
-		Out << "\n\n/* Global Variable Declarations */\n";
-		for (Module::global_iterator I = M.global_begin(), E =
-		     M.global_end(); I != E; ++I)
-			if (!I->isDeclaration()) {
-				// Ignore special globals, such as debug info.
-				if (getGlobalVariableClass(I))
-					continue;
-
-				//           if (I->hasLocalLinkage())
-				//             Out << "static ";
-				//           else
-				//             Out << "extern ";
-
-				// Thread Local Storage
-				if (I->isThreadLocal())
-					Out << "__thread ";
-
-				printType(Out,
-					  I->getType()->getElementType(),
-					  false, GetValueName(I));
-
-				if (I->hasLinkOnceLinkage())
-					Out << " __attribute__((common))";
-				else if (I->hasCommonLinkage())	// FIXME is this right?
-					Out << " __ATTRIBUTE_WEAK__";
-				else if (I->hasWeakLinkage())
-					Out << " __ATTRIBUTE_WEAK__";
-				else if (I->hasExternalWeakLinkage())
-					Out << " __EXTERNAL_WEAK__";
-				if (I->hasHiddenVisibility())
-					Out << " __HIDDEN__";
-				Out << ";\n";
-			}
-	}
-
-	vector < Process * >::iterator processIt =
-	    this->elab->getProcesses()->begin();
-	vector < Process * >::iterator endIt =
-	    this->elab->getProcesses()->end();
-
-	for (; processIt < endIt; processIt++) {
+	vector < Process * >::iterator processIt = this->elab->getProcesses()->begin();
+	vector < Process * >::iterator endIt = this->elab->getProcesses()->end();
+	
+	TRACE_2("SimpleWriter > Emitting Processes\n");
+	for (; processIt < endIt; ++processIt) {
 		Process *proc = *processIt;
-		std::vector < Function * >*usedFcts =
-		    proc->getUsedFunctions();
+		std::vector < Function * >*usedFcts = proc->getUsedFunctions();
+		TRACE_3("SimpleWriter > printing process : " << proc->getName() << "\n");
+		TRACE_3("Info : nb of used functions : " << usedFcts->size() << "\n");
+
 		for (std::vector < Function * >::iterator itF =
-		     usedFcts->begin(); itF < usedFcts->end(); itF++) {
+			     usedFcts->begin(); itF < usedFcts->end(); ++itF) {
 			Function *F = *itF;
+			TRACE_4("SimpleWriter > printing function : " << F->getNameStr() << "\n");
 
 			// Do not codegen any 'available_externally' functions at all, they have
 			// definitions outside the translation unit.

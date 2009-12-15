@@ -66,8 +66,7 @@ bool FunctionBuilder::mark(Value * arg)
 
 	/* Do not consider some instructions as well as already-visited instructions */
 	Instruction *argAsInst = cast < Instruction > (arg);
-	if (find(used_insts.begin(), used_insts.end(), argAsInst) !=
-	    used_insts.end()) {
+	if (find(used_insts.begin(), used_insts.end(), argAsInst) != used_insts.end()) {
 		TRACE_6("Arg has already been visited\n");
 		return false;
 	} else {
@@ -80,8 +79,7 @@ bool FunctionBuilder::mark(Value * arg)
 	}
 
 	currentBlock = argAsInst->getParent();
-	if (find(used_bb.begin(), used_bb.end(), currentBlock) ==
-	    used_bb.end()) {
+	if (find(used_bb.begin(), used_bb.end(), currentBlock) == used_bb.end()) {
 		TRACE_5("Block useful :" << currentBlock->
 			getNameStr() << "\n");
 		used_bb.push_back(currentBlock);
@@ -93,26 +91,27 @@ bool FunctionBuilder::mark(Value * arg)
 void FunctionBuilder::markUsefulInstructions()
 {
 	Value *arg;
-
+	
 	while (!temp_queue.empty()) {
 		Instruction *inst = temp_queue.back();
+		User::op_iterator opit = inst->op_begin(), opend = inst->op_end();
+
 		temp_queue.pop_back();
-
-    /*** Visit each argument of the instruction ***/
-		for (User::op_iterator opit = inst->op_begin(), opend =
-		     inst->op_end(); opit != opend; ++opit) {
+		
+		/*** Visit each argument of the instruction ***/
+		for (; opit != opend; ++opit) {
 			arg = *opit;
-
-      /*** Mark the instruction and the associated basicblock as useful ***/
+			
+			/*** Mark the instruction and the associated basicblock as useful ***/
 			if (!mark(arg))
 				continue;
-
-      /*** Visit each use of the arg ***/
-			for (Value::use_iterator I = arg->use_begin(), E =
-			     arg->use_end(); I != E; ++I) {
+			
+			Value::use_iterator I = arg->use_begin(), E = arg->use_end();
+			/*** Visit each use of the arg ***/
+			for (; I != E; ++I) {
 				Value *v = *I;
-
-	/*** Mark the instruction and the associated basicblock as useful ***/
+				
+				/*** Mark the instruction and the associated basicblock as useful ***/
 				if (!mark(v))
 					continue;
 			}
@@ -122,23 +121,19 @@ void FunctionBuilder::markUsefulInstructions()
 
 void FunctionBuilder::cloneBlocks()
 {
-	for (Function::iterator BI = origFct->begin(), BE = origFct->end();
-	     BI != BE; ++BI) {
+	for (Function::iterator BI = origFct->begin(), BE = origFct->end(); BI != BE; ++BI) {
 		BasicBlock *BB = &*BI;
-
-    /*** Avoid basic blocks with no useful instruction ***/
-		if (find(used_bb.begin(), used_bb.end(), BB) ==
-		    used_bb.end())
+		
+		/*** Avoid basic blocks with no useful instruction ***/
+		if (find(used_bb.begin(), used_bb.end(), BB) ==	used_bb.end())
 			continue;
-
-    /*** Register the (new) basic block in the value map, set its (new) name ***/
-		BasicBlock *NewBB =
-		    BasicBlock::Create(getGlobalContext(), "", fctToJit);
+		
+		/*** Register the (new) basic block in the value map, set its (new) name ***/
+		BasicBlock *NewBB = BasicBlock::Create(getGlobalContext(), "", fctToJit);
 		if (BB->hasName())
 			NewBB->setName(BB->getName());
 
-		TRACE_6("Clone block : " << BB << "->" << BB << " (" <<
-			NewBB->getNameStr() << ")\n");
+		TRACE_6("Clone block : " << BB << "->" << BB << " (" <<	NewBB->getNameStr() << ")\n");
 		ValueMap[BB] = NewBB;
 	}
 }
@@ -147,11 +142,9 @@ Function *FunctionBuilder::buildFct()
 {
 	BasicBlock *currentBlock = NULL;
 
-  /********************* Init stack ****************/
+	/********************* Init stack ****************/
 	if (isa < Constant > (this->res)) {
-		BasicBlock *entryBlock =
-		    BasicBlock::Create(getGlobalContext(), "entry",
-				       fctToJit);
+		BasicBlock *entryBlock = BasicBlock::Create(getGlobalContext(), "entry", fctToJit);
 		Value *instr = IRBuilder <> (entryBlock).CreateRet(res);
 		TRACE_5("Function is just a return :\n");
 		PRINT_5(instr->dump());
@@ -159,70 +152,60 @@ Function *FunctionBuilder::buildFct()
 		return this->fctToJit;
 	}
 
-  /*********** Determine which instructions are useful ***********/
+	/*********** Determine which instructions are useful ***********/
 	TRACE_5("Marking useful basic blocks and instructions\n");
 	mark(res);
 	markUsefulInstructions();
-
-  /**************** Clone blocks *******************/
+	
+	/**************** Clone blocks *******************/
 	TRACE_5("Cloning basic blocks\n");
 	cloneBlocks();
-
-  /********* Put arguments in the ValueMap *********/
+	
+	/********* Put arguments in the ValueMap *********/
 	ValueMap[this->origFct->arg_begin()] = this->fctToJit->arg_begin();
-
-  /****** Useful instructions are pushed in the list of *********/
-  /************* instructions to be generated  ******************/
-	Function::iterator origbb = origFct->begin(), origbe =
-	    origFct->end();;
+	
+	/****** Useful instructions are pushed in the list of *********/
+	/************* instructions to be generated  ******************/
+	Function::iterator origbb = origFct->begin(), origbe = origFct->end();;
 	//  Function::iterator clonebb = cloneFct->begin(), clonebe = cloneFct->end(); ;
 	std::map < std::string, Value * >namedValues;
 	Instruction *lastInst = NULL;
 	BasicBlock *lastBlock = NULL;
 	BasicBlock *NewBB;
 	BasicBlock *oldCurrentBlock = NULL;
-
-  /*** For each basic block in the original function... ***/
+	
+	/*** For each basic block in the original function... ***/
 	while (origbb != origbe) {
-		BasicBlock::iterator origInstIt =
-		    origbb->begin(), origInstEnd = origbb->end();
+		BasicBlock::iterator origInstIt = origbb->begin(), origInstEnd = origbb->end();
 		currentBlock = &*origbb++;
-		TRACE_6("Current block : " << currentBlock->
-			getNameStr() << "\n");
-
-    /*** ...get the corresponding block in the fctToJit if it exists ***/
+		TRACE_6("Current block : " << currentBlock->getNameStr() << "\n");
+		
+		/*** ...get the corresponding block in the fctToJit if it exists ***/
 		if (find(used_bb.begin(), used_bb.end(), currentBlock) ==
-		    used_bb.end()) {
+			used_bb.end()) {
 			TRACE_6("   not useful\n");
 			continue;
 		}
-
+		
 		NewBB = cast < BasicBlock > (ValueMap[currentBlock]);
 		TRACE_6("New block is " << NewBB << "\n");
-
-    /*** Add branch instruction from the previous block to the current one ***/
+		
+		/*** Add branch instruction from the previous block to the current one ***/
 		if (oldCurrentBlock != NULL) {
-			oldCurrentBlock->getInstList().
-			    push_back(BranchInst::Create(NewBB));
+			oldCurrentBlock->getInstList().push_back(BranchInst::Create(NewBB));
 		}
 		lastBlock = NewBB;
-
-    /*** For each instruction in the original basic block... ***/
+		
+		/*** For each instruction in the original basic block... ***/
 		while (origInstIt != origInstEnd) {
 			Instruction *origInst = &*origInstIt;
 
-      /*** ...clone the instruction if it is useful ***/
-			if (find
-			    (used_insts.begin(), used_insts.end(),
-			     origInst) != used_insts.end()) {
-				Instruction *NewInst =
-				    origInst->clone(getGlobalContext());
-				TRACE_6("Found useful and cloned : " <<
-					origInst << " -> " << NewInst <<
-					"\n");
+			/*** ...clone the instruction if it is useful ***/
+			if (find(used_insts.begin(), used_insts.end(), origInst) != used_insts.end()) {
+				Instruction *NewInst = origInst->clone(getGlobalContext());
+				TRACE_6("Found useful and cloned : " <<	origInst << " -> " << NewInst << "\n");
 				if (origInst->hasName())
-					NewInst->setName(origInst->
-							 getName());
+					NewInst->setName(origInst->getName());
 				//NewBB->getInstList().insert(NewBB->getInstList().end(), NewInst);
 				NewBB->getInstList().push_back(NewInst);
 				RemapInstruction(NewInst, ValueMap);	// Important: link the instruction to others (use-def chain)

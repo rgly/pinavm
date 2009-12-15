@@ -39,16 +39,16 @@ std::map < CallInst *, SCConstruct * >*SCCFactory::getConstructs()
 }
 
 
-bool SCCFactory::handle(llvm::Function * fct, BasicBlock * bb,
-			CallInst * callInst)
+bool SCCFactory::handle(llvm::Function * fct, BasicBlock * bb, CallInst * callInst)
 {
 	Function *calledFct;
 	SCConstructHandler *scch;
 
 	calledFct = callInst->getCalledFunction();
 
-	std::map < Function *, SCConstructHandler * >::iterator it =
-	    this->scchandlers.find(calledFct);
+	std::map < Function *, SCConstructHandler * >::iterator it;
+	it = this->scchandlers.find(calledFct);
+
 	if (it != scchandlers.end()) {
 		scch = it->second;
 		this->scc[callInst] = scch->handle(fct, bb, callInst);
@@ -56,4 +56,10 @@ bool SCCFactory::handle(llvm::Function * fct, BasicBlock * bb,
 	} else {
 		return false;
 	}
+}
+
+bool SCCFactory::handlerExists(llvm::Function * fct, BasicBlock * bb, CallInst * callInst)
+{
+	Function * calledFct = callInst->getCalledFunction();
+	return this->scchandlers.find(calledFct) != this->scchandlers.end();
 }

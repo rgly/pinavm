@@ -7,43 +7,51 @@
 
 #define VERBOSE 7
 
-#define TRACE(Msg) std::cout << Msg
+#define TRACE(Msg) std::cout << Msg; std::cout.flush();
 
 #if VERBOSE >= 1
-#define TRACE_1(Msg) std::cout << "###> " << Msg
+#define TRACE_1(Msg) TRACE(std::cout << "###> " << Msg)
 #else
 #define TRACE_1(Msg)
 #endif
 
 #if VERBOSE >= 2
-#define TRACE_2(Msg) std::cout << "   **> " << Msg
+#define TRACE_2(Msg) TRACE(std::cout << "   **> " << Msg)
 #else
 #define TRACE_2(Msg)
 #endif
 
 #if VERBOSE >= 3
-#define TRACE_3(Msg) std::cout << "      -> " << Msg
+#define TRACE_3(Msg) TRACE(std::cout << "      -> " << Msg)
 #else
 #define TRACE_3(Msg)
 #endif
 
 #if VERBOSE >= 4
-#define TRACE_4(Msg) std::cout << "           " << Msg
+#define TRACE_4(Msg) TRACE(std::cout << "           " << Msg)
 #else
 #define TRACE_4(Msg)
 #endif
 
 #if VERBOSE >= 5
-#define TRACE_5(Msg) std::cout << "              " << Msg
+#define TRACE_5(Msg) TRACE(std::cout << "              " << Msg)
 #else
 #define TRACE_5(Msg)
 #endif
 
 #if VERBOSE >= 6
-#define TRACE_6(Msg) std::cout << "                 " << Msg
+#define TRACE_6(Msg) TRACE(std::cout << "                 " << Msg)
 #else
 #define TRACE_6(Msg)
 #endif
+
+#if VERBOSE >= 7
+#define TRACE_7(Msg) TRACE(std::cout << "                 " << Msg)
+#else
+#define TRACE_7(Msg)
+#endif
+
+
 
 
 #if VERBOSE >= 5
@@ -58,8 +66,13 @@
 #define PRINT_6(Inst)
 #endif
 
+#if VERBOSE >= 7
+#define PRINT_7(Inst) Inst
+#else
+#define PRINT_7(Inst)
+#endif
 
-#define ERROR(Msg)    std::cout << Msg << "\n\n"; exit(1);
+#define ERROR(Msg)    TRACE(std::cout << Msg << "\n\n"); exit(1);
 
 
 #endif

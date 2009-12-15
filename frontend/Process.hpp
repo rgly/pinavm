@@ -42,7 +42,6 @@ struct Process:public ElabMember {
 	void printElab(int sep, std::string prefix);
 	 std::vector < Function * >*getUsedFunctions();
 	void addUsedFunction(Function * fct);
-	bool isFunctionUsed(Function * fct);
 };
 
 #endif

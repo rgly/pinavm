@@ -115,11 +115,7 @@ std::vector < Function * >*Process::getUsedFunctions()
 
 void Process::addUsedFunction(Function * fct)
 {
-	this->usedFunctions.push_back(fct);
-}
-
-bool Process::isFunctionUsed(Function * fct)
-{
-	return find(this->usedFunctions.begin(), this->usedFunctions.end(),
-		    fct) != this->usedFunctions.end();
+	if (find(this->usedFunctions.begin(), this->usedFunctions.end(), fct) == this->usedFunctions.end()) {
+		this->usedFunctions.push_back(fct);
+	}
 }

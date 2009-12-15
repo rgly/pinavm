@@ -179,13 +179,9 @@ void *SCJit::jitAddr(Function * f, Value * arg)
 
 	fctToJit = buildFct(f, FT, arg);
 
-	void *(*fct) (sc_core::sc_module *) =
-	    (void *(*)(sc_core::sc_module *)) ee->
-	    getPointerToFunction(fctToJit);
+	void *(*fct) (sc_core::sc_module *) = (void *(*)(sc_core::sc_module *)) ee->getPointerToFunction(fctToJit);
 	TRACE_5("Executing fctToJit\n");
-	void *res =
-	    fct(this->elab->
-		getSCModule(this->currentProcess->getModule()));
+	void *res = fct(this->elab->getSCModule(this->currentProcess->getModule()));
 
 	return res;
 }

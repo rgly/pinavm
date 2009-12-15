@@ -44,7 +44,9 @@ class SCElab : public ElabMember
   std::vector<Process*> processes;
   std::vector<Port*> ports;
   std::vector<Event*> events;
-  
+
+  std::vector<GlobalValue*> globalVariables;
+
   llvm::Module* llvmMod;
 
  public:
@@ -67,6 +69,10 @@ class SCElab : public ElabMember
   sc_core::sc_module* getSCModule(IRModule* irmod);
 
   std::vector<Process*>* getProcesses();
+  
+  void addGlobalVariable(GlobalValue *globalVar);
+  std::vector < GlobalValue * >* getGlobalVariables();
+
 };
 
 #endif

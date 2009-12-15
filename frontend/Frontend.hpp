@@ -33,6 +33,8 @@ class Frontend {
 
 	Module *getLLVMModule();
 	SCCFactory *getConstructs();
+
+	void fillGlobalVars(Instruction* inst);
 };
 
 #endif

@@ -38,16 +38,19 @@
 #include "llvm/Config/config.h"
 
 #include <map>
+#include <vector>
 #include <algorithm>
 #include <sstream>
 #include <string>
 #include <iostream>
+#include <utility>
 
-#include "SCElab.h"
-#include "SCCFactory.hpp"
 #include "Frontend.hpp"
 
 struct SCConstruct;
+struct SCCFactory;
+struct SCElab;
+
 using namespace llvm;
 
 enum SpecialGlobalClass {
@@ -74,7 +77,7 @@ class SimpleWriter : public ModulePass, public InstVisitor<SimpleWriter> {
   unsigned OpaqueCounter;
   DenseMap<const Value*, unsigned> AnonValueNumbers;
   unsigned NextAnonValueNumber;
-  std::map<CallInst*, SCConstruct*>* scconstructs;
+  SCCFactory* sccfactory;
   SCElab* elab;
 
 public:
@@ -83,7 +86,7 @@ public:
     : ModulePass(&ID), Out(o), IL(0), Mang(0), LI(0), 
       TheModule(0), TAsm(0), TD(0), OpaqueCounter(0), NextAnonValueNumber(0) {
     FPCounter = 0;
-    this->scconstructs = fe->getConstructs()->getConstructs();
+    this->sccfactory = fe->getConstructs();
     this->elab = fe->getElab();
   }
   explicit SimpleWriter(formatted_raw_ostream &o)
@@ -170,7 +173,7 @@ public:
   void visitBranchInst(BranchInst &I);
   void visitSwitchInst(SwitchInst &I);
   void visitInvokeInst(InvokeInst &I);
-    void visitUnwindInst(UnwindInst &I);
+  void visitUnwindInst(UnwindInst &I);
   void visitUnreachableInst(UnreachableInst &I);
 
   void visitPHINode(PHINode &I);
@@ -212,6 +215,26 @@ public:
 			  gep_type_iterator E, bool Static);
 
   std::string GetValueName(const Value *Operand);
+  
+  void fillDependencies(const Function* F,
+		  std::string prefix,
+		  std::vector<std::pair<std::string, const Type*> >* args,
+		  std::vector<std::pair<std::string, const Type*> >* ret);
+  
+  void insertAllFields(std::vector<std::pair<std::string, const Type*> >* deps,
+		  std::map<std::string, const Type*>* allDepsByName,
+		  std::string parentName,
+		  const StructType* structType);
+  void addVectors(std::vector<std::pair<std::string, const Type*> >* from,
+		  std::vector<std::pair<std::string, const Type*> >* to);
+  void getValueDependencies(Value* value,
+			  std::string prefix,
+			  std::vector<std::pair<std::string, const Type*> >* args,
+			  std::vector<std::pair<std::string, const Type*> >* ret,
+			  std::map<Value*, std::string>* allDepsByValue,
+			  std::map<std::string, const Type*>* allDepsByName);
+  int getNumField(GetElementPtrInst* inst);
+
 };
 
 #endif

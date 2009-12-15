@@ -22,8 +22,5 @@ SCConstruct *EventHandler::handle(Function * fct, BasicBlock * bb,
 void EventHandler::insertInMap(std::map < Function *,
 			       SCConstructHandler * >*scchandlers)
 {
-	SCConstructHandler::insertInMap(scchandlers,
-					(std::
-					 string)
-					"_ZN7sc_core9sc_module4waitERKNS_8sc_eventE");
+	SCConstructHandler::insertInMap(scchandlers, (std::string) "_ZN7sc_core9sc_module4waitERKNS_8sc_eventE");
 }

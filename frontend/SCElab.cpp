@@ -49,8 +49,7 @@ Process *SCElab::addProcess(IRModule * mod,
 	const char *fctName = process->func_process;
 	string modType = mod->getModuleType();
 	string moduleName = mod->getUniqueName();
-	string mainFctName =
-	    "_ZN" + (string) modType + "6" + (string) fctName + "Ev";
+	string mainFctName = "_ZN" + (string) modType + "6" + (string) fctName + "Ev";
 	string processName = moduleName + "::" + mainFctName;
 	Function *mainFct = this->llvmMod->getFunction(mainFctName);
 
@@ -120,20 +119,17 @@ IRModule *SCElab::getIRModule(void *moduleAddr)
 
 Process *SCElab::getProcess(void *processAddr)
 {
-	return this->processMap.
-	    find((sc_core::sc_process_b *) processAddr)->second;
+	return this->processMap.find((sc_core::sc_process_b *) processAddr)->second;
 }
 
 Port *SCElab::getPort(void *portAddr)
 {
-	return this->portsMap.find((sc_core::sc_port_base *) portAddr)->
-	    second;
+	return this->portsMap.find((sc_core::sc_port_base *) portAddr)->second;
 }
 
 Event *SCElab::getEvent(void *eventAddr)
 {
-	return this->eventsMap.find((sc_core::sc_event *) eventAddr)->
-	    second;
+	return this->eventsMap.find((sc_core::sc_event *) eventAddr)->second;
 }
 
 void SCElab::printElab(int sep, string prefix)
@@ -155,4 +151,15 @@ std::vector < Process * >*SCElab::getProcesses()
 sc_core::sc_module * SCElab::getSCModule(IRModule * irmod)
 {
 	return this->sc2irModules.find(irmod)->second;
+}
+
+void SCElab::addGlobalVariable(GlobalValue * globalVar)
+{
+	if (find(globalVariables.begin(), globalVariables.end(), globalVar) == globalVariables.end())
+		this->globalVariables.push_back(globalVar);
+}
+
+std::vector < GlobalValue * >* SCElab::getGlobalVariables()
+{
+	return & this->globalVariables;
 }

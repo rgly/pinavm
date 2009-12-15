@@ -24,9 +24,9 @@ struct SCCFactory {
       public:
 	SCCFactory(SCJit * jit);
 	~SCCFactory();
-	bool handle(llvm::Function * fct, BasicBlock * bb,
-		    CallInst * callInst);
-	 std::map < CallInst *, SCConstruct * >*getConstructs();
+	bool handle(llvm::Function * fct, BasicBlock * bb, CallInst * callInst);
+	std::map < CallInst *, SCConstruct * >*getConstructs();
+	bool handlerExists(llvm::Function * fct, BasicBlock * bb, CallInst * callInst);
 };
 
 #endif
