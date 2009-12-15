@@ -1,5 +1,6 @@
 SRCS = ${wildcard *.cpp}
 TARGET = libpinapa.so
+all: $(TARGET)
 
 ROOT=..
 include $(ROOT)/Makefile.common

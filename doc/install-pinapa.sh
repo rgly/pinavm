@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 trap 'echo "Error detected! End of script.";exit 1' ERR
 set -x
@@ -32,7 +32,9 @@ install_llvm() {
     test -f llvm-2.6.tar.gz || wget http://llvm.org/releases/2.6/llvm-2.6.tar.gz
     tar xzf llvm-2.6.tar.gz
     cd llvm-2.6
-    ln -s "$SRC_ROOT_DIR"/SimpleBackend/ lib/Target/SimpleBackend
+    if [ \! -e lib/Target/SimpleBackend ]; then
+	ln -s "$SRC_ROOT_DIR"/SimpleBackend/ lib/Target/SimpleBackend
+    fi
     patch -p0 <<\EOF
 --- configure 	2009-12-02 17:40:52.000000000 +0100
 +++ configure	2009-12-02 17:43:40.000000000 +0100
@@ -111,7 +113,7 @@ EOF
 install_systemc_gcc () {
     cd "$DOWNLOAD_AND_COMPILE_DIR"
     rm -fr systemc-2.2.0-gcc
-    test -f systemc-2.2.0.tgz || cp ~marquet/local/download/systemc-2.2.0.tgz .
+    test -f systemc-2.2.0.tgz || wget http://www-verimag.imag.fr/~moy/cours/tlm/systemc/systemc-2.2.0.tgz
     tar xzf systemc-2.2.0.tgz
     mv systemc-2.2.0 systemc-2.2.0-gcc
     cd systemc-2.2.0-gcc
@@ -122,6 +124,8 @@ install_systemc_gcc () {
     mkdir objdir
     cd objdir
     chmod +x ../configure
+    # most ./configure scripts create the target, but it seems SystemC's doesn't ...
+    mkdir -p "$INSTALL_PATH_SYSTEMC_GCC"
     ../configure --prefix="$INSTALL_PATH_SYSTEMC_GCC"
     make pthreads_debug
     # SystemC's configure.in is buggy, and seems not to obey --prefix correctly ...
@@ -209,9 +213,9 @@ install_systemc_llvm () {
     done
 }
 
+install_systemc_gcc
 install_llvm
 install_llvm_gcc
-install_systemc_gcc
 
 ( install_systemc_llvm )
 

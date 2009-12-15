@@ -1,24 +1,36 @@
-#################
 0) Set the PATH so that a good compiler is used, for instance gcc-4.2
-#################
 
 $ which g++
 /usr/local/soft/gcc/4.2.4/bin/g++
 
-#################
-1) Modify script "autoconf.ac"
-#################
+1) Download the tool
 
-Environment variables to modify are at the end of autoconf.ac.
+TOOL=/where/you/want/
+git clone [...] $TOOL
 
-$ autoconf
-$ ./configure
+2) Choose a temporary directory to install SystemC and LLVM :
 
-#################
-2) Execute the script
-#################
+DOWNLOAD=/somewhere/else/
 
-$ ./install_pinapa.sh
+3) Run configure:
+
+cd $TOOL
+autoconf
+./configure --with-tools-dir=$DOWNLOAD
+
+4) Set environment variables:
+
+export SYSTEMCFRONTEND=$TOOL/frontend
+export SYSTEMCROOT=$DOWNLOAD/download/systemc-2.2.0-gcc
+
+5) Execute the script
+
+cd $TOOL/doc
+./install_pinapa.sh
+
+
+###################################################
+(draft section)
 
 #################
 3) Compile and execute the front-end
