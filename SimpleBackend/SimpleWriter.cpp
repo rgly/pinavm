@@ -1458,9 +1458,7 @@ std::string SimpleWriter::GetValueName(const Value * Operand)
 	     I != E; ++I) {
 		char ch = *I;
 
-		if (!
-			((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')
-				|| (ch >= '0' && ch <= '9') || ch == '_')) {
+		if (! ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch == '_')) {
 			char buffer[5];
 			sprintf(buffer, "_%x_", ch);
 			VarName += buffer;
@@ -2166,8 +2164,9 @@ SimpleWriter::fillDependencies(const Function* F,
 			std::vector<pair<std::string, const Type*> >* args,
 			std::vector<pair<std::string, const Type*> >* ret)
 {
-	TRACE_6("SimpleWriter > fillDependencies\n");
+	std::string argPrefix;
 
+	TRACE_6("SimpleWriter > fillDependencies\n");
 	if (!F->arg_empty()) {
 		Function::const_arg_iterator argI = F->arg_begin(), argE = F->arg_end();
 		unsigned Idx = 1;
@@ -2185,9 +2184,9 @@ SimpleWriter::fillDependencies(const Function* F,
 		for (; argI != argE; ++argI) {
 			const Value* currentArg = &*argI;
 			std::vector<pair<std::string, const Type*> >* argDeps = new std::vector<pair<std::string, const Type*> >();
-			
+			argPrefix = prefix + GetValueName(currentArg);
 			// Get the memory locations accessed through this prarameter 			
-			getValueDependencies((Value*) currentArg, prefix, argDeps, ret, allDepsByValue, allDepsByName);
+			getValueDependencies((Value*) currentArg, argPrefix, argDeps, ret, allDepsByValue, allDepsByName);
 			addVectors(argDeps, args);
 		}
 	}
@@ -2268,19 +2267,21 @@ SimpleWriter::getValueDependencies(Value* value,
 	}
 	
 	visited.push_back(value);
-	(*allDepsByValue)[value] = value->getNameStr();
-	(*allDepsByName)[value->getNameStr()] = value->getType();
-	TRACE_7("Added to visited : " << value << "   " << value->getNameStr() << "\n");
+	(*allDepsByValue)[value] = prefix;
+	(*allDepsByName)[prefix] = value->getType();
+	TRACE_7("Added to visited : " << value << "   " << prefix << "\n");
 
 	// Handle each Value pushed onto the stack for the current parameter
 	while (visited.begin() != visited.end()) {
 		Value* currentValue = *(visited.begin());
 		std::string currentName = (*allDepsByValue)[currentValue];
 		const Type *currentTy = (*allDepsByName)[currentName];
+
 		if (isa<PointerType>(currentTy)) {
 			currentTy = cast<PointerType>(currentTy)->getElementType();        
 		}
-		
+		const StructType* cst = cast<StructType>(currentTy);
+
 		TRACE_7("Current value is : " << currentValue << "\n");
 		currentValue->dump();
 		TRACE_7("\n");
@@ -2299,18 +2300,27 @@ SimpleWriter::getValueDependencies(Value* value,
 			
 			// if the current use is a getElementPointer instruction, let's see which field is accessed
 			if (GetElementPtrInst* getEltPtrInst = dyn_cast<GetElementPtrInst>(currentUse)) {
+				const Type* fieldType;
+				TRACE_7("Treating Geteltptr \n");
+									
 				int numField = getNumField(getEltPtrInst);
 				if (numField < 0) {
-					insertAllFields(args, allDepsByName, currentName, currentStructTy);
-				} else {
-					const Type* fieldType = currentStructTy->getElementType(numField);
-					std::string fieldName = (*allDepsByValue)[getEltPtrInst->getOperand(1)];
-					TRACE_7("Treating Geteltptr > adding " << fieldName << "to deps\n");
-					
-					std::stringstream ss;
-					ss << numField;
-					name = fieldName + "-field" + ss.str();
-					
+					insertAllFields(args, allDepsByName, currentName, cast<StructType>(currentTy));
+				}
+				
+				fieldType = cst->getElementType(numField);
+				if (isa<PointerType>(fieldType)) {
+					fieldType = cast<PointerType>(fieldType);        
+				}
+
+				std::string fieldName = (*allDepsByValue)[getEltPtrInst->getOperand(0)];
+				std::stringstream ss;
+				ss << numField;
+				name = fieldName + "-field" + ss.str();
+				
+				if (isa<StructType>(fieldType)) {
+					const StructType* fieldStructType = cast<StructType>(fieldType);
+					TRACE_7("Is a struct : " << name << ", adding it to deps\n");
 					if (allDepsByName->find(name) == allDepsByName->end()) {
 						(*allDepsByValue)[getEltPtrInst] = name;
 						(*allDepsByName)[name] = fieldType;
@@ -2320,21 +2330,27 @@ SimpleWriter::getValueDependencies(Value* value,
 					} else {
 						TRACE_7("Already visited : " << getEltPtrInst << "  " << name << "\n");
 					}
-				}				
-			} else if (dyn_cast<StoreInst>(currentUse)) {
-				Type* storeType = cast<Type>(storeInst->getOperand(1));
-				StructType* StructStoreType = cast<Type>(storeInst->getOperand(1));
+				} else {
+					TRACE_7("Not a Struct type, adding " << name << " to args\n");
+					args->push_back(pair<std::string, const Type*>(name, fieldType));
+				}
+			} else if (StoreInst* si = dyn_cast<StoreInst>(currentUse)) {
+				const Type* storeType = si->getOperand(1)->getType();
+				TRACE_7("Treating StoreInst \n");
 
 				if (isa<PointerType>(storeType)) {
-					storeType = cast<PointerType>(currentTy)->getElementType();        
+					storeType = cast<const PointerType>(storeType);        
 				}
-				if (StructStoreType = cast<const StructType>(storeType)) {
+				if (const StructType* StructStoreType = cast<const StructType>(storeType)) {
+					const StructType* StructStoreType = cast<const StructType>(storeType);
 					insertAllFields(ret, allDepsByName, currentName, StructStoreType);
 				} else {
 					ret->push_back(pair<std::string, const Type*>(currentName, storeType));
 				}
 			} else if (CallInst* callInst = dyn_cast<CallInst>(currentUse)) {
 				Function* fCalled = callInst->getCalledFunction();
+				TRACE_7("Treating CallInst \n");
+
 				if (! this->sccfactory->handlerExists(fCalled, callInst->getParent(), callInst)) {
 					for (User::op_iterator opit = callInst->op_begin(), opend = callInst->op_end(); opit != opend; ++opit) {
 						Value* op = *opit; 
@@ -2347,15 +2363,17 @@ SimpleWriter::getValueDependencies(Value* value,
 				}
 			} else if (isa<StructType>(currentTy)) {
 //				if (LoadInst* loadInst = dyn_cast<LoadInst>(currentUse)) {
+				TRACE_7("Treating other inst with StructType\n");
+
 				const StructType* currentStructTy = cast<const StructType>(currentTy);
 				name = currentName;
 				(*allDepsByValue)[currentUse] = name;
 				visited.push_back(currentUse);
 				TRACE_7("Added to visited : " << cast<Instruction>(currentUse) << "  " << name << "\n");
 			} else {
-				args->push_back(pair<std::string, const Type*>(currentName, currentTy));							
+				ERROR("getValueDepencencies() > Else case ????? ");
+//				args->push_back(pair<std::string, const Type*>(currentName, currentTy));
 			}
-			TRACE_7("Not a Struct type\n");
 		}
 		visited.erase(visited.begin());
 	}
