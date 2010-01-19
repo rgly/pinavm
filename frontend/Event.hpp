@@ -13,12 +13,15 @@ struct Event:public ElabMember {
       protected:
 	string eventName;
 	Process *process;
+	int numEvent;
 
       public:
-	 Event(Process * p, string eventName);
+	Event(Process * p, string eventName);
 	string toString();
 	Process *getProcess();
 	void printElab(int sep, string prefix);
+	int getNumEvent();
+
 };
 
 #endif

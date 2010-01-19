@@ -12,7 +12,6 @@ SYSTEMC_OBJS = $(SYSTEMCROOT)/lib-linux/libsystemc.a
 FRONTEND_SRC = ${wildcard $(SYSTEMCFRONTEND)/*.cpp} ${wildcard $(SYSTEMCFRONTEND)/*.hpp}
 BACKENDS_SRC = ${wildcard $(LLVMBACKENDSHEADERS)/*.cpp} ${wildcard $(LLVMBACKENDSHEADERS)/*.hpp}
 
-
 ALL_OBJS = $(OBJS) $(FRONTEND_OBJS) $(BACKENDS_OBJS) $(SYSTEMC_OBJS)
 
 CPPFLAGS += -I$(SYSTEMC)/include

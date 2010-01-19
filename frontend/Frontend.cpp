@@ -16,12 +16,6 @@
 
 #include "config.h"
 
-#include "sysc/kernel/sc_process_table.h"
-#include "sysc/kernel/sc_process_handle.h"
-#include "sysc/kernel/sc_simcontext.h"
-#include "sysc/kernel/sc_thread_process.h"
-#include "sysc/kernel/sc_module_registry.h"
-
 #include <iostream>
 #include <typeinfo>
 
@@ -94,64 +88,23 @@ Frontend::fillGlobalVars(Instruction* inst)
 
 bool Frontend::run()
 {
-	sc_core::sc_thread_handle thread_p;	// Pointer to thread process accessing.
-
 	TRACE_1("Getting ELAB\n");
 
-	// To call the "end_of_elaboration()" methods.
-	sc_core::sc_get_curr_simcontext()->initialize(true);
-
 	this->elab = new SCElab(llvmMod);
-	std::vector < Function * >*fctStack =
-	    new std::vector < Function * >();
-
-	//------- Get modules and ports --------
-	vector < sc_core::sc_module * >modules = sc_core::sc_get_curr_simcontext()->get_module_registry()->m_module_vec;
-	vector < sc_core::sc_module * >::iterator modIt;
-
-	for (modIt = modules.begin(); modIt < modules.end(); ++modIt) {
-		sc_core::sc_module * mod = *modIt;
-
-		IRModule *m = this->elab->addModule(mod);
-		std::vector < sc_core::sc_port_base * >*ports =
-		    mod->m_port_vec;
-
-		vector < sc_core::sc_port_base * >::iterator it;
-		for (it = ports->begin(); it < ports->end(); ++it) {
-			sc_core::sc_port_base * p = *it;
-			this->elab->addPort(m, p);
-		}
-	}
-
-	//------- Get processes and events --------
-	sc_core::sc_process_table * processes = sc_core::sc_get_curr_simcontext()->m_process_table;
-	for (thread_p = processes->thread_q_head(); thread_p;
-	     thread_p = thread_p->next_exist()) {
-		sc_core::sc_process_b * theProcess = thread_p;
-		sc_core::sc_module * mod =
-		    (sc_core::sc_module *) thread_p->m_semantics_host_p;
-		IRModule *m = this->elab->getIRModule(mod);
-		Process *process = this->elab->addProcess(m, theProcess);
-
-		std::vector < const sc_core::sc_event * >eventsVector =
-		    theProcess->m_static_events;
-		vector < const sc_core::sc_event * >::iterator it;
-		for (it = eventsVector.begin(); it < eventsVector.end();
-		     it++) {
-			sc_core::sc_event * ev =
-			    (sc_core::sc_event *) * it;
-			this->elab->addEvent(process, ev);
-		}
-	}
+	this->elab->complete();
 
 	this->scjit = new SCJit(llvmMod, elab);
 	this->sccfactory = new SCCFactory(scjit);
+
+// 	TRACE_1("Dumping typeSymbolTable\n");
+// 	this->llvmMod->getTypeSymbolTable().dump();
 
 	TRACE_1("Analyzing code\n");
 
 	// Walk through call graph and build intermediate representation
 	vector < Process * >::iterator processIt = this->elab->getProcesses()->begin();
 	vector < Process * >::iterator endIt = this->elab->getProcesses()->end();
+	std::vector < Function * >*fctStack = new std::vector < Function * >();
 
 	for (; processIt < endIt; processIt++) {
 		Process *proc = *processIt;
@@ -168,6 +121,9 @@ bool Frontend::run()
 					CallInst *callInst = dyn_cast < CallInst > (&*i);
 					if (callInst) {
 						if (! sccfactory->handle(F, &*bb, callInst)) {
+							TRACE_6("CallInst : " << callInst << "\n");
+							TRACE_6("CalledFct : " << callInst->getCalledFunction() << "\n");
+							callInst->dump();
 							TRACE_4("Call not handled : " << callInst->getCalledFunction()->getNameStr() << "\n");
 							fctStack->push_back(callInst->getCalledFunction());
 							proc->addUsedFunction(F);
@@ -181,7 +137,7 @@ bool Frontend::run()
 			}
 		}
 	}
-
+	
 
 	delete fctStack;
 	return false;

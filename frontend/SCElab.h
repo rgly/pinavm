@@ -12,12 +12,10 @@
 
 #include "llvm/Module.h"
 
-#include "sysc/kernel/sc_module.h"
-#include "sysc/kernel/sc_name_gen.h"
-#include "sysc/kernel/sc_process.h"
-#include "sysc/kernel/sc_event.h"
-#include "sysc/communication/sc_port.h"
-#include "sysc/kernel/sc_process_handle.h"
+struct sc_module;
+struct sc_process_b;
+struct sc_event;
+struct sc_port;
 
 #include "FUtils.hpp"
 #include "ElabMember.hpp"
@@ -27,6 +25,7 @@ struct IRModule;
 struct Process;
 struct Port;
 struct Event;
+struct Channel;
 
 using namespace llvm;
 
@@ -37,6 +36,7 @@ class SCElab : public ElabMember
   std::map<sc_core::sc_process_b*, Process*> processMap;
   std::map<sc_core::sc_port_base*, Port*> portsMap;
   std::map<sc_core::sc_event*, Event*> eventsMap;
+  std::map<sc_core::sc_interface*, Channel*> channelsMap;
 
   std::map<IRModule*, sc_core::sc_module*> sc2irModules;
   
@@ -44,6 +44,7 @@ class SCElab : public ElabMember
   std::vector<Process*> processes;
   std::vector<Port*> ports;
   std::vector<Event*> events;
+  std::vector<Channel*> channels;
 
   std::vector<GlobalValue*> globalVariables;
 
@@ -68,10 +69,15 @@ class SCElab : public ElabMember
 
   sc_core::sc_module* getSCModule(IRModule* irmod);
 
+  int getNumProcesses();
   std::vector<Process*>* getProcesses();
-  
+  std::vector<Port*>* getPorts();
+  std::vector<Channel*>* getChannels();
+
   void addGlobalVariable(GlobalValue *globalVar);
   std::vector < GlobalValue * >* getGlobalVariables();
+
+  void complete();
 
 };
 

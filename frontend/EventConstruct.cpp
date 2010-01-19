@@ -3,9 +3,15 @@
 
 using namespace llvm;
 
+EventConstruct::EventConstruct(Value* missingValue) : SCConstruct(missingValue)
+{
+	this->id = WAITEVENTCONSTRUCT;
+}
+
 EventConstruct::EventConstruct(Event * e)
 {
 	this->event = e;
+	this->id = WAITEVENTCONSTRUCT;
 }
 
 void
@@ -21,5 +27,8 @@ Event *EventConstruct::getWaitedEvent()
 
 std::string EventConstruct::toString()
 {
-	return "WAIT(" + this->event->toString() + ")";
+	if (this->staticallyFound)
+		return "WAIT(" + this->event->toString() + ")";
+	else
+		return "WAIT(dynamic content)";
 }

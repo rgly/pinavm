@@ -12,11 +12,9 @@ SCJit::SCJit(Module * mod, SCElab * scelab)
 	this->ee = EngineBuilder(this->moduleProvider).create();
 
 	//  llvm::ExecutionEngine::create(this->mdl);
-
+	
 	if (this->ee == NULL) {
-		std::
-		    cerr <<
-		    "Error : executionengine could not be created.\n";
+		std::cerr << "Error : executionengine could not be created.\n";
 		exit(1);
 	}
 
@@ -202,11 +200,10 @@ int SCJit::jitInt(Function * f, Value * arg)
 	fctToJit = buildFct(f, FT, arg);
 
 	int (*fct) (sc_core::sc_module *) =
-	    (int (*)(sc_core::sc_module *)) ee->
-	    getPointerToFunction(fctToJit);
-	int res =
-	    fct(this->elab->
-		getSCModule(this->currentProcess->getModule()));
+		(int (*)(sc_core::sc_module *)) ee->getPointerToFunction(fctToJit);
+
+	int res = fct(this->elab->getSCModule(this->currentProcess->getModule()));
+
 	delete fctToJit;
 
 	return res;
@@ -220,17 +217,40 @@ double SCJit::jitDouble(Function * f, Value * arg)
 	TRACE_5("jitDouble() \n");
 	fillArgsType(f, (std::vector < const Type * >*) &argsType);
 	FunctionType *FT =
-	    FunctionType::get(Type::getDoubleTy(getGlobalContext()),
-			      argsType, false);
+		FunctionType::get(Type::getDoubleTy(getGlobalContext()), argsType, false);
 
 	fctToJit = buildFct(f, FT, arg);
 
 	double (*fct) (sc_core::sc_module *) =
-	    (double (*)(sc_core::sc_module *)) ee->
-	    getPointerToFunction(fctToJit);
+	    (double (*)(sc_core::sc_module *)) ee->getPointerToFunction(fctToJit);
 	double res =
-	    fct(this->elab->
-		getSCModule(this->currentProcess->getModule()));
+	    fct(this->elab->getSCModule(this->currentProcess->getModule()));
+
+	delete fctToJit;
 
 	return res;
+}
+
+bool SCJit::jitBool(Function * f, Value * arg)
+{
+	Function *fctToJit;
+	const std::vector < const Type *>argsType;
+
+	TRACE_5("jitBool() \n");
+	fillArgsType(f, (std::vector < const Type * >*) &argsType);
+	FunctionType *FT =  FunctionType::get(Type::getInt8Ty(getGlobalContext()), argsType, false);
+
+	fctToJit = buildFct(f, FT, arg);
+
+	int (*fct) (sc_core::sc_module *) =
+	    (int (*)(sc_core::sc_module *)) ee->getPointerToFunction(fctToJit);
+	int res =
+	    fct(this->elab->getSCModule(this->currentProcess->getModule()));
+
+	delete fctToJit;
+
+	if (res)
+		return false;
+	else
+		return true;
 }

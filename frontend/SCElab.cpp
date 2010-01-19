@@ -1,8 +1,30 @@
+#include <llvm/TypeSymbolTable.h>
+#include <llvm/Type.h>
+
 #include "IRModule.hpp"
 #include "Process.hpp"
 #include "Port.hpp"
 #include "Event.hpp"
 #include "FUtils.hpp"
+#include "Channel.hpp"
+#include "SimpleChannel.hpp"
+#include "ClockChannel.hpp"
+
+#include "llvm/ADT/StringExtras.h"
+
+
+#include "sysc/kernel/sc_process_table.h"
+#include "sysc/kernel/sc_simcontext.h"
+#include "sysc/kernel/sc_thread_process.h"
+#include "sysc/kernel/sc_module_registry.h"
+#include "sysc/kernel/sc_module.h"
+#include "sysc/kernel/sc_name_gen.h"
+#include "sysc/kernel/sc_process.h"
+#include "sysc/kernel/sc_event.h"
+#include "sysc/communication/sc_port.h"
+#include "sysc/communication/sc_bind_ef.h"
+#include "sysc/communication/sc_bind_info.h"
+#include "sysc/kernel/sc_process_handle.h"
 
 #include "SCElab.h"
 #include "config.h"
@@ -19,7 +41,7 @@ SCElab::~SCElab()
 	this->eventsMap.clear();
 	this->portsMap.clear();
 	this->sc2irModules.clear();
-
+	
 	FUtils::deleteVector < IRModule * >(&this->modules);
 	FUtils::deleteVector < Process * >(&this->processes);
 	FUtils::deleteVector < Event * >(&this->events);
@@ -46,46 +68,124 @@ IRModule *SCElab::addModule(sc_core::sc_module * mod)
 Process *SCElab::addProcess(IRModule * mod,
 			    sc_core::sc_process_b * process)
 {
-	const char *fctName = process->func_process;
+	string fctName(process->func_process);
 	string modType = mod->getModuleType();
 	string moduleName = mod->getUniqueName();
-	string mainFctName = "_ZN" + (string) modType + "6" + (string) fctName + "Ev";
+	string mainFctName = "_ZN" + modType + utostr(fctName.size()) + fctName + "Ev";
 	string processName = moduleName + "::" + mainFctName;
 	Function *mainFct = this->llvmMod->getFunction(mainFctName);
 
 //   Function* fct;
 //   const std::vector<const Type*> argsType;
 //   FunctionType* FT = FunctionType::get(Type::getVoidTy(getGlobalContext()), argsType, false);
-
 	Process *p = new Process(mod, mainFct, processName, mainFctName);
 	TRACE_2("Add (sc_process_b) " << process << " -> (Process) " << p
-		<< " ; Fonction : " << mainFctName << " " << mainFct <<
-		"\n");
+		<< " ; Fonction : " << mainFctName << " " << mainFct << "\n");
 
 	mod->addProcess(p);
 	this->processes.push_back(p);
-	this->processMap.insert(this->processMap.end(),
-				pair < sc_core::sc_process_b *,
-				Process * >(process, p));
+	this->processMap.insert(this->processMap.end(), pair < sc_core::sc_process_b *,	Process * >(process, p));
 
 	return p;
 }
 
 Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 {
+	string match;
 	char buffer[10];
-	sprintf(buffer, "%x", (int) port);
-	string portName = mod->getUniqueName() + "::0x" + buffer;
-	//  sc_core::sc_interface* if = port->get_interface();
+	char temp[10];
 
-	Port *p = new Port(mod, portName);
-	TRACE_2("Add (sc_port_base) " << port << " -> (Port) " << p <<
-		"\n");
+	Port* p;
+	std::map < sc_core::sc_port_base *, Port * >::iterator it;
 
-	this->ports.push_back(p);
-	this->portsMap.insert(this->portsMap.end(),
-			      pair < sc_core::sc_port_base *,
-			      Port * >(port, p));
+	if ((it = this->portsMap.find(port)) == this->portsMap.end()) {
+		
+		sprintf(buffer, "%x", (int) port);
+		string portName = mod->getUniqueName() + "::0x" + buffer;
+		
+		sc_core::sc_interface* itf = port->get_interface();
+//	sc_core::sc_port_b<bool>* pb = (sc_core::sc_port_b<bool>*) port;
+		
+//	const char* typeName = typeid(*(pb->m_interface)).name();
+		const char* typeName = typeid(*itf).name();
+//		N7sc_core5sc_inIbEE
+
+		string itfTypeName(typeName);
+		string variableTypeName("");
+		Channel* ch;
+		std::map < sc_core::sc_interface*, Channel * >::iterator itM;
+		
+		TRACE_4("m_interface of port is: " << itfTypeName << "\n");
+		sprintf(temp, "%d", (int) itfTypeName.size());
+		TRACE_4("Found : " << temp << "\n");
+		
+		match = "N7sc_core9sc_signalI";
+		if (itfTypeName.find(match) == 0) {
+			size_t found = itfTypeName.find_last_of("EE");
+			sprintf(temp, "%d", (int) found);
+			TRACE_4("Found : " << temp << "\n");
+			sprintf(temp, "%d", (int) match.size());
+			TRACE_4("match size : " << temp << "\n");		
+			size_t typeLength = found - match.size() - 1;
+			sprintf(temp, "%d", (int) typeLength);
+			TRACE_4("typeLength : " << temp << "\n");
+			variableTypeName = itfTypeName.substr(match.size(), typeLength);
+
+			const Type* itfType = NULL;
+			if (variableTypeName == "b") {
+				itfType = Type::getInt1Ty(getGlobalContext());
+				if (itfType)
+					TRACE_4("Boolean type found !\n");
+			} else if(variableTypeName == "i") {
+				itfType = Type::getInt32Ty(getGlobalContext());
+				if (itfType)
+					TRACE_4("Integer type found !\n");
+			} else {
+				itfType = this->llvmMod->getTypeSymbolTable().lookup(itfTypeName);
+				
+				if (itfType) {
+					TRACE_4("Type found !\n");
+				} else {
+					ERROR("SCElab.addPort() -> interface type not found " << variableTypeName << "\n");
+				}
+			}
+			TRACE_4("typeName of variable accessed through port : " << variableTypeName << "\n");
+			TRACE_4("type of variable accessed through port : " << itfType << "\n");
+			p = new Port(mod, portName);
+			if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
+				ch = new SimpleChannel((Type*) itfType, variableTypeName);
+				this->channels.push_back(ch);
+				this->channelsMap.insert(this->channelsMap.end(), pair < sc_core::sc_interface *, Channel * >(itf, ch));
+
+				TRACE_4("New channel !\n");
+			} else {
+				ch = itM->second;
+			}
+
+			TRACE_2("Add (sc_port_base) " << port << " -> (SIMPLE_PORT) " << p << " with channel " << ch << "\n");
+			p->addChannel(ch);
+		}
+		match = "N7sc_core8sc_clockE";		
+		if (itfTypeName.find(match) == 0) {
+			p = new Port(mod, portName);
+			if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
+				ch = new ClockChannel();
+				this->channelsMap.insert(this->channelsMap.end(), pair < sc_core::sc_interface *, Channel * >(itf, ch));
+
+			} else {
+				ch = itM->second;
+			}
+			p->addChannel(ch);
+			TRACE_2("Add (sc_port_base) " << port << " -> (CLOCK_PORT) " << p << " with channel " << ch <<"\n");
+		}
+		
+		this->ports.push_back(p);
+		this->portsMap.insert(this->portsMap.end(), pair < sc_core::sc_port_base *, Port * >(port, p));
+		
+	}  else {
+		p = it->second;
+	}
+
 	return p;
 }
 
@@ -143,9 +243,28 @@ void SCElab::printElab(int sep, string prefix)
 }
 
 
-std::vector < Process * >*SCElab::getProcesses()
+int
+SCElab::getNumProcesses()
+{
+	return this->processes.size();
+}
+
+std::vector < Process * >*
+SCElab::getProcesses()
 {
 	return &this->processes;
+}
+
+std::vector < Port *>*
+SCElab::getPorts()
+{
+	return &this->ports;
+}
+
+std::vector < Channel* >*
+SCElab::getChannels()
+{
+	return &this->channels;
 }
 
 sc_core::sc_module * SCElab::getSCModule(IRModule * irmod)
@@ -162,4 +281,66 @@ void SCElab::addGlobalVariable(GlobalValue * globalVar)
 std::vector < GlobalValue * >* SCElab::getGlobalVariables()
 {
 	return & this->globalVariables;
+}
+
+
+void
+SCElab::complete()
+{
+	sc_core::sc_thread_handle thread_p;
+
+	// To call the "end_of_elaboration()" methods.
+	sc_core::sc_get_curr_simcontext()->initialize(true);
+
+	//------- Get modules and ports --------
+	vector < sc_core::sc_module * >modules =
+		sc_core::sc_get_curr_simcontext()->get_module_registry()->m_module_vec;
+	vector < sc_core::sc_module * >::iterator modIt;
+	for (modIt = modules.begin(); modIt < modules.end(); ++modIt) {
+		sc_core::sc_module * mod = *modIt;
+		IRModule *m = this->addModule(mod);
+		std::vector < sc_core::sc_port_base * >*ports = mod->m_port_vec;
+		vector < sc_core::sc_port_base * >::iterator it;
+		for (it = ports->begin(); it < ports->end(); ++it) {
+			sc_core::sc_port_base * p = *it;
+			this->addPort(m, p);
+		}
+	}
+
+	//------- Get processes and events --------
+	sc_core::sc_process_table * processes = sc_core::sc_get_curr_simcontext()->m_process_table;
+	for (thread_p = processes->thread_q_head(); thread_p; thread_p = thread_p->next_exist()) {
+		sc_core::sc_process_b * theProcess = thread_p;
+		sc_core::sc_module * mod = (sc_core::sc_module *) thread_p->m_semantics_host_p;
+		IRModule *m = this->getIRModule(mod);
+		Process *process = this->addProcess(m, theProcess);
+
+		std::vector < const sc_core::sc_event * >eventsVector = theProcess->m_static_events;
+		vector < const sc_core::sc_event * >::iterator it;
+		for (it = eventsVector.begin(); it < eventsVector.end(); it++) {
+			sc_core::sc_event * ev = (sc_core::sc_event *) * it;
+			this->addEvent(process, ev);
+		}
+	}
+
+        //------- Add each port to processes depending on it -------
+	for (modIt = modules.begin(); modIt < modules.end(); ++modIt) {
+		sc_core::sc_module * mod = *modIt;
+		std::vector < sc_core::sc_port_base * >* ports = mod->m_port_vec;
+		
+		vector < sc_core::sc_port_base * >::iterator it;
+		for (it = ports->begin(); it < ports->end(); ++it) {
+			sc_core::sc_port_base * p = *it;
+
+			if (p->m_bind_info != 0) {
+				Port* cPort = this->getPort(p);
+				std::vector<sc_core::sc_bind_ef*>::iterator itb;
+				for (itb = p->m_bind_info->thread_vec.begin() ;
+				     itb != p->m_bind_info->thread_vec.end() ; ++itb) {
+					sc_core::sc_process_b* cProcess = (*itb)->handle;
+					this->getProcess(cProcess)->addPort(cPort);
+				}
+			}
+		}
+	}
 }

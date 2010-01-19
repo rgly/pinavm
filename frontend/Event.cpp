@@ -9,15 +9,24 @@
 using namespace llvm;
 using namespace std;
 
+static int numberOfEvents = 0;
+
 Event::Event(Process * p, string event)
 {
 	this->process = p;
 	this->eventName = event;
+	this->numEvent = numberOfEvents++;
 }
 
 string Event::toString()
 {
 	return this->eventName;
+}
+
+int
+Event::getNumEvent()
+{
+	return this->numEvent;
 }
 
 Process *Event::getProcess()

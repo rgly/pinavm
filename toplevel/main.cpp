@@ -8,6 +8,14 @@
 #include "FrontendItf.hpp"
 #include "SimpleBackend.hpp"
 
+static cl::opt < bool >
+RelativeClocks("relative-clocks", cl::desc("Use relative clocks in the backend"));
+
+static cl::opt < bool >
+EventsAsBool("events-as-bool", cl::desc("Encode events using booleans instead of integers"));
+
+
+/*** Global options ***/
 static cl::opt < std::string >
 InputFilename(cl::Positional, cl::desc("<input bitcode file>"),
 	      cl::init("-"), cl::value_desc("filename"));
@@ -42,7 +50,7 @@ void pinapa_callback()
 
 	if (Backend != "-") {
 		if (Backend == "simple" || Backend == "Simple") {
-			launch_simplebackend(fe, OutputFilename);
+			launch_simplebackend(fe, OutputFilename, EventsAsBool, RelativeClocks);
 		} else {
 			ERROR("Backend " << Backend << " unknown\n");
 		}

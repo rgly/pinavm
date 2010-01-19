@@ -2,12 +2,14 @@
 
 TimeConstruct::TimeConstruct(int t)
 {
+	this->id = TIMECONSTRUCT;
 	this->time = (double) t;
 	this->tu = SC_MS;
 }
 
 TimeConstruct::TimeConstruct(double t)
 {
+	this->id = TIMECONSTRUCT;
 	this->time = t;
 	this->tu = SC_MS;
 }

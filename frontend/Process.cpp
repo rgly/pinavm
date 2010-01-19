@@ -37,9 +37,26 @@ IRModule *Process::getModule()
 	return this->module;
 }
 
+
 void Process::addEvent(Event * ev)
 {
 	this->events.push_back(ev);
+}
+std::vector < Event* >*
+Process::getEvents()
+{
+	return & this->events;
+}
+
+
+void Process::addPort(Port* p)
+{
+	this->ports.push_back(p);
+}
+std::vector < Port* >*
+Process::getPorts()
+{
+	return & this->ports;
 }
 
 /********** Pretty print **********/

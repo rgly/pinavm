@@ -5,6 +5,7 @@ using namespace llvm;
 NotifyConstruct::NotifyConstruct(Event * e)
 {
 	this->event = e;
+	this->id = NOTIFYCONSTRUCT;
 }
 
 void

@@ -8,14 +8,21 @@
 #include "llvm/Instructions.h"
 #include "llvm/Support/raw_ostream.h"
 
+#include "Port.hpp"
+#include "Channel.hpp"
+#include "SimpleChannel.hpp"
 #include "SCCFactory.hpp"
 #include "SCElab.h"
 #include "SimpleWriter.h"
 #include "SCConstruct.hpp"
+#include "EventConstruct.hpp"
+#include "ReadConstruct.hpp"
+#include "WriteConstruct.hpp"
 #include "Process.hpp"
 
 #include "config.h"
 
+static Instruction* pointerToInst;
 static std::stringstream ErrorMsg("");
 
 static void triggerError(formatted_raw_ostream & Out)
@@ -109,8 +116,7 @@ printStructReturnPointerFunctionType(formatted_raw_ostream & Out,
 				const AttrListPtr & PAL,
 				const PointerType * TheTy)
 {
-	const FunctionType *FTy =
-		cast < FunctionType > (TheTy->getElementType());
+	const FunctionType *FTy = cast < FunctionType > (TheTy->getElementType());
 	std::stringstream FunctionInnards;
 	FunctionInnards << " (*) (";
 	bool PrintedType = false;
@@ -126,8 +132,7 @@ printStructReturnPointerFunctionType(formatted_raw_ostream & Out,
 		const Type *ArgTy = *I;
 		if (PAL.paramHasAttr(Idx, Attribute::ByVal)) {
 			assert(isa < PointerType > (ArgTy));
-			ArgTy =
-				cast < PointerType > (ArgTy)->getElementType();
+			ArgTy =	cast < PointerType > (ArgTy)->getElementType();
 		}
 		printType(FunctionInnards, ArgTy,
 			/*isSigned= */ PAL.paramHasAttr(Idx,
@@ -187,10 +192,8 @@ SimpleWriter::printSimpleType(formatted_raw_ostream & Out,
 				isSigned,
 				" __attribute__((vector_size("
 				+
-				utostr(TD->
-					getTypeAllocSize
-					(VTy)) + " ))) " +
-				NameSoFar);
+				utostr(TD->getTypeAllocSize(VTy)) +
+				" ))) " + NameSoFar);
 	}
 
 	default:
@@ -240,9 +243,7 @@ SimpleWriter::printSimpleType(std::ostream & Out, const Type * Ty,
 				isSigned,
 				" __attribute__((vector_size("
 				+
-				utostr(TD->
-					getTypeAllocSize
-					(VTy)) + " ))) ");
+				utostr(TD->getTypeAllocSize(VTy)) + " ))) ");
 	}
 
 	default:
@@ -277,9 +278,7 @@ SimpleWriter::printType(formatted_raw_ostream & Out,
 
 	switch (Ty->getTypeID()) {
 	case Type::FunctionTyID:{
-		ErrorMsg <<
-			"NYI : use of complex type : FunctionTy : " <<
-			NameSoFar;
+		ErrorMsg << "NYI : use of complex type : FunctionTy : " << NameSoFar;
 		triggerError(Out);
 
 		const FunctionType *FTy =
@@ -332,8 +331,7 @@ SimpleWriter::printType(formatted_raw_ostream & Out,
 		for (StructType::element_iterator I =
 			     STy->element_begin(), E = STy->element_end();
 		     I != E; ++I) {
-			TRACE_4
-				("\n/**** Dumping struct element in printType() ****/\n");
+			TRACE_4("\n/**** Dumping struct element in printType() ****/\n");
 			if (fieldPrinted)
 				Out << " , ";
 			else
@@ -344,8 +342,7 @@ SimpleWriter::printType(formatted_raw_ostream & Out,
 //       Out << ";\n";
 			fieldPrinted = true;
 		}
-		TRACE_4
-			("\n/**** struct elements printed ****/\n");
+		TRACE_4("\n/**** struct elements printed ****/\n");
 //     Out << '}';
 //     if (STy->isPacked())
 //       Out << " __attribute__ ((packed))";
@@ -356,8 +353,7 @@ SimpleWriter::printType(formatted_raw_ostream & Out,
 		const PointerType *PTy = cast < PointerType > (Ty);
 		std::string ptrName = NameSoFar;
 
-		TRACE_4
-			("/**** Handling PointerTy type in printType() ****/\n");
+		TRACE_4("/**** Handling PointerTy type in printType() ****/\n");
 
 		if (isa < ArrayType > (PTy->getElementType()) ||
 			isa < VectorType > (PTy->getElementType()))
@@ -481,16 +477,14 @@ SimpleWriter::printType(std::ostream & Out,
 	}
 	case Type::StructTyID:{
 		const StructType *STy = cast < StructType > (Ty);
-		TRACE_4
-			("/**** Handling StructTy type in printType() ****/\n");
+		TRACE_4("/**** Handling StructTy type in printType() ****/\n");
 //     Out << NameSoFar + " {\n";
 		unsigned Idx = 0;
 		bool fieldPrinted = false;
 		for (StructType::element_iterator I =
 			     STy->element_begin(), E = STy->element_end();
 		     I != E; ++I) {
-			TRACE_4
-				("\n/**** dump struct element ****/\n");
+			TRACE_4("\n/**** dump struct element ****/\n");
 			if (fieldPrinted)
 				Out << " , ";
 			else
@@ -501,8 +495,7 @@ SimpleWriter::printType(std::ostream & Out,
 //       Out << ";\n";
 			fieldPrinted = true;
 		}
-		TRACE_4
-			("\n/**** struct elements printed ****/\n");
+		TRACE_4("\n/**** struct elements printed ****/\n");
 
 //     Out << '}';
 //     if (STy->isPacked())
@@ -514,8 +507,7 @@ SimpleWriter::printType(std::ostream & Out,
 		const PointerType *PTy = cast < PointerType > (Ty);
 		std::string ptrName = "*" + NameSoFar;
 
-		TRACE_4
-			("/**** Handling PointerTy type in printType() ****/\n");
+		TRACE_4("/**** Handling PointerTy type in printType() ****/\n");
 
 		if (isa < ArrayType > (PTy->getElementType()) ||
 			isa < VectorType > (PTy->getElementType()))
@@ -1481,28 +1473,27 @@ void SimpleWriter::writeInstComputationInline(Instruction & I)
 					Ty != Type::getInt16Ty(I.getContext()) &&
 					Ty != Type::getInt32Ty(I.getContext()) &&
 					Ty != Type::getInt64Ty(I.getContext()))) {
-		llvm_report_error
-			("The Simple backend does not currently support integer "
-				"types of widths other than 1, 8, 16, 32, 64.\n"
+		llvm_report_error("The Simple backend does not currently support integer types"
+				"of widths other than 1, 8, 16, 32, 64.\n"
 				"This is being tracked as PR 4158.");
 	}
+
 	// If this is a non-trivial bool computation, make sure to truncate down to
 	// a 1 bit value.  This is important because we want "add i1 x, y" to return
 	// "0" when x and y are true, not "2" for example.
 	bool NeedBoolTrunc = false;
-	if (I.getType() == Type::getInt1Ty(I.getContext()) &&
-		!isa < ICmpInst > (I) && !isa < FCmpInst > (I))
+	if (I.getType() == Type::getInt1Ty(I.getContext()) && !isa < ICmpInst > (I) && !isa < FCmpInst > (I))
 		NeedBoolTrunc = true;
 
 	if (NeedBoolTrunc)
 		Out << "((";
 
-	TRACE_4("\n /***** Visiting " << I.
-		getOpcodeName() <<
-		" ( writeInstComputationInline() ) ******/ \n");
+	TRACE_4("/***** Visiting " << I.getOpcodeName() << " ( writeInstComputationInline() ) ******/ \n");
+//	Out << "/***** Visiting " << I.getOpcodeName() << " ( writeInstComputationInline() ) ******/ \n";
 	visit(I);
-	TRACE_4("\n /***** Visited " << I.
-		getOpcodeName() << "******/ \n");
+//	Out << "\n/***** Visited " << I.getOpcodeName() << "******/ \n";
+	TRACE_4("\n");
+	TRACE_4("/***** Visited " << I.getOpcodeName() << "******/ \n");
 
 	if (NeedBoolTrunc)
 		Out << ")&1)";
@@ -2319,7 +2310,6 @@ SimpleWriter::getValueDependencies(Value* value,
 				name = fieldName + "-field" + ss.str();
 				
 				if (isa<StructType>(fieldType)) {
-					const StructType* fieldStructType = cast<StructType>(fieldType);
 					TRACE_7("Is a struct : " << name << ", adding it to deps\n");
 					if (allDepsByName->find(name) == allDepsByName->end()) {
 						(*allDepsByValue)[getEltPtrInst] = name;
@@ -2342,7 +2332,6 @@ SimpleWriter::getValueDependencies(Value* value,
 					storeType = cast<const PointerType>(storeType);        
 				}
 				if (const StructType* StructStoreType = cast<const StructType>(storeType)) {
-					const StructType* StructStoreType = cast<const StructType>(storeType);
 					insertAllFields(ret, allDepsByName, currentName, StructStoreType);
 				} else {
 					ret->push_back(pair<std::string, const Type*>(currentName, storeType));
@@ -2362,17 +2351,13 @@ SimpleWriter::getValueDependencies(Value* value,
 					}
 				}
 			} else if (isa<StructType>(currentTy)) {
-//				if (LoadInst* loadInst = dyn_cast<LoadInst>(currentUse)) {
 				TRACE_7("Treating other inst with StructType\n");
-
-				const StructType* currentStructTy = cast<const StructType>(currentTy);
 				name = currentName;
 				(*allDepsByValue)[currentUse] = name;
 				visited.push_back(currentUse);
 				TRACE_7("Added to visited : " << cast<Instruction>(currentUse) << "  " << name << "\n");
 			} else {
 				ERROR("getValueDepencencies() > Else case ????? ");
-//				args->push_back(pair<std::string, const Type*>(currentName, currentTy));
 			}
 		}
 		visited.erase(visited.begin());
@@ -2427,7 +2412,7 @@ void SimpleWriter::printFunction(Function & F)
 
 		if (const AllocaInst * AI = isDirectAlloca(&*I)) {
 			if (printedVar)
-				Out << "     ,\n";
+				Out << ",\n      ";
 			printType(Out, AI->getAllocatedType(), false,
 				GetValueName(AI));
 			//      Out << ";    /* Address-exposed local */\n";
@@ -2435,7 +2420,7 @@ void SimpleWriter::printFunction(Function & F)
 		} else if (I->getType() != Type::getVoidTy(F.getContext())
 			&& !isInlinableInst(*I)) {
 			if (printedVar)
-				Out << "     ,\n";
+				Out << ",\n      ";
 
 			printType(Out, I->getType(), false,
 				GetValueName(&*I));
@@ -2512,8 +2497,7 @@ void SimpleWriter::printBasicBlock(BasicBlock * BB)
 	// do not require a label to be generated.
 	//
 	bool NeedsLabel = false;
-	for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E;
-	     ++PI)
+	for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
 		if (isGotoCodeNecessary(*PI, BB)) {
 			NeedsLabel = true;
 			break;
@@ -2534,19 +2518,18 @@ void SimpleWriter::printBasicBlock(BasicBlock * BB)
 			} else {
 				Out << "  ";
 			}
-			TRACE_4("\n/**** before writeInst ****/\n");
+			pointerToInst = &*II;
 			writeInstComputationInline(*II);
-			TRACE_4("\n/**** after writeInst ****/\n");
-
 			Out << ";\n";
+		} else {
+			TRACE_4("/***** SKIPPING inlinable inst or direct alloca ****/\n");
 		}
 	}
 
-	TRACE_4("/***** visit terminator : " << *BB->getTerminator()->
-		getOpcodeName() << "*****/\n");
+	TRACE_4("/***** Visit terminator : " << *BB->getTerminator()->getOpcodeName() << "*****/\n");
 	// Don't emit prefix or suffix for the terminator.
 	visit(*BB->getTerminator());
-	TRACE_4("/***** visited terminator ****/\n");
+	TRACE_4("/***** Visited terminator ****/\n");
 
 }
 
@@ -2675,7 +2658,7 @@ void SimpleWriter::printPHICopiesForSuccessor(BasicBlock * CurBlock,
 			Out << "  " << GetValueName(I) <<
 				"__PHI_TEMPORARY = ";
 			writeOperand(IV);
-			Out << ";   /* for PHI node */\n";
+			Out << "   /* for PHI node */";
 		}
 	}
 }
@@ -2713,7 +2696,7 @@ void SimpleWriter::visitBranchInst(BranchInst & I)
 
 			if (isGotoCodeNecessary
 				(I.getParent(), I.getSuccessor(1))) {
-				Out << "   else\n    ";
+				Out << "  else\n    ";
 				printPHICopiesForSuccessor(I.getParent(),
 							I.
 							getSuccessor(1),
@@ -3155,16 +3138,378 @@ void SimpleWriter::lowerIntrinsics(Function & F)
 	}
 }
 
-void visitSCConstruct(SCConstruct * scc)
+std::string
+intToString(int anInt)
 {
-	;
+	std::stringstream ss;
+	ss << anInt;
+	return ss.str();
+}
+
+void
+SimpleWriter::printCodingGlobals()
+{
+	int nbThreads = this->elab->getNumProcesses();
+	int ct;
+
+	/* Declare variables */
+	Out << "var\n";
+	for (ct = 0; ct < nbThreads - 1;) {
+		Out << "T" + intToString(ct) +  ", ";
+		ct++;
+	}
+	Out << "T" + intToString(nbThreads - 1) + ",\n";
+
+	for (ct = 0; ct < nbThreads - 1;) {
+		Out << "e" + intToString(ct) +  ", ";
+		ct++;
+	}
+	Out << "e" + intToString(nbThreads - 1) + ":uint[2], \n";
+
+	std::vector < Channel* >* channels = this->elab->getChannels();
+	std::vector < Channel * >::iterator itC;
+	for (itC = channels->begin() ; itC != channels->end() ; ++itC) {
+	     Channel* channel = *itC;
+	     if (channel->getID() == SIMPLE_CHANNEL) {
+		     SimpleChannel* sc = (SimpleChannel*) channel;
+		     printType(Out, sc->getType(), false, sc->getGlobalVariableName());
+		     Out << ", ";
+	     }
+	}
+	Out << "\n";
+
+	for (ct = 0; ct < nbThreads - 1;) {
+		Out << "finished" + intToString(ct) +  ", ";
+		ct++;
+	}
+	Out << "finished" + intToString(nbThreads - 1) + ":bool;\n\n";
+
+	/* Define them */
+	Out << "initial\n";
+	for (ct = 0; ct < nbThreads;) {
+		Out << "T" + intToString(ct) +  "==";
+		ct++;
+	}
+	for (ct = 0; ct < nbThreads;) {
+		Out << "e" + intToString(ct) +  "==";
+		ct++;
+	}
+	Out << "uint[2]0 and\n";
+	for (ct = 0; ct < nbThreads;) {
+		Out << "finished" + intToString(ct) +  "==";
+		ct++;
+	}
+	Out << "false;\n\n";
+}
+
+void
+SimpleWriter::printSelectClock()
+{
+	int nbThreads = this->elab->getNumProcesses();
+	int ct;
+
+	Out << ""
+		"proc selectClock(pid:uint[2])\n"
+		"returns (clock:int)\n"
+		"begin\n";
+
+	for (ct = 0; ct < nbThreads;)
+	{
+		Out << "    if pid == uint[2]" + intToString(ct) + "\n";
+		Out << "    then\n        clock = T" + intToString(ct) + ";\n";
+		Out << "    endif;\n";
+		ct++;
+	}
+	Out << "end\n\n";
+}
+
+void
+SimpleWriter::printWaitTimePrimitive()
+{
+	int nbThreads = this->elab->getNumProcesses();
+	int ct;
+
+	if (this->relativeClocks) {
+		triggerError(Out, "NYI : relative encoding for time in SimpleBackend\n");
+	}
+
+	Out << ""
+		"proc\n"
+		"wait(d:int, pid:uint[2])\n"
+		"returns ()\n"
+		"var clock:int;\n"
+		"begin\n";
+	
+	for (ct = 0; ct < nbThreads;)
+	{
+		Out << "    if pid == " + intToString(ct) + "\n";
+		Out << "    then\n        T" + intToString(ct) + " = T" + intToString(ct) + " + d;\n";
+		Out << "        clock = T" + intToString(ct) + ";\n";
+		Out << "    endif;\n";
+		ct++;
+	}
+
+	Out << "    yield;\n";
+	Out << "    assume(\n";
+
+	for (ct = 0; ct < nbThreads;)
+	{
+		Out << "(finished" + intToString(ct) + " or e" + intToString(ct) + " != uint[2]0 or clock <= T" + intToString(ct) + ")";
+		if (ct < nbThreads - 1)
+			Out << " and\n";
+		else
+			Out << ");\n";
+		ct++;
+	}	
+	Out << "end\n\n";
+}
+
+void
+SimpleWriter::printNotifyPrimitive()
+{
+	int nbThreads = this->elab->getNumProcesses();
+	int ct;
+
+	if (this->eventsAsBool) {
+		triggerError(Out, "NYI : events encoding as booleans for time in SimpleBackend\n");
+	}
+
+	printSelectClock();
+
+	Out <<""
+		"proc notify(pnumber:uint[2], nevent:uint[2])\n"
+		"returns ()\n"
+		"var clock:int;\n"
+		"begin\n";
+
+	Out << "    selectClock(pid);\n";
+
+	for (ct = 0; ct < nbThreads;) {
+		Out << "    if e" + intToString(ct) + " == nevent\n";
+		Out << "    then\n";
+		Out << "        e" + intToString(ct) + " = uint[2]0;\n";
+		Out << "        T" + intToString(ct) + " = clock;";
+		Out << "    endif;\n";
+		ct++;
+	}
+	Out << "end\n\n";
+}
+
+void
+SimpleWriter::printWaitEventPrimitive()
+{
+	int nbThreads = this->elab->getNumProcesses();
+	int ct;
+
+	if (this->eventsAsBool) {
+		triggerError(Out, "NYI : events encoding as booleans for time in SimpleBackend\n");
+	}
+	Out << ""
+		"proc\n"
+		"wait_e(pid:uint[2], nevent:uint[2])\n"
+		"returns ()\n"
+		"begin\n";
+
+	for (ct = 0; ct < nbThreads;) {
+		Out << "    if pid == " + intToString(ct) + "\n";
+		Out << "    then\n";
+		Out << "        e" + intToString(ct) + " = nevent;\n";
+		Out << "        yield;\n";
+		Out << "        assume(e" + intToString(ct) + " == uint[2]0\n";
+		Out << "    endif;\n";
+		ct++;
+	}
+	Out << "end\n\n";
+}
+
+
+
+void
+SimpleWriter::printPrimitives()
+{
+	Out << "\n\n/*---- Encoding ----*/\n";
+	printCodingGlobals();
+	printSelectClock();
+	printWaitTimePrimitive();
+	printNotifyPrimitive();
+	printWaitEventPrimitive();
+}
+
+void
+SimpleWriter::printGlobalVariables(Mangler* mang)
+{
+	vector < GlobalValue * >::iterator globalIt = this->elab->getGlobalVariables()->begin();
+	vector < GlobalValue * >::iterator globalEnd = this->elab->getGlobalVariables()->end();
+
+	TRACE_2("SimpleWriter > Emitting Global variables\n");
+
+	Out << "/*---- Global variables ----*/\n";
+	for (; globalIt < globalEnd; ++globalIt) {
+		GlobalValue* gv = *globalIt;
+		printType(Out, gv->getType(), false, mang->getMangledName(gv));
+	}
+	
+
+}
+
+void
+SimpleWriter::printProcesses()
+{
+	vector < Process * >::iterator processIt = this->elab->getProcesses()->begin();
+	vector < Process * >::iterator endIt = this->elab->getProcesses()->end();
+
+	TRACE_2("SimpleWriter > Emitting Processes\n");
+	Out << "\n\n/*---- Threads ----*/\n";
+	for (; processIt < endIt; ++processIt) {
+
+		Process *proc = *processIt;
+		std::vector < Function * >*usedFcts = proc->getUsedFunctions();
+		TRACE_3("SimpleWriter > printing process : " << proc->getName() << "\n");
+		TRACE_3("Info : nb of used functions : " << usedFcts->size() << "\n");
+
+		for (std::vector < Function * >::iterator itF = usedFcts->begin();
+		     itF < usedFcts->end(); ++itF) {
+
+			Function *F = *itF;
+			TRACE_4("SimpleWriter > printing function : " << F->getNameStr() << "\n");
+
+			// Do not codegen any 'available_externally' functions at all, they have
+			// definitions outside the translation unit.
+			if (F->hasAvailableExternallyLinkage())
+				continue;
+
+			LI = &getAnalysis < LoopInfo > (*F);
+
+			// Get rid of intrinsics we can't handle.
+			lowerIntrinsics(*F);
+
+			// Output all floating point constants that cannot be printed accurately.
+			printFloatingPointConstants(*F);
+
+			printFunction(*F);
+		}
+	}
+}
+
+/*
+ * TODO : manage the case where events and time couldn't be determined statically
+ */
+void
+SimpleWriter::visitSCConstruct(SCConstruct * scc)
+{
+	TimeConstruct* tc;
+	NotifyConstruct* notifyC;
+	EventConstruct* eventC;	
+	ReadConstruct* rc;
+	WriteConstruct* wc;
+	Event* event;
+	Port* port;
+	vector<Channel*>* channels;
+	vector<Channel*>::iterator channelsIt;
+	SimpleChannel* sc;
+
+	TRACE_4("/***** visitSCConstruct() *****/\n");
+	switch(scc->getID()) {
+	case WAITEVENTCONSTRUCT:
+		eventC = (EventConstruct*) scc;
+		event = eventC->getWaitedEvent();
+		if (eventC->isStaticallyFound()) {
+			Out << "wait_e(pnumber, ";
+			Out << "e" + intToString(event->getNumEvent());
+			Out << ")";
+		} else {
+			/* todo */
+		}
+		break;
+	case NOTIFYCONSTRUCT:
+		notifyC = (NotifyConstruct*) scc;
+		event = notifyC->getNotifiedEvent();
+		if (eventC->isStaticallyFound()) {
+			Out << "notify(pnumber, ";
+			Out << "e" + intToString(event->getNumEvent());
+			Out << ")";
+		} else {
+			/* todo */
+		}
+		break;
+	case TIMECONSTRUCT:
+		tc = (TimeConstruct*) scc;
+		if (tc->isStaticallyFound()) {
+			Out << "wait(pnumber, ";
+			Out << intToString(tc->getTime());
+			Out << ")";
+		} else {
+			/* todo */
+		}
+		break;
+	case READCONSTRUCT:
+		rc = (ReadConstruct*) scc;
+		port = rc->getPort();
+		
+		if (port->getChannelID() == SIMPLE_CHANNEL) {
+			if (port->getChannels()->size() != 1 ) {
+				ERROR("Reading in a port binded to more than one channel is not possible\n");
+			} else {
+				SimpleChannel* sc = (SimpleChannel*) port->getChannel();
+				Out << "/* read() on simpleport */\n";
+				sc->getGlobalVariableName();
+			}
+		} else {
+			/* todo */
+		}
+		break;
+	case WRITECONSTRUCT:
+		wc = (WriteConstruct*) scc;		
+		port = wc->getPort();
+		channels = port->getChannels();
+		
+		switch(port->getChannelID()) {
+		case SIMPLE_CHANNEL:
+			for (channelsIt = channels->begin() ; channelsIt != channels->end() ; ++channelsIt) {
+				sc = (SimpleChannel*) *channelsIt;
+//			if (port->getGlobalVariableType()->getTypeID() != Type::PointerTyID) {
+				Out << "/* write() on simpleport */\n";
+				Out << sc->getGlobalVariableName() << " = " << wc->getValue();
+				if (channelsIt != channels->end())
+					Out << ";\n";
+			}
+			break;
+		case FORWARDING_CHANNEL:
+			for (channelsIt = channels->begin() ; channelsIt != channels->end() ; ++channelsIt) {
+				/* NYI */
+			}
+			break;
+		case FIFO_CHANNEL:
+			for (channelsIt = channels->begin() ; channelsIt != channels->end() ; ++channelsIt) {
+				/* NYI */
+			}
+			break;
+		case CLOCK_CHANNEL:
+			/* IMPOSSIBLE case */
+			ERROR("How can we write on a CLOCK channel ??\n");
+			break;
+		default:
+			Out << "/* write() on port */\n";
+			break;
+ 		}
+
+// 		if (wc->isStaticallyFound()) {
+// 			Out << wc->getGlobalVariable() << " = " << wc->getValue() << "\n";
+// 		} else {
+			/* todo */
+// 		}
+		break;
+	default:
+		ErrorMsg << "Construction not managed in Simple backend: " << scc->getID();
+		triggerError(Out);
+	}
 }
 
 void SimpleWriter::visitCallInst(CallInst & I)
 {
 	std::map < CallInst *, SCConstruct * >::iterator itC;
-
-	if ((itC = this->sccfactory->getConstructs()->find(&I)) != this->sccfactory->getConstructs()->end()) {
+	CallInst* pI = cast<CallInst>(pointerToInst);
+	if ((itC = this->sccfactory->getConstructs()->find(pI)) != this->sccfactory->getConstructs()->end()) {
 		SCConstruct *scc = itC->second;
 		return visitSCConstruct(scc);
 	}
@@ -3183,8 +3528,7 @@ void SimpleWriter::visitCallInst(CallInst & I)
 	Value *Callee = I.getCalledValue();
 
 	const PointerType *PTy = cast < PointerType > (Callee->getType());
-	const FunctionType *FTy =
-		cast < FunctionType > (PTy->getElementType());
+	const FunctionType *FTy = cast < FunctionType > (PTy->getElementType());
 
 	// If this is a call to a struct-return function, assign to the first
 	// parameter instead of passing it to the call.
@@ -3327,7 +3671,7 @@ bool SimpleWriter::visitBuiltinCall(CallInst & I, Intrinsic::ID ID,
 			std::string msg;
 			raw_string_ostream Msg(msg);
 			Msg <<
-				"The C backend does not currently support zero "
+				"The C backend does not currently supoprt zero "
 			    << "argument varargs functions, such as '" <<
 				I.getParent()->getParent()->getName() << "'!";
 			llvm_report_error(Msg.str());
@@ -3488,6 +3832,7 @@ void SimpleWriter::visitMallocInst(MallocInst & I)
 
 void SimpleWriter::visitAllocaInst(AllocaInst & I)
 {
+	TRACE_4("visitAllocaInst()\n");
 	Out << '(';
 	printType(Out, I.getType());
 	Out << ") alloca(sizeof(";
@@ -3505,8 +3850,8 @@ void SimpleWriter::visitFreeInst(FreeInst & I)
 	llvm_unreachable("lowerallocations pass didn't work!");
 }
 
-void SimpleWriter::printGEPExpression(Value * Ptr, gep_type_iterator I,
-				gep_type_iterator E, bool Static)
+void
+SimpleWriter::printGEPExpression(Value * Ptr, gep_type_iterator I,	gep_type_iterator E, bool Static)
 {
 	TRACE_4("/**** printGEPExpression() ****/\n");
 
@@ -3678,8 +4023,7 @@ void SimpleWriter::visitStoreInst(StoreInst & I)
 
 void SimpleWriter::visitGetElementPtrInst(GetElementPtrInst & I)
 {
-	printGEPExpression(I.getPointerOperand(), gep_type_begin(I),
-			gep_type_end(I), false);
+	printGEPExpression(I.getPointerOperand(), gep_type_begin(I), gep_type_end(I), false);
 }
 
 void SimpleWriter::visitVAArgInst(VAArgInst & I)
@@ -3883,47 +4227,15 @@ bool SimpleWriter::runOnModule(Module & M)
 // 				Out << ";\n";
 // 			}
 // 	}
-
-
-	vector < GlobalValue * >::iterator globalIt = this->elab->getGlobalVariables()->begin();
-	vector < GlobalValue * >::iterator globalEnd = this->elab->getGlobalVariables()->end();
-	TRACE_2("SimpleWriter > Emitting Global variables\n");
-	for (; globalIt < globalEnd; ++globalIt) {
-		GlobalValue* gv = *globalIt;
-		printType(Out, gv->getType(), false, Mang->getMangledName(gv));
-	}
-
-	vector < Process * >::iterator processIt = this->elab->getProcesses()->begin();
-	vector < Process * >::iterator endIt = this->elab->getProcesses()->end();
 	
-	TRACE_2("SimpleWriter > Emitting Processes\n");
-	for (; processIt < endIt; ++processIt) {
-		Process *proc = *processIt;
-		std::vector < Function * >*usedFcts = proc->getUsedFunctions();
-		TRACE_3("SimpleWriter > printing process : " << proc->getName() << "\n");
-		TRACE_3("Info : nb of used functions : " << usedFcts->size() << "\n");
+	/* Print Global variables from the program */
+	printGlobalVariables(Mang);
+	
+	/* Print all stuff relative to encoding */
+	printPrimitives();
 
-		for (std::vector < Function * >::iterator itF =
-			     usedFcts->begin(); itF < usedFcts->end(); ++itF) {
-			Function *F = *itF;
-			TRACE_4("SimpleWriter > printing function : " << F->getNameStr() << "\n");
-
-			// Do not codegen any 'available_externally' functions at all, they have
-			// definitions outside the translation unit.
-			if (F->hasAvailableExternallyLinkage())
-				continue;
-
-			LI = &getAnalysis < LoopInfo > (*F);
-
-			// Get rid of intrinsics we can't handle.
-			lowerIntrinsics(*F);
-
-			// Output all floating point constants that cannot be printed accurately.
-			printFloatingPointConstants(*F);
-
-			printFunction(*F);
-		}
-	}
+	/* Print all processes and functions */
+	printProcesses();
 
 	// Free memory...
 	delete IL;

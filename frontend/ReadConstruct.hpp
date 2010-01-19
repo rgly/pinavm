@@ -7,12 +7,16 @@
 using namespace llvm;
 
 struct ReadConstruct:public SCConstruct {
-	protected:Port * port;
-      public:
-	ReadConstruct(Port * p);
+protected:
+	Port * port;
+	Value* callInstruction;
+
+public:
+	ReadConstruct(Port * p, Value* callInst);
+	Value* getCallInst();
 	void setPort(Port * e);
 	Port *getPort();
-	 std::string toString();
+	std::string toString();
 };
 
 #endif

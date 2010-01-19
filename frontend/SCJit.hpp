@@ -67,6 +67,7 @@ struct SCJit {
 	void *jitAddr(Function * f, Value * arg);
 	int jitInt(Function * f, Value * arg);
 	double jitDouble(Function * f, Value * arg);
+	bool jitBool(Function * f, Value * arg);
 	Function *buildFct(Function * f, FunctionType * FT, Value * arg);
 	Module *getModule();
 };

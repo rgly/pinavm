@@ -38,7 +38,10 @@
 
 using namespace llvm;
 
-void launch_simplebackend(Frontend * fe, std::string OutputFilename)
+void launch_simplebackend(Frontend * fe,
+			std::string OutputFilename,
+			bool useBoolInsteadOfInts,
+			bool relativeClocks)
 {
 	Module *llvmMod = fe->getLLVMModule();
 
@@ -49,18 +52,13 @@ void launch_simplebackend(Frontend * fe, std::string OutputFilename)
 	if (OutputFilename != "-") {
 
 		std::string error;
-		raw_fd_ostream *FDOut =
-		    new raw_fd_ostream(OutputFilename.c_str(),
-				       /*Binary= */ true, true, error);
+		raw_fd_ostream *FDOut = new raw_fd_ostream(OutputFilename.c_str(), true, true, error);
 		if (!error.empty()) {
 			errs() << error << '\n';
 			delete FDOut;
 			return;
 		}
-		Out =
-		    new formatted_raw_ostream(*FDOut,
-					      formatted_raw_ostream::
-					      DELETE_STREAM);
+		Out = new formatted_raw_ostream(*FDOut,	formatted_raw_ostream::DELETE_STREAM);
 
 		// Make sure that the Output file gets unlinked from the disk if we get a
 		// SIGINT
@@ -69,7 +67,7 @@ void launch_simplebackend(Frontend * fe, std::string OutputFilename)
 	// Build up all of the passes that we want to do to the module.
 	PassManager Passes;
 
-	ModulePass *simpleWriter = new SimpleWriter(fe, *Out);
+	ModulePass *simpleWriter = new SimpleWriter(fe, *Out, useBoolInsteadOfInts, relativeClocks);
 
 	Passes.add(new TargetData(llvmMod));
 	Passes.add(createVerifierPass());

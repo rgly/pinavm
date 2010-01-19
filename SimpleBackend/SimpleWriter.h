@@ -79,15 +79,19 @@ class SimpleWriter : public ModulePass, public InstVisitor<SimpleWriter> {
   unsigned NextAnonValueNumber;
   SCCFactory* sccfactory;
   SCElab* elab;
+  bool relativeClocks;
+  bool eventsAsBool;
 
 public:
   static char ID;
-  explicit SimpleWriter(Frontend* fe, formatted_raw_ostream &o)
+  explicit SimpleWriter(Frontend* fe, formatted_raw_ostream &o, bool useRelativeClocks, bool encodeEventsAsBool)
     : ModulePass(&ID), Out(o), IL(0), Mang(0), LI(0), 
       TheModule(0), TAsm(0), TD(0), OpaqueCounter(0), NextAnonValueNumber(0) {
     FPCounter = 0;
     this->sccfactory = fe->getConstructs();
     this->elab = fe->getElab();
+    this->relativeClocks = useRelativeClocks;
+    this->eventsAsBool = encodeEventsAsBool;
   }
   explicit SimpleWriter(formatted_raw_ostream &o)
     : ModulePass(&ID), Out(o), IL(0), Mang(0), LI(0), 
@@ -183,6 +187,17 @@ public:
 
   void visitCastInst (CastInst &I);
   void visitSelectInst(SelectInst &I);
+
+  void printCodingGlobals();
+  void printSelectClock();
+  void printWaitTimePrimitive();
+  void printNotifyPrimitive();
+  void printWaitEventPrimitive();
+  void printPrimitives();
+  void printGlobalVariables(Mangler* mang);
+  void printProcesses();
+
+  void visitSCConstruct(SCConstruct * scc);
   void visitCallInst (CallInst &I);
   void visitInlineAsm(CallInst &I);
   bool visitBuiltinCall(CallInst &I, Intrinsic::ID ID, bool &WroteCallee);

@@ -13,10 +13,11 @@ struct Event;
 struct EventConstruct:public SCConstruct {
 	protected:Event * event;
       public:
+	EventConstruct(Value* missingValue);
 	EventConstruct(Event * e);
 	void setWaitedEvent(Event * e);
 	Event *getWaitedEvent();
-	 std::string toString();
+	std::string toString();
 };
 
 #endif
