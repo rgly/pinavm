@@ -23,62 +23,6 @@ test -d "$INSTALL_PATH_SYSTEMC_LLVM" || \
     (echo "$INSTALL_PATH_SYSTEMC_LLVM does not exist, creating it" && \
     mkdir -p "$INSTALL_PATH_SYSTEMC_LLVM")
 
-###############################
-########## LLVM ###############
-###############################
-install_llvm() {
-    echo "Building llvm..."
-    cd "$DOWNLOAD_AND_COMPILE_DIR"
-    test -f llvm-2.6.tar.gz || wget http://llvm.org/releases/2.6/llvm-2.6.tar.gz
-    tar xzf llvm-2.6.tar.gz
-    cd llvm-2.6
-    ln -s "$SRC_ROOT_DIR"/SimpleBackend/ lib/Target/SimpleBackend
-    patch -p0 <<\EOF
---- configure 	2009-12-02 17:40:52.000000000 +0100
-+++ configure	2009-12-02 17:43:40.000000000 +0100
-@@ -5052,6 +5052,7 @@
-         cbe)      TARGETS_TO_BUILD="CBackend $TARGETS_TO_BUILD" ;;
-         msil)     TARGETS_TO_BUILD="MSIL $TARGETS_TO_BUILD" ;;
-         cpp)      TARGETS_TO_BUILD="CppBackend $TARGETS_TO_BUILD" ;;
-+        simple)   TARGETS_TO_BUILD="SimpleBackend $TARGETS_TO_BUILD" ;;
-         *) { { echo "$as_me:$LINENO: error: Unrecognized target $a_target" >&5
- echo "$as_me: error: Unrecognized target $a_target" >&2;}
-    { (exit 1); exit 1; }; } ;;
---- CMakeLists.txt      2009-08-18 17:29:35.000000000 +0200
-+++ CMakeLists.txt      2009-12-02 17:28:08.000000000 +0100
-@@ -60,6 +60,7 @@
-   SystemZ
-   X86
-   XCore
-+  SimpleBackend
-   )
- 
- if( MSVC )
-EOF
-    test -d objdir || mkdir objdir
-    cd objdir
-    ../configure --prefix="$INSTALL_PATH_LLVM" --enable-debug-runtime \
-	--disable-optimized --enable-checking --enable-bindings=none \
-	--enable-targets=x86,simple
-    make
-    rm -rf "$INSTALL_PATH_LLVM"
-    mkdir -p "$INSTALL_PATH_LLVM"
-    make install
-}
-
-###############################
-########## LLVM-GCC ###########
-###############################
-install_llvm_gcc () {
-    echo "Building llvm-gcc..."
-    cd "$DOWNLOAD_AND_COMPILE_DIR"
-    test -f "llvm-gcc-4.2-2.6-i686-linux.tar.gz" || \
-	wget http://llvm.org/releases/2.6/llvm-gcc-4.2-2.6-i686-linux.tar.gz
-    tar xzf llvm-gcc-4.2-2.6-i686-linux.tar.gz
-    rm -rf "$INSTALL_PATH_LLVMGCC"
-    mv llvm-gcc-4.2-2.6-i686-linux "$INSTALL_PATH_LLVMGCC"
-}
-
 ################################################
 ########## SYSTEMC (normal install) ############
 ################################################
@@ -126,6 +70,63 @@ install_systemc_gcc () {
     make pthreads_debug
     # SystemC's configure.in is buggy, and seems not to obey --prefix correctly ...
     make prefix="$INSTALL_PATH_SYSTEMC_GCC" install
+}
+
+
+###############################
+########## LLVM ###############
+###############################
+install_llvm() {
+    echo "Building llvm..."
+    cd "$DOWNLOAD_AND_COMPILE_DIR"
+    test -f llvm-2.6.tar.gz || wget http://llvm.org/releases/2.6/llvm-2.6.tar.gz
+    tar xzf llvm-2.6.tar.gz
+    cd llvm-2.6
+    test -L lib/Target/SimpleBackend || ln -s "$SRC_ROOT_DIR"/SimpleBackend/ lib/Target/SimpleBackend
+    patch -p0 <<\EOF
+--- configure 	2009-12-02 17:40:52.000000000 +0100
++++ configure	2009-12-02 17:43:40.000000000 +0100
+@@ -5052,6 +5052,7 @@
+         cbe)      TARGETS_TO_BUILD="CBackend $TARGETS_TO_BUILD" ;;
+         msil)     TARGETS_TO_BUILD="MSIL $TARGETS_TO_BUILD" ;;
+         cpp)      TARGETS_TO_BUILD="CppBackend $TARGETS_TO_BUILD" ;;
++        simple)   TARGETS_TO_BUILD="SimpleBackend $TARGETS_TO_BUILD" ;;
+         *) { { echo "$as_me:$LINENO: error: Unrecognized target $a_target" >&5
+ echo "$as_me: error: Unrecognized target $a_target" >&2;}
+    { (exit 1); exit 1; }; } ;;
+--- CMakeLists.txt      2009-08-18 17:29:35.000000000 +0200
++++ CMakeLists.txt      2009-12-02 17:28:08.000000000 +0100
+@@ -60,6 +60,7 @@
+   SystemZ
+   X86
+   XCore
++  SimpleBackend
+   )
+ 
+ if( MSVC )
+EOF
+    test -d objdir || mkdir objdir
+    cd objdir
+    ../configure --prefix="$INSTALL_PATH_LLVM" --enable-debug-runtime \
+	--disable-optimized --enable-checking --enable-bindings=none --enable-libffi=no\
+	--enable-targets=x86,simple
+    make
+    rm -rf "$INSTALL_PATH_LLVM"
+    mkdir -p "$INSTALL_PATH_LLVM"
+    make install
+}
+
+###############################
+########## LLVM-GCC ###########
+###############################
+install_llvm_gcc () {
+    echo "Building llvm-gcc..."
+    cd "$DOWNLOAD_AND_COMPILE_DIR"
+    test -f "llvm-gcc-4.2-2.6-i686-linux.tar.gz" || \
+	wget http://llvm.org/releases/2.6/llvm-gcc-4.2-2.6-i686-linux.tar.gz
+    tar xzf llvm-gcc-4.2-2.6-i686-linux.tar.gz
+    rm -rf "$INSTALL_PATH_LLVMGCC"
+    mv llvm-gcc-4.2-2.6-i686-linux "$INSTALL_PATH_LLVMGCC"
 }
 
 ####################################################
