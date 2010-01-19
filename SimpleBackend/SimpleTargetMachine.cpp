@@ -1,4 +1,8 @@
 #include "SimpleTargetMachine.h"
+#include "llvm/PassManager.h"
+#include "llvm/CodeGen/Passes.h"
+#include "llvm/Transforms/Scalar.h"
+#include "SimpleWriter.h"
 
 namespace llvm {
 
