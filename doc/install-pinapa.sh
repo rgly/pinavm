@@ -23,11 +23,76 @@ test -d "$INSTALL_PATH_SYSTEMC_LLVM" || \
     (echo "$INSTALL_PATH_SYSTEMC_LLVM does not exist, creating it" && \
     mkdir -p "$INSTALL_PATH_SYSTEMC_LLVM")
 
+
+configure_llvm() {
+    ../configure --prefix="$INSTALL_PATH_LLVM" --enable-debug-runtime \
+	--disable-optimized --enable-checking --enable-bindings=none --enable-libffi=no\
+	--enable-targets=x86,simple
+}
+
+###############################
+########## LLVM ###############
+###############################
+install_llvm() {
+    echo "Building llvm..."
+    cd "$DOWNLOAD_AND_COMPILE_DIR"
+    test -f llvm-2.6.tar.gz || wget http://llvm.org/releases/2.6/llvm-2.6.tar.gz
+    tar xzf llvm-2.6.tar.gz
+    cd llvm-2.6
+    test -d objdir || mkdir objdir
+    cd objdir
+    configure_llvm
+    make
+    rm -rf "$INSTALL_PATH_LLVM"
+    mkdir -p "$INSTALL_PATH_LLVM"
+    make install
+}
+
+###############################
+########## BACKEND ############
+###############################
+
+install_backend() {
+    echo "Building backend..."
+    cd "$DOWNLOAD_AND_COMPILE_DIR"
+    cd llvm-2.6
+    test -L lib/Target/SimpleBackend || ln -s "$SRC_ROOT_DIR"/SimpleBackend/ lib/Target/SimpleBackend
+
+    patch -p0 <<\EOF
+--- configure 	2009-12-02 17:40:52.000000000 +0100
++++ configure	2009-12-02 17:43:40.000000000 +0100
+@@ -5052,6 +5052,7 @@
+         cbe)      TARGETS_TO_BUILD="CBackend $TARGETS_TO_BUILD" ;;
+         msil)     TARGETS_TO_BUILD="MSIL $TARGETS_TO_BUILD" ;;
+         cpp)      TARGETS_TO_BUILD="CppBackend $TARGETS_TO_BUILD" ;;
++        simple)   TARGETS_TO_BUILD="SimpleBackend $TARGETS_TO_BUILD" ;;
+         *) { { echo "$as_me:$LINENO: error: Unrecognized target $a_target" >&5
+ echo "$as_me: error: Unrecognized target $a_target" >&2;}
+    { (exit 1); exit 1; }; } ;;
+--- CMakeLists.txt      2009-08-18 17:29:35.000000000 +0200
++++ CMakeLists.txt      2009-12-02 17:28:08.000000000 +0100
+@@ -60,6 +60,7 @@
+   SystemZ
+   X86
+   XCore
++  SimpleBackend
+   )
+ 
+ if( MSVC )
+EOF
+    cd objdir
+    configure_llvm
+    make
+    make install
+}
+
 ################################################
 ########## SYSTEMC (normal install) ############
 ################################################
 
 patch_systemc() {
+    patch -p0 < ../systemc-2.2.0.patch
+
     patch -p0 <<\EOF
 --- src/sysc/utils/sc_utils_ids.cpp     2006-12-15 21:31:39.000000000 +0100
 +++ src/sysc/utils/sc_utils_ids.cpp     2009-11-04 15:05:00.000000000 +0100
@@ -44,6 +109,7 @@ patch_systemc() {
  namespace sc_core {
  #define SC_DEFINE_MESSAGE(id,unused,text) extern const char id[] = text;
 EOF
+
     ##### Link to Pinapa #########
     sed -i -e's/main(/launch_systemc(/' ./src/sysc/kernel/sc_main.cpp
     sed -i -e's/namespace sc_core {/extern void pinapa_callback();\nnamespace sc_core {/' \
@@ -72,49 +138,6 @@ install_systemc_gcc () {
     make prefix="$INSTALL_PATH_SYSTEMC_GCC" install
 }
 
-
-###############################
-########## LLVM ###############
-###############################
-install_llvm() {
-    echo "Building llvm..."
-    cd "$DOWNLOAD_AND_COMPILE_DIR"
-    test -f llvm-2.6.tar.gz || wget http://llvm.org/releases/2.6/llvm-2.6.tar.gz
-    tar xzf llvm-2.6.tar.gz
-    cd llvm-2.6
-    test -L lib/Target/SimpleBackend || ln -s "$SRC_ROOT_DIR"/SimpleBackend/ lib/Target/SimpleBackend
-    patch -p0 <<\EOF
---- configure 	2009-12-02 17:40:52.000000000 +0100
-+++ configure	2009-12-02 17:43:40.000000000 +0100
-@@ -5052,6 +5052,7 @@
-         cbe)      TARGETS_TO_BUILD="CBackend $TARGETS_TO_BUILD" ;;
-         msil)     TARGETS_TO_BUILD="MSIL $TARGETS_TO_BUILD" ;;
-         cpp)      TARGETS_TO_BUILD="CppBackend $TARGETS_TO_BUILD" ;;
-+        simple)   TARGETS_TO_BUILD="SimpleBackend $TARGETS_TO_BUILD" ;;
-         *) { { echo "$as_me:$LINENO: error: Unrecognized target $a_target" >&5
- echo "$as_me: error: Unrecognized target $a_target" >&2;}
-    { (exit 1); exit 1; }; } ;;
---- CMakeLists.txt      2009-08-18 17:29:35.000000000 +0200
-+++ CMakeLists.txt      2009-12-02 17:28:08.000000000 +0100
-@@ -60,6 +60,7 @@
-   SystemZ
-   X86
-   XCore
-+  SimpleBackend
-   )
- 
- if( MSVC )
-EOF
-    test -d objdir || mkdir objdir
-    cd objdir
-    ../configure --prefix="$INSTALL_PATH_LLVM" --enable-debug-runtime \
-	--disable-optimized --enable-checking --enable-bindings=none --enable-libffi=no\
-	--enable-targets=x86,simple
-    make
-    rm -rf "$INSTALL_PATH_LLVM"
-    mkdir -p "$INSTALL_PATH_LLVM"
-    make install
-}
 
 ###############################
 ########## LLVM-GCC ###########
@@ -213,6 +236,7 @@ install_systemc_llvm () {
 install_llvm
 install_llvm_gcc
 install_systemc_gcc
+install_backend
 
 ( install_systemc_llvm )
 
