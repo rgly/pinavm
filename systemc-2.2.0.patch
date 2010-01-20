@@ -1,7 +1,0 @@
-Common subdirectories: systemc-2.2.0/src/sysc/communication and ../download/systemc-2.2.0/src/sysc/communication
-Common subdirectories: systemc-2.2.0/src/sysc/datatypes and ../download/systemc-2.2.0/src/sysc/datatypes
-Common subdirectories: systemc-2.2.0/src/sysc/kernel and ../download/systemc-2.2.0/src/sysc/kernel
-Common subdirectories: systemc-2.2.0/src/sysc/packages and ../download/systemc-2.2.0/src/sysc/packages
-Common subdirectories: systemc-2.2.0/src/sysc/qt and ../download/systemc-2.2.0/src/sysc/qt
-Common subdirectories: systemc-2.2.0/src/sysc/tracing and ../download/systemc-2.2.0/src/sysc/tracing
-Common subdirectories: systemc-2.2.0/src/sysc/utils and ../download/systemc-2.2.0/src/sysc/utils
