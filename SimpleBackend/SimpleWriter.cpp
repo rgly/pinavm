@@ -4153,12 +4153,12 @@ void SimpleWriter::visitExtractValueInst(ExtractValueInst & EVI)
 
 
 
-// extern "C" void
-// LLVMInitializeSimpleBackendTarget()
-// { 
-//   // Register the target.
-//   RegisterTargetMachine<SimpleTargetMachine> X(TheSimpleBackendTarget);
-// }
+extern "C" void
+LLVMInitializeSimpleBackendTarget()
+{ 
+  // Register the target.
+  RegisterTargetMachine<SimpleTargetMachine> X(TheSimpleBackendTarget);
+}
 
 /***************************************************************************
  ***************** Main functions ******************************************

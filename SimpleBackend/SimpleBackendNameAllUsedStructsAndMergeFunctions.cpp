@@ -1,4 +1,5 @@
 #include "SimpleBackendNameAllUsedStructsAndMergeFunctions.h"
+#include "SimpleWriter.h"
 
 void
 SimpleBackendNameAllUsedStructsAndMergeFunctions::

@@ -23,6 +23,9 @@ test -d "$INSTALL_PATH_SYSTEMC_LLVM" || \
     (echo "$INSTALL_PATH_SYSTEMC_LLVM does not exist, creating it" && \
     mkdir -p "$INSTALL_PATH_SYSTEMC_LLVM")
 
+
+llvm_configure_flags="--prefix=$INSTALL_PATH_LLVM --enable-debug-runtime --disable-optimized --enable-checking --enable-bindings=none --enable-libffi=no"
+
 ###############################
 ########## LLVM ###############
 ###############################
@@ -32,9 +35,25 @@ install_llvm() {
     test -f llvm-2.6.tar.gz || wget http://llvm.org/releases/2.6/llvm-2.6.tar.gz
     tar xzf llvm-2.6.tar.gz
     cd llvm-2.6
-    if [ \! -e lib/Target/SimpleBackend ]; then
-	ln -s "$SRC_ROOT_DIR"/SimpleBackend/ lib/Target/SimpleBackend
-    fi
+    test -d objdir || mkdir objdir
+    cd objdir
+    ../configure ${llvm_configure_flags}
+    make
+    rm -rf "$INSTALL_PATH_LLVM"
+    mkdir -p "$INSTALL_PATH_LLVM"
+    make install
+}
+
+###############################
+########## BACKEND ############
+###############################
+
+install_backend() {
+    echo "Building backend..."
+    cd "$DOWNLOAD_AND_COMPILE_DIR"
+    cd llvm-2.6
+    test -L lib/Target/SimpleBackend || ln -s "$SRC_ROOT_DIR"/SimpleBackend/ lib/Target/SimpleBackend
+
     patch -p0 <<\EOF
 --- configure 	2009-12-02 17:40:52.000000000 +0100
 +++ configure	2009-12-02 17:43:40.000000000 +0100
@@ -57,28 +76,10 @@ install_llvm() {
  
  if( MSVC )
 EOF
-    test -d objdir || mkdir objdir
     cd objdir
-    ../configure --prefix="$INSTALL_PATH_LLVM" --enable-debug-runtime \
-	--disable-optimized --enable-checking --enable-bindings=none \
-	--enable-targets=x86,simple
+    ../configure ${llvm_configure_flags} --enable-targets=x86,simple
     make
-    rm -rf "$INSTALL_PATH_LLVM"
-    mkdir -p "$INSTALL_PATH_LLVM"
     make install
-}
-
-###############################
-########## LLVM-GCC ###########
-###############################
-install_llvm_gcc () {
-    echo "Building llvm-gcc..."
-    cd "$DOWNLOAD_AND_COMPILE_DIR"
-    test -f "llvm-gcc-4.2-2.6-i686-linux.tar.gz" || \
-	wget http://llvm.org/releases/2.6/llvm-gcc-4.2-2.6-i686-linux.tar.gz
-    tar xzf llvm-gcc-4.2-2.6-i686-linux.tar.gz
-    rm -rf "$INSTALL_PATH_LLVMGCC"
-    mv llvm-gcc-4.2-2.6-i686-linux "$INSTALL_PATH_LLVMGCC"
 }
 
 ################################################
@@ -86,6 +87,8 @@ install_llvm_gcc () {
 ################################################
 
 patch_systemc() {
+    patch -p0 < ../systemc-2.2.0.patch
+
     patch -p0 <<\EOF
 --- src/sysc/utils/sc_utils_ids.cpp     2006-12-15 21:31:39.000000000 +0100
 +++ src/sysc/utils/sc_utils_ids.cpp     2009-11-04 15:05:00.000000000 +0100
@@ -102,6 +105,7 @@ patch_systemc() {
  namespace sc_core {
  #define SC_DEFINE_MESSAGE(id,unused,text) extern const char id[] = text;
 EOF
+
     ##### Link to Pinapa #########
     sed -i -e's/main(/launch_systemc(/' ./src/sysc/kernel/sc_main.cpp
     sed -i -e's/namespace sc_core {/extern void pinapa_callback();\nnamespace sc_core {/' \
@@ -130,6 +134,20 @@ install_systemc_gcc () {
     make pthreads_debug
     # SystemC's configure.in is buggy, and seems not to obey --prefix correctly ...
     make prefix="$INSTALL_PATH_SYSTEMC_GCC" install
+}
+
+
+###############################
+########## LLVM-GCC ###########
+###############################
+install_llvm_gcc () {
+    echo "Building llvm-gcc..."
+    cd "$DOWNLOAD_AND_COMPILE_DIR"
+    test -f "llvm-gcc-4.2-2.6-i686-linux.tar.gz" || \
+	wget http://llvm.org/releases/2.6/llvm-gcc-4.2-2.6-i686-linux.tar.gz
+    tar xzf llvm-gcc-4.2-2.6-i686-linux.tar.gz
+    rm -rf "$INSTALL_PATH_LLVMGCC"
+    mv llvm-gcc-4.2-2.6-i686-linux "$INSTALL_PATH_LLVMGCC"
 }
 
 ####################################################
@@ -213,13 +231,12 @@ install_systemc_llvm () {
     done
 }
 
-install_systemc_gcc
 install_llvm
 install_llvm_gcc
+install_systemc_gcc
+install_backend
 
 ( install_systemc_llvm )
 
 
 echo "$(basename $0) done."
-
-# ../configure --prefix=/home/marquet/local/lib/llvm-gcc --program-prefix=llvm- --enable-llvm=/home/marquet/local/download/llvm-2.6/objdir --enable-languages=c,c++ && make && make install

@@ -6,7 +6,6 @@
 #include "llvm/Target/TargetData.h"
 
 #include "SimpleBackendNameAllUsedStructsAndMergeFunctions.h"
-#include "SimpleWriter.h"
 
 namespace llvm {
   
@@ -29,7 +28,7 @@ namespace llvm {
 
   };
   
-  //  extern Target TheSimpleBackendTarget;
+  extern Target TheSimpleBackendTarget;
   
 } // End llvm namespace
 
