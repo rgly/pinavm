@@ -24,11 +24,7 @@ test -d "$INSTALL_PATH_SYSTEMC_LLVM" || \
     mkdir -p "$INSTALL_PATH_SYSTEMC_LLVM")
 
 
-configure_llvm() {
-    ../configure --prefix="$INSTALL_PATH_LLVM" --enable-debug-runtime \
-	--disable-optimized --enable-checking --enable-bindings=none --enable-libffi=no\
-	--enable-targets=x86,simple
-}
+llvm_configure_flags="--prefix=$INSTALL_PATH_LLVM --enable-debug-runtime --disable-optimized --enable-checking --enable-bindings=none --enable-libffi=no"
 
 ###############################
 ########## LLVM ###############
@@ -41,7 +37,7 @@ install_llvm() {
     cd llvm-2.6
     test -d objdir || mkdir objdir
     cd objdir
-    configure_llvm
+    ../configure ${llvm_configure_flags}
     make
     rm -rf "$INSTALL_PATH_LLVM"
     mkdir -p "$INSTALL_PATH_LLVM"
@@ -81,7 +77,7 @@ install_backend() {
  if( MSVC )
 EOF
     cd objdir
-    configure_llvm
+    ../configure ${llvm_configure_flags} --enable-targets=x86,simple
     make
     make install
 }
@@ -242,5 +238,3 @@ install_backend
 
 
 echo "$(basename $0) done."
-
-# ../configure --prefix=/home/marquet/local/lib/llvm-gcc --program-prefix=llvm- --enable-llvm=/home/marquet/local/download/llvm-2.6/objdir --enable-languages=c,c++ && make && make install
