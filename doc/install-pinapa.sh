@@ -44,44 +44,6 @@ install_llvm() {
     make install
 }
 
-###############################
-########## BACKEND ############
-###############################
-
-install_backend() {
-    echo "Building backend..."
-    cd "$DOWNLOAD_AND_COMPILE_DIR"
-    cd llvm-2.6
-    test -L lib/Target/SimpleBackend || ln -s "$SRC_ROOT_DIR"/SimpleBackend/ lib/Target/SimpleBackend
-
-    patch -p0 <<\EOF
---- configure 	2009-12-02 17:40:52.000000000 +0100
-+++ configure	2009-12-02 17:43:40.000000000 +0100
-@@ -5052,6 +5052,7 @@
-         cbe)      TARGETS_TO_BUILD="CBackend $TARGETS_TO_BUILD" ;;
-         msil)     TARGETS_TO_BUILD="MSIL $TARGETS_TO_BUILD" ;;
-         cpp)      TARGETS_TO_BUILD="CppBackend $TARGETS_TO_BUILD" ;;
-+        simple)   TARGETS_TO_BUILD="SimpleBackend $TARGETS_TO_BUILD" ;;
-         *) { { echo "$as_me:$LINENO: error: Unrecognized target $a_target" >&5
- echo "$as_me: error: Unrecognized target $a_target" >&2;}
-    { (exit 1); exit 1; }; } ;;
---- CMakeLists.txt      2009-08-18 17:29:35.000000000 +0200
-+++ CMakeLists.txt      2009-12-02 17:28:08.000000000 +0100
-@@ -60,6 +60,7 @@
-   SystemZ
-   X86
-   XCore
-+  SimpleBackend
-   )
- 
- if( MSVC )
-EOF
-    cd objdir
-    ../configure ${llvm_configure_flags} --enable-targets=x86,simple
-    make
-    make install
-}
-
 ################################################
 ########## SYSTEMC (normal install) ############
 ################################################
@@ -234,9 +196,8 @@ install_systemc_llvm () {
 install_llvm
 install_llvm_gcc
 install_systemc_gcc
-install_backend
 
-( install_systemc_llvm )
+#( install_systemc_llvm )
 
 
 echo "$(basename $0) done."
