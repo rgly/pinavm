@@ -5,7 +5,7 @@ export INSTALL_PATH_SYSTEMC_LLVM=@INSTALL_PATH_SYSTEMC_LLVM@
 export INSTALL_PATH_SYSTEMC_GCC=@INSTALL_PATH_SYSTEMC_GCC@
 export SRC_ROOT_DIR=@abs_top_srcdir@
 
-export LLVMBACKENDSHEADERS=@DOWNLOAD_AND_COMPILE_DIR@/llvm-2.6/Target/SimpleBackend
-export LLVMBACKENDS=@DOWNLOAD_AND_COMPILE_DIR@/llvm-2.6/Target
+export LLVMBACKENDSHEADERS=@abs_top_srcdir@/SimpleBackend
+export LLVMBACKENDS=@abs_top_srcdir@/SimpleBackend
 export SYSTEMCFRONTEND=@abs_top_srcdir@/frontend
 export SYSTEMCROOT=@INSTALL_PATH_SYSTEMC_GCC@
