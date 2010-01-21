@@ -1,7 +1,3 @@
-include $(ROOT)/config.mk
-$(ROOT)/config.mk: $(ROOT)/config.mk.in $(ROOT)/configure.ac
-	@cd $(ROOT) && $(MAKE) config.mk
-
 .SUFFIXES:
 .SECONDARY:
 SHELL = /bin/sh
