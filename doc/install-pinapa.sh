@@ -10,6 +10,8 @@ set -x
 (cd .. && make config.sh)
 source ../config.sh
 
+SCRIPT_DIR=`pwd`
+
 # ##### INITIALIZATION #####
  test -d "$DOWNLOAD_AND_COMPILE_DIR" || \
      (echo "$DOWNLOAD_AND_COMPILE_DIR does not exist, creating it" && \
@@ -49,24 +51,7 @@ install_llvm() {
 ################################################
 
 patch_systemc() {
-    patch -p0 < ../systemc-2.2.0.patch
-
-    patch -p0 <<\EOF
---- src/sysc/utils/sc_utils_ids.cpp     2006-12-15 21:31:39.000000000 +0100
-+++ src/sysc/utils/sc_utils_ids.cpp     2009-11-04 15:05:00.000000000 +0100
-@@ -58,8 +58,10 @@
- // the source.
- //
- 
-+#include <cstdlib>
-+#include <string.h>
- #include "sysc/utils/sc_report.h"
--
-+using namespace std;
- 
- namespace sc_core {
- #define SC_DEFINE_MESSAGE(id,unused,text) extern const char id[] = text;
-EOF
+    patch -p0 < ${SCRIPT_DIR}/../systemc-2.2.0.patch
 
     ##### Link to Pinapa #########
     sed -i -e's/main(/launch_systemc(/' ./src/sysc/kernel/sc_main.cpp

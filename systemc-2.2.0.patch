@@ -1,6 +1,6 @@
-diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/communication/Makefile.in systemc-2.2.0-gcc/src/sysc/communication/Makefile.in
+diff -rupNB -x '*~' /tmp/systemc-2.2.0/src/sysc/communication/Makefile.in src/sysc/communication/Makefile.in
 --- /tmp/systemc-2.2.0/src/sysc/communication/Makefile.in	2007-08-30 14:54:09.000000000 +0200
-+++ systemc-2.2.0-gcc/src/sysc/communication/Makefile.in	2010-01-21 15:28:50.000000000 +0100
++++ src/sysc/communication/Makefile.in	2010-01-21 17:31:31.000000000 +0100
 @@ -120,8 +120,10 @@ H_FILES = \
  	sc_signal_resolved.h \
  	sc_signal_resolved_ports.h \
@@ -14,9 +14,9 @@ diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/communication/Makefile.in systemc
  
  noinst_HEADERS = $(H_FILES)
  
-diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/communication/sc_bind_ef.h systemc-2.2.0-gcc/src/sysc/communication/sc_bind_ef.h
+diff -rupNB -x '*~' /tmp/systemc-2.2.0/src/sysc/communication/sc_bind_ef.h src/sysc/communication/sc_bind_ef.h
 --- /tmp/systemc-2.2.0/src/sysc/communication/sc_bind_ef.h	1970-01-01 01:00:00.000000000 +0100
-+++ systemc-2.2.0-gcc/src/sysc/communication/sc_bind_ef.h	2010-01-21 15:22:43.000000000 +0100
++++ src/sysc/communication/sc_bind_ef.h	2010-01-21 17:31:31.000000000 +0100
 @@ -0,0 +1,18 @@
 +namespace sc_core {
 +
@@ -36,9 +36,9 @@ diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/communication/sc_bind_ef.h system
 +};
 +
 +}
-diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/communication/sc_bind_elem.h systemc-2.2.0-gcc/src/sysc/communication/sc_bind_elem.h
+diff -rupNB -x '*~' /tmp/systemc-2.2.0/src/sysc/communication/sc_bind_elem.h src/sysc/communication/sc_bind_elem.h
 --- /tmp/systemc-2.2.0/src/sysc/communication/sc_bind_elem.h	1970-01-01 01:00:00.000000000 +0100
-+++ systemc-2.2.0-gcc/src/sysc/communication/sc_bind_elem.h	2010-01-21 15:21:46.000000000 +0100
++++ src/sysc/communication/sc_bind_elem.h	2010-01-21 17:31:31.000000000 +0100
 @@ -0,0 +1,17 @@
 +namespace sc_core {
 +
@@ -57,9 +57,9 @@ diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/communication/sc_bind_elem.h syst
 +};
 +
 +}
-diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/communication/sc_bind_info.h systemc-2.2.0-gcc/src/sysc/communication/sc_bind_info.h
+diff -rupNB -x '*~' /tmp/systemc-2.2.0/src/sysc/communication/sc_bind_info.h src/sysc/communication/sc_bind_info.h
 --- /tmp/systemc-2.2.0/src/sysc/communication/sc_bind_info.h	1970-01-01 01:00:00.000000000 +0100
-+++ systemc-2.2.0-gcc/src/sysc/communication/sc_bind_info.h	2010-01-21 15:28:00.000000000 +0100
++++ src/sysc/communication/sc_bind_info.h	2010-01-21 17:31:31.000000000 +0100
 @@ -0,0 +1,35 @@
 +#include <vector>
 +
@@ -96,9 +96,9 @@ diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/communication/sc_bind_info.h syst
 +};
 +
 +}
-diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/communication/sc_port.cpp systemc-2.2.0-gcc/src/sysc/communication/sc_port.cpp
+diff -rupNB -x '*~' /tmp/systemc-2.2.0/src/sysc/communication/sc_port.cpp src/sysc/communication/sc_port.cpp
 --- /tmp/systemc-2.2.0/src/sysc/communication/sc_port.cpp	2006-12-15 21:31:35.000000000 +0100
-+++ systemc-2.2.0-gcc/src/sysc/communication/sc_port.cpp	2010-01-21 15:27:48.000000000 +0100
++++ src/sysc/communication/sc_port.cpp	2010-01-21 17:31:31.000000000 +0100
 @@ -79,6 +79,9 @@
  #include "sysc/utils/sc_utils_ids.h"
  #include "sysc/communication/sc_event_finder.h"
@@ -180,9 +180,9 @@ diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/communication/sc_port.cpp systemc
  
  // IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
  
-diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/communication/sc_port.h systemc-2.2.0-gcc/src/sysc/communication/sc_port.h
+diff -rupNB -x '*~' /tmp/systemc-2.2.0/src/sysc/communication/sc_port.h src/sysc/communication/sc_port.h
 --- /tmp/systemc-2.2.0/src/sysc/communication/sc_port.h	2006-12-15 21:31:35.000000000 +0100
-+++ systemc-2.2.0-gcc/src/sysc/communication/sc_port.h	2010-01-21 15:44:17.000000000 +0100
++++ src/sysc/communication/sc_port.h	2010-01-21 17:31:31.000000000 +0100
 @@ -209,7 +209,7 @@ private:
      // called after simulation ends
      void simulation_done();
@@ -192,9 +192,9 @@ diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/communication/sc_port.h systemc-2
  
      sc_bind_info* m_bind_info;
  
-diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/Makefile.in systemc-2.2.0-gcc/src/sysc/kernel/Makefile.in
+diff -rupNB -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/Makefile.in src/sysc/kernel/Makefile.in
 --- /tmp/systemc-2.2.0/src/sysc/kernel/Makefile.in	2007-08-30 14:54:12.000000000 +0200
-+++ systemc-2.2.0-gcc/src/sysc/kernel/Makefile.in	2010-01-21 15:48:27.000000000 +0100
++++ src/sysc/kernel/Makefile.in	2010-01-21 17:31:31.000000000 +0100
 @@ -123,18 +123,19 @@ H_FILES = \
  	sc_time.h \
  	sc_ver.h \
@@ -221,9 +221,38 @@ diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/Makefile.in systemc-2.2.0-
  	sc_object_manager.h \
  	sc_runnable_int.h \
  	sc_simcontext_int.h
-diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_main.cpp systemc-2.2.0-gcc/src/sysc/kernel/sc_main.cpp
+diff -rupNB -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_cthread_process.cpp src/sysc/kernel/sc_cthread_process.cpp
+--- /tmp/systemc-2.2.0/src/sysc/kernel/sc_cthread_process.cpp	2006-12-15 21:31:37.000000000 +0100
++++ src/sysc/kernel/sc_cthread_process.cpp	2010-01-21 17:47:52.000000000 +0100
+@@ -129,11 +129,11 @@ void sc_cthread_process::prepare_for_sim
+ //
+ // This is the object instance constructor for this class.
+ //------------------------------------------------------------------------------
+-sc_cthread_process::sc_cthread_process( const char* name_p, 
++sc_cthread_process::sc_cthread_process( const char* name_p, const char* type_p, 
+     bool free_host, SC_ENTRY_FUNC method_p, 
+     sc_process_host* host_p, const sc_spawn_options* opt_p 
+ ):
+-    sc_thread_process(name_p, free_host, method_p, host_p, opt_p)
++	sc_thread_process(name_p, type_p, free_host, method_p, host_p, opt_p)
+ {
+     m_dont_init = false;
+     m_process_kind = SC_CTHREAD_PROC_;
+diff -rupNB -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_cthread_process.h src/sysc/kernel/sc_cthread_process.h
+--- /tmp/systemc-2.2.0/src/sysc/kernel/sc_cthread_process.h	2006-12-15 21:31:37.000000000 +0100
++++ src/sysc/kernel/sc_cthread_process.h	2010-01-21 17:48:25.000000000 +0100
+@@ -113,7 +113,7 @@ class sc_cthread_process : public sc_thr
+               sc_simcontext* );
+ 
+   public:
+-    sc_cthread_process( const char* name_p, bool free_host,
++    sc_cthread_process( const char* name_p, const char* type_p, bool free_host,
+         SC_ENTRY_FUNC method_p, sc_process_host* host_p,
+         const sc_spawn_options* opt_p );
+     virtual ~sc_cthread_process();
+diff -rupNB -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_main.cpp src/sysc/kernel/sc_main.cpp
 --- /tmp/systemc-2.2.0/src/sysc/kernel/sc_main.cpp	2006-12-15 21:31:37.000000000 +0100
-+++ systemc-2.2.0-gcc/src/sysc/kernel/sc_main.cpp	2010-01-21 14:46:31.000000000 +0100
++++ src/sysc/kernel/sc_main.cpp	2010-01-21 17:31:31.000000000 +0100
 @@ -47,7 +47,7 @@
  
  
@@ -233,9 +262,39 @@ diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_main.cpp systemc-2.2.0-
  {
  	return sc_core::sc_elab_and_sim( argc, argv );
  }
-diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_module.h systemc-2.2.0-gcc/src/sysc/kernel/sc_module.h
+diff -rupNB -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_method_process.cpp src/sysc/kernel/sc_method_process.cpp
+--- /tmp/systemc-2.2.0/src/sysc/kernel/sc_method_process.cpp	2006-12-15 21:31:37.000000000 +0100
++++ src/sysc/kernel/sc_method_process.cpp	2010-01-21 17:35:06.000000000 +0100
+@@ -141,12 +141,12 @@ void sc_method_process::kill_process()
+ //
+ // This is the object instance constructor for this class.
+ //------------------------------------------------------------------------------
+-sc_method_process::sc_method_process( const char* name_p, 
++sc_method_process::sc_method_process( const char* name_p, const char* type_p,
+     bool free_host, SC_ENTRY_FUNC method_p, 
+     sc_process_host* host_p, const sc_spawn_options* opt_p 
+ ):
+     sc_process_b(
+-        name_p && name_p[0] ? name_p : sc_gen_unique_name("method_p"), 
++	    name_p && name_p[0] ? name_p : sc_gen_unique_name("method_p"), type_p,
+         free_host, method_p, host_p, opt_p)
+ {
+ 
+diff -rupNB -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_method_process.h src/sysc/kernel/sc_method_process.h
+--- /tmp/systemc-2.2.0/src/sysc/kernel/sc_method_process.h	2006-12-15 21:31:37.000000000 +0100
++++ src/sysc/kernel/sc_method_process.h	2010-01-21 17:36:36.000000000 +0100
+@@ -121,7 +121,7 @@ class sc_method_process : public sc_proc
+                   sc_simcontext* );
+ 
+   public:
+-    sc_method_process( const char* name_p, bool free_host,
++    sc_method_process( const char* name_p, const char* type_p, bool free_host,
+         SC_ENTRY_FUNC method_p, sc_process_host* host_p,
+         const sc_spawn_options* opt_p );
+ 
+diff -rupNB -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_module.h src/sysc/kernel/sc_module.h
 --- /tmp/systemc-2.2.0/src/sysc/kernel/sc_module.h	2007-03-14 18:48:04.000000000 +0100
-+++ systemc-2.2.0-gcc/src/sysc/kernel/sc_module.h	2010-01-21 15:37:44.000000000 +0100
++++ src/sysc/kernel/sc_module.h	2010-01-21 17:57:54.000000000 +0100
 @@ -374,7 +374,7 @@ protected:
  private:
      sc_module( const sc_module& );
@@ -245,9 +304,85 @@ diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_module.h systemc-2.2.0-
  
      bool                        m_end_module_called;
      std::vector<sc_port_base*>* m_port_vec;
-diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_module_registry.h systemc-2.2.0-gcc/src/sysc/kernel/sc_module_registry.h
+@@ -473,7 +473,8 @@ extern sc_module* sc_module_dynalloc(sc_
+ 
+ // the SC_HAS_PROCESS macro call must be followed by a ;
+ #define SC_HAS_PROCESS(user_module_name)                                      \
+-    typedef user_module_name SC_CURRENT_USER_MODULE
++	typedef user_module_name SC_CURRENT_USER_MODULE;		      \
++    user_module_name* typeHelper;
+ 
+ // The this-> construct on sensitive operators in the macros below is
+ // required for gcc 4.x when a templated class has a templated parent that is
+@@ -485,53 +486,59 @@ extern sc_module* sc_module_dynalloc(sc_
+ // class A : public B<X>
+ 
+ 
+-#define declare_method_process(handle, name, host_tag, func)        \
++#define declare_method_process(handle, name, type, host_tag, func)   \
+     {		                                                    \
+         ::sc_core::sc_process_handle handle =                      \
+ 	    sc_core::sc_get_curr_simcontext()->create_method_process( \
+-		name,  false, SC_MAKE_FUNC_PTR( host_tag, func ), \
++		    name,  type, false, SC_MAKE_FUNC_PTR( host_tag, func ), \
+ 		this, 0 ); \
+         this->sensitive << handle;                                        \
+         this->sensitive_pos << handle;                                    \
+         this->sensitive_neg << handle;                                    \
+     }
+ 
+-#define declare_thread_process(handle, name, host_tag, func)        \
++#define declare_thread_process(handle, name, type, host_tag, func)   \
+     {                                                               \
+         ::sc_core::sc_process_handle handle =                      \
+ 	     sc_core::sc_get_curr_simcontext()->create_thread_process( \
+-                 name,  false,           \
++		     name, type, false,				       \
+                  SC_MAKE_FUNC_PTR( host_tag, func ), this, 0 ); \
+         this->sensitive << handle;                                        \
+         this->sensitive_pos << handle;                                    \
+         this->sensitive_neg << handle;                                    \
+     }
+ 
+-#define declare_cthread_process(handle, name, host_tag, func, edge) \
++#define declare_cthread_process(handle, name, type, host_tag, func, edge) \
+     {                                                               \
+         ::sc_core::sc_process_handle handle =                     \
+ 	     sc_core::sc_get_curr_simcontext()->create_cthread_process( \
+-            name,  false,          \
++		     name, type, false,					\
+                      SC_MAKE_FUNC_PTR( host_tag, func ), this, 0 ); \
+         this->sensitive.operator() ( handle, edge );\
+     }
+ 
+ #define SC_CTHREAD(func, edge)                                                \
++    typeHelper = this;                                                        \
+     declare_cthread_process( func ## _handle,                                 \
+                              #func,                                           \
++			     typeid(*typeHelper).name(),		      \
+                              SC_CURRENT_USER_MODULE,                          \
+                              func,                                            \
+                              edge )
+ 
+ #define SC_METHOD(func)                                                       \
++    typeHelper = this;                                                        \
+     declare_method_process( func ## _handle,                                  \
+                             #func,                                            \
++			     typeid(*typeHelper).name(),		      \
+                             SC_CURRENT_USER_MODULE,                           \
+                             func )
+ 
+ #define SC_THREAD(func)                                                       \
++    typeHelper = this;                                                        \
+     declare_thread_process( func ## _handle,                                  \
+                             #func,                                            \
++			    typeid(*typeHelper).name(),	        	      \
+                             SC_CURRENT_USER_MODULE,                           \
+                             func )
+ 
+diff -rupNB -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_module_registry.h src/sysc/kernel/sc_module_registry.h
 --- /tmp/systemc-2.2.0/src/sysc/kernel/sc_module_registry.h	2006-12-15 21:31:37.000000000 +0100
-+++ systemc-2.2.0-gcc/src/sysc/kernel/sc_module_registry.h	2010-01-21 15:36:46.000000000 +0100
++++ src/sysc/kernel/sc_module_registry.h	2010-01-21 17:31:31.000000000 +0100
 @@ -94,7 +94,7 @@ private:
      void simulation_done();
  
@@ -257,9 +392,9 @@ diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_module_registry.h syste
  
      sc_simcontext*          m_simc;
      std::vector<sc_module*> m_module_vec;
-diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_process.cpp systemc-2.2.0-gcc/src/sysc/kernel/sc_process.cpp
+diff -rupNB -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_process.cpp src/sysc/kernel/sc_process.cpp
 --- /tmp/systemc-2.2.0/src/sysc/kernel/sc_process.cpp	2006-12-15 21:31:37.000000000 +0100
-+++ systemc-2.2.0-gcc/src/sysc/kernel/sc_process.cpp	2010-01-21 15:57:04.000000000 +0100
++++ src/sysc/kernel/sc_process.cpp	2010-01-21 17:31:31.000000000 +0100
 @@ -254,7 +254,7 @@ sc_process_b::remove_static_events()
  //
  // This is the object instance constructor for this class.
@@ -278,9 +413,9 @@ diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_process.cpp systemc-2.2
  }
  
  //------------------------------------------------------------------------------
-diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_process.h systemc-2.2.0-gcc/src/sysc/kernel/sc_process.h
+diff -rupNB -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_process.h src/sysc/kernel/sc_process.h
 --- /tmp/systemc-2.2.0/src/sysc/kernel/sc_process.h	2006-12-15 21:31:37.000000000 +0100
-+++ systemc-2.2.0-gcc/src/sysc/kernel/sc_process.h	2010-01-21 15:54:47.000000000 +0100
++++ src/sysc/kernel/sc_process.h	2010-01-21 17:31:31.000000000 +0100
 @@ -290,7 +290,7 @@ class sc_process_b : public sc_object {
      };
  
@@ -320,9 +455,9 @@ diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_process.h systemc-2.2.0
    protected:
      static sc_process_b* m_delete_next_p;          // Next process to delete.
      static sc_process_b* m_last_created_process_p; // Last process created.
-diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_process_table.h systemc-2.2.0-gcc/src/sysc/kernel/sc_process_table.h
+diff -rupNB -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_process_table.h src/sysc/kernel/sc_process_table.h
 --- /tmp/systemc-2.2.0/src/sysc/kernel/sc_process_table.h	1970-01-01 01:00:00.000000000 +0100
-+++ systemc-2.2.0-gcc/src/sysc/kernel/sc_process_table.h	2010-01-21 15:31:37.000000000 +0100
++++ src/sysc/kernel/sc_process_table.h	2010-01-21 17:31:31.000000000 +0100
 @@ -0,0 +1,39 @@
 +#include "sysc/kernel/sc_process.h"
 +#include "sysc/kernel/sc_cthread_process.h"
@@ -363,9 +498,30 @@ diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_process_table.h systemc
 +};
 +
 +}
-diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_simcontext.cpp systemc-2.2.0-gcc/src/sysc/kernel/sc_simcontext.cpp
+diff -rupNB -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_runnable_int.h src/sysc/kernel/sc_runnable_int.h
+--- /tmp/systemc-2.2.0/src/sysc/kernel/sc_runnable_int.h	2006-12-15 21:31:37.000000000 +0100
++++ src/sysc/kernel/sc_runnable_int.h	2010-01-21 17:48:58.000000000 +0100
+@@ -82,7 +82,7 @@ inline void sc_runnable::init()
+     if ( !m_methods_push_head )
+     {
+         m_methods_push_head = 
+-            new sc_method_process((const char*)0, true, (SC_ENTRY_FUNC)0, 0, 0);
++            new sc_method_process((const char*)0, (const char*)0, true, (SC_ENTRY_FUNC)0, 0, 0);
+         m_methods_push_head->dont_initialize(true);
+     }
+     m_methods_push_tail = m_methods_push_head;
+@@ -92,7 +92,7 @@ inline void sc_runnable::init()
+     if ( !m_threads_push_head )
+     {
+         m_threads_push_head = 
+-            new sc_thread_process((const char*)0, true, (SC_ENTRY_FUNC)0, 0, 0);
++            new sc_thread_process((const char*)0, (const char*)0, true, (SC_ENTRY_FUNC)0, 0, 0);
+         m_threads_push_head->dont_initialize(true);
+     }
+ 	m_threads_push_head->set_next_runnable(SC_NO_THREADS);
+diff -rupNB -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_simcontext.cpp src/sysc/kernel/sc_simcontext.cpp
 --- /tmp/systemc-2.2.0/src/sysc/kernel/sc_simcontext.cpp	2006-12-15 21:31:37.000000000 +0100
-+++ systemc-2.2.0-gcc/src/sysc/kernel/sc_simcontext.cpp	2010-01-21 15:18:16.000000000 +0100
++++ src/sysc/kernel/sc_simcontext.cpp	2010-01-21 17:45:27.000000000 +0100
 @@ -135,6 +135,7 @@
  // sc_simcontext. Changed the boolean update_phase to an enum that shows all
  // the phases.
@@ -374,10 +530,11 @@ diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_simcontext.cpp systemc-
  #include "sysc/kernel/sc_cor_fiber.h"
  #include "sysc/kernel/sc_cor_pthread.h"
  #include "sysc/kernel/sc_cor_qt.h"
-@@ -160,41 +161,11 @@
+@@ -160,41 +161,12 @@
  #include "sysc/utils/sc_mempool.h"
  #include "sysc/utils/sc_utils_ids.h"
  
++extern void pinapa_callback();
 +extern void pinapa_callback();
  namespace sc_core {
  
@@ -417,7 +574,49 @@ diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_simcontext.cpp systemc-
  
  // IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
  
-@@ -1316,7 +1287,7 @@ sc_start( const sc_time& duration )
+@@ -1010,11 +982,11 @@ sc_simcontext::gen_unique_name( const ch
+ 
+ sc_process_handle 
+ sc_simcontext::create_cthread_process( 
+-    const char* name_p, bool free_host, SC_ENTRY_FUNC method_p,         
++    const char* name_p, const char* type_p, bool free_host, SC_ENTRY_FUNC method_p,         
+     sc_process_host* host_p, const sc_spawn_options* opt_p )
+ {
+     sc_cthread_handle handle = 
+-        new sc_cthread_process(name_p, free_host, method_p, host_p, opt_p);
++	    new sc_cthread_process(name_p, type_p, free_host, method_p, host_p, opt_p);
+     if ( m_ready_to_simulate ) 
+     {
+ 	handle->prepare_for_simulation();
+@@ -1027,11 +999,11 @@ sc_simcontext::create_cthread_process( 
+ 
+ sc_process_handle 
+ sc_simcontext::create_method_process( 
+-    const char* name_p, bool free_host, SC_ENTRY_FUNC method_p,         
++    const char* name_p, const char* type_p, bool free_host, SC_ENTRY_FUNC method_p,         
+     sc_process_host* host_p, const sc_spawn_options* opt_p )
+ {
+     sc_method_handle handle = 
+-        new sc_method_process(name_p, free_host, method_p, host_p, opt_p);
++	    new sc_method_process(name_p, type_p, free_host, method_p, host_p, opt_p);
+     if ( m_ready_to_simulate ) {
+ 	if ( !handle->dont_initialize() ) {
+ 	    push_runnable_method( handle );
+@@ -1045,11 +1017,11 @@ sc_simcontext::create_method_process( 
+ 
+ sc_process_handle 
+ sc_simcontext::create_thread_process( 
+-    const char* name_p, bool free_host, SC_ENTRY_FUNC method_p,         
++    const char* name_p, const char* type_p, bool free_host, SC_ENTRY_FUNC method_p,         
+     sc_process_host* host_p, const sc_spawn_options* opt_p )
+ {
+     sc_thread_handle handle = 
+-        new sc_thread_process(name_p, free_host, method_p, host_p, opt_p);
++	    new sc_thread_process(name_p, type_p, free_host, method_p, host_p, opt_p);
+     if ( m_ready_to_simulate ) {
+ 	handle->prepare_for_simulation();
+ 	if ( !handle->dont_initialize() ) {
+@@ -1316,7 +1288,7 @@ sc_start( const sc_time& duration )
  	}
          return;
      }
@@ -426,18 +625,29 @@ diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_simcontext.cpp systemc-
  }
  
  void
-diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_simcontext.h systemc-2.2.0-gcc/src/sysc/kernel/sc_simcontext.h
+diff -rupNB -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_simcontext.h src/sysc/kernel/sc_simcontext.h
 --- /tmp/systemc-2.2.0/src/sysc/kernel/sc_simcontext.h	2006-12-15 21:31:37.000000000 +0100
-+++ systemc-2.2.0-gcc/src/sysc/kernel/sc_simcontext.h	2010-01-21 15:39:50.000000000 +0100
-@@ -128,7 +128,6 @@ class sc_runnable;
- class sc_process_host;
++++ src/sysc/kernel/sc_simcontext.h	2010-01-21 17:44:25.000000000 +0100
+@@ -231,15 +231,15 @@ public:
  
+     // process creation
+     sc_process_handle create_cthread_process( 
+-	const char* name_p, bool free_host, SC_ENTRY_FUNC method_p, 
++	const char* name_p, const char* type_p, bool free_host, SC_ENTRY_FUNC method_p, 
+ 	sc_process_host* host_p, const sc_spawn_options* opt_p );
  
--
- struct sc_curr_proc_info
- {
-     sc_process_b*     process_handle;
-@@ -323,7 +322,6 @@ private:
+     sc_process_handle create_method_process( 
+-	const char* name_p, bool free_host, SC_ENTRY_FUNC method_p, 
++	const char* name_p, const char* type_p, bool free_host, SC_ENTRY_FUNC method_p, 
+ 	sc_process_host* host_p, const sc_spawn_options* opt_p );
+ 
+     sc_process_handle create_thread_process( 
+-	const char* name_p, bool free_host, SC_ENTRY_FUNC method_p, 
++	const char* name_p, const char* type_p, bool free_host, SC_ENTRY_FUNC method_p, 
+ 	sc_process_host* host_p, const sc_spawn_options* opt_p );
+ 
+     sc_curr_proc_handle get_curr_proc_info();
+@@ -323,7 +323,6 @@ private:
  
      sc_name_gen*                m_name_gen;
  
@@ -445,7 +655,7 @@ diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_simcontext.h systemc-2.
      sc_curr_proc_info           m_curr_proc_info;
      sc_object*                  m_current_writer;
      bool                        m_write_check;
-@@ -358,6 +356,9 @@ private:
+@@ -358,6 +357,9 @@ private:
      sc_cor_pkg*                 m_cor_pkg; // the simcontext's coroutine package
      sc_cor*                     m_cor;     // the simcontext's coroutine
  
@@ -455,9 +665,57 @@ diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_simcontext.h systemc-2.
  private:
  
      // disabled
-diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_thread_process.h systemc-2.2.0-gcc/src/sysc/kernel/sc_thread_process.h
+diff -rupNB -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_spawn.h src/sysc/kernel/sc_spawn.h
+--- /tmp/systemc-2.2.0/src/sysc/kernel/sc_spawn.h	2006-12-15 21:31:37.000000000 +0100
++++ src/sysc/kernel/sc_spawn.h	2010-01-21 17:50:48.000000000 +0100
+@@ -133,7 +133,7 @@ inline sc_process_handle sc_spawn( 
+ 	if ( !opt_p || !opt_p->is_method() )
+ 	{
+             sc_process_handle thread_handle = context_p->create_thread_process( 
+-		    name_p, true,
++		    name_p, (const char*) 0, true,
+ 		    SC_MAKE_FUNC_PTR(sc_spawn_object<T>,semantics), 
+ 		    spawn_p, opt_p 
+ 	    );
+@@ -142,7 +142,7 @@ inline sc_process_handle sc_spawn( 
+ 	else
+ 	{
+             sc_process_handle method_handle = context_p->create_method_process( 
+-		    name_p, true,
++		    name_p, (const char*) 0, true,
+ 		    SC_MAKE_FUNC_PTR(sc_spawn_object<T>,semantics), 
+ 		    spawn_p, opt_p 
+ 	    );
+diff -rupNB -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_thread_process.cpp src/sysc/kernel/sc_thread_process.cpp
+--- /tmp/systemc-2.2.0/src/sysc/kernel/sc_thread_process.cpp	2006-12-15 21:31:37.000000000 +0100
++++ src/sysc/kernel/sc_thread_process.cpp	2010-01-21 17:47:22.000000000 +0100
+@@ -170,12 +170,12 @@ void sc_thread_process::prepare_for_simu
+ //
+ // This is the object instance constructor for this class.
+ //------------------------------------------------------------------------------
+-sc_thread_process::sc_thread_process( const char* name_p, bool free_host,
++sc_thread_process::sc_thread_process( const char* name_p, const char* type_p, bool free_host,
+     SC_ENTRY_FUNC method_p, sc_process_host* host_p, 
+     const sc_spawn_options* opt_p 
+ ):
+     sc_process_b(
+-        name_p && name_p[0] ? name_p : sc_gen_unique_name("thread_p"), 
++	    name_p && name_p[0] ? name_p : sc_gen_unique_name("thread_p"), type_p,
+         free_host, method_p, host_p, opt_p),
+         m_cor_p(0), m_stack_size(SC_DEFAULT_STACK_SIZE), 
+         m_wait_cycle_n(0)
+diff -rupNB -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_thread_process.h src/sysc/kernel/sc_thread_process.h
 --- /tmp/systemc-2.2.0/src/sysc/kernel/sc_thread_process.h	2006-12-15 21:31:37.000000000 +0100
-+++ systemc-2.2.0-gcc/src/sysc/kernel/sc_thread_process.h	2010-01-21 15:40:56.000000000 +0100
++++ src/sysc/kernel/sc_thread_process.h	2010-01-21 17:46:18.000000000 +0100
+@@ -134,7 +134,7 @@ class sc_thread_process : public sc_proc
+     friend void wait( const sc_time&, sc_event_and_list&,
+               sc_simcontext* );
+   public:
+-    sc_thread_process( const char* name_p, bool free_host,
++    sc_thread_process( const char* name_p, const char* type_p, bool free_host,
+         SC_ENTRY_FUNC method_p, sc_process_host* host_p,
+         const sc_spawn_options* opt_p );
+ 
 @@ -142,10 +142,10 @@ class sc_thread_process : public sc_proc
  
      virtual const char* kind() const
@@ -470,9 +728,9 @@ diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_thread_process.h system
      sc_thread_handle next_runnable();
      virtual void prepare_for_simulation();
      inline bool ready_to_run();
-diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/utils/sc_utils_ids.cpp systemc-2.2.0-gcc/src/sysc/utils/sc_utils_ids.cpp
+diff -rupNB -x '*~' /tmp/systemc-2.2.0/src/sysc/utils/sc_utils_ids.cpp src/sysc/utils/sc_utils_ids.cpp
 --- /tmp/systemc-2.2.0/src/sysc/utils/sc_utils_ids.cpp	2006-12-15 21:31:39.000000000 +0100
-+++ systemc-2.2.0-gcc/src/sysc/utils/sc_utils_ids.cpp	2010-01-21 14:46:31.000000000 +0100
++++ src/sysc/utils/sc_utils_ids.cpp	2010-01-21 17:31:31.000000000 +0100
 @@ -58,8 +58,10 @@
  // the source.
  //
