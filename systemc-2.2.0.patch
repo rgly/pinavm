@@ -1,0 +1,487 @@
+diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/communication/Makefile.in systemc-2.2.0-gcc/src/sysc/communication/Makefile.in
+--- /tmp/systemc-2.2.0/src/sysc/communication/Makefile.in	2007-08-30 14:54:09.000000000 +0200
++++ systemc-2.2.0-gcc/src/sysc/communication/Makefile.in	2010-01-21 15:28:50.000000000 +0100
+@@ -120,8 +120,10 @@ H_FILES = \
+ 	sc_signal_resolved.h \
+ 	sc_signal_resolved_ports.h \
+ 	sc_signal_rv.h \
+-	sc_signal_rv_ports.h 
+-
++	sc_signal_rv_ports.h \
++	sc_bind_elem.h \
++	sc_bind_info.h \
++	sc_bind_ef.h
+ 
+ noinst_HEADERS = $(H_FILES)
+ 
+diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/communication/sc_bind_ef.h systemc-2.2.0-gcc/src/sysc/communication/sc_bind_ef.h
+--- /tmp/systemc-2.2.0/src/sysc/communication/sc_bind_ef.h	1970-01-01 01:00:00.000000000 +0100
++++ systemc-2.2.0-gcc/src/sysc/communication/sc_bind_ef.h	2010-01-21 15:22:43.000000000 +0100
+@@ -0,0 +1,18 @@
++namespace sc_core {
++
++class sc_process_b;
++class sc_event_finder;
++
++struct sc_bind_ef
++{
++    // constructor
++    sc_bind_ef( sc_process_b* , sc_event_finder* );
++
++    // destructor
++    ~sc_bind_ef();
++
++    sc_process_b* handle;
++    sc_event_finder* event_finder;
++};
++
++}
+diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/communication/sc_bind_elem.h systemc-2.2.0-gcc/src/sysc/communication/sc_bind_elem.h
+--- /tmp/systemc-2.2.0/src/sysc/communication/sc_bind_elem.h	1970-01-01 01:00:00.000000000 +0100
++++ systemc-2.2.0-gcc/src/sysc/communication/sc_bind_elem.h	2010-01-21 15:21:46.000000000 +0100
+@@ -0,0 +1,17 @@
++namespace sc_core {
++
++class sc_port_base;
++class sc_interface;
++
++struct sc_bind_elem
++{
++    // constructors
++    sc_bind_elem();
++    explicit sc_bind_elem( sc_interface* interface_ );
++    explicit sc_bind_elem( sc_port_base* parent_ );
++
++    sc_interface* iface;
++    sc_port_base* parent;
++};
++
++}
+diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/communication/sc_bind_info.h systemc-2.2.0-gcc/src/sysc/communication/sc_bind_info.h
+--- /tmp/systemc-2.2.0/src/sysc/communication/sc_bind_info.h	1970-01-01 01:00:00.000000000 +0100
++++ systemc-2.2.0-gcc/src/sysc/communication/sc_bind_info.h	2010-01-21 15:28:00.000000000 +0100
+@@ -0,0 +1,35 @@
++#include <vector>
++
++#include "sc_port.h" 
++
++namespace sc_core {
++
++class sc_bind_elem;
++class sc_bind_ef;
++
++struct sc_bind_info
++{
++    // constructor
++    explicit sc_bind_info( int max_size_, 
++	sc_port_policy policy_=SC_ONE_OR_MORE_BOUND );
++
++    // destructor
++    ~sc_bind_info();
++
++    int            max_size() const;
++    sc_port_policy policy() const; 
++    int            size() const;
++
++    int                        m_max_size;
++    sc_port_policy             m_policy;
++    std::vector<sc_bind_elem*> vec;
++    bool                       has_parent;
++    int                        last_add;
++    bool                       is_leaf;
++    bool                       complete;
++
++    std::vector<sc_bind_ef*>   thread_vec;
++    std::vector<sc_bind_ef*>   method_vec;
++};
++
++}
+diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/communication/sc_port.cpp systemc-2.2.0-gcc/src/sysc/communication/sc_port.cpp
+--- /tmp/systemc-2.2.0/src/sysc/communication/sc_port.cpp	2006-12-15 21:31:35.000000000 +0100
++++ systemc-2.2.0-gcc/src/sysc/communication/sc_port.cpp	2010-01-21 15:27:48.000000000 +0100
+@@ -79,6 +79,9 @@
+ #include "sysc/utils/sc_utils_ids.h"
+ #include "sysc/communication/sc_event_finder.h"
+ #include "sysc/communication/sc_port.h"
++#include "sysc/communication/sc_bind_elem.h"
++#include "sysc/communication/sc_bind_ef.h"
++#include "sysc/communication/sc_bind_info.h"
+ #include "sysc/communication/sc_signal_ifs.h"
+ 
+ namespace sc_core {
+@@ -87,18 +90,6 @@ namespace sc_core {
+ //  STRUCT : sc_bind_elem
+ // ----------------------------------------------------------------------------
+ 
+-struct sc_bind_elem
+-{
+-    // constructors
+-    sc_bind_elem();
+-    explicit sc_bind_elem( sc_interface* interface_ );
+-    explicit sc_bind_elem( sc_port_base* parent_ );
+-
+-    sc_interface* iface;
+-    sc_port_base* parent;
+-};
+-
+-
+ // IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+ 
+ // constructors
+@@ -123,19 +114,6 @@ sc_bind_elem::sc_bind_elem( sc_port_base
+ //  STRUCT : sc_bind_ef
+ // ----------------------------------------------------------------------------
+ 
+-struct sc_bind_ef
+-{
+-    // constructor
+-    sc_bind_ef( sc_process_b* , sc_event_finder* );
+-
+-    // destructor
+-    ~sc_bind_ef();
+-
+-    sc_process_b* handle;
+-    sc_event_finder* event_finder;
+-};
+-
+-
+ // IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+ 
+ // constructor
+@@ -158,31 +136,6 @@ sc_bind_ef::~sc_bind_ef()
+ //  STRUCT : sc_bind_info
+ // ----------------------------------------------------------------------------
+ 
+-struct sc_bind_info
+-{
+-    // constructor
+-    explicit sc_bind_info( int max_size_, 
+-	sc_port_policy policy_=SC_ONE_OR_MORE_BOUND );
+-
+-    // destructor
+-    ~sc_bind_info();
+-
+-    int            max_size() const;
+-    sc_port_policy policy() const; 
+-    int            size() const;
+-
+-    int                        m_max_size;
+-    sc_port_policy             m_policy;
+-    std::vector<sc_bind_elem*> vec;
+-    bool                       has_parent;
+-    int                        last_add;
+-    bool                       is_leaf;
+-    bool                       complete;
+-
+-    std::vector<sc_bind_ef*>   thread_vec;
+-    std::vector<sc_bind_ef*>   method_vec;
+-};
+-
+ 
+ // IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+ 
+diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/communication/sc_port.h systemc-2.2.0-gcc/src/sysc/communication/sc_port.h
+--- /tmp/systemc-2.2.0/src/sysc/communication/sc_port.h	2006-12-15 21:31:35.000000000 +0100
++++ systemc-2.2.0-gcc/src/sysc/communication/sc_port.h	2010-01-21 15:44:17.000000000 +0100
+@@ -209,7 +209,7 @@ private:
+     // called after simulation ends
+     void simulation_done();
+ 
+-protected:
++public:
+ 
+     sc_bind_info* m_bind_info;
+ 
+diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/Makefile.in systemc-2.2.0-gcc/src/sysc/kernel/Makefile.in
+--- /tmp/systemc-2.2.0/src/sysc/kernel/Makefile.in	2007-08-30 14:54:12.000000000 +0200
++++ systemc-2.2.0-gcc/src/sysc/kernel/Makefile.in	2010-01-21 15:48:27.000000000 +0100
+@@ -123,18 +123,19 @@ H_FILES = \
+ 	sc_time.h \
+ 	sc_ver.h \
+ 	sc_wait.h \
+-	sc_wait_cthread.h 
+-
++	sc_wait_cthread.h \
++	sc_method_process.h \
++	sc_module_registry.h \
++	sc_name_gen.h \
++	sc_thread_process.h \
++	sc_cthread_process.h \
++	sc_process_table.h
+ 
+ NO_H_FILES = \
+ 	sc_cor_fiber.h \
+ 	sc_cor_pthread.h \
+ 	sc_cor_qt.h \
+-	sc_cthread_process.h \
+ 	sc_macros_int.h \
+-	sc_method_process.h \
+-	sc_module_registry.h \
+-	sc_name_gen.h \
+ 	sc_object_manager.h \
+ 	sc_runnable_int.h \
+ 	sc_simcontext_int.h
+diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_main.cpp systemc-2.2.0-gcc/src/sysc/kernel/sc_main.cpp
+--- /tmp/systemc-2.2.0/src/sysc/kernel/sc_main.cpp	2006-12-15 21:31:37.000000000 +0100
++++ systemc-2.2.0-gcc/src/sysc/kernel/sc_main.cpp	2010-01-21 14:46:31.000000000 +0100
+@@ -47,7 +47,7 @@
+ 
+ 
+ int
+-main( int argc, char* argv[] )
++launch_systemc( int argc, char* argv[] )
+ {
+ 	return sc_core::sc_elab_and_sim( argc, argv );
+ }
+diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_module.h systemc-2.2.0-gcc/src/sysc/kernel/sc_module.h
+--- /tmp/systemc-2.2.0/src/sysc/kernel/sc_module.h	2007-03-14 18:48:04.000000000 +0100
++++ systemc-2.2.0-gcc/src/sysc/kernel/sc_module.h	2010-01-21 15:37:44.000000000 +0100
+@@ -374,7 +374,7 @@ protected:
+ private:
+     sc_module( const sc_module& );
+ 
+-private:
++public:
+ 
+     bool                        m_end_module_called;
+     std::vector<sc_port_base*>* m_port_vec;
+diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_module_registry.h systemc-2.2.0-gcc/src/sysc/kernel/sc_module_registry.h
+--- /tmp/systemc-2.2.0/src/sysc/kernel/sc_module_registry.h	2006-12-15 21:31:37.000000000 +0100
++++ systemc-2.2.0-gcc/src/sysc/kernel/sc_module_registry.h	2010-01-21 15:36:46.000000000 +0100
+@@ -94,7 +94,7 @@ private:
+     void simulation_done();
+ 
+ 
+-private:
++public:
+ 
+     sc_simcontext*          m_simc;
+     std::vector<sc_module*> m_module_vec;
+diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_process.cpp systemc-2.2.0-gcc/src/sysc/kernel/sc_process.cpp
+--- /tmp/systemc-2.2.0/src/sysc/kernel/sc_process.cpp	2006-12-15 21:31:37.000000000 +0100
++++ systemc-2.2.0-gcc/src/sysc/kernel/sc_process.cpp	2010-01-21 15:57:04.000000000 +0100
+@@ -254,7 +254,7 @@ sc_process_b::remove_static_events()
+ //
+ // This is the object instance constructor for this class.
+ //------------------------------------------------------------------------------
+-sc_process_b::sc_process_b( const char* name_p, bool free_host,
++sc_process_b::sc_process_b( const char* name_p, const char* type_p, bool free_host,
+      SC_ENTRY_FUNC method_p, sc_process_host* host_p, 
+      const sc_spawn_options* opt_p 
+ ) :
+@@ -286,6 +286,8 @@ sc_process_b::sc_process_b( const char* 
+ 
+     m_last_created_process_p = this;
+ 
++    this->type_process = type_p;
++    this->func_process = name_p;
+ }
+ 
+ //------------------------------------------------------------------------------
+diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_process.h systemc-2.2.0-gcc/src/sysc/kernel/sc_process.h
+--- /tmp/systemc-2.2.0/src/sysc/kernel/sc_process.h	2006-12-15 21:31:37.000000000 +0100
++++ systemc-2.2.0-gcc/src/sysc/kernel/sc_process.h	2010-01-21 15:54:47.000000000 +0100
+@@ -290,7 +290,7 @@ class sc_process_b : public sc_object {
+     };
+ 
+   public:
+-    sc_process_b( const char* name_p, bool free_host,
++    sc_process_b( const char* name_p, const char* type_p, bool free_host,
+         SC_ENTRY_FUNC method_p, sc_process_host* host_p,
+         const sc_spawn_options* opt_p );
+     virtual ~sc_process_b();
+@@ -344,6 +344,8 @@ class sc_process_b : public sc_object {
+     const char*                 file;
+     int                         lineno;
+     int                         proc_id;
++    sc_process_host*             m_semantics_host_p;   // Host for semantics.
++    std::vector<const sc_event*> m_static_events;   // Static events waiting on.
+ 
+   protected:
+     std::vector<sc_object*>      m_child_objects;  // Child processes.
+@@ -361,9 +363,7 @@ class sc_process_b : public sc_object {
+     bool                         m_reset_level;    // Level for reset.
+     sc_reset*                    m_reset_p;        // Reset object.
+     sc_process_b*                m_runnable_p;     // sc_runnable link
+-    sc_process_host*             m_semantics_host_p;   // Host for semantics.
+     SC_ENTRY_FUNC                m_semantics_method_p; // Method for semantics.
+-    std::vector<const sc_event*> m_static_events;   // Static events waiting on.
+     sc_event*                    m_term_event_p;    // Terminated event.
+     process_throw_type           m_throw_type;      // Throw type.
+     bool                         m_timed_out;       // True if we timed out.
+@@ -371,6 +371,10 @@ class sc_process_b : public sc_object {
+     trigger_t                    m_trigger_type;    // Type of trigger using.
+     bool                         m_zombie;          // True if terminated.
+ 
++ public:
++    const char* func_process;
++    const char* type_process;
++
+   protected:
+     static sc_process_b* m_delete_next_p;          // Next process to delete.
+     static sc_process_b* m_last_created_process_p; // Last process created.
+diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_process_table.h systemc-2.2.0-gcc/src/sysc/kernel/sc_process_table.h
+--- /tmp/systemc-2.2.0/src/sysc/kernel/sc_process_table.h	1970-01-01 01:00:00.000000000 +0100
++++ systemc-2.2.0-gcc/src/sysc/kernel/sc_process_table.h	2010-01-21 15:31:37.000000000 +0100
+@@ -0,0 +1,39 @@
++#include "sysc/kernel/sc_process.h"
++#include "sysc/kernel/sc_cthread_process.h"
++#include "sysc/kernel/sc_method_process.h"
++#include "sysc/kernel/sc_process_handle.h"
++
++namespace sc_core {
++
++// ----------------------------------------------------------------------------
++//  CLASS : sc_process_table
++//
++//  Container class that keeps track of all method processes,
++//  thread processes, and cthread processes.
++// ----------------------------------------------------------------------------
++
++class sc_process_table
++{
++  public:
++
++    sc_process_table();
++    ~sc_process_table();
++    void push_front( sc_method_handle );
++    void push_front( sc_thread_handle );
++    void push_front( sc_cthread_handle );
++    sc_cthread_handle cthread_q_head();
++    sc_method_handle method_q_head();
++    sc_cthread_handle remove( sc_cthread_handle );
++    sc_method_handle remove( sc_method_handle );
++    sc_thread_handle remove( sc_thread_handle );
++    sc_thread_handle thread_q_head();
++
++
++  private:
++
++    sc_cthread_handle m_cthread_q; // Queue of existing cthread processes.
++    sc_method_handle  m_method_q;  // Queue of existing method processes.
++    sc_thread_handle  m_thread_q;  // Queue of existing thread processes.
++};
++
++}
+diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_simcontext.cpp systemc-2.2.0-gcc/src/sysc/kernel/sc_simcontext.cpp
+--- /tmp/systemc-2.2.0/src/sysc/kernel/sc_simcontext.cpp	2006-12-15 21:31:37.000000000 +0100
++++ systemc-2.2.0-gcc/src/sysc/kernel/sc_simcontext.cpp	2010-01-21 15:18:16.000000000 +0100
+@@ -135,6 +135,7 @@
+ // sc_simcontext. Changed the boolean update_phase to an enum that shows all
+ // the phases.
+ 
++#include "sysc/kernel/sc_process_table.h"
+ #include "sysc/kernel/sc_cor_fiber.h"
+ #include "sysc/kernel/sc_cor_pthread.h"
+ #include "sysc/kernel/sc_cor_qt.h"
+@@ -160,41 +161,11 @@
+ #include "sysc/utils/sc_mempool.h"
+ #include "sysc/utils/sc_utils_ids.h"
+ 
++extern void pinapa_callback();
+ namespace sc_core {
+ 
+ sc_stop_mode stop_mode = SC_STOP_FINISH_DELTA;
+ 
+-// ----------------------------------------------------------------------------
+-//  CLASS : sc_process_table
+-//
+-//  Container class that keeps track of all method processes,
+-//  thread processes, and cthread processes.
+-// ----------------------------------------------------------------------------
+-
+-class sc_process_table
+-{
+-  public:
+-
+-    sc_process_table();
+-    ~sc_process_table();
+-    void push_front( sc_method_handle );
+-    void push_front( sc_thread_handle );
+-    void push_front( sc_cthread_handle );
+-    sc_cthread_handle cthread_q_head();
+-    sc_method_handle method_q_head();
+-    sc_cthread_handle remove( sc_cthread_handle );
+-    sc_method_handle remove( sc_method_handle );
+-    sc_thread_handle remove( sc_thread_handle );
+-    sc_thread_handle thread_q_head();
+-
+-
+-  private:
+-
+-    sc_cthread_handle m_cthread_q; // Queue of existing cthread processes.
+-    sc_method_handle  m_method_q;  // Queue of existing method processes.
+-    sc_thread_handle  m_thread_q;  // Queue of existing thread processes.
+-};
+-
+ 
+ // IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+ 
+@@ -1316,7 +1287,7 @@ sc_start( const sc_time& duration )
+ 	}
+         return;
+     }
+-    context->simulate( duration );
++    pinapa_callback();
+ }
+ 
+ void
+diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_simcontext.h systemc-2.2.0-gcc/src/sysc/kernel/sc_simcontext.h
+--- /tmp/systemc-2.2.0/src/sysc/kernel/sc_simcontext.h	2006-12-15 21:31:37.000000000 +0100
++++ systemc-2.2.0-gcc/src/sysc/kernel/sc_simcontext.h	2010-01-21 15:39:50.000000000 +0100
+@@ -128,7 +128,6 @@ class sc_runnable;
+ class sc_process_host;
+ 
+ 
+-
+ struct sc_curr_proc_info
+ {
+     sc_process_b*     process_handle;
+@@ -323,7 +322,6 @@ private:
+ 
+     sc_name_gen*                m_name_gen;
+ 
+-    sc_process_table*           m_process_table;
+     sc_curr_proc_info           m_curr_proc_info;
+     sc_object*                  m_current_writer;
+     bool                        m_write_check;
+@@ -358,6 +356,9 @@ private:
+     sc_cor_pkg*                 m_cor_pkg; // the simcontext's coroutine package
+     sc_cor*                     m_cor;     // the simcontext's coroutine
+ 
++public :
++    sc_process_table*           m_process_table;
++
+ private:
+ 
+     // disabled
+diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_thread_process.h systemc-2.2.0-gcc/src/sysc/kernel/sc_thread_process.h
+--- /tmp/systemc-2.2.0/src/sysc/kernel/sc_thread_process.h	2006-12-15 21:31:37.000000000 +0100
++++ systemc-2.2.0-gcc/src/sysc/kernel/sc_thread_process.h	2010-01-21 15:40:56.000000000 +0100
+@@ -142,10 +142,10 @@ class sc_thread_process : public sc_proc
+ 
+     virtual const char* kind() const
+         { return "sc_thread_process"; }
++    sc_thread_handle next_exist();
+ 
+   protected:
+     virtual void kill_process();
+-    sc_thread_handle next_exist();
+     sc_thread_handle next_runnable();
+     virtual void prepare_for_simulation();
+     inline bool ready_to_run();
+diff -rupN -x '*~' /tmp/systemc-2.2.0/src/sysc/utils/sc_utils_ids.cpp systemc-2.2.0-gcc/src/sysc/utils/sc_utils_ids.cpp
+--- /tmp/systemc-2.2.0/src/sysc/utils/sc_utils_ids.cpp	2006-12-15 21:31:39.000000000 +0100
++++ systemc-2.2.0-gcc/src/sysc/utils/sc_utils_ids.cpp	2010-01-21 14:46:31.000000000 +0100
+@@ -58,8 +58,10 @@
+ // the source.
+ //
+ 
++#include <cstdlib>
++#include <string.h>
+ #include "sysc/utils/sc_report.h"
+-
++using namespace std;
+ 
+ namespace sc_core {
+ #define SC_DEFINE_MESSAGE(id,unused,text) extern const char id[] = text;
