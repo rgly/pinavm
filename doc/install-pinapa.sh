@@ -25,6 +25,10 @@ test -d "$INSTALL_PATH_SYSTEMC_LLVM" || \
     (echo "$INSTALL_PATH_SYSTEMC_LLVM does not exist, creating it" && \
     mkdir -p "$INSTALL_PATH_SYSTEMC_LLVM")
 
+test -d "$INSTALL_PATH_PINAPA" || \
+    (echo "$INSTALL_PATH_PINAPA does not exist, creating it" && \
+    mkdir -p "$INSTALL_PATH_PINAPA")
+
 
 llvm_configure_flags="--prefix=$INSTALL_PATH_LLVM --enable-debug-runtime --disable-optimized --enable-checking --enable-bindings=none --enable-libffi=no"
 
@@ -178,9 +182,22 @@ install_systemc_llvm () {
     done
 }
 
+###############################
+########### PINAPA ############
+###############################
+install_pinapa () {
+    echo "Building pinapa..."
+    cd ${SRC_ROOT_DIR}/toplevel
+    rm -rf ${INSTALL_PATH_PINAPA}
+    mkdir -p ${INSTALL_PATH_PINAPA}
+    make
+    cp libpinapa.so ${INSTALL_PATH_PINAPA}
+}
+
 install_llvm
 install_llvm_gcc
 install_systemc_gcc
+install_pinapa
 
 #( install_systemc_llvm )
 
