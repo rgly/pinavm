@@ -1,23 +1,14 @@
-##===- lib/Target/CBackend/Makefile ------------------------*- Makefile -*-===##
-#
-#                     The LLVM Compiler Infrastructure
-#
-# This file is distributed under the University of Illinois Open Source
-# License. See LICENSE.TXT for details.
-#
-##===----------------------------------------------------------------------===##
+all: all-objs
 
-LEVEL = ../../../
-LIBRARYNAME = LLVMSimpleBackend
-#LOADABLE_MODULE = 1
-#LINK_COMPONENTS=
-KEEP_SYMBOLS=1
-CPPFLAGS=-I$(SYSTEMCFRONTEND) -I$(SYSTEMCROOT)/include
-CXXFLAGS=-g -I$(SYSTEMCFRONTEND) -I$(SYSTEMCROOT)/include
-#TARGET=simple
+SRCS = ${wildcard *.cpp}
+TARGET = all
 
-DIRS = TargetInfo
+ROOT=..
+include $(ROOT)/Makefile.common
 
-include $(LEVEL)/Makefile.common
+CPPFLAGS += `llvm-config --cxxflags jit bitreader bitwriter native`
+CPPFLAGS += -I$(SYSTEMC)/include
+CPPFLAGS += -I$(SYSTEMCFRONTEND)
 
-#CompileCommonOpts += -Wno-format
+all-objs: $(OBJS)
+#	g++ -shared $(OBJS) -o $@ $(SYSTEMCROOT)/lib-linux/libsystemc.a $(LDFLAGS) $(LDLIBS)
