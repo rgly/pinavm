@@ -6,6 +6,8 @@
 
 struct Frontend;
 
+using namespace llvm;
+
 class FrontendPass:public ModulePass {
       private:
 	Frontend * frontend;
