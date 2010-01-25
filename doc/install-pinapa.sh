@@ -187,6 +187,7 @@ install_systemc_llvm () {
 ###############################
 install_pinapa () {
     echo "Building pinapa..."
+    export PATH=${INSTALL_PATH_SYSTEMC_LLVM}/bin:${PATH}
     cd ${SRC_ROOT_DIR}/toplevel
     rm -rf ${INSTALL_PATH_PINAPA}
     mkdir -p ${INSTALL_PATH_PINAPA}
