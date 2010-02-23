@@ -1,10 +1,4 @@
-################################################################################
-#                         Copyright STMicroelectronics, Verimag
-#    Reproduction and Communication of this document is strictly prohibited
-#          unless specifically authorized in writing by STMicroelectronics
-#-------------------------------------------------------------------------------
-#                           System Platform Group -- HPC
-#-------------------------------------------------------------------------------
+# Copyright (C) 2010 by Verimag
 
 # Process this file with autoconf to produce a configure script.
 
