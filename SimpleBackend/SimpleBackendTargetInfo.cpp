@@ -1,4 +1,4 @@
-//#include "SimpleTargetMachine.h"
+#include "SimpleTargetMachine.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/StringExtras.h"

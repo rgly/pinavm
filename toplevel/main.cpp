@@ -6,7 +6,7 @@
 #include "llvm/System/Signals.h"
 
 #include "FrontendItf.hpp"
-#include "SimpleBackend.hpp"
+#include "SimpleBackend.h"
 
 static cl::opt < bool >
 RelativeClocks("relative-clocks", cl::desc("Use relative clocks in the backend"));
@@ -35,9 +35,20 @@ static cl::opt < bool >
 PrintIR("print-ir",
 	cl::desc("Print Intermediate representation for all processes"));
 
+static cl::opt < bool >
+DisableDbgMsg("dis-dbg-msg", cl::desc("Disable debug messages"));
+
+bool disable_debug_msg;
+
 void pinapa_callback()
 {
 	TRACE_1("Entering Pinapa, building module\n");
+
+	if (DisableDbgMsg) {
+		disable_debug_msg = true;
+	} else {
+		disable_debug_msg = false;
+	}
 
 	Frontend *fe = launch_frontend(InputFilename);
 
@@ -56,6 +67,7 @@ void pinapa_callback()
 		}
 	}
 
+	
 	TRACE_1("Shutdown...\n");
 	llvm_shutdown();
 }

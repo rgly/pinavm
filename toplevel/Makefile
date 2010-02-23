@@ -6,7 +6,7 @@ ROOT=..
 include $(ROOT)/Makefile.common
 
 FRONTEND_OBJS = ${wildcard $(SYSTEMCFRONTEND)/*.o}
-BACKENDS_OBJS = ${wildcard $(LLVMBACKENDS)/Debug/*.o}
+BACKENDS_OBJS = ${wildcard $(LLVMBACKENDS)/*.o}
 SYSTEMC_OBJS = $(SYSTEMCROOT)/lib-linux/libsystemc.a
 
 FRONTEND_SRC = ${wildcard $(SYSTEMCFRONTEND)/*.cpp} ${wildcard $(SYSTEMCFRONTEND)/*.hpp}

@@ -1,6 +1,3 @@
-#ifndef _SIMPLEBACKEND_H
-#define _SIMPLEBACKEND_H
-
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
@@ -35,6 +32,7 @@
 #include "SimpleBackendNameAllUsedStructsAndMergeFunctions.h"
 #include "Frontend.hpp"
 #include "SimpleWriter.h"
+#include "SimpleBackend.h"
 
 using namespace llvm;
 
@@ -87,5 +85,3 @@ void launch_simplebackend(Frontend * fe,
 	if (Out != &fouts())
 		delete Out;
 }
-
-#endif
