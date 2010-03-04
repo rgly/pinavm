@@ -22,7 +22,7 @@
 
 #include "config.h"
 
-Frontend *launch_frontend(std::string InputFilename)
+Frontend *launch_frontend(std::string InputFilename, bool inlineFcts)
 {
 	Module *M;
 
@@ -53,6 +53,7 @@ Frontend *launch_frontend(std::string InputFilename)
 
 	// Pinapa pass
 	FrontendPass *fep = new FrontendPass();
+	fep->setInlineFunctions(inlineFcts);
 	Passes.add(fep);
 
 	// Write bitcode out to disk or outs() as the last step...

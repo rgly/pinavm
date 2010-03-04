@@ -1,4 +1,5 @@
 #include "SCCFactory.hpp"
+#include "Process.hpp"
 
 SCCFactory::SCCFactory(SCJit * scjit)
 {
@@ -25,21 +26,24 @@ SCCFactory::~SCCFactory()
 		delete scch;
 	}
 
-	for (std::map < CallInst *, SCConstruct * >::iterator it =
-	     this->scc.begin(); it != this->scc.end(); it++) {
-		SCConstruct *construct = it->second;
+	for (std::map < CallInst *, std::map<Process*, SCConstruct *> >::iterator it =
+		     this->scc.begin(); it != this->scc.end(); it++) {
+		std::map<Process*, SCConstruct *> aMap = it->second;
+		for (std::map<Process*, SCConstruct *>::iterator itM = aMap.begin(); itM != aMap.end(); itM++) {
+			SCConstruct *construct = itM->second;
+			delete construct;
+		}
 		this->scc.erase(it);
-		delete construct;
 	}
 }
 
-std::map < CallInst *, SCConstruct * >*SCCFactory::getConstructs()
+std::map <CallInst *, std::map<Process*, SCConstruct *> >* SCCFactory::getConstructs()
 {
 	return &this->scc;
 }
 
 
-bool SCCFactory::handle(llvm::Function * fct, BasicBlock * bb, CallInst * callInst)
+bool SCCFactory::handle(Process* proc, llvm::Function * fct, BasicBlock * bb, CallInst * callInst)
 {
 	Function *calledFct;
 	SCConstructHandler *scch;
@@ -51,7 +55,7 @@ bool SCCFactory::handle(llvm::Function * fct, BasicBlock * bb, CallInst * callIn
 
 	if (it != scchandlers.end()) {
 		scch = it->second;
-		this->scc[callInst] = scch->handle(fct, bb, callInst);
+		this->scc[callInst][proc] = scch->handle(fct, bb, callInst);
 		return true;
 	} else {
 		return false;

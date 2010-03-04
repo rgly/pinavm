@@ -21,6 +21,7 @@ class Frontend {
 	SCCFactory *sccfactory;
 	SCElab *elab;
 	Module *llvmMod;
+	bool inlineFunctions;
 
       public:
 	 Frontend(Module * M);
@@ -30,6 +31,9 @@ class Frontend {
 	SCElab *getElab();
 	void printElab(std::string prefix);
 	void printIR();
+	SCJit* getJit();
+
+	void setInlineFunctions(bool b);
 
 	Module *getLLVMModule();
 	SCCFactory *getConstructs();

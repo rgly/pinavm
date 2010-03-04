@@ -11,13 +11,15 @@ using namespace llvm;
 class FrontendPass:public ModulePass {
       private:
 	Frontend * frontend;
+	bool inlineFunctions;
 
       public:
 	static char ID;		// Pass identification, replacement for typeid
-	 FrontendPass();
+	FrontendPass();
 	Frontend *getFrontend();
 	bool runOnModule(Module & M);
-	void getAnalysisUsage(AnalysisUsage & AU) const;
+	void getAnalysisUsage(AnalysisUsage & AU) const;	
+	void setInlineFunctions(bool b);
 };
 
 #endif

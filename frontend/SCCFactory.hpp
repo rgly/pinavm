@@ -15,17 +15,19 @@
 #include "WriteHandler.hpp"
 #include "ReadHandler.hpp"
 
+struct Process;
+
 struct SCCFactory {
 
       private:
 	std::map < Function *, SCConstructHandler * >scchandlers;
-	std::map < CallInst *, SCConstruct * >scc;
+	std::map <CallInst *, std::map<Process*, SCConstruct *> > scc;
 
       public:
 	SCCFactory(SCJit * jit);
 	~SCCFactory();
-	bool handle(llvm::Function * fct, BasicBlock * bb, CallInst * callInst);
-	std::map < CallInst *, SCConstruct * >*getConstructs();
+	bool handle(Process* proc, llvm::Function * fct, BasicBlock * bb, CallInst * callInst);
+	std::map <CallInst *, std::map<Process*, SCConstruct *> >* getConstructs();
 	bool handlerExists(llvm::Function * fct, BasicBlock * bb, CallInst * callInst);
 };
 

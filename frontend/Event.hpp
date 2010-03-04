@@ -2,6 +2,7 @@
 #define _EVENT_HPP
 
 #include <string>
+#include <vector>
 
 #include "ElabMember.hpp"
 
@@ -12,16 +13,16 @@ struct Process;
 struct Event:public ElabMember {
       protected:
 	string eventName;
-	Process *process;
+	std::vector<Process*> processes;
 	int numEvent;
 
       public:
-	Event(Process * p, string eventName);
+	Event(string eventName);
 	string toString();
-	Process *getProcess();
+	std::vector<Process*>* getProcesses();
 	void printElab(int sep, string prefix);
 	int getNumEvent();
-
+	void addProcess(Process* p);
 };
 
 #endif

@@ -1,4 +1,5 @@
 #include <string>
+#include <vector>
 
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
@@ -9,11 +10,10 @@
 using namespace llvm;
 using namespace std;
 
-static int numberOfEvents = 0;
+static int numberOfEvents = 1;
 
-Event::Event(Process * p, string event)
+Event::Event(string event)
 {
-	this->process = p;
 	this->eventName = event;
 	this->numEvent = numberOfEvents++;
 }
@@ -29,9 +29,15 @@ Event::getNumEvent()
 	return this->numEvent;
 }
 
-Process *Event::getProcess()
+std::vector<Process*>* Event::getProcesses()
 {
-	return this->process;
+	return &this->processes;
+}
+
+void
+Event::addProcess(Process* p)
+{
+	this->processes.push_back(p);
 }
 
 /********** Pretty print **********/

@@ -40,7 +40,7 @@ SCElab::~SCElab()
 	this->processMap.clear();
 	this->eventsMap.clear();
 	this->portsMap.clear();
-	this->sc2irModules.clear();
+	this->ir2scModules.clear();
 	
 	FUtils::deleteVector < IRModule * >(&this->modules);
 	FUtils::deleteVector < Process * >(&this->processes);
@@ -57,9 +57,7 @@ IRModule *SCElab::addModule(sc_core::sc_module * mod)
 	this->modulesMap.insert(this->modulesMap.end(),
 				pair < sc_core::sc_module *,
 				IRModule * >(mod, m));
-	this->sc2irModules.insert(this->sc2irModules.end(),
-				  pair < IRModule *,
-				  sc_core::sc_module * >(m, mod));
+	this->ir2scModules.insert(this->ir2scModules.end(), pair <IRModule *, sc_core::sc_module *>(m, mod));
 	TRACE_2("Added (sc_module)  " << (void *) mod << " -> (IRModule) "
 		<< m << " with name " << moduleName << "\n");
 	return m;
@@ -72,7 +70,7 @@ Process *SCElab::addProcess(IRModule * mod,
 	string modType = mod->getModuleType();
 	string moduleName = mod->getUniqueName();
 	string mainFctName = "_ZN" + modType + utostr(fctName.size()) + fctName + "Ev";
-	string processName = moduleName + "::" + mainFctName;
+	string processName = moduleName + "_" + mainFctName;
 	Function *mainFct = this->llvmMod->getFunction(mainFctName);
 
 //   Function* fct;
@@ -101,7 +99,7 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 	if ((it = this->portsMap.find(port)) == this->portsMap.end()) {
 		
 		sprintf(buffer, "%x", (int) port);
-		string portName = mod->getUniqueName() + "::0x" + buffer;
+		string portName = mod->getUniqueName() + "_0x" + buffer;
 		
 		sc_core::sc_interface* itf = port->get_interface();
 //	sc_core::sc_port_b<bool>* pb = (sc_core::sc_port_b<bool>*) port;
@@ -197,16 +195,16 @@ Event *SCElab::addEvent(Process * process, sc_core::sc_event * event)
 	if ((it = this->eventsMap.find(event)) == this->eventsMap.end()) {
 		char buffer[10];
 		sprintf(buffer, "%x", (int) event);
-		string eventName = mod->getUniqueName() + "::0x" + buffer;
-		e = new Event(process, eventName);
+		string eventName = mod->getUniqueName() + "_0x" + buffer;
+		e = new Event(eventName);
 		this->events.push_back(e);
 		this->eventsMap[event] = e;
 	} else {
 		e = it->second;
 	}
 	process->addEvent(e);
-	TRACE_2("Add (sc_event)     " << event << " -> (Event) " << e <<
-		" to (Process) " << process << "\n");
+	e->addProcess(process);
+	TRACE_2("Add (sc_event)     " << event << " -> (Event) " << e << " (" << e->toString() << ") to (Process) " << process << "\n");
 	return e;
 
 }
@@ -249,10 +247,22 @@ SCElab::getNumProcesses()
 	return this->processes.size();
 }
 
+int
+SCElab::getNumEvents()
+{
+	return this->events.size();
+}
+
 std::vector < Process * >*
 SCElab::getProcesses()
 {
 	return &this->processes;
+}
+ 
+std::vector < Event * >*
+SCElab::getEvents()
+{
+	return &this->events;
 }
 
 std::vector < Port *>*
@@ -269,7 +279,7 @@ SCElab::getChannels()
 
 sc_core::sc_module * SCElab::getSCModule(IRModule * irmod)
 {
-	return this->sc2irModules.find(irmod)->second;
+	return this->ir2scModules.find(irmod)->second;
 }
 
 void SCElab::addGlobalVariable(GlobalValue * globalVar)

@@ -7,6 +7,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Instructions.h"
+#include "llvm/Transforms/Utils/BasicInliner.h"
 
 #include "Frontend.hpp"
 
@@ -22,6 +23,7 @@
 Frontend::Frontend(Module * M)
 {
 	this->llvmMod = M;
+	this->inlineFunctions = false;
 }
 
 Frontend::~Frontend()
@@ -39,6 +41,11 @@ Frontend::~Frontend()
 
 }
 
+SCJit *Frontend::getJit()
+{
+	return this->scjit;
+}
+
 SCElab *Frontend::getElab()
 {
 	return this->elab;
@@ -47,6 +54,11 @@ SCElab *Frontend::getElab()
 SCCFactory *Frontend::getConstructs()
 {
 	return this->sccfactory;
+}
+
+void Frontend::setInlineFunctions(bool b)
+{
+	this->inlineFunctions = b;
 }
 
 void Frontend::printElab(string prefix)
@@ -106,6 +118,39 @@ bool Frontend::run()
 	vector < Process * >::iterator endIt = this->elab->getProcesses()->end();
 	std::vector < Function * >*fctStack = new std::vector < Function * >();
 
+	if (this->inlineFunctions) {
+								
+		for (; processIt < endIt; processIt++) {
+			Process *proc = *processIt;
+			Function *F = proc->getMainFct();
+			TRACE_3("Parsing Function : " << F->getNameStr() << "\n");
+		start_for:
+			for (Function::iterator bb = F->begin(), be = F->end(); bb != be; ++bb) {
+				BasicBlock::iterator i = bb->begin(), ie = bb->end();
+				while (i != ie) {
+					CallInst *callInst = dyn_cast < CallInst > (&*i);
+					if (callInst) {
+						if (! this->sccfactory->handlerExists(F, &*bb, callInst)) {
+							TRACE_6("CallInst : " << callInst << "\n");
+							TRACE_6("CalledFct : " << callInst->getCalledFunction() << "\n");
+							callInst->dump();
+							TRACE_4("Call not handled : " << callInst->getCalledFunction()->getNameStr() << "\n");
+							TRACE_4("Inlining function : " << callInst->getCalledFunction()->getNameStr() << "\n");
+							llvm::InlineFunction(callInst);
+							// InlineFunction invalidates iterators => restart loop.
+							goto start_for;
+						}
+					}
+					BasicBlock::iterator tmpend = bb->end();
+					i++;
+				}
+			}
+		}
+	}
+	
+	processIt = this->elab->getProcesses()->begin();	
+	fctStack = new std::vector < Function * >();
+
 	for (; processIt < endIt; processIt++) {
 		Process *proc = *processIt;
 		fctStack->push_back(proc->getMainFct());
@@ -115,18 +160,19 @@ bool Frontend::run()
 			Function *F = fctStack->back();
 			fctStack->pop_back();
 			TRACE_3("Parsing Function : " << F->getNameStr() << "\n");
+			F->dump();
 			for (Function::iterator bb = F->begin(), be = F->end(); bb != be; ++bb) {
 				BasicBlock::iterator i = bb->begin(), ie = bb->end();
 				while (i != ie) {
 					CallInst *callInst = dyn_cast < CallInst > (&*i);
 					if (callInst) {
-						if (! sccfactory->handle(F, &*bb, callInst)) {
+						if (! sccfactory->handle(proc, F, &*bb, callInst)) {
 							TRACE_6("CallInst : " << callInst << "\n");
 							TRACE_6("CalledFct : " << callInst->getCalledFunction() << "\n");
 							callInst->dump();
 							TRACE_4("Call not handled : " << callInst->getCalledFunction()->getNameStr() << "\n");
 							fctStack->push_back(callInst->getCalledFunction());
-							proc->addUsedFunction(F);
+							proc->addUsedFunction(callInst->getCalledFunction());
 						}
 					} else {
 						fillGlobalVars(&*i);

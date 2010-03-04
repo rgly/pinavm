@@ -54,6 +54,7 @@ struct SCJit {
 	Process *currentProcess;
 	ExecutionEngine *ee;
 	ExistingModuleProvider *moduleProvider;
+	int nbFctToJit;
 
       public:
 	 SCJit(Module * mod, SCElab * scelab);

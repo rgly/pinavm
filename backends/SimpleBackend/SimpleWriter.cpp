@@ -20,23 +20,11 @@
 #include "WriteConstruct.hpp"
 #include "Process.hpp"
 
+#include "utils.h"
 #include "config.h"
 
 static Instruction* pointerToInst;
-static std::stringstream ErrorMsg("");
-
-static void triggerError(formatted_raw_ostream & Out)
-{
-	Out.flush();
-	delete &Out;
-	llvm_report_error(ErrorMsg.str());
-}
-
-static void triggerError(formatted_raw_ostream & Out, std::string msg)
-{
-	ErrorMsg << msg;
-	triggerError(Out);
-}
+static Process* currentProcess;
 
 /***************************************************************************
  *************** Static functions ******************************************
@@ -1975,16 +1963,8 @@ void SimpleWriter::printFloatingPointConstants(const Constant * C)
 /// printSymbolTable - Run through symbol table looking for type names.  If a
 /// type name is found, emit its declaration...
 ///
-void SimpleWriter::printModuleTypes(const TypeSymbolTable & TST)
+void SimpleWriter::fillModuleTypes(const TypeSymbolTable & TST)
 {
-	Out << "/* Helper union for bitcasts */\n";
-	Out << "typedef union {\n";
-	Out << "  unsigned int Int32;\n";
-	Out << "  unsigned long long Int64;\n";
-	Out << "  float Float;\n";
-	Out << "  double Double;\n";
-	Out << "} llvmBitCastUnion;\n";
-
 	// We are only interested in the type plane of the symbol table.
 	TypeSymbolTable::const_iterator I = TST.begin();
 	TypeSymbolTable::const_iterator End = TST.end();
@@ -1994,69 +1974,9 @@ void SimpleWriter::printModuleTypes(const TypeSymbolTable & TST)
 		return;
 
 	// Print out forward declarations for structure types before anything else!
-	Out << "/* Structure forward decls */\n";
 	for (; I != End; ++I) {
-		std::string Name =
-			"struct l_" + Mang->makeNameProper(I->first);
-		Out << Name << ";\n";
+		std::string Name = "struct l_" + Mang->makeNameProper(I->first);
 		TypeNames.insert(std::make_pair(I->second, Name));
-	}
-
-	Out << '\n';
-
-	// Now we can print out typedefs.  Above, we guaranteed that this can only be
-	// for struct or opaque types.
-	Out << "/* Typedefs */\n";
-	for (I = TST.begin(); I != End; ++I) {
-		std::string Name = "l_" + Mang->makeNameProper(I->first);
-		Out << "typedef ";
-		printType(Out, I->second, false, Name);
-		Out << ";\n";
-	}
-
-	Out << '\n';
-
-	// Keep track of which structures have been printed so far...
-	std::set < const Type *>StructPrinted;
-
-	// Loop over all structures then push them into the stack so they are
-	// printed in the correct order.
-	//
-	Out << "/* Structure contents */\n";
-	for (I = TST.begin(); I != End; ++I)
-		if (isa < StructType > (I->second)
-			|| isa < ArrayType > (I->second))
-			// Only print out used types!
-			printContainedStructs(I->second, StructPrinted);
-}
-
-// Push the struct onto the stack and recursively push all structs
-// this one depends on.
-//
-// TODO:  Make this work properly with vector types
-//
-void SimpleWriter::printContainedStructs(const Type * Ty,
-					std::set <
-					const Type * >&StructPrinted)
-{
-	// Don't walk through pointers.
-	if (isa < PointerType > (Ty) || Ty->isPrimitiveType()
-		|| Ty->isInteger())
-		return;
-
-	// Print all contained types first.
-	for (Type::subtype_iterator I = Ty->subtype_begin(),
-		     E = Ty->subtype_end(); I != E; ++I)
-		printContainedStructs(*I, StructPrinted);
-
-	if (isa < StructType > (Ty) || isa < ArrayType > (Ty)) {
-		// Check to see if we have already printed this struct.
-		if (StructPrinted.insert(Ty).second) {
-			// Print structure type out.
-			std::string Name = TypeNames[Ty];
-			printType(Out, Ty, false, Name, true);
-			Out << ";\n\n";
-		}
 	}
 }
 
@@ -2237,6 +2157,13 @@ SimpleWriter::getNumField(GetElementPtrInst* inst)
 	return res;
 }
 
+bool
+SimpleWriter::isSystemCType(const Type* ty)
+{
+	std::string typeName = this->TypeNames[ty];
+	return typeName.substr(0, 15).compare("struct.sc_core::") == 0;
+}
+
 void
 SimpleWriter::getValueDependencies(Value* value,
 				std::string prefix,
@@ -2309,7 +2236,9 @@ SimpleWriter::getValueDependencies(Value* value,
 				ss << numField;
 				name = fieldName + "-field" + ss.str();
 				
-				if (isa<StructType>(fieldType)) {
+				if (isSystemCType(fieldType)) {
+					TRACE_7("Is a SystemC type  : " << name << ", nothing to do with it\n");
+				} else if (isa<StructType>(fieldType)) {
 					TRACE_7("Is a struct : " << name << ", adding it to deps\n");
 					if (allDepsByName->find(name) == allDepsByName->end()) {
 						(*allDepsByValue)[getEltPtrInst] = name;
@@ -3138,14 +3067,6 @@ void SimpleWriter::lowerIntrinsics(Function & F)
 	}
 }
 
-std::string
-intToString(int anInt)
-{
-	std::stringstream ss;
-	ss << anInt;
-	return ss.str();
-}
-
 void
 SimpleWriter::printCodingGlobals()
 {
@@ -3364,6 +3285,7 @@ SimpleWriter::printProcesses()
 
 		Process *proc = *processIt;
 		std::vector < Function * >*usedFcts = proc->getUsedFunctions();
+		currentProcess = proc;
 		TRACE_3("SimpleWriter > printing process : " << proc->getName() << "\n");
 		TRACE_3("Info : nb of used functions : " << usedFcts->size() << "\n");
 
@@ -3423,8 +3345,8 @@ SimpleWriter::visitSCConstruct(SCConstruct * scc)
 		break;
 	case NOTIFYCONSTRUCT:
 		notifyC = (NotifyConstruct*) scc;
-		event = notifyC->getNotifiedEvent();
-		if (eventC->isStaticallyFound()) {
+		if (notifyC->isStaticallyFound()) {
+			event = notifyC->getNotifiedEvent();
 			Out << "notify(pnumber, ";
 			Out << "e" + intToString(event->getNumEvent());
 			Out << ")";
@@ -3507,11 +3429,12 @@ SimpleWriter::visitSCConstruct(SCConstruct * scc)
 
 void SimpleWriter::visitCallInst(CallInst & I)
 {
-	std::map < CallInst *, SCConstruct * >::iterator itC;
+	std::map <CallInst*, std::map<Process*, SCConstruct*> >::iterator itC;
 	CallInst* pI = cast<CallInst>(pointerToInst);
-	if ((itC = this->sccfactory->getConstructs()->find(pI)) != this->sccfactory->getConstructs()->end()) {
-		SCConstruct *scc = itC->second;
-		return visitSCConstruct(scc);
+	itC = this->sccfactory->getConstructs()->find(pI);
+	if (itC != this->sccfactory->getConstructs()->end()) {
+		std::map<Process*, SCConstruct * > CbyP = itC->second;
+		return visitSCConstruct(CbyP.find(currentProcess)->second);
 	}
 
 	if (isa < InlineAsm > (I.getOperand(0)))
@@ -4227,6 +4150,9 @@ bool SimpleWriter::runOnModule(Module & M)
 // 				Out << ";\n";
 // 			}
 // 	}
+
+	/* Fill types table */
+	fillModuleTypes(M.getTypeSymbolTable());
 	
 	/* Print Global variables from the program */
 	printGlobalVariables(Mang);

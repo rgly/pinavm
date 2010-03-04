@@ -21,5 +21,8 @@ Event *NotifyConstruct::getNotifiedEvent()
 
 string NotifyConstruct::toString()
 {
-	return "NOTIFY(event)";
+	if (this->staticallyFound)
+		return "NOTIFY(" + this->event->toString() + ")";
+	else
+		return "NOTIFY(dynamic content)";
 }

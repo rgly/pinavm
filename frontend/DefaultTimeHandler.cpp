@@ -14,11 +14,11 @@ SCConstruct *DefaultTimeHandler::handle(Function * fct, BasicBlock * bb,
 
 	if (arg->getType()->isInteger()) {
 		int time_waited = this->scjit->jitInt(fct, arg);
-		TRACE_3("time waited: " << time_waited << "\n");
+		TRACE_3("Int time waited: " << time_waited << "\n");
 		return new DefaultTimeConstruct(time_waited);
 	} else if (arg->getType()->isFloatingPoint()) {
 		double time_waited = this->scjit->jitDouble(fct, arg);
-		TRACE_3("time waited: " << time_waited << "\n");
+		TRACE_3("Double time waited: " << time_waited << "\n");
 		return new DefaultTimeConstruct(time_waited);
 	} else {
 		ERROR("call to wait with argument not int nor double\n");

@@ -31,6 +31,7 @@ protected:
 	std::vector < Event * > events;
 	std::vector < Port * > ports;
 	std::vector < Function * > usedFunctions;
+	int pid;
 
       public:
 	 Process(IRModule * mod, Function * fct, std::string name,
@@ -47,6 +48,7 @@ protected:
 	std::vector < Event* >* getEvents();
 	std::vector < Port* >* getPorts();
 	void addUsedFunction(Function * fct);
+	int getPid();
 };
 
 #endif

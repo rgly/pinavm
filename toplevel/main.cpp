@@ -7,6 +7,7 @@
 
 #include "FrontendItf.hpp"
 #include "SimpleBackend.h"
+#include "PromelaBackend.h"
 
 static cl::opt < bool >
 RelativeClocks("relative-clocks", cl::desc("Use relative clocks in the backend"));
@@ -38,6 +39,9 @@ PrintIR("print-ir",
 static cl::opt < bool >
 DisableDbgMsg("dis-dbg-msg", cl::desc("Disable debug messages"));
 
+static cl::opt < bool >
+InlineFcts("inline", cl::desc("Inline all functions"));
+
 bool disable_debug_msg;
 
 void pinapa_callback()
@@ -50,7 +54,7 @@ void pinapa_callback()
 		disable_debug_msg = false;
 	}
 
-	Frontend *fe = launch_frontend(InputFilename);
+	Frontend *fe = launch_frontend(InputFilename, InlineFcts);
 
 	if (PrintIR) {
 		fe->printIR();
@@ -62,21 +66,19 @@ void pinapa_callback()
 	if (Backend != "-") {
 		if (Backend == "simple" || Backend == "Simple") {
 			launch_simplebackend(fe, OutputFilename, EventsAsBool, RelativeClocks);
+		} else if (Backend == "promela" || Backend == "Promela") {
+			launch_promelabackend(fe, OutputFilename, EventsAsBool, RelativeClocks);
 		} else {
 			ERROR("Backend " << Backend << " unknown\n");
 		}
 	}
-
-	
-	TRACE_1("Shutdown...\n");
-	llvm_shutdown();
 }
 
 
 
 int main(int argc, char **argv)
 {
-	llvm_shutdown_obj X;	// Call llvm_shutdown() on exit.
+//	llvm_shutdown_obj X;	// Call llvm_shutdown() on exit.
 
 	try {
 
@@ -84,8 +86,7 @@ int main(int argc, char **argv)
 		// usable by the JIT.
 		InitializeNativeTarget();
 
-		cl::ParseCommandLineOptions(argc, argv,
-					    "llvm .bc -> .bc modular optimizer and analysis printer\n");
+		cl::ParseCommandLineOptions(argc, argv, "llvm .bc -> .bc modular optimizer and analysis printer\n");
 
 		sys::PrintStackTraceOnErrorSignal();
 
@@ -97,6 +98,7 @@ int main(int argc, char **argv)
 		errs() << argv[0] <<
 		    ": Unexpected unknown exception occurred.\n";
 	}
-	llvm_shutdown();
-	return 1;
+	TRACE_1("Shutdown...\n");
+//	llvm_shutdown();
+	return 0;
 }

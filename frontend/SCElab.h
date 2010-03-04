@@ -38,7 +38,7 @@ class SCElab : public ElabMember
   std::map<sc_core::sc_event*, Event*> eventsMap;
   std::map<sc_core::sc_interface*, Channel*> channelsMap;
 
-  std::map<IRModule*, sc_core::sc_module*> sc2irModules;
+  std::map<IRModule*, sc_core::sc_module*> ir2scModules;
   
   std::vector<IRModule*> modules;
   std::vector<Process*> processes;
@@ -69,10 +69,13 @@ class SCElab : public ElabMember
 
   sc_core::sc_module* getSCModule(IRModule* irmod);
 
+
+  int getNumEvents();
   int getNumProcesses();
   std::vector<Process*>* getProcesses();
   std::vector<Port*>* getPorts();
   std::vector<Channel*>* getChannels();
+  std::vector<Event*>* getEvents();
 
   void addGlobalVariable(GlobalValue *globalVar);
   std::vector < GlobalValue * >* getGlobalVariables();

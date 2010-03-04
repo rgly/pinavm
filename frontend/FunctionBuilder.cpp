@@ -1,11 +1,10 @@
 #include "FunctionBuilder.h"
+#include "llvm/ADT/ilist.h"
 
-FunctionBuilder::FunctionBuilder(Process * process,
-				 Function * origFunction,
-				 Function * functionToJit,
-				 Value * resValue)
+FunctionBuilder::FunctionBuilder(Function * origFunction,
+				Function * functionToJit,
+				Value * resValue)
 {
-	this->proc = process;
 	this->origFct = origFunction;
 	this->fctToJit = functionToJit;
 	this->res = resValue;
@@ -13,8 +12,10 @@ FunctionBuilder::FunctionBuilder(Process * process,
 
 FunctionBuilder::~FunctionBuilder()
 {
+//	TRACE_5("Deleting Function Builder...");
 //   Utils::deleteVector<BasicBlock*>(this->used_bb);
 //   Utils::deleteVector<Instruction*>(this->used_insts);
+//	ValueMap.clear();
 }
 
 // Looks up the type in the symbol table and returns a pointer to its name or
@@ -36,9 +37,9 @@ bool FunctionBuilder::mark(Value * arg)
 {
 	BasicBlock *currentBlock;
 
-	TRACE_5("Mark() : \n");
-	PRINT_5(arg->dump());
-	TRACE_5("\n");
+ 	TRACE_5("Mark() : \n");
+ 	PRINT_5(arg->dump());
+ 	TRACE_5("\n");
 
 	if (isa < Argument > (arg)) {
 		TRACE_5("Found argument: \n");
@@ -162,7 +163,13 @@ Function *FunctionBuilder::buildFct()
 	cloneBlocks();
 	
 	/********* Put arguments in the ValueMap *********/
-	ValueMap[this->origFct->arg_begin()] = this->fctToJit->arg_begin();
+	Function::arg_iterator origIt = this->origFct->arg_begin();
+	Function::arg_iterator argIt = this->fctToJit->arg_begin();
+	while (origIt != this->origFct->arg_end()) {
+		ValueMap[origIt] = argIt;
+		origIt++;
+		argIt++;
+	}
 	
 	/****** Useful instructions are pushed in the list of *********/
 	/************* instructions to be generated  ******************/
@@ -223,10 +230,8 @@ Function *FunctionBuilder::buildFct()
 		oldCurrentBlock = NewBB;
 	}
 
-	TRACE_6("Number of basic blocks : " << this->fctToJit->
-		getBasicBlockList().size() << "\n");
-	TRACE_6("Entry block : " << &this->fctToJit->
-		getEntryBlock() << "\n");
+	TRACE_6("Number of basic blocks : " << this->fctToJit->getBasicBlockList().size() << "\n");
+	TRACE_6("Entry block : " << &this->fctToJit->getEntryBlock() << "\n");
 	TRACE_6("Before CreateRet, lastBlock = " << lastBlock << "\n");
 	IRBuilder <> (lastBlock).CreateRet(lastInst);
 	return this->fctToJit;

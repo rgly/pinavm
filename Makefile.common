@@ -25,10 +25,10 @@ ARCH = $(shell $(SYSTEMC)/config/config.guess | sed -e 's/x86_64-.*-linux-gnu/li
 
 CXX = g++
 CPPFLAGS = -MMD -MP -MF $(basename $@).d
-CXXFLAGS = -O3 -g -Wall -Winvalid-pch
+CXXFLAGS = -g -Wall -Winvalid-pch
 
 CC = gcc
-CFLAGS = -O3 -g -Wall
+CFLAGS = -g -Wall
 
 LD = $(CXX)
 LDFLAGS = $(CXXFLAGS)

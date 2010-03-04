@@ -19,12 +19,14 @@ SCJit::SCJit(Module * mod, SCElab * scelab)
 	}
 
 	this->ee->runStaticConstructorsDestructors(false);
+	this->nbFctToJit = 0;
 }
 
 SCJit::~SCJit()
 {
-	this->ee->runStaticConstructorsDestructors(true);
-	delete this->ee;
+	this->ee->clearAllGlobalMappings();
+ 	this->ee->runStaticConstructorsDestructors(true);
+ 	delete this->ee;
 }
 
 void
@@ -51,11 +53,15 @@ void SCJit::elaborate()
 
 void SCJit::setCurrentProcess(Process * process)
 {
+	TRACE_4("#################### SET Process : " << process << "\n");
+	TRACE_4("#################### Associated module : " << process->getModule() << "\n");
 	this->currentProcess = process;
 }
 
 Process *SCJit::getCurrentProcess()
 {
+	TRACE_4("#################### GET current process : " << this->currentProcess << "\n");
+	TRACE_4("#################### Associated module : " << this->currentProcess->getModule() << "\n");
 	return this->currentProcess;
 }
 
@@ -117,12 +123,14 @@ Function *SCJit::buildFct(Function * f, FunctionType * FT, Value * arg)
 {
 	Function *fctToJit;
 
-	fctToJit =
-	    Function::Create(FT, Function::ExternalLinkage, "fctToJit",
-			     this->mdl);
+	std::stringstream ss;
+	ss << "fctToJit-" << this->nbFctToJit++;
+	std::string fctName = std::string("") + ss.str();
+	fctToJit = Function::Create(FT, Function::PrivateLinkage, ss.str(), this->mdl);
 	fctToJit->setCallingConv(CallingConv::C);
+	TRACE_4("Building fctToJit : " << fctToJit->getNameStr() << " " << fctToJit << "\n");
 
-	FunctionBuilder fb(currentProcess, f, fctToJit, arg);
+	FunctionBuilder fb(f, fctToJit, arg);
 	fb.buildFct();
 
 	TRACE_5("------------ fctToJit completed ---------------\n");
@@ -150,7 +158,6 @@ Function *SCJit::buildFct(Function * f, FunctionType * FT, Value * arg)
 	//  FPM.add(d);
 
 	FPM.run(*fctToJit);
-	//  MP.releaseModule();
 
 	verifyFunction(*fctToJit);
 	TRACE_5("fctToJit verified\n");
@@ -178,8 +185,13 @@ void *SCJit::jitAddr(Function * f, Value * arg)
 	fctToJit = buildFct(f, FT, arg);
 
 	void *(*fct) (sc_core::sc_module *) = (void *(*)(sc_core::sc_module *)) ee->getPointerToFunction(fctToJit);
-	TRACE_5("Executing fctToJit\n");
-	void *res = fct(this->elab->getSCModule(this->currentProcess->getModule()));
+	IRModule* mod = this->getCurrentProcess()->getModule();
+	TRACE_4("********************* SC MODULE : " << mod << "\n");
+	void *res = fct(this->elab->getSCModule(mod));
+
+	fctToJit->dropAllReferences();
+	ee->freeMachineCodeForFunction(fctToJit);
+	fctToJit->eraseFromParent();
 
 	return res;
 }
@@ -193,18 +205,20 @@ int SCJit::jitInt(Function * f, Value * arg)
 	TRACE_5("jitInt() \n");
 
 	fillArgsType(f, (std::vector < const Type * >*) &argsType);
-	FunctionType *FT =
-	    FunctionType::get(IntegerType::get(getGlobalContext(), 32),
-			      argsType, false);
+	FunctionType *FT = FunctionType::get(IntegerType::get(getGlobalContext(), 32), argsType, false);
 
 	fctToJit = buildFct(f, FT, arg);
 
 	int (*fct) (sc_core::sc_module *) =
 		(int (*)(sc_core::sc_module *)) ee->getPointerToFunction(fctToJit);
 
-	int res = fct(this->elab->getSCModule(this->currentProcess->getModule()));
+	IRModule* mod = this->getCurrentProcess()->getModule();
+	TRACE_4("********************* SC MODULE : " << mod << "\n");
+	int res = fct(this->elab->getSCModule(mod));
 
-	delete fctToJit;
+	fctToJit->dropAllReferences();
+	ee->freeMachineCodeForFunction(fctToJit);
+	fctToJit->eraseFromParent();
 
 	return res;
 }
@@ -216,17 +230,19 @@ double SCJit::jitDouble(Function * f, Value * arg)
 
 	TRACE_5("jitDouble() \n");
 	fillArgsType(f, (std::vector < const Type * >*) &argsType);
-	FunctionType *FT =
-		FunctionType::get(Type::getDoubleTy(getGlobalContext()), argsType, false);
+	FunctionType *FT = FunctionType::get(Type::getDoubleTy(getGlobalContext()), argsType, false);
 
 	fctToJit = buildFct(f, FT, arg);
 
 	double (*fct) (sc_core::sc_module *) =
-	    (double (*)(sc_core::sc_module *)) ee->getPointerToFunction(fctToJit);
-	double res =
-	    fct(this->elab->getSCModule(this->currentProcess->getModule()));
+		(double (*)(sc_core::sc_module *)) ee->getPointerToFunction(fctToJit);
+	IRModule* mod = this->getCurrentProcess()->getModule();
+	TRACE_4("********************* SC MODULE : " << mod << "\n");
+	double res = fct(this->elab->getSCModule(mod));
 
-	delete fctToJit;
+	fctToJit->dropAllReferences();
+	ee->freeMachineCodeForFunction(fctToJit);
+	fctToJit->eraseFromParent();
 
 	return res;
 }
@@ -244,10 +260,13 @@ bool SCJit::jitBool(Function * f, Value * arg)
 
 	int (*fct) (sc_core::sc_module *) =
 	    (int (*)(sc_core::sc_module *)) ee->getPointerToFunction(fctToJit);
-	int res =
-	    fct(this->elab->getSCModule(this->currentProcess->getModule()));
+	IRModule* mod = this->getCurrentProcess()->getModule();
+	TRACE_4("********************* SC MODULE : " << mod << "\n");
+	int res = fct(this->elab->getSCModule(mod));
 
-	delete fctToJit;
+	fctToJit->dropAllReferences();
+	ee->freeMachineCodeForFunction(fctToJit);
+	fctToJit->eraseFromParent();
 
 	if (res)
 		return false;

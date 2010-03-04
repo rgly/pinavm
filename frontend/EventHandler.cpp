@@ -1,5 +1,6 @@
 #include <string>
 
+#include "Event.hpp"
 #include "EventHandler.hpp"
 #include "EventConstruct.hpp"
 #include "SCJit.hpp"
@@ -18,7 +19,7 @@ SCConstruct *EventHandler::handle(Function * fct, BasicBlock * bb,
 		return new EventConstruct(arg);
 	} else {
 		Event *e = this->scjit->getElab()->getEvent(eventAddr);
-		TRACE_3("Event associated : " << (void *) e << "\n");
+		TRACE_3("Event associated : " << (void *) e << " (" << e->toString() << ") \n");
 		return new EventConstruct(e);
 	}
 }

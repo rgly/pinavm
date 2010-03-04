@@ -147,8 +147,7 @@ public:
   void lowerIntrinsics(Function &F);
 
   void printModule(Module *M);
-  void printModuleTypes(const TypeSymbolTable &ST);
-  void printContainedStructs(const Type *Ty, std::set<const Type *> &);
+  void fillModuleTypes(const TypeSymbolTable &ST);
   void printFloatingPointConstants(Function &F);
   void printFloatingPointConstants(const Constant *C);
   void printFunctionSignature(const Function *F, bool Prototype);
@@ -242,6 +241,7 @@ public:
 		  const StructType* structType);
   void addVectors(std::vector<std::pair<std::string, const Type*> >* from,
 		  std::vector<std::pair<std::string, const Type*> >* to);
+  bool isSystemCType(const Type* ty);
   void getValueDependencies(Value* value,
 			  std::string prefix,
 			  std::vector<std::pair<std::string, const Type*> >* args,

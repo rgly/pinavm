@@ -17,6 +17,7 @@ TimeConstruct::TimeConstruct(double t)
 
 TimeConstruct::TimeConstruct(double t, time_unit tunit)
 {
+	this->id = TIMECONSTRUCT;
 	this->time = t;
 	this->tu = tu;
 }

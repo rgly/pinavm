@@ -5,27 +5,38 @@ all: $(TARGET)
 ROOT=..
 include $(ROOT)/Makefile.common
 
-FRONTEND_OBJS = ${wildcard $(SYSTEMCFRONTEND)/*.o}
-BACKENDS_OBJS = ${wildcard $(LLVMBACKENDS)/*.o}
+BACKENDSDIR = $(ROOT)/backends
+FRONTENDDIR = $(ROOT)/frontend
+UTILSDIR = $(ROOT)/utils
+
+FRONTEND_OBJS = ${wildcard $(FRONTENDDIR)/*.o}
+BACKENDS_OBJS = ${wildcard $(BACKENDSDIR)/SimpleBackend/*.o} ${wildcard $(BACKENDSDIR)/PromelaBackend/*.o}
+UTILS_OBJS = ${wildcard $(UTILSDIR)/*.o}
+
 SYSTEMC_OBJS = $(SYSTEMCROOT)/lib-linux/libsystemc.a
 
-FRONTEND_SRC = ${wildcard $(SYSTEMCFRONTEND)/*.cpp} ${wildcard $(SYSTEMCFRONTEND)/*.hpp}
-BACKENDS_SRC = ${wildcard $(LLVMBACKENDSHEADERS)/*.cpp} ${wildcard $(LLVMBACKENDSHEADERS)/*.hpp}
+FRONTEND_SRC = ${wildcard $(ROOT)/frontend/*.cpp} ${wildcard $(ROOT)/frontend/*.hpp}
+BACKENDS_SRC = ${wildcard $(ROOT)/backends/**/*.cpp} ${wildcard $(ROOT)/backends/**/*.hpp}
+UTILS_SRC = ${wildcard $(ROOT)/utils/*.cpp} ${wildcard $(ROOT)/utils/*.hpp}
 
-ALL_OBJS = $(OBJS) $(FRONTEND_OBJS) $(BACKENDS_OBJS) $(SYSTEMC_OBJS)
+ALL_OBJS = $(OBJS) $(UTILS_OBJS) $(FRONTEND_OBJS) $(BACKENDS_OBJS) $(SYSTEMC_OBJS)
 
 CPPFLAGS += -I$(SYSTEMC)/include
-CPPFLAGS += -I$(SYSTEMCFRONTEND)
-CPPFLAGS += -I$(LLVMBACKENDSHEADERS)
+CPPFLAGS += -I$(FRONTENDDIR)
+CPPFLAGS += -I$(BACKENDSDIR)/SimpleBackend -I$(BACKENDSDIR)/PromelaBackend
+CPPFLAGS += -I$(UTILSDIR)
 CPPFLAGS += `llvm-config --cxxflags jit bitreader bitwriter native`
 
 LDLIBS += `llvm-config --ldflags --libs jit bitreader bitwriter native` 
 
 frontend: $(FRONTEND_SRC)
-	cd $(SYSTEMCFRONTEND) && make all
+	cd $(FRONTENDDIR) && make all
 
 backends: $(BACKENDS_SRC)
-	cd $(LLVMBACKENDS) && make
+	cd $(BACKENDSDIR) && make all
 
-$(TARGET): frontend backends $(OBJS)
+utils: $(UTILS_SRC)
+	cd $(UTILSDIR) && make all
+
+$(TARGET): frontend backends utils $(OBJS)
 	g++ -shared -o $@ $(ALL_OBJS) $(LDFLAGS) $(LDLIBS)

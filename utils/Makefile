@@ -8,6 +8,7 @@ include $(ROOT)/Makefile.common
 
 CPPFLAGS += `llvm-config --cxxflags jit bitreader bitwriter native`
 CPPFLAGS += -I$(SYSTEMC)/include
+CPPFLAGS += -I$(ROOT)/frontend
 CPPFLAGS += -I$(ROOT)/utils
 
 all-objs: $(OBJS)

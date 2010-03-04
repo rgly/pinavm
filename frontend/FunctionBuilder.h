@@ -60,7 +60,7 @@ class FunctionBuilder {
   void cloneBlocks ();
 
  public:
-  FunctionBuilder(Process* process, Function* origFunction, Function* functionToJit, Value* resValue);
+  FunctionBuilder(Function* origFunction, Function* functionToJit, Value* resValue);
   ~FunctionBuilder();
   Function* buildFct();
 

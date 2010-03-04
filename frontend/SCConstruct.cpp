@@ -8,6 +8,7 @@ using namespace llvm;
 SCConstruct::SCConstruct()
 {
 	this->threadName = "NYI: SCConstruct::threadName";
+	this->staticallyFound = true;
 }
 
 SCConstruct::SCConstruct(Value* missingValue)
