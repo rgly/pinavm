@@ -227,9 +227,9 @@ if [ "$(llvm-config --version)" != 2.6 ]; then
 fi
 
 install_systemc_gcc
+( install_systemc_llvm )
 compile_pinapa
 
-#( install_systemc_llvm )
 
 
 echo "$(basename $0) done."
