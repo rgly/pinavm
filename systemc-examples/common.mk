@@ -1,6 +1,9 @@
 TARGET_ARCH=linux
 
+ifndef ROOT
 ROOT=../../
+endif
+
 include $(ROOT)/config.mk
 
 ifndef SUF
@@ -40,7 +43,7 @@ OPTFLAGS=-mem2reg -disable-opt -disable-inlining
 endif
 
 ifndef PINAPALIB
-PINAPALIB=/home/marquet/git/llvm-front-end/toplevel/libpinapa.so
+PINAPALIB=$(ROOT)/toplevel/libpinapa.so
 endif
 
 ifndef SYSTEMCLIB
