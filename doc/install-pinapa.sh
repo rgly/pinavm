@@ -106,6 +106,7 @@ install_llvm_gcc () {
 ####################################################
 
 install_systemc_llvm () {
+    echo "Installing SystemC (patched and compiled with LLVM) ..."
     cd "$DOWNLOAD_AND_COMPILE_DIR"
     rm -fr systemc-2.2.0-llvm
     test -f systemc-2.2.0.tgz || cp ~marquet/local/download/systemc-2.2.0.tgz .
