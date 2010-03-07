@@ -1,10 +1,11 @@
 all: llopt
 
-include ../../config.mk
+ROOT=../..
+include $(ROOT)/config.mk
 
-.PHONY: ../../config.mk
-../../config.mk:
-	@cd ../../ && $(MAKE) config.mk --no-print-directory -s
+.PHONY: $(ROOT)/config.mk
+$(ROOT)/config.mk:
+	@cd $(ROOT) && $(MAKE) config.mk --no-print-directory -s
 
 LLVMSYSTEMCROOT=$(INSTALL_PATH_SYSTEMC_LLVM)
 SYSTEMCROOT=$(INSTALL_PATH_SYSTEMC_GCC)
