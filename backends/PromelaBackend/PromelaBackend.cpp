@@ -38,7 +38,8 @@ using namespace llvm;
 void launch_promelabackend(Frontend * fe,
 			std::string OutputFilename,
 			bool useBoolInsteadOfInts,
-			bool relativeClocks)
+			bool relativeClocks,
+			bool bug)
 {
 	Module *llvmMod = fe->getLLVMModule();
 
@@ -64,7 +65,7 @@ void launch_promelabackend(Frontend * fe,
 	// Build up all of the passes that we want to do to the module.
 	PassManager Passes;
 
-	ModulePass *promelaWriter = new PromelaWriter(fe, *Out, useBoolInsteadOfInts, relativeClocks);
+	ModulePass *promelaWriter = new PromelaWriter(fe, *Out, useBoolInsteadOfInts, relativeClocks, bug);
 
 	Passes.add(new TargetData(llvmMod));
 	Passes.add(createVerifierPass());

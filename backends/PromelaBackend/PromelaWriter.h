@@ -85,10 +85,11 @@ class PromelaWriter : public ModulePass, public InstVisitor<PromelaWriter> {
   SCJit* scjit;
   bool relativeClocks;
   bool eventsAsBool;
+  bool insertBug;
 
 public:
   static char ID;
-  PromelaWriter(Frontend* fe, formatted_raw_ostream &o, bool encodeEventsAsBool, bool useRelativeClocks);
+  PromelaWriter(Frontend* fe, formatted_raw_ostream &o, bool encodeEventsAsBool, bool useRelativeClocks, bool bug);
   PromelaWriter(formatted_raw_ostream &o);
   const char *getPassName() const;
   void getAnalysisUsage(AnalysisUsage &AU) const;
@@ -139,7 +140,7 @@ public:
 
   void printModule(Module *M);
   void printModuleTypes(const TypeSymbolTable &ST);
-  void fillContainedStructs(const Type *Ty, std::set<const Type *> &);
+  bool fillContainedStructs(const Type *Ty, std::set<const Type *> *);
   void printFloatingPointConstants(Function &F);
   void printFloatingPointConstants(const Constant *C);
   void printFunctionSignature(const Function *F, bool Prototype, bool inlineFct);
@@ -235,6 +236,8 @@ public:
 		  const StructType* structType);
   void addVectors(std::vector<std::pair<std::string, const Type*> >* from,
 		  std::vector<std::pair<std::string, const Type*> >* to);
+  bool isTypeEmpty(const Type* ty);
+  bool isSystemCStruct(const StructType* ty);
   bool isSystemCType(const Type* ty);
   void getValueDependencies(Value* value,
 			  std::string prefix,

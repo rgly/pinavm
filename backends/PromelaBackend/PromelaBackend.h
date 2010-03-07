@@ -6,6 +6,6 @@ struct Frontend;
 void launch_promelabackend(Frontend * fe,
 			std::string OutputFilename,
 			bool useBoolInsteadOfInts,
-			bool relativeClocks);
+			bool relativeClocks, bool bug);
 
 #endif

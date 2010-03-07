@@ -97,7 +97,7 @@ static const AllocaInst *isDirectAlloca(const Value * V)
  ******************* Constructors ******************************************
  **************************************************************************/
 
-PromelaWriter::PromelaWriter(Frontend* fe, formatted_raw_ostream &o, bool encodeEventsAsBool, bool useRelativeClocks)
+PromelaWriter::PromelaWriter(Frontend* fe, formatted_raw_ostream &o, bool encodeEventsAsBool, bool useRelativeClocks, bool bug)
 	: ModulePass(&ID), Out(o), IL(0), Mang(0), LI(0), 
 	  TheModule(0), TAsm(0), TD(0), OpaqueCounter(0), NextAnonValueNumber(0) {
 	FPCounter = 0;
@@ -106,6 +106,7 @@ PromelaWriter::PromelaWriter(Frontend* fe, formatted_raw_ostream &o, bool encode
 	this->scjit = fe->getJit();
 	this->relativeClocks = useRelativeClocks;
 	this->eventsAsBool = encodeEventsAsBool;
+	this->insertBug = bug;
 }
 
 PromelaWriter::PromelaWriter(formatted_raw_ostream &o)
@@ -1417,7 +1418,7 @@ std::string PromelaWriter::GetValueName(const Value * Operand)
 	// Mangle globals with the standard mangler interface for LLC compatibility.
 	if (const GlobalValue * GV = dyn_cast < GlobalValue > (Operand)) {
 		res = Mang->getMangledName(GV);
-		return replaceAll(res, ".", "");
+		return replaceAll(res, ".", "-");
 	}
 	std::string Name = Operand->getName();
 
@@ -1444,7 +1445,7 @@ std::string PromelaWriter::GetValueName(const Value * Operand)
 	}
 
 	res = "llvm_cbe_" + VarName;
-	return replaceAll(res, ".", "");
+	return replaceAll(res, ".", "-");
 }
 
 /// writeInstComputationInline - Emit the computation for the specified
@@ -1960,7 +1961,7 @@ void PromelaWriter::printFloatingPointConstants(const Constant * C)
 void
 PromelaWriter::insertTypeName(const Type* Ty, std::string TyName)
 {
-	this->TypeNames[Ty] = replaceAll(TyName, ".", "");
+	this->TypeNames[Ty] = replaceAll(TyName, ".", "-");
 }
 
 int
@@ -1989,11 +1990,8 @@ void PromelaWriter::printModuleTypes(const TypeSymbolTable & TST)
 	// Print out forward declarations for structure types before anything else!
 	Out << "/* Structure forward decls */\n";
 	for (; I != End; ++I) {
-//		TRACE_6(":::::::::::::::::::::::::::: " << I->first << " -> " << I->second << "\n");
 		std::string Name = I->first; //not using Mang->makeNameProper(...)
 		insertTypeName(I->second, Name);
-//		TypeNames.insert(std::make_pair(I->second, Name));
-		//		TypeNames[I->second] = Name;
 	}
 	Out << '\n';
 
@@ -2004,10 +2002,9 @@ void PromelaWriter::printModuleTypes(const TypeSymbolTable & TST)
 
 		Process *proc = *processIt;
 		Function::arg_iterator argI = proc->getMainFct()->arg_begin();
-		const Value* moduleArg = &*argI;
-		
+		const Value* moduleArg = &*argI;		
 		const PointerType* PTy = cast<PointerType>(moduleArg->getType());
-		fillContainedStructs(PTy->getElementType(), StructPrinted);
+		fillContainedStructs(PTy->getElementType(), &StructPrinted);
 	}
 
 	std::set < const Type *>::iterator itS;
@@ -2020,6 +2017,8 @@ void PromelaWriter::printModuleTypes(const TypeSymbolTable & TST)
 		printType(Out, Ty, true, Name, true);
 		Out << ";\n\n";
 	}
+
+
 // 		std::vector < Function * >*usedFcts = proc->getUsedFunctions();
 // 		currentProcess = proc;
 
@@ -2061,25 +2060,29 @@ void PromelaWriter::printModuleTypes(const TypeSymbolTable & TST)
 //
 // TODO:  Make this work properly with vector types
 //
-void PromelaWriter::fillContainedStructs(const Type * Ty,
-					std::set <const Type * >&StructPrinted)
+bool PromelaWriter::fillContainedStructs(const Type * Ty, std::set <const Type * >* StructPrinted)
 {
+	bool isEmpty = true;
+
 	// Don't walk through pointers.
 	if (isa < PointerType > (Ty) || Ty->isPrimitiveType() || Ty->isInteger())
-		return;
-
+		return false;
+	
 	// Print all contained types first.
 	for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end(); I != E; ++I) {
 		Type* subTy = *I;
 		if (isSystemCType(subTy))
 			continue;
 		
-		fillContainedStructs(subTy, StructPrinted);
+		if (! fillContainedStructs(subTy, StructPrinted))
+			isEmpty = false;
 	}
 	if (isa < StructType > (Ty) || isa < ArrayType > (Ty)) {
-		// Check to see if we have already printed this struct.
-		StructPrinted.insert(Ty);
+		if (StructPrinted != NULL && ! isEmpty)
+			StructPrinted->insert(Ty);
 	}
+
+	return isEmpty;
 }
 
 void PromelaWriter::printFunctionSignature(const Function * F,
@@ -2132,18 +2135,20 @@ void PromelaWriter::printFunctionSignature(const Function * F,
 	bool printedArg = false;
 //	if (!args->empty()) {
 	Function::const_arg_iterator argI = F->arg_begin(), argE = F->arg_end();
+//	++argI;
 	for (; argI != argE; ++argI) {
 		const Value* currentArg = &*argI;
-		
-		std::string ArgName = GetValueName(currentArg);
-		TRACE_7("PRINTING ARG : " << ArgName << "\n");
-		if (printedArg)
-			Out << ", ";
-		if (inlineFct)
-			Out << ArgName;
-		else
-			printType(Out, currentArg->getType(), /*isSigned*/true, ArgName, false);
-		printedArg = true;
+		if (! isTypeEmpty(currentArg->getType())) { 
+			std::string ArgName = GetValueName(currentArg);
+			TRACE_7("PRINTING ARG : " << ArgName << "\n");
+			if (printedArg)
+				Out << ", ";
+			if (inlineFct)
+				Out << ArgName;
+			else
+				printType(Out, currentArg->getType(), /*isSigned*/true, ArgName, false);
+			printedArg = true;
+		}
 	}
 //	}
 	Out << ')';
@@ -2157,6 +2162,24 @@ PromelaWriter::addVectors(std::vector<pair<std::string, const Type*> >* from,
 	for (itFrom = from->begin(); itFrom != from->end(); ++itFrom) {
 		to->push_back(*itFrom);
 	}
+}
+
+bool
+PromelaWriter::isTypeEmpty(const Type* ty)
+{
+	while (isa<PointerType>(ty)) {
+ 		ty = cast<PointerType>(ty)->getElementType();
+	}
+
+	return fillContainedStructs(ty, NULL);
+}
+
+bool
+PromelaWriter::isSystemCStruct(const StructType* ty)
+{
+ 	std::string typeName = this->TypeNames.find(ty)->second;
+	TRACE_7("------------------------> isSystemCStruct > " << typeName << "\n");
+ 	return typeName.substr(0, 16).compare("struct-sc_core::") == 0 || typeName.substr(0, 12).compare("struct-std::") == 0;
 }
 
 bool
@@ -2194,6 +2217,9 @@ void PromelaWriter::printFunction(Function & F, bool inlineFct)
 	Out << "\n";
 	Out << "{\n";
 
+	if (! inlineFct)
+		Out << "atomic {\n";
+
 
 	// If this is a struct return function, handle the result with magic.
 // 	if (isStructReturn) {
@@ -2220,8 +2246,8 @@ void PromelaWriter::printFunction(Function & F, bool inlineFct)
 			Out << ";\n    ";
 			
 		} else if (I->getType() != Type::getVoidTy(F.getContext()) && !isInlinableInst(*I) && ! isSystemCType(I->getType())) {
-			TRACE_7("Adding new local variable : " << GetValueName(&*I) << "  ->  " );
-			I->dump();
+// 			TRACE_7("Adding new local variable : " << GetValueName(&*I) << "  ->  " );
+// 			I->dump();
 
 			printType(Out, I->getType(), false, GetValueName(&*I));
 			Out << ";\n    ";
@@ -2243,8 +2269,6 @@ void PromelaWriter::printFunction(Function & F, bool inlineFct)
 	}
 	Out << "\n";
 	TRACE_5("PromelaWriter > printing basic blocks\n");
-	if (! inlineFct)
-		Out << "atomic {\n";
 
 	// print the basic blocks
 	for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
@@ -2255,9 +2279,16 @@ void PromelaWriter::printFunction(Function & F, bool inlineFct)
 			printBasicBlock(BB);
 		}
 	}
+
+	if (currentProcess->getPid() == 0 &&  this->insertBug) {
+		Out << "    assert(false);\n";
+	} else {
+		Out << "finished[" << currentProcess->getPid() << "] = true;\n";
+	}
+
 	if (! inlineFct)
 		Out << "}\n";
-
+       
 	Out << "}\n\n";
 }
 
@@ -2939,9 +2970,9 @@ PromelaWriter::printCodingGlobals()
 	Out << 	"#define NBTHREADS " << nbThreads << "\n"
 		"#define NBEVENTS " << nbEvents << "\n"
 		"bool finished[NBTHREADS];\n\n"
-		"int Tg;\n"
+//		"int Tg;\n"
 		"int T[NBTHREADS];\n"
-		"int S[NBEVENTS];\n"
+//		"int S[NBEVENTS];\n"
 		"\n";
 
 	if (this->eventsAsBool) {
@@ -2981,67 +3012,91 @@ PromelaWriter::printWaitTimePrimitive()
 	Out << ""
 		"inline wait(pnumber, time)\n"
 		"{\n"
-		"    assert(T[pnumber] == Tg);\n"
+		//		"    assert(T[pnumber] == Tg);\n"
 		"    T[pnumber] = T[pnumber] + time;         \n";
-	for (ct = 0; ct < nbThreads - 1; ct++) {
-		Out << "    ( finished[" + intToString(ct) + "] || e[" + intToString(ct) + "] != 0 || T[pnumber] <= T["+ intToString(ct) + "] ) && \n";
+	
+	if (this->eventsAsBool) {
+		for (ct = 0; ct < nbThreads - 1; ct++) {
+			Out << "( finished[" << intToString(ct) << "] || waiters[" << intToString(ct) << "] || T[pnumber] <= T[" << intToString(ct) << "] ) &&\n";
+		}
+		Out << "( finished[" << intToString(nbThreads - 1) << "] || waiters[" << intToString(nbThreads - 1) << "] || T[pnumber] <= T[" << intToString(nbThreads - 1) << "] ) &&\n";
+
+	} else {
+
+		for (ct = 0; ct < nbThreads - 1; ct++) {
+			Out << "    ( finished[" + intToString(ct) + "] || e[" + intToString(ct) + "] != 0 || T[pnumber] <= T["+ intToString(ct) + "] ) && \n";
+		}
+		Out << "    ( finished[" + intToString(nbThreads - 1) + "] || e[" + intToString(nbThreads - 1) + "] != 0 || T[pnumber] <= T["+ intToString(nbThreads - 1) + "] );\n";
+//	Out <<"    Tg = T[pnumber];\n"
 	}
-	Out << "    ( finished[" + intToString(nbThreads - 1) + "] || e[" + intToString(nbThreads - 1) + "] != 0 || T[pnumber] <= T["+ intToString(nbThreads - 1) + "] );\n";
-	Out <<"    Tg = T[pnumber];\n"
-		"}\n\n";
+
+	Out << "}\n\n";
+
 }
 
 
 void
 PromelaWriter::printNotifyPrimitive()
 {
-//	int nbThreads = this->elab->getNumProcesses();
-// 	int ct;
-
-// 	vector < Process * >::iterator processIt = this->elab->getProcesses()->begin();
-// 	vector < Process * >::iterator endIt = this->elab->getProcesses()->end();
-
-// 	for (; processIt < endIt; ++processIt) {
-// 		Process *proc = *processIt;
- 		std::vector < Event* >* events = this->elab->getEvents();
-		vector < Event * >::iterator evIt = events->begin();
-		vector < Event * >::iterator endEvIt = events->end();
+	
+	if (this->eventsAsBool) {
 		
-		for (; evIt < endEvIt; ++evIt) {
+		vector < Event * >::iterator evIt = this->elab->getEvents()->begin();
+		vector < Event * >::iterator endEvIt = this->elab->getEvents()->end();
+		
+		for (; evIt < evIt; ++evIt) {
+			
 			Event* event = *evIt;
-			
-			Out << "inline notify_" << getEventName(NULL, event) << "(pnumber)\n"
+			Out << "inline notify_" << getEventName(NULL, event) << " (pnumber)\n"
 				"{\n";
-			vector < Process * >::iterator processIt2 = event->getProcesses()->begin();
-			vector < Process * >::iterator endIt2 = event->getProcesses()->end();
 			
-			for (; processIt2 < endIt2; ++processIt2) {
-				Process *proc2 = *processIt2;
+			vector < Process * >::iterator processIt = event->getProcesses()->begin();
+			vector < Process * >::iterator endIt = event->getProcesses()->end();
+			
+			for (; processIt < endIt; ++processIt) {
+				Process *proc = *processIt;
 				
-				if (this->eventsAsBool) {
-					Out << "    if\n";
-					Out << "      :: " << getEventName(proc2, event) << " == true ->\n";
-					Out << "        " << getEventName(proc2, event) << " = false;\n";
-					Out << "        assert(T[" << proc2->getPid() << "] <= T[pnumber]);\n";
-					Out << "        T[" << proc2->getPid() << "] = T[pnumber];\n";
-					Out << "        waiters[" << proc2->getPid() << "] = false;\n";
-					Out << "      :: (" << getEventName(proc2, event) << ") == false -> skip;\n";
-					Out << "    fi;\n";
-				} else {
-					Out << "    if\n"
-						"    :: e[" << proc2->getPid() << "] == " << event->getNumEvent() << "  ->\n"
-						"       e[" << proc2->getPid() << "] = 0;\n"
-						"       assert(T[" << proc2->getPid() << "] <= T[pnumber]);\n"
-						"       T[" << proc2->getPid() << "]=T[pnumber];\n"
-						"    :: else -> skip;"
-						"\n";
-					Out << "    fi;\n";
-
-				}
+				Out << "    if\n";
+				Out << "      :: " << getEventName(proc, event) << " == true ->\n";
+//					Out << "        assert(T[" << proc->getPid() << "] <= T[pnumber]);\n";
+				Out << "        " << getEventName(proc, event) << " = false;\n";
+				Out << "        T[" << proc->getPid() << "] = T[pnumber];\n";
+				Out << "        waiters[" << proc->getPid() << "] = false;\n";
+				Out << "      :: (" << getEventName(proc, event) << ") == false -> skip;\n";
+				Out << "    fi;\n";
 			}
-			Out << "    S[" << event->getNumEvent() << "] = " << "T[pnumber];\n";
 			Out << "}\n\n";
 		}
+	} else {
+		vector < Event * >::iterator evIt = this->elab->getEvents()->begin();
+		vector < Event * >::iterator endEvIt = this->elab->getEvents()->end();
+		
+		for (; evIt < endEvIt; ++evIt) {
+			
+			Event* event = *evIt;
+			Out << "inline notify_" << getEventName(NULL, event) << " (pnumber)\n"
+				"{\n";
+			
+			vector < Process * >::iterator processIt = event->getProcesses()->begin();
+			vector < Process * >::iterator endIt = event->getProcesses()->end();
+			
+			for (; processIt < endIt; ++processIt) {
+				Process *proc = *processIt;
+				
+				Out << "    if\n"
+					"    :: e[" << proc->getPid() << "] == " << event->getNumEvent() << "  ->\n"
+					"       e[" << proc->getPid() << "] = 0;\n"
+//						"       assert(T[" << proc->getPid() << "] <= T[pnumber]);\n"
+					"       T[" << proc->getPid() << "]=T[pnumber];\n"
+					"    :: else -> skip;"
+					"\n";
+				Out << "    fi;\n";
+			}
+			Out << "}\n\n";					
+		}
+	}
+//			Out << "    S[" << event->getNumEvent() << "] = " << "T[pnumber];\n";
+//		}
 //	}
 }
 
@@ -3067,18 +3122,20 @@ PromelaWriter::printWaitEventPrimitive()
 				"{\n";
 			
 			if (this->eventsAsBool) {
-				Out << "    assert(T[" << proc->getPid() << "] == Tg);\n"
+				Out <<  ""
+//					"    assert(T[" << proc->getPid() << "] == Tg);\n"
 					"    " << getEventName(proc, event) << " = true;\n"
 					"    waiters[" << proc->getPid() << "] = true;\n"
-					"     " << getEventName(proc, event) << " == false;\n"
-					"    assert(T[" << proc->getPid() << "] == S[" << event->getNumEvent() << "]);\n"
-					"    Tg = T[" << proc->getPid() << "];\n";
+					"     " << getEventName(proc, event) << " == false;\n";
+//					"    assert(T[" << proc->getPid() << "] == S[" << event->getNumEvent() << "]);\n"
+//					"    Tg = T[" << proc->getPid() << "];\n";
 			} else {
-				Out << 	"    assert(T[" << proc->getPid() << "] == Tg);\n"
+				Out <<  ""
+//					"    assert(T[" << proc->getPid() << "] == Tg);\n"
 					"    e[" << proc->getPid() << "] = " << event->getNumEvent() << ";\n"
-					"    e[" << proc->getPid() << "] == 0;\n"
-					"    assert(T[" << proc->getPid() << "] == S[" << event->getNumEvent() << "]);\n"
-					"    Tg = T[" << proc->getPid() << "];\n";
+					"    e[" << proc->getPid() << "] == 0;\n";
+//					"    assert(T[" << proc->getPid() << "] == S[" << event->getNumEvent() << "]);\n"
+//					"    Tg = T[" << proc->getPid() << "];\n";
 			}
 			Out << "}\n\n";
 		}
@@ -3168,7 +3225,7 @@ PromelaWriter::printInitSection()
 
 	if (this->eventsAsBool) {
 		Out << ""
-			"    Tg=0;\n"
+//			"    Tg=0;\n"
 			"    do\n"
 			"      :: i == NBTHREADS -> break;\n"
 			"      :: else ->\n"
@@ -3177,16 +3234,17 @@ PromelaWriter::printInitSection()
 			"         finished[i] = false;\n"
 			"         i++;\n"
 			"    od;\n"
-			"    i = 0;\n"
-			"    do\n"
-			"      :: i == NBEVENTS -> break;\n"
-			"      :: else ->\n"
-			"         S[i] = 0;\n"
-			"         i++;\n"
-			"    od;\n"
+// 			"    i = 0;\n"
+// 			"    do\n"
+// 			"      :: i == NBEVENTS -> break;\n"
+// 			"      :: else ->\n"
+// 			"         S[i] = 0;\n"
+// 			"         i++;\n"
+// 			"    od;\n"
 			"    \n";
 	} else {
-		Out <<  "    Tg=0;\n"
+		Out <<  ""
+//			"    Tg=0;\n"
 			"    do\n"
 			"      :: i == NBTHREADS -> break;\n"
 			"      :: else ->\n"
@@ -3194,39 +3252,41 @@ PromelaWriter::printInitSection()
 			"         T[i] = 0;\n"
 			"         finished[i] = false;\n"
 			"         i++;\n"
-			"    od;\n"
-			"    i = 0;\n"
-			"    do\n"
-			"      :: i == NBEVENTS -> break;\n"
-			"      :: else ->\n"
-			"         S[i] = 0;\n"
-			"         i++;\n"
-			"    od;\n"
+ 			"    od;\n"
+// 			"    i = 0;\n"
+// 			"    do\n"
+// 			"      :: i == NBEVENTS -> break;\n"
+// 			"      :: else ->\n"
+// 			"         S[i] = 0;\n"
+// 			"         i++;\n"
+// 			"    od;\n"
 			"\n";
 	}
 
 	for (; processIt < endIt; ++processIt) {
 		Process *proc = *processIt;
-		const std::string fctName = GetValueName(proc->getMainFct()) + "_pnumber_" + intToString(proc->getPid());
-		const std::string modName = "mod_" + proc->getModule()->getUniqueName();
-		Out << "    ";
-		printType(Out, proc->getMainFct()->arg_begin()->getType() , false, modName, false, AttrListPtr());
-		Out << ";\n";
+		if (!isTypeEmpty(proc->getMainFct()->arg_begin()->getType())) {
+			const std::string fctName = GetValueName(proc->getMainFct()) + "_pnumber_" + intToString(proc->getPid());
+			const std::string modName = "mod_" + proc->getModule()->getUniqueName();
+			Out << "    ";
+			printType(Out, proc->getMainFct()->arg_begin()->getType() , false, modName, false, AttrListPtr());
+			Out << ";\n";
+		}
 	}
 
 	Out << "\n";
-	Out <<
-		"    mod_Sink.field3 = true;\n"
-		"    mod_Source.field2 = true;\n"
-		"\n"
-		"    atomic {\n";
+	Out <<	"    atomic {\n";
 
 	processIt = this->elab->getProcesses()->begin();
 	for (; processIt < endIt; ++processIt) {
 		Process *proc = *processIt;
 		const std::string fctName = GetValueName(proc->getMainFct()) + "_pnumber_" + intToString(proc->getPid());
-		const std::string modName = "mod_" + proc->getModule()->getUniqueName();
-		Out << "        run " + fctName + "(" << modName << ");\n";
+		if (! isTypeEmpty(proc->getMainFct()->arg_begin()->getType())) {
+			const std::string modName = "mod_" + proc->getModule()->getUniqueName();
+			Out << "        run " + fctName + "(" << modName << ");\n";
+		} else {
+			Out << "        run " + fctName + "();\n";
+		}
 	}
 	
 	Out << "    }\n}\n";

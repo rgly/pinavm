@@ -11,6 +11,8 @@
 #include "ClockChannel.hpp"
 
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Assembly/Writer.h"
+#include "llvm/Support/Streams.h"
 
 
 #include "sysc/kernel/sc_process_table.h"
@@ -77,8 +79,9 @@ Process *SCElab::addProcess(IRModule * mod,
 //   const std::vector<const Type*> argsType;
 //   FunctionType* FT = FunctionType::get(Type::getVoidTy(getGlobalContext()), argsType, false);
 	Process *p = new Process(mod, mainFct, processName, mainFctName);
+	mainFct->dump();
 	TRACE_2("Add (sc_process_b) " << process << " -> (Process) " << p
-		<< " ; Fonction : " << mainFctName << " " << mainFct << "\n");
+		<< " ; Fonction : " << mainFctName << " " << mainFct << " mainFct->name = " << mainFct->getNameStr() << " type arg 1 : " << this->llvmMod->getTypeName(cast<PointerType>(mainFct->arg_begin()->getType())->getElementType()) << "\n");
 
 	mod->addProcess(p);
 	this->processes.push_back(p);
