@@ -8,7 +8,13 @@ all: configure-all
 	autoconf -o $@ $<
 
 config.status: ./configure
-	./config.status --recheck
+	if [ -x ./config.status ]; then \
+		./config.status --recheck ;\
+	else \
+		echo "Please, run the configure script in $(PWD)" ;\
+		echo "and try again." ;\
+		exit 1 ;\
+	fi
 
 %: %.in config.status
 	@./config.status $*

@@ -7,7 +7,7 @@ trap 'echo "Error detected! End of script.";exit 1' ERR
 ################ CONFIG  #####################
 ##############################################
 
-(cd .. && make config.sh)
+(cd .. && make config.sh) || exit 1
 source ../config.sh
 
 SCRIPT_DIR=`pwd`
