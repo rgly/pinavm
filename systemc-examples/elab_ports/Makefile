@@ -1,16 +1,5 @@
-all: llopt
-
-ROOT=../..
-include $(ROOT)/config.mk
-
-.PHONY: $(ROOT)/config.mk
-$(ROOT)/config.mk:
-	@cd $(ROOT) && $(MAKE) config.mk --no-print-directory -s
-
-LLVMSYSTEMCROOT=$(INSTALL_PATH_SYSTEMC_LLVM)
-SYSTEMCROOT=$(INSTALL_PATH_SYSTEMC_GCC)
-
 TARGET_ARCH=linux
+SRC = main.cpp
 
 ifndef SUF
 SUF=cpp
@@ -45,25 +34,27 @@ CPPFLAGS=-fno-inline-functions
 endif
 
 ifndef OPTFLAGS
-OPTFLAGS=-mem2reg -disable-opt
+OPTFLAGS=-mem2reg -disable-opt -disable-inlining
 endif
 
 ifndef PINAPALIB
-PINAPALIB=../libpinapa.so
+PINAPALIB=/home/marquet/git/llvm-front-end/toplevel/libpinapa.so
 endif
 
 ifndef SYSTEMCLIB
-SYSTEMCLIB=$(SYSTEMCROOT)/lib-linux/libsystemc.a
+SYSTEMCLIB=$(INTACTSYSTEMCROOT)/lib-linux/libsystemc.a
 endif
 
 ifndef CPPSCFLAGS
-CPPSCFLAGS=-I$(SYSTEMCROOT)/ -I$(SYSTEMCROOT)/include -I$(SYSTEMCROOT)/include/sysc
+CPPSCFLAGS=-I$(INTACTSYSTEMCROOT)/ -I$(INTACTSYSTEMCROOT)/include -I$(INTACTSYSTEMCROOT)/include/sysc
 endif
-
 
 GCC_SSA=${patsubst %.$(SUF),%.$(SUF).ssa,$(SRC)}
 LLOPT=${patsubst %.ll,%.opt.ll,$(LL)}
 
+all: main.exe main.opt.sc.bc
+
+include ${SCOOT_HOME}/common.mk
 
 ll: $(LL)
 llopt: $(LLOPT)
@@ -82,14 +73,17 @@ gcc-ssa: $(GCC_SSA)
 %.opt.ll: %.opt.bc Makefile
 	llvm-dis -f $*.opt.bc -o $@
 
-%.ll: %.$(SUF) Makefile
-	llvm-$(COMP) $(LLVMGCCFLAGS) -emit-llvm -S $< -o $@ $(INCLUDE)
+%.ll: %.bc Makefile
+	llvm-dis -f $*.bc -o $*.ll
 
-%.bc: %.ll Makefile
-	llvm-as -f $*.ll -o $*.bc
+%.bc: %.$(SUF) Makefile
+	llvm-$(COMP) $(LLVMGCCFLAGS) -emit-llvm -c $< -o $@ $(INCLUDE)
 
-%.exe: %.$(SUF) Makefile
+%.exe: %.$(SUF) Makefile $(PINAPALIB)
 	$(COMP) $< -o $@ $(PINAPALIB) $(SYSTEMCLIB) $(CPPSCFLAGS)
+
+%.simu: %.$(SUF) Makefile
+	$(COMP) $< -o $@ $(SYSTEMCLIB) $(CPPSCFLAGS)
 
 # -fdump-tree-ssa works only if -O is provided.
 %.$(SUF).ssa: %.$(SUF) Makefile ../include.mk

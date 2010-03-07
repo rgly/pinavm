@@ -1,13 +1,13 @@
 #!/bin/bash
 
 trap 'echo "Error detected! End of script.";exit 1' ERR
-set -x
+#set -x
 
 ##############################################
 ################ CONFIG  #####################
 ##############################################
 
-(cd .. && make config.sh)
+(cd .. && make config.sh) || exit 1
 source ../config.sh
 
 SCRIPT_DIR=`pwd`
@@ -24,11 +24,6 @@ test -d "$INSTALL_PATH_LLVM" || \
 test -d "$INSTALL_PATH_SYSTEMC_LLVM" || \
     (echo "$INSTALL_PATH_SYSTEMC_LLVM does not exist, creating it" && \
     mkdir -p "$INSTALL_PATH_SYSTEMC_LLVM")
-
-test -d "$INSTALL_PATH_PINAPA" || \
-    (echo "$INSTALL_PATH_PINAPA does not exist, creating it" && \
-    mkdir -p "$INSTALL_PATH_PINAPA")
-
 
 llvm_configure_flags="--prefix=$INSTALL_PATH_LLVM --enable-debug-runtime --disable-optimized --enable-checking --enable-bindings=none --enable-libffi=no"
 
@@ -106,6 +101,7 @@ install_llvm_gcc () {
 ####################################################
 
 install_systemc_llvm () {
+    echo "Installing SystemC (patched and compiled with LLVM) ..."
     cd "$DOWNLOAD_AND_COMPILE_DIR"
     rm -fr systemc-2.2.0-llvm
     test -f systemc-2.2.0.tgz || cp ~marquet/local/download/systemc-2.2.0.tgz .
@@ -185,22 +181,55 @@ install_systemc_llvm () {
 ###############################
 ########### PINAPA ############
 ###############################
-install_pinapa () {
+compile_pinapa () {
     echo "Building pinapa..."
-    export PATH=${INSTALL_PATH_SYSTEMC_LLVM}/bin:${PATH}
     cd ${SRC_ROOT_DIR}/toplevel
-    rm -rf ${INSTALL_PATH_PINAPA}
-    mkdir -p ${INSTALL_PATH_PINAPA}
     make
-    cp libpinapa.so ${INSTALL_PATH_PINAPA}
 }
 
-install_llvm
-install_llvm_gcc
-install_systemc_gcc
-install_pinapa
+do_you_want () {
+    echo "Do you want me to install it for you?"
+    echo "y: Yes, install it now"
+    echo "other: No, I'll install it myself."
+    read answer
+    if [ "$answer" = "y" ]; then
+	"$@"
+    else
+	echo "aborting."
+	exit 1
+    fi
+}
 
-#( install_systemc_llvm )
+# TODO: all this tests should probably be moved to the configure
+# script.
+if ! llvm-gcc --version > /dev/null; then
+    echo "llvm-gcc doesn't seem to be installed on your system."
+    echo "you can install it yourself (aptitude install llvm-gcc does the"
+    echo "trick on Debian systems), or let me do it."
+    do_you_want install_llvm_gcc
+fi
+
+# Debian's llvm-config give /usr/include/llvm while hand-compiled
+# llvm-config gives the path without llvm/.
+if [ ! -r "$(llvm-config --includedir)/llvm/LLVMContext.h" ] && \
+    [ ! -r "$(llvm-config --includedir)/LLVMContext.h" ] ; then
+    echo "LLVM doesn't seem to be installed on your system."
+    echo "you can install it yourself (aptitude install llvm-dev does the"
+    echo "trick on Debian systems), or let me do it (but it takes a long time)"
+    do_you_want install_llvm
+fi
+
+if [ "$(llvm-config --version)" != 2.6 ]; then
+    echo "LLVM's version isn't 2.6. It's unlikely that anything work unless"
+    echo "LLVM 2.6 is installed (and the corresponding llvm-config executable"
+    echo "be at the front of your PATH)."
+    do_you_want install_llvm
+fi
+
+install_systemc_gcc
+( install_systemc_llvm )
+compile_pinapa
+
 
 
 echo "$(basename $0) done."
