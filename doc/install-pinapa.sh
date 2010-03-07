@@ -1,7 +1,7 @@
 #!/bin/bash
 
 trap 'echo "Error detected! End of script.";exit 1' ERR
-set -x
+#set -x
 
 ##############################################
 ################ CONFIG  #####################
@@ -195,8 +195,34 @@ install_pinapa () {
     cp libpinapa.so ${INSTALL_PATH_PINAPA}
 }
 
-install_llvm
-install_llvm_gcc
+if [ ! -r "$(llvm-config --includedir)/LLVMContext.h" ]; then
+    echo "LLVM doesn't seem to be installed on your system."
+    echo "Do you want me to install it for you?"
+    echo "y: Yes, install it now"
+    echo "other: No, I'll install it myself."
+    read answer
+    if [ "$answer" = "y" ]; then
+	install_llvm
+    else
+	echo "aborting."
+	exit 1
+    fi
+fi
+
+if ! llvm-gcc --version > /dev/null; then
+    echo "llvm-gcc doesn't seem to be installed on your system."
+    echo "Do you want me to install it for you?"
+    echo "y: Yes, install it now"
+    echo "other: No, I'll install it myself."
+    read answer
+    if [ "$answer" = "y" ]; then
+	install_llvm_gcc
+    else
+	echo "aborting."
+	exit 1
+    fi
+fi
+
 install_systemc_gcc
 install_pinapa
 
