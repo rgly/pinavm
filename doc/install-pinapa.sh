@@ -209,6 +209,8 @@ do_you_want () {
     fi
 }
 
+# TODO: all this tests should probably be moved to the configure
+# script.
 if ! llvm-gcc --version > /dev/null; then
     echo "llvm-gcc doesn't seem to be installed on your system."
     echo "you can install it yourself (aptitude install llvm-gcc does the"
@@ -216,7 +218,10 @@ if ! llvm-gcc --version > /dev/null; then
     do_you_want install_llvm_gcc
 fi
 
-if [ ! -r "$(llvm-config --includedir)/LLVMContext.h" ]; then
+# Debian's llvm-config give /usr/include/llvm while hand-compiled
+# llvm-config gives the path without llvm/.
+if [ ! -r "$(llvm-config --includedir)/llvm/LLVMContext.h" ] && \
+    [ ! -r "$(llvm-config --includedir)/LLVMContext.h" ] ; then
     echo "LLVM doesn't seem to be installed on your system."
     echo "you can install it yourself (aptitude install llvm-dev does the"
     echo "trick on Debian systems), or let me do it (but it takes a long time)"
