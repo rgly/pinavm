@@ -195,32 +195,38 @@ install_pinapa () {
     cp libpinapa.so ${INSTALL_PATH_PINAPA}
 }
 
-if [ ! -r "$(llvm-config --includedir)/LLVMContext.h" ]; then
-    echo "LLVM doesn't seem to be installed on your system."
+do_you_want () {
     echo "Do you want me to install it for you?"
     echo "y: Yes, install it now"
     echo "other: No, I'll install it myself."
     read answer
     if [ "$answer" = "y" ]; then
-	install_llvm
+	"$@"
     else
 	echo "aborting."
 	exit 1
     fi
-fi
+}
 
 if ! llvm-gcc --version > /dev/null; then
     echo "llvm-gcc doesn't seem to be installed on your system."
-    echo "Do you want me to install it for you?"
-    echo "y: Yes, install it now"
-    echo "other: No, I'll install it myself."
-    read answer
-    if [ "$answer" = "y" ]; then
-	install_llvm_gcc
-    else
-	echo "aborting."
-	exit 1
-    fi
+    echo "you can install it yourself (aptitude install llvm-gcc does the"
+    echo "trick on Debian systems), or let me do it."
+    do_you_want install_llvm_gcc
+fi
+
+if [ ! -r "$(llvm-config --includedir)/LLVMContext.h" ]; then
+    echo "LLVM doesn't seem to be installed on your system."
+    echo "you can install it yourself (aptitude install llvm-dev does the"
+    echo "trick on Debian systems), or let me do it (but it takes a long time)"
+    do_you_want install_llvm
+fi
+
+if [ "$(llvm-config --version)" != 2.6 ]; then
+    echo "LLVM's version isn't 2.6. It's unlikely that anything work unless"
+    echo "LLVM 2.6 is installed (and the corresponding llvm-config executable"
+    echo "be at the front of your PATH)."
+    do_you_want install_llvm
 fi
 
 install_systemc_gcc
