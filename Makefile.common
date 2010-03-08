@@ -4,9 +4,8 @@ SHELL = /bin/sh
 
 include $(ROOT)/config.mk
 
-.PHONY: $(ROOT)/config.mk
 $(ROOT)/config.mk:
-	@cd $(ROOT) && $(MAKE) config.mk --no-print-directory -s
+	@cd $(ROOT) && $(MAKE) config.mk
 
 ifndef LLVMBACKENDSHEADERS
    $(error Please set environment variable LLVMBACKENDSHEADERS)
