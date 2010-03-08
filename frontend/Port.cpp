@@ -73,5 +73,6 @@ Port::getType()
 void Port::printElab(int sep, string prefix)
 {
 	this->printPrefix(sep, prefix);
-	//  TRACE("Port : " << (void*) this << " (\"" << this->name() << "\")\n");
+	std::string chstr = this->channel->toString();
+	TRACE("Port : " << this->getName() << " (\"" << (void*) this << "\"), bounded to channel " << chstr << "\n");
 }

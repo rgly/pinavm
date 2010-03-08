@@ -41,12 +41,10 @@ protected:
 	Function *getMainFct();
 	IRModule *getModule();
 	void addEvent(Event * ev);
-	void addPort(Port* p);
 	void printIR(SCCFactory * sccfactory);
 	void printElab(int sep, std::string prefix);
 	std::vector < Function * >*getUsedFunctions();
 	std::vector < Event* >* getEvents();
-	std::vector < Port* >* getPorts();
 	void addUsedFunction(Function * fct);
 	int getPid();
 };

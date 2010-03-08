@@ -71,12 +71,18 @@ string IRModule::getUniqueName()
 /********** Pretty print **********/
 void IRModule::printElab(int sep, string prefix)
 {
-	std::vector < Process * >::iterator itP;
+	std::vector < Process * >::iterator itProcesses;
+	std::vector < Port * >::iterator itPorts;
 	this->printPrefix(sep, prefix);
 	TRACE("Module : " << this << "\n");
-	for (itP = this->processes.begin(); itP < this->processes.end();
-	     itP++) {
-		Process *p = *itP;
+	for (itPorts = this->ports.begin(); itPorts < this->ports.end(); ++itPorts) {
+		Port* port = *itPorts;
+		port->printElab(sep + 3, prefix);
+	}
+	TRACE("\n");
+	for (itProcesses = this->processes.begin(); itProcesses < this->processes.end();
+	     itProcesses++) {
+		Process *p = *itProcesses;
 		p->printElab(sep + 3, prefix);
 	}
 }

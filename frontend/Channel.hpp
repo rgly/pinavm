@@ -1,6 +1,7 @@
 #ifndef _CHANNEL_HPP
 #define _CHANNEL_HPP
 
+#include <string.h>
 #include <vector>
 #include <llvm/Type.h>
 
@@ -16,7 +17,7 @@ typedef enum {
 	CLOCK_CHANNEL
 } channel_id;
 
-struct Channel {
+class Channel {
 protected:
 	channel_id id;
 	std::vector<Port*>* ports;
@@ -27,6 +28,7 @@ public:
 	std::vector<Port*>* getPorts();
 	channel_id getID();
 	Type* getType();
+	virtual std::string toString() = 0;
 };
 
 

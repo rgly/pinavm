@@ -16,6 +16,7 @@ protected:
 public:
 	SimpleChannel(Type* globalVariableType, std::string globalVarTypeName);
 	std::string getGlobalVariableName();
+	std::string toString();
 };
 
 #endif
