@@ -530,12 +530,11 @@ diff -rupNB -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_simcontext.cpp src/sys
  #include "sysc/kernel/sc_cor_fiber.h"
  #include "sysc/kernel/sc_cor_pthread.h"
  #include "sysc/kernel/sc_cor_qt.h"
-@@ -160,41 +161,12 @@
+@@ -160,41 +161,11 @@
  #include "sysc/utils/sc_mempool.h"
  #include "sysc/utils/sc_utils_ids.h"
  
-+extern void pinapa_callback();
-+extern void pinapa_callback();
++extern "C" void pinapa_callback();
  namespace sc_core {
  
  sc_stop_mode stop_mode = SC_STOP_FINISH_DELTA;

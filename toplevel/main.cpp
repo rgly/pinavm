@@ -5,6 +5,28 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/System/Signals.h"
 
+// For JIT
+#include "llvm/LLVMContext.h"
+#include "llvm/Module.h"
+#include "llvm/ModuleProvider.h"
+#include "llvm/Type.h"
+#include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/CodeGen/LinkAllCodegenComponents.h"
+#include "llvm/ExecutionEngine/GenericValue.h"
+#include "llvm/ExecutionEngine/JIT.h"
+#include "llvm/ExecutionEngine/JITEventListener.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/PluginLoader.h"
+#include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/System/Process.h"
+#include "llvm/System/Signals.h"
+#include "llvm/Target/TargetSelect.h"
+#include <cerrno>
+
+#include "llvm/System/DynamicLibrary.h"
+
 #include "FrontendItf.hpp"
 #include "SimpleBackend.h"
 #include "PromelaBackend.h"
@@ -27,6 +49,13 @@ InputFilename(cl::Positional, cl::desc("<input bitcode file>"),
 static cl::opt < std::string >
 Args("args", cl::desc("<input args>"),
 	      cl::init(""), cl::value_desc("string"));
+
+/*
+TODO: this would be better than Args, to allow having multiple arguments.
+static cl::list<std::string>
+InputArgv(cl::ConsumeAfter, cl::desc("<program arguments>..."));
+*/
+
 
 static cl::opt < std::string >
 OutputFilename("o", cl::desc("Override output filename"),
@@ -51,9 +80,10 @@ InlineFcts("inline", cl::desc("Inline all functions"));
 
 bool disable_debug_msg;
 
+extern "C"
 void pinapa_callback()
 {
-	TRACE_1("Entering Pinapa, building module\n");
+	TRACE_1("Entering Pinapa (callback), building module\n");
 
 	if (DisableDbgMsg) {
 		disable_debug_msg = true;
@@ -81,7 +111,111 @@ void pinapa_callback()
 	}
 }
 
+static ExecutionEngine *EE = 0;
 
+int load_and_run_sc_main(std::string & InputFile)
+{
+	std::vector<std::string> InputArgv;
+
+	// Lot of copy-paste from lli.cpp
+	LLVMContext &Context = getGlobalContext();
+	
+	// If we have a native target, initialize it to ensure it is linked in and
+	// usable by the JIT.
+	InitializeNativeTarget();
+
+	// So that JIT-ed code can call pinapa_callback.
+	sys::DynamicLibrary::AddSymbol("pinapa_callback", (void *)pinapa_callback);
+
+	// Load the bitcode...
+	std::string ErrorMsg;
+	ModuleProvider *MP = NULL;
+	if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFile,&ErrorMsg)){
+		MP = getBitcodeModuleProvider(Buffer, Context, &ErrorMsg);
+		if (!MP) delete Buffer;
+	}
+  
+	if (!MP) {
+		errs() << "error loading program '" << InputFile << "': "
+		       << ErrorMsg << "\n";
+		exit(1);
+	} else {
+		TRACE_1("bitcode file loaded\n");
+	}
+
+	// Get the module as the MP could go away once EE takes over.
+	Module *Mod = MP->getModule();
+	if (!Mod) {
+		errs() << "bitcode didn't read correctly.\n";
+		errs() << "Reason: " << ErrorMsg << "\n";
+		exit(1);
+	}
+
+	EngineBuilder builder(MP);
+	builder.setErrorStr(&ErrorMsg);
+	builder.setEngineKind(EngineKind::JIT);
+
+	EE = builder.create();
+	if (!EE) {
+		if (!ErrorMsg.empty())
+			errs() << "error creating EE: " << ErrorMsg << "\n";
+		else
+			errs() << "unknown error creating EE!\n";
+		exit(1);
+	}
+	
+	// TODO: manage --args correctly.
+
+	// Add the module's name to the start of the vector of arguments to main().
+	InputArgv.push_back("main.exe");
+	InputArgv.push_back(Args);
+
+	// Call the main function from M as if its signature were:
+	//   int main (int argc, char **argv, const char **envp)
+	// using the contents of Args to determine argc & argv, and the contents of
+	// EnvVars to determine envp.
+	//
+	std::string EntryFunc = "sc_main";
+	Function *EntryFn = Mod->getFunction(EntryFunc);
+	if (!EntryFn) {
+		errs() << '\'' << EntryFunc << "\' function not found in module.\n";
+		return -1;
+	}
+
+	// TODO: is this usefull?
+	// If the program doesn't explicitly call exit, we will need the Exit
+	// function later on to make an explicit call, so get the function now. 
+	Constant *Exit = Mod->getOrInsertFunction("exit", Type::getVoidTy(Context),
+						  Type::getInt32Ty(Context),
+						  NULL);
+	
+	// Reset errno to zero on entry to main.
+	errno = 0;
+	
+	// Run static constructors.
+	// EE->runStaticConstructorsDestructors(false);
+
+	// Run main.
+	int Result = EE->runFunctionAsMain(EntryFn, InputArgv, environ);
+
+	// Run static destructors.
+	EE->runStaticConstructorsDestructors(true);
+	
+	// If the program didn't call exit explicitly, we should call it now. 
+	// This ensures that any atexit handlers get called correctly.
+	if (Function *ExitF = dyn_cast<Function>(Exit)) {
+		std::vector<GenericValue> Args;
+		GenericValue ResultGV;
+		ResultGV.IntVal = APInt(32, Result);
+		Args.push_back(ResultGV);
+		EE->runFunction(ExitF, Args);
+		errs() << "ERROR: exit(" << Result << ") returned!\n";
+		abort();
+	} else {
+		errs() << "ERROR: exit defined with wrong prototype!\n";
+		abort();
+	}
+}
 
 int main(int argc, char **argv)
 {
@@ -97,6 +231,10 @@ int main(int argc, char **argv)
 
 		sys::PrintStackTraceOnErrorSignal();
 
+#ifdef LOAD_PLATFORM_BC
+		TRACE_1("Loading bitcode file\n");
+		load_and_run_sc_main(InputFilename);
+#else
 		TRACE_1("Executing SystemC elaboration\n");
 		if (Args != "") {
 			
@@ -107,6 +245,7 @@ int main(int argc, char **argv)
 			launch_systemc(2, arguments);
 		} else
 			launch_systemc(0, NULL);
+#endif
 	} catch(const std::string & msg) {
 		errs() << argv[0] << ": " << msg << "\n";
 	} catch(...) {

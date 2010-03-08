@@ -1,6 +1,8 @@
 SRCS = ${wildcard *.cpp}
 TARGET = libpinapa.so
+TARGET_EXE = pinapa
 all: $(TARGET)
+both: $(TARGET) $(TARGET_EXE)
 
 ROOT=..
 include $(ROOT)/Makefile.common
@@ -40,3 +42,10 @@ utils: $(UTILS_SRC)
 
 $(TARGET): frontend backends utils $(OBJS)
 	g++ -shared -o $@ $(ALL_OBJS) $(LDFLAGS) $(LDLIBS)
+
+
+main-load-bc.o: main.cpp
+	$(CXX) -c $< -o $@ $(CPPFLAGS) -DLOAD_PLATFORM_BC $(CXXFLAGS) $(CXXEXTRAFLAGS)
+
+$(TARGET_EXE): frontend backends utils main-load-bc.o $(filter-out main.o, $(OBJS))
+	g++ -o $@ $(filter-out main.o, $(ALL_OBJS)) main-load-bc.o $(LDFLAGS) $(LDLIBS)
