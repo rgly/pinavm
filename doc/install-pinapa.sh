@@ -17,13 +17,13 @@ SCRIPT_DIR=`pwd`
      (echo "$DOWNLOAD_AND_COMPILE_DIR does not exist, creating it" && \
      mkdir -p "$DOWNLOAD_AND_COMPILE_DIR")
 
-test -d "$INSTALL_PATH_LLVM" || \
-    (echo "$INSTALL_PATH_LLVM does not exist, creating it" && \
-    mkdir -p "$INSTALL_PATH_LLVM")
-
 test -d "$INSTALL_PATH_SYSTEMC_LLVM" || \
     (echo "$INSTALL_PATH_SYSTEMC_LLVM does not exist, creating it" && \
     mkdir -p "$INSTALL_PATH_SYSTEMC_LLVM")
+
+test -d "$INSTALL_PATH_SYSTEMC_GCC" || \
+    (echo "$INSTALL_PATH_SYSTEMC_GCC does not exist, creating it" && \
+    mkdir -p "$INSTALL_PATH_SYSTEMC_GCC")
 
 llvm_configure_flags="--prefix=$INSTALL_PATH_LLVM --enable-debug-runtime --disable-optimized --enable-checking --enable-bindings=none --enable-libffi=no"
 
@@ -31,6 +31,10 @@ llvm_configure_flags="--prefix=$INSTALL_PATH_LLVM --enable-debug-runtime --disab
 ########## LLVM ###############
 ###############################
 install_llvm() {
+    test -d "$INSTALL_PATH_LLVM" || \
+	(echo "$INSTALL_PATH_LLVM does not exist, creating it" && \
+	mkdir -p "$INSTALL_PATH_LLVM")
+
     echo "Building llvm..."
     cd "$DOWNLOAD_AND_COMPILE_DIR"
     test -f llvm-2.6.tar.gz || wget http://llvm.org/releases/2.6/llvm-2.6.tar.gz
