@@ -32,5 +32,6 @@ void DefaultTimeHandler::insertInMap(std::map < Function *,
 					"_ZN7sc_core9sc_module4waitEi");
 	SCConstructHandler::insertInMap(scchandlers,
 					"_ZN7sc_core9sc_module4waitEdNS_12sc_time_unitE");
-
+	SCConstructHandler::insertInMap(scchandlers,
+					"_ZN7sc_core4waitEdNS_12sc_time_unitEPNS_13sc_simcontextE");
 }
