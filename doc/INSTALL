@@ -1,7 +1,10 @@
 0) Set the PATH so that a good compiler is used, for instance gcc-4.2
 
 $ which g++
-/usr/local/soft/gcc/4.2.4/bin/g++
+/usr/local/soft/gcc/4.4.0/bin/g++
+
+Make sure your version isn't listed here:
+http://llvm.org/docs/GettingStarted.html#brokengcc
 
 1) Download the tool
 
@@ -18,40 +21,26 @@ cd $TOOL
 autoconf
 ./configure --with-tools-dir=$DOWNLOAD
 
-4) Set environment variables:
-
-export SYSTEMCFRONTEND=$TOOL/frontend
-export SYSTEMCROOT=$DOWNLOAD/download/systemc-2.2.0-gcc
-
-5) Execute the script
+4) Execute the script
 
 cd $TOOL/doc
 ./install_pinapa.sh
 
+The script may have to install LLVM and llvm-gcc. If it does so, then
+the installed tools must be added to your PATH, like:
 
-###################################################
-(draft section)
+export PATH=$PATH:$DOWNLOAD/lib/llvm-gcc/bin:$DOWNLOAD/lib/llvm-2.6/bin
 
-#################
-3) Compile and execute the front-end
-#################
+You may have to restart ./install_pinapa.sh after setting your PATH.
 
-Set $INSTALL_PATH_SYSTEMC_GCC to the same value as the one in
-install_pinapa.sh.
+The script will compile the front-end and back-end. We can now run the
+examples.
 
-$ cd location-to-frontend
-$ g++ -g *.cpp `llvm-config --cxxflags --ldflags --libs jit bitreader bitwriter native` -I$INSTALL_PATH_SYSTEMC_GCC/include -L $INSTALL_PATH_SYSTEMC_GCC/lib-linux -shared -o libpinapa.so
+5) Compile an example
 
-#################
-4) Compile your example
-#################
+cd $TOOL/systemc-examples/jerome-chain
+make
 
-Use the file Makefile.examples and produce
-$ make example.exe
-$ make example.opt.bc
+6) Run an example
 
-#################
-5) Run the analysis of your example 
-#################
-
-$ ./example.exe example.opt.bc
+./main.exe -print-ir -print-elab -b promela -o ok.3.pr main.opt.sc.bc -inline -args 3
