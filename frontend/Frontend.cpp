@@ -166,7 +166,9 @@ bool Frontend::run()
 				while (i != ie) {
 					CallInst *callInst = dyn_cast < CallInst > (&*i);
 					if (callInst) {
-						if (callInst->getCalledFunction()->getIntrinsicID() != Intrinsic::not_intrinsic) {
+						if (callInst->getCalledFunction() == NULL) {
+							TRACE_6("Encountered call to function pointer. Not parsing it.\n");
+						} else if (callInst->getCalledFunction()->getIntrinsicID() != Intrinsic::not_intrinsic) {
 							TRACE_6("Encountered call to intrinsic function \"" << callInst->getCalledFunction()->getNameStr() << "\" (id = " << callInst->getCalledFunction()->getIntrinsicID() << "). Not parsing it.\n");
 						} else if (! sccfactory->handle(proc, F, &*bb, callInst)) {
 							TRACE_6("CallInst : " << callInst << "\n");
