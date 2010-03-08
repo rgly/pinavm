@@ -1,5 +1,6 @@
 #include <systemc>
 
+#include "llvm/Intrinsics.h"
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
 #include "llvm/Module.h"
@@ -160,13 +161,14 @@ bool Frontend::run()
 			Function *F = fctStack->back();
 			fctStack->pop_back();
 			TRACE_3("Parsing Function : " << F->getNameStr() << "\n");
-			F->dump();
 			for (Function::iterator bb = F->begin(), be = F->end(); bb != be; ++bb) {
 				BasicBlock::iterator i = bb->begin(), ie = bb->end();
 				while (i != ie) {
 					CallInst *callInst = dyn_cast < CallInst > (&*i);
 					if (callInst) {
-						if (! sccfactory->handle(proc, F, &*bb, callInst)) {
+						if (callInst->getCalledFunction()->getIntrinsicID() != Intrinsic::not_intrinsic) {
+							TRACE_6("Encountered call to intrinsic function \"" << callInst->getCalledFunction()->getNameStr() << "\" (id = " << callInst->getCalledFunction()->getIntrinsicID() << "). Not parsing it.\n");
+						} else if (! sccfactory->handle(proc, F, &*bb, callInst)) {
 							TRACE_6("CallInst : " << callInst << "\n");
 							TRACE_6("CalledFct : " << callInst->getCalledFunction() << "\n");
 							callInst->dump();

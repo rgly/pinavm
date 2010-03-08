@@ -79,7 +79,7 @@ Process *SCElab::addProcess(IRModule * mod,
 //   const std::vector<const Type*> argsType;
 //   FunctionType* FT = FunctionType::get(Type::getVoidTy(getGlobalContext()), argsType, false);
 	Process *p = new Process(mod, mainFct, processName, mainFctName);
-	mainFct->dump();
+//	mainFct->dump();
 	TRACE_2("Add (sc_process_b) " << process << " -> (Process) " << p
 		<< " ; Fonction : " << mainFctName << " " << mainFct << " mainFct->name = " << mainFct->getNameStr() << " type arg 1 : " << this->llvmMod->getTypeName(cast<PointerType>(mainFct->arg_begin()->getType())->getElementType()) << "\n");
 
@@ -96,7 +96,7 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 	char buffer[10];
 	char temp[10];
 
-	Port* p;
+	Port* theNewPort;
 	std::map < sc_core::sc_port_base *, Port * >::iterator it;
 
 	if ((it = this->portsMap.find(port)) == this->portsMap.end()) {
@@ -152,23 +152,23 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 			}
 			TRACE_4("typeName of variable accessed through port : " << variableTypeName << "\n");
 			TRACE_4("type of variable accessed through port : " << itfType << "\n");
-			p = new Port(mod, portName);
+			theNewPort = new Port(mod, portName);
 			if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
 				ch = new SimpleChannel((Type*) itfType, variableTypeName);
 				this->channels.push_back(ch);
 				this->channelsMap.insert(this->channelsMap.end(), pair < sc_core::sc_interface *, Channel * >(itf, ch));
-
+				
 				TRACE_4("New channel !\n");
 			} else {
 				ch = itM->second;
 			}
 
-			TRACE_2("Add (sc_port_base) " << port << " -> (SIMPLE_PORT) " << p << " with channel " << ch << "\n");
-			p->addChannel(ch);
+			TRACE_2("Add (sc_port_base) " << port << " -> (SIMPLE_PORT) " << theNewPort << " with channel " << ch << "\n");
+			theNewPort->addChannel(ch);
 		}
 		match = "N7sc_core8sc_clockE";		
 		if (itfTypeName.find(match) == 0) {
-			p = new Port(mod, portName);
+			theNewPort = new Port(mod, portName);
 			if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
 				ch = new ClockChannel();
 				this->channelsMap.insert(this->channelsMap.end(), pair < sc_core::sc_interface *, Channel * >(itf, ch));
@@ -176,18 +176,18 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 			} else {
 				ch = itM->second;
 			}
-			p->addChannel(ch);
-			TRACE_2("Add (sc_port_base) " << port << " -> (CLOCK_PORT) " << p << " with channel " << ch <<"\n");
+			theNewPort->addChannel(ch);
+			TRACE_2("Add (sc_port_base) " << port << " -> (CLOCK_PORT) " << theNewPort << " with channel " << ch <<"\n");
 		}
-		
-		this->ports.push_back(p);
-		this->portsMap.insert(this->portsMap.end(), pair < sc_core::sc_port_base *, Port * >(port, p));
+		mod->addPort(theNewPort);
+		this->ports.push_back(theNewPort);
+		this->portsMap.insert(this->portsMap.end(), pair < sc_core::sc_port_base *, Port * >(port, theNewPort));
 		
 	}  else {
-		p = it->second;
+		theNewPort = it->second;
 	}
 
-	return p;
+	return theNewPort;
 }
 
 Event *SCElab::addEvent(Process * process, sc_core::sc_event * event)
@@ -333,27 +333,6 @@ SCElab::complete()
 		for (it = eventsVector.begin(); it < eventsVector.end(); it++) {
 			sc_core::sc_event * ev = (sc_core::sc_event *) * it;
 			this->addEvent(process, ev);
-		}
-	}
-
-        //------- Add each port to processes depending on it -------
-	for (modIt = modules.begin(); modIt < modules.end(); ++modIt) {
-		sc_core::sc_module * mod = *modIt;
-		std::vector < sc_core::sc_port_base * >* ports = mod->m_port_vec;
-		
-		vector < sc_core::sc_port_base * >::iterator it;
-		for (it = ports->begin(); it < ports->end(); ++it) {
-			sc_core::sc_port_base * p = *it;
-
-			if (p->m_bind_info != 0) {
-				Port* cPort = this->getPort(p);
-				std::vector<sc_core::sc_bind_ef*>::iterator itb;
-				for (itb = p->m_bind_info->thread_vec.begin() ;
-				     itb != p->m_bind_info->thread_vec.end() ; ++itb) {
-					sc_core::sc_process_b* cProcess = (*itb)->handle;
-					this->getProcess(cProcess)->addPort(cPort);
-				}
-			}
 		}
 	}
 }

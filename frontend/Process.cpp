@@ -3,6 +3,7 @@
 #include "SCConstruct.hpp"
 #include "SCCFactory.hpp"
 #include "utils.h"
+#include "llvm/Intrinsics.h"
 
 #include <algorithm>
 #include <vector>
@@ -56,17 +57,6 @@ Process::getEvents()
 	return & this->events;
 }
 
-
-void Process::addPort(Port* p)
-{
-	this->ports.push_back(p);
-}
-std::vector < Port* >*
-Process::getPorts()
-{
-	return & this->ports;
-}
-
 /********** Pretty print **********/
 void Process::printElab(int sep, string prefix)
 {
@@ -108,7 +98,7 @@ void Process::printIR(SCCFactory * sccfactory)
 						map<Process*, SCConstruct*> CbyP = itC->second;
 						SCConstruct *scc = CbyP.find(this)->second;
 						TRACE("    SCC Construct : " << scc->toString() << "\n");
-					} else {
+					} else if (callInst->getCalledFunction()->getIntrinsicID() == Intrinsic::not_intrinsic) {
 						fctStack->push_back(callInst->getCalledFunction());
 					}
 				}

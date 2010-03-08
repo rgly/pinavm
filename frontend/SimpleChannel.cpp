@@ -1,4 +1,5 @@
 #include <string>
+#include <sstream>
 
 #include "SimpleChannel.hpp"
 
@@ -18,4 +19,12 @@ string
 SimpleChannel::getGlobalVariableName()
 {
 	return this->globalVariableName;
+}
+
+std::string
+SimpleChannel::toString()
+{
+	std::stringstream ss;
+	ss << "SimpleChannel " << (void*) this;
+	return ss.str();
 }
