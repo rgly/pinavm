@@ -12,6 +12,15 @@ source ../config.sh
 
 SCRIPT_DIR=`pwd`
 
+# Make sure llvm-config and llvm-g++ are in the $PATH.
+# We ensure this at the start of the script so that
+# re-running the script after installing llvm-gcc works.
+# The user will need anyway to set his $PATH properly
+# but there's a hint for that at the end of the script.
+PATH="${PATH}:$INSTALL_PATH_LLVMGCC/bin"
+PATH="${PATH}:$INSTALL_PATH_LLVM/bin"
+export PATH
+
 # ##### INITIALIZATION #####
  test -d "$DOWNLOAD_AND_COMPILE_DIR" || \
      (echo "$DOWNLOAD_AND_COMPILE_DIR does not exist, creating it" && \
@@ -234,6 +243,19 @@ install_systemc_gcc
 ( install_systemc_llvm )
 compile_pinapa
 
+date
+echo "
 
+$(basename $0) done.
 
-echo "$(basename $0) done."
+If the script installed llvm-gcc and llvm, you need to add
+the following to your shell's config file (~/.bashrc or so):
+
+PATH=\"\${PATH}:$INSTALL_PATH_LLVMGCC/bin\"
+PATH=\"\${PATH}:$INSTALL_PATH_LLVM/bin\"
+export PATH
+
+You can now try to compile and run an example with
+
+cd ../systemc-examples/jerome-chain
+make promela"
