@@ -1,6 +1,6 @@
 SRCS = ${wildcard *.cpp}
 TARGET = libpinapa.so
-TARGET_EXE = pinapa
+TARGET_EXE = pinavm
 all: $(TARGET)
 both: $(TARGET) $(TARGET_EXE)
 
