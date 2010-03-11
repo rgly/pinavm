@@ -78,17 +78,7 @@ install_llvm_gcc () {
 ########## SYSTEMC (compiled with LLVM) ############
 ####################################################
 
-install_systemc_llvm () {
-    echo "Installing SystemC (patched and compiled with LLVM) ..."
-    cd "$DOWNLOAD_AND_COMPILE_DIR"
-    rm -fr systemc-2.2.0-llvm
-    test -f systemc-2.2.0.tgz || cp ~marquet/local/download/systemc-2.2.0.tgz .
-    tar xzf systemc-2.2.0.tgz
-    mv systemc-2.2.0 systemc-2.2.0-llvm
-    cd systemc-2.2.0-llvm
-
-    patch_systemc
-
+build_systemc_for_llvm () {
     export CXX="llvm-g++ --emit-llvm"
     export RANLIB="echo this is the old ranlib command on file :"
 
@@ -154,6 +144,20 @@ install_systemc_llvm () {
 	    mkdir -p "$INSTALL_PATH_SYSTEMC_LLVM/include/sysc/$DIRNAME_CORRECTED"
 	cp "$hfile" "$INSTALL_PATH_SYSTEMC_LLVM/include/sysc/$DIRNAME_CORRECTED"
     done
+}
+
+install_systemc_llvm () {
+    echo "Installing SystemC (patched and compiled with LLVM) ..."
+    cd "$DOWNLOAD_AND_COMPILE_DIR"
+    rm -fr systemc-2.2.0-llvm
+    test -f systemc-2.2.0.tgz || cp ~marquet/local/download/systemc-2.2.0.tgz .
+    tar xzf systemc-2.2.0.tgz
+    mv systemc-2.2.0 systemc-2.2.0-llvm
+    cd systemc-2.2.0-llvm
+
+    patch_systemc
+
+    build_systemc_for_llvm
 }
 
 ###############################
