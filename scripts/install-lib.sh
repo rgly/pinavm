@@ -150,7 +150,7 @@ install_systemc_llvm () {
     echo "Installing SystemC (patched and compiled with LLVM) ..."
     cd "$DOWNLOAD_AND_COMPILE_DIR"
     rm -fr systemc-2.2.0-llvm
-    test -f systemc-2.2.0.tgz || cp ~marquet/local/download/systemc-2.2.0.tgz .
+    test -f systemc-2.2.0.tgz || wget http://www-verimag.imag.fr/~moy/systemc-2.2.0.tgz -O systemc-2.2.0.tgz
     tar xzf systemc-2.2.0.tgz
     mv systemc-2.2.0 systemc-2.2.0-llvm
     cd systemc-2.2.0-llvm
