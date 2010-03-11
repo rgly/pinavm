@@ -5,8 +5,8 @@ trap 'echo "Error detected! End of script.";exit 1' ERR
 
 
 SCRIPT_DIR=$(cd "$(dirname $0)"; pwd)
-PINAVM_DIR=$(cd "$SCRIPT_DIR"/..; pwd)
-source "$SCRIPT_DIR"/install-lib.sh
+PINAVM_DIR=$SCRIPT_DIR
+source "$PINAVM_DIR"/scripts/install-lib.sh
 
 ##############################################
 ################ CONFIG  #####################

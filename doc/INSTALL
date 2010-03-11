@@ -1,4 +1,4 @@
-0) Set the PATH so that a good compiler is used, for instance gcc-4.2
+0) Set the PATH so that a good compiler is used, for instance gcc-4.4
 
 $ which g++
 /usr/local/soft/gcc/4.4.0/bin/g++
@@ -15,32 +15,47 @@ git clone [...] $TOOL
 
 DOWNLOAD=/somewhere/else/
 
-3) Run configure:
+3) Optionnally: install llvm and llvm-gcc. If you do not do so, the
+installation script will do it for you (but will take time and disk
+space to do the compilation). On a Debian-based system, this should be
+as simple as
+
+  aptitude install llvm-dev
+  aptitude install llvm-gcc
+
+LLVM's version should be 2.6. Note that the version of LLVM provided
+by Debian requires libffi, so you may need to run
+
+  aptitude install libffi-dev
+
+too.
+
+4) Run configure:
 
 cd $TOOL
 autoconf
 ./configure --with-tools-dir=$DOWNLOAD
 
-4) Execute the script
+5) Execute the script
 
-cd $TOOL/doc
-./install_pinapa.sh
+cd $TOOL
+./install-pinavm.sh
 
 The script may have to install LLVM and llvm-gcc. If it does so, then
 the installed tools must be added to your PATH, like:
 
 export PATH=$PATH:$DOWNLOAD/lib/llvm-gcc/bin:$DOWNLOAD/lib/llvm-2.6/bin
 
-You may have to restart ./install_pinapa.sh after setting your PATH.
+You may have to restart ./install-pinavm.sh after setting your PATH.
 
 The script will compile the front-end and back-end. We can now run the
 examples.
 
-5) Compile an example
+6) Compile an example
 
 cd $TOOL/systemc-examples/jerome-chain
 make
 
-6) Run an example
+7) Run an example
 
 ./main.exe -print-ir -print-elab -b promela -o ok.3.pr main.opt.sc.bc -inline -args 3

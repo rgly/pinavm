@@ -28,7 +28,7 @@ install_llvm() {
 ################################################
 
 patch_systemc() {
-    patch -p0 < ${SCRIPT_DIR}/../systemc-2.2.0.patch
+    patch -p0 < ${PINAVM_DIR}/systemc-2.2.0.patch
 
     ##### Link to Pinapa #########
     sed -i -e's/main(/launch_systemc(/' ./src/sysc/kernel/sc_main.cpp
