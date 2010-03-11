@@ -121,29 +121,19 @@ build_systemc_for_llvm () {
     make pthreads_debug
 
     ###### Manual make install #######
-    test -d "$INSTALL_PATH_SYSTEMC_LLVM" && rm -rf "$INSTALL_PATH_SYSTEMC_LLVM"
     mkdir -p "$INSTALL_PATH_SYSTEMC_LLVM"
 
-    for libfile in $(find . -name "*.a")
-    do
-	llvm-link -f -o libsystemc.a "$libfile"
-    done
+    llvm-link -f -o libsystemc.a $(find src/sysc/ -name "*.a")
 
-    mkdir "$INSTALL_PATH_SYSTEMC_LLVM"/lib-linux
+    mkdir -p "$INSTALL_PATH_SYSTEMC_LLVM"/lib-linux
+    mkdir -p "$INSTALL_PATH_SYSTEMC_LLVM"/include/sysc
     cp libsystemc.a "$INSTALL_PATH_SYSTEMC_LLVM"/lib-linux/
-    mkdir "$INSTALL_PATH_SYSTEMC_LLVM"/include
-    cd ../src
+
+    cd ../src/
+    # copy files keeping the directory structure
     cp systemc systemc.h "$INSTALL_PATH_SYSTEMC_LLVM"/include/
-    cd sysc
-    mkdir "$INSTALL_PATH_SYSTEMC_LLVM"/include/sysc
-    for hfile in $(find . -name "*.h")
-    do
-	DIRNAME=$(dirname "$hfile")
-	DIRNAME_CORRECTED=$(echo "$DIRNAME" | sed s/'.\/'//)
-	test -d "$INSTALL_PATH_SYSTEMC_LLVM/include/sysc/$DIRNAME_CORRECTED" || \
-	    mkdir -p "$INSTALL_PATH_SYSTEMC_LLVM/include/sysc/$DIRNAME_CORRECTED"
-	cp "$hfile" "$INSTALL_PATH_SYSTEMC_LLVM/include/sysc/$DIRNAME_CORRECTED"
-    done
+    find sysc/ -name "*.h" | tar -cf - -T - | \
+	(cd "$INSTALL_PATH_SYSTEMC_LLVM/include/"; tar -xf -)
 }
 
 install_systemc_llvm () {
