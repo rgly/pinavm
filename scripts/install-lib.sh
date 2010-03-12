@@ -1,40 +1,5 @@
-#!/bin/bash
+#! /bin/echo please-dont-execute-this-file-but-source-it:
 
-trap 'echo "Error detected! End of script.";exit 1' ERR
-#set -x
-
-##############################################
-################ CONFIG  #####################
-##############################################
-
-(cd .. && make config.sh) || exit 1
-source ../config.sh
-
-SCRIPT_DIR=`pwd`
-
-# Make sure llvm-config and llvm-g++ are in the $PATH.
-# We ensure this at the start of the script so that
-# re-running the script after installing llvm-gcc works.
-# The user will need anyway to set his $PATH properly
-# but there's a hint for that at the end of the script.
-PATH="${PATH}:$INSTALL_PATH_LLVMGCC/bin"
-PATH="${PATH}:$INSTALL_PATH_LLVM/bin"
-export PATH
-
-# ##### INITIALIZATION #####
- test -d "$DOWNLOAD_AND_COMPILE_DIR" || \
-     (echo "$DOWNLOAD_AND_COMPILE_DIR does not exist, creating it" && \
-     mkdir -p "$DOWNLOAD_AND_COMPILE_DIR")
-
-test -d "$INSTALL_PATH_SYSTEMC_LLVM" || \
-    (echo "$INSTALL_PATH_SYSTEMC_LLVM does not exist, creating it" && \
-    mkdir -p "$INSTALL_PATH_SYSTEMC_LLVM")
-
-test -d "$INSTALL_PATH_SYSTEMC_GCC" || \
-    (echo "$INSTALL_PATH_SYSTEMC_GCC does not exist, creating it" && \
-    mkdir -p "$INSTALL_PATH_SYSTEMC_GCC")
-
-llvm_configure_flags="--prefix=$INSTALL_PATH_LLVM --enable-debug-runtime --disable-optimized --enable-checking --enable-bindings=none --enable-libffi=no"
 
 ###############################
 ########## LLVM ###############
@@ -63,7 +28,7 @@ install_llvm() {
 ################################################
 
 patch_systemc() {
-    patch -p0 < ${SCRIPT_DIR}/../systemc-2.2.0.patch
+    patch -p0 < ${PINAVM_DIR}/systemc-2.2.0.patch
 
     ##### Link to Pinapa #########
     sed -i -e's/main(/launch_systemc(/' ./src/sysc/kernel/sc_main.cpp
@@ -113,17 +78,7 @@ install_llvm_gcc () {
 ########## SYSTEMC (compiled with LLVM) ############
 ####################################################
 
-install_systemc_llvm () {
-    echo "Installing SystemC (patched and compiled with LLVM) ..."
-    cd "$DOWNLOAD_AND_COMPILE_DIR"
-    rm -fr systemc-2.2.0-llvm
-    test -f systemc-2.2.0.tgz || cp ~marquet/local/download/systemc-2.2.0.tgz .
-    tar xzf systemc-2.2.0.tgz
-    mv systemc-2.2.0 systemc-2.2.0-llvm
-    cd systemc-2.2.0-llvm
-
-    patch_systemc
-
+build_systemc_for_llvm () {
     export CXX="llvm-g++ --emit-llvm"
     export RANLIB="echo this is the old ranlib command on file :"
 
@@ -166,29 +121,33 @@ install_systemc_llvm () {
     make pthreads_debug
 
     ###### Manual make install #######
-    test -d "$INSTALL_PATH_SYSTEMC_LLVM" && rm -rf "$INSTALL_PATH_SYSTEMC_LLVM"
     mkdir -p "$INSTALL_PATH_SYSTEMC_LLVM"
 
-    for libfile in $(find . -name "*.a")
-    do
-	llvm-link -f -o libsystemc.a "$libfile"
-    done
+    llvm-link -f -o libsystemc.a $(find src/sysc/ -name "*.a")
 
-    mkdir "$INSTALL_PATH_SYSTEMC_LLVM"/lib-linux
+    mkdir -p "$INSTALL_PATH_SYSTEMC_LLVM"/lib-linux
+    mkdir -p "$INSTALL_PATH_SYSTEMC_LLVM"/include/sysc
     cp libsystemc.a "$INSTALL_PATH_SYSTEMC_LLVM"/lib-linux/
-    mkdir "$INSTALL_PATH_SYSTEMC_LLVM"/include
-    cd ../src
+
+    cd ../src/
+    # copy files keeping the directory structure
     cp systemc systemc.h "$INSTALL_PATH_SYSTEMC_LLVM"/include/
-    cd sysc
-    mkdir "$INSTALL_PATH_SYSTEMC_LLVM"/include/sysc
-    for hfile in $(find . -name "*.h")
-    do
-	DIRNAME=$(dirname "$hfile")
-	DIRNAME_CORRECTED=$(echo "$DIRNAME" | sed s/'.\/'//)
-	test -d "$INSTALL_PATH_SYSTEMC_LLVM/include/sysc/$DIRNAME_CORRECTED" || \
-	    mkdir -p "$INSTALL_PATH_SYSTEMC_LLVM/include/sysc/$DIRNAME_CORRECTED"
-	cp "$hfile" "$INSTALL_PATH_SYSTEMC_LLVM/include/sysc/$DIRNAME_CORRECTED"
-    done
+    find sysc/ -name "*.h" | tar -cf - -T - | \
+	(cd "$INSTALL_PATH_SYSTEMC_LLVM/include/"; tar -xf -)
+}
+
+install_systemc_llvm () {
+    echo "Installing SystemC (patched and compiled with LLVM) ..."
+    cd "$DOWNLOAD_AND_COMPILE_DIR"
+    rm -fr systemc-2.2.0-llvm
+    test -f systemc-2.2.0.tgz || wget http://www-verimag.imag.fr/~moy/systemc-2.2.0.tgz -O systemc-2.2.0.tgz
+    tar xzf systemc-2.2.0.tgz
+    mv systemc-2.2.0 systemc-2.2.0-llvm
+    cd systemc-2.2.0-llvm
+
+    patch_systemc
+
+    build_systemc_for_llvm
 }
 
 ###############################
@@ -212,50 +171,3 @@ do_you_want () {
 	exit 1
     fi
 }
-
-# TODO: all this tests should probably be moved to the configure
-# script.
-if ! llvm-gcc --version > /dev/null; then
-    echo "llvm-gcc doesn't seem to be installed on your system."
-    echo "you can install it yourself (aptitude install llvm-gcc does the"
-    echo "trick on Debian systems), or let me do it."
-    do_you_want install_llvm_gcc
-fi
-
-# Debian's llvm-config give /usr/include/llvm while hand-compiled
-# llvm-config gives the path without llvm/.
-if [ ! -r "$(llvm-config --includedir)/llvm/LLVMContext.h" ] && \
-    [ ! -r "$(llvm-config --includedir)/LLVMContext.h" ] ; then
-    echo "LLVM doesn't seem to be installed on your system."
-    echo "you can install it yourself (aptitude install llvm-dev does the"
-    echo "trick on Debian systems), or let me do it (but it takes a long time)"
-    do_you_want install_llvm
-fi
-
-if [ "$(llvm-config --version)" != 2.6 ]; then
-    echo "LLVM's version isn't 2.6. It's unlikely that anything work unless"
-    echo "LLVM 2.6 is installed (and the corresponding llvm-config executable"
-    echo "be at the front of your PATH)."
-    do_you_want install_llvm
-fi
-
-install_systemc_gcc
-( install_systemc_llvm )
-compile_pinapa
-
-date
-echo "
-
-$(basename $0) done.
-
-If the script installed llvm-gcc and llvm, you need to add
-the following to your shell's config file (~/.bashrc or so):
-
-PATH=\"\${PATH}:$INSTALL_PATH_LLVMGCC/bin\"
-PATH=\"\${PATH}:$INSTALL_PATH_LLVM/bin\"
-export PATH
-
-You can now try to compile and run an example with
-
-cd ../systemc-examples/jerome-chain
-make promela"
