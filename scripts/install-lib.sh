@@ -1,5 +1,38 @@
 #! /bin/echo please-dont-execute-this-file-but-source-it:
 
+# true if $1 has a greater version number than $2.
+version_greater () {
+    major_1=$(echo "$1" | sed 's/\..*//')
+    major_2=$(echo "$2" | sed 's/\..*//')
+    if [ "$major_1" -lt "$major_2" ]; then
+	return 1
+    elif [ "$major_1" -gt "$major_2" ]; then
+	return 0
+    fi
+    # Get rid of "svn" or similar suffixes.
+    minor_1=$(echo "$1" | sed -e 's/.*\.//' -e 's/[^0-9]*$//')
+    minor_2=$(echo "$2" | sed -e 's/.*\.//' -e 's/[^0-9]*$//')
+    if [ "$minor_1" -lt "$minor_2" ]; then
+	return 1
+    fi
+    return 0
+}
+
+test_version_greater_true () {
+    version_greater "$1" "$2" || echo "FAIL: version_greater $1 $2"
+}
+
+test_version_greater_false () {
+    version_greater "$1" "$2" && echo "FAIL: version_greater $1 $2"
+}
+
+test_version_greater () {
+    test_version_greater_true 2.7svn 2.6
+    test_version_greater_true 2.0 1.1
+    test_version_greater_true 2.1 1.0
+    test_version_greater_true 2.6 2.6
+    test_version_greater_false 2.6 2.7
+}
 
 ###############################
 ########## LLVM ###############

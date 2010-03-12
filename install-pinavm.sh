@@ -58,10 +58,10 @@ if [ ! -r "$(llvm-config --includedir)/llvm/LLVMContext.h" ] && \
     do_you_want install_llvm
 fi
 
-if [ "$(llvm-config --version)" != 2.6 ]; then
-    echo "LLVM's version isn't 2.6. It's unlikely that anything work unless"
-    echo "LLVM 2.6 is installed (and the corresponding llvm-config executable"
-    echo "be at the front of your PATH)."
+if ! version_greater "$(llvm-config --version)" 2.6; then
+    echo "LLVM's version is $(llvm-config --version), which isn't >= 2.6."
+    echo "It's unlikely that anything work unless LLVM >= 2.6 is installed"
+    echo "(and the corresponding llvm-config executable be at the front of your PATH)."
     do_you_want install_llvm
 fi
 
