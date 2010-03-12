@@ -28,7 +28,7 @@ ALL_OBJS = $(OBJS) $(UTILS_OBJS) $(FRONTEND_OBJS) $(BACKENDS_OBJS) $(SYSTEMC_OBJ
 
 CPPFLAGS += -I$(SYSTEMC)/include
 CPPFLAGS += -I$(FRONTENDDIR)
-CPPFLAGS += -I$(BACKENDSDIR)/SimpleBackend -I$(BACKENDSDIR)/PromelaBackend
+CPPFLAGS += -I$(BACKENDSDIR)/SimpleBackend -I$(BACKENDSDIR)/PromelaBackend -I$(BACKENDSDIR)/42Backend
 CPPFLAGS += -I$(UTILSDIR)
 CPPFLAGS += `llvm-config --cxxflags jit bitreader bitwriter native`
 

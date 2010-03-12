@@ -2,11 +2,11 @@
 
 //using namespace sc_core;
 
-#define KASCPAR
+//#define KASCPAR
 
 #define NS * 1e-9
 
-SC_MODULE(Component)
+class Component : public sc_module //SC_MODULE(Component)
 {
 public:
 #ifdef KASCPAR
@@ -19,8 +19,11 @@ public:
 	
 	bool notified;
 	bool isHead;
+  SC_HAS_PROCESS(Component)
 
-	SC_CTOR(Component):
+  Component(sc_module_name name) : sc_module(name),
+					   
+				   //	SC_CTOR(Component):
 		out("Out"),
 		in("in")
 		{
