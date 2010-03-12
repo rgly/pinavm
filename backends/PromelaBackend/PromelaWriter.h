@@ -196,9 +196,10 @@ public:
   void visitInlineAsm(CallInst &I);
   bool visitBuiltinCall(CallInst &I, Intrinsic::ID ID, bool &WroteCallee);
 
-  void visitMallocInst(MallocInst &I);
+	// MM: malloc and free are now normal functions.
+//  void visitMallocInst(MallocInst &I);
   void visitAllocaInst(AllocaInst &I);
-  void visitFreeInst  (FreeInst   &I);
+//  void visitFreeInst  (FreeInst   &I);
   void visitLoadInst  (LoadInst   &I);
   void visitStoreInst (StoreInst  &I);
   void visitGetElementPtrInst(GetElementPtrInst &I);

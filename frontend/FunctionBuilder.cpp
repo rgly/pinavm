@@ -1,4 +1,5 @@
 #include "FunctionBuilder.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/ADT/ilist.h"
 
 FunctionBuilder::FunctionBuilder(Function * origFunction,
@@ -209,7 +210,7 @@ Function *FunctionBuilder::buildFct()
 
 			/*** ...clone the instruction if it is useful ***/
 			if (find(used_insts.begin(), used_insts.end(), origInst) != used_insts.end()) {
-				Instruction *NewInst = origInst->clone(getGlobalContext());
+				Instruction *NewInst = origInst->clone();
 				TRACE_6("Found useful and cloned : " <<	origInst << " -> " << NewInst << "\n");
 				if (origInst->hasName())
 					NewInst->setName(origInst->getName());

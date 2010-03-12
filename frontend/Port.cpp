@@ -1,5 +1,6 @@
 #include <string>
 #include <vector>
+#include <algorithm>
 
 #include "IRModule.hpp"
 #include "Port.hpp"

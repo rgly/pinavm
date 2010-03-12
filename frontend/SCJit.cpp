@@ -1,4 +1,5 @@
 #include "SCJit.hpp"
+#include "llvm/LLVMContext.h"
 
 using namespace std;
 using namespace llvm;
@@ -8,8 +9,8 @@ SCJit::SCJit(Module * mod, SCElab * scelab)
 	this->mdl = mod;
 	this->elab = scelab;
 
-	this->moduleProvider = new ExistingModuleProvider(mod);
-	this->ee = EngineBuilder(this->moduleProvider).create();
+	//this->moduleProvider = new ExistingModuleProvider(mod);
+	this->ee = EngineBuilder(mod).create();
 
 	//  llvm::ExecutionEngine::create(this->mdl);
 	
@@ -114,7 +115,7 @@ Value *getValue(std::map < std::string, Value * >namedValues, Value * arg)
 		if (arg->hasName()) {
 			return namedValues[arg->getName()];
 		} else {
-			return inst->clone(getGlobalContext());
+			return inst->clone();
 		}
 	}
 }
@@ -139,7 +140,7 @@ Function *SCJit::buildFct(Function * f, FunctionType * FT, Value * arg)
 
 	//  fctToJit->viewCFG();
 
-	FunctionPassManager FPM(this->moduleProvider);
+	FunctionPassManager FPM(this->mdl);
 
 	// Set up the optimizer pipeline.  Start with registering info about how the
 	// target lays out data structures.

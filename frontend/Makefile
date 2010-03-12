@@ -6,7 +6,7 @@ TARGET = all
 ROOT=..
 include $(ROOT)/Makefile.common
 
-CPPFLAGS += `llvm-config --cxxflags jit bitreader bitwriter native`
+CPPFLAGS += `llvm-config --cxxflags jit bitreader bitwriter native` -frtti
 CPPFLAGS += -I$(SYSTEMC)/include
 CPPFLAGS += -I$(ROOT)/utils
 

@@ -22,8 +22,8 @@ SCConstruct *WriteHandler::handle(Function * fct, BasicBlock * bb,
 	if (po->getChannelID() == SIMPLE_CHANNEL) {
 		Value *value = callInst->getOperand(2);
 		Type* valueType = po->getType();
-		
-		if (valueType->isInteger()) {
+
+		if (valueType->isIntegerTy()) {
 			if (((IntegerType*) valueType)->getBitWidth() == 1) {
 				char* valuePointer= (char*) this->scjit->jitAddr(fct, value);
 				int boolValue = (int) *valuePointer;

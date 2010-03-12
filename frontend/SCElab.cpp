@@ -10,6 +10,7 @@
 #include "SimpleChannel.hpp"
 #include "ClockChannel.hpp"
 
+#include "llvm/LLVMContext.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/Streams.h"

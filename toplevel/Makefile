@@ -26,13 +26,16 @@ UTILS_OBJS = $(UTILS_CXX:.cpp=.o)
 
 ALL_OBJS = $(OBJS) $(UTILS_OBJS) $(FRONTEND_OBJS) $(BACKENDS_OBJS) $(SYSTEMC_OBJS)
 
-CPPFLAGS += -I$(SYSTEMC)/include
-CPPFLAGS += -I$(FRONTENDDIR)
-CPPFLAGS += -I$(BACKENDSDIR)/SimpleBackend -I$(BACKENDSDIR)/PromelaBackend
-CPPFLAGS += -I$(UTILSDIR)
-CPPFLAGS += `llvm-config --cxxflags jit bitreader bitwriter native`
+CXXFLAGS += -I$(SYSTEMC)/include
+CXXFLAGS += -I$(FRONTENDDIR)
+CXXFLAGS += -I$(BACKENDSDIR)/SimpleBackend -I$(BACKENDSDIR)/PromelaBackend
+CXXFLAGS += -I$(UTILSDIR)
 
-LDLIBS += `llvm-config --ldflags --libs jit bitreader bitwriter native` 
+# llvm-config sometimes includes -fno-rtti -fno-exceptions, but we don't want this.
+CXXFLAGS += `llvm-config --cxxflags jit bitreader bitwriter native` \
+	-frtti -fexceptions
+
+LDLIBS += `llvm-config --ldflags --libs jit interpreter nativecodegen bitreader selectiondag`
 
 frontend: $(FRONTEND_SRC) $(FRONTEND_OBJS)
 	cd $(FRONTENDDIR) && $(MAKE) all
@@ -48,7 +51,14 @@ $(TARGET): frontend backends utils $(OBJS)
 
 
 main-load-bc.o: main.cpp
-	$(CXX) -c $< -o $@ $(CPPFLAGS) -DLOAD_PLATFORM_BC $(CXXFLAGS) $(CXXEXTRAFLAGS)
+	$(CXX) -c $< -o $@ $(CXXFLAGS) -DLOAD_PLATFORM_BC $(CXXEXTRAFLAGS)
 
 $(TARGET_EXE): frontend backends utils main-load-bc.o $(filter-out main.o, $(OBJS))
 	g++ -o $@ $(filter-out main.o, $(ALL_OBJS)) main-load-bc.o $(LDFLAGS) $(LDLIBS)
+
+llvm-version:
+	llvm-config --version
+
+debug-config:
+	@echo CXXFLAGS=$(CXXFLAGS)
+	@echo LDLIBS=$(LDLIBS)

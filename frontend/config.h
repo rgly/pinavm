@@ -2,6 +2,8 @@
 #define _CONFIG_H
 
 #include <iostream>
+#include <unistd.h>
+#include <stdlib.h>
 
 //#include "llvm/Support/Streams.h"
 

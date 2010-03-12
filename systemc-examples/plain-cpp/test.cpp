@@ -12,6 +12,7 @@
   Should do it.
 */
 #include <stdio.h>
+#include <iostream>
 
 extern "C" int sc_main(int argc, char **argv);
 
