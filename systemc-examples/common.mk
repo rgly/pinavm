@@ -111,3 +111,8 @@ clean:
 
 realclean: clean
 	$(RM) *~ 
+
+PINAVM=../../toplevel/pinavm
+.PHONY: $(PINAVM)
+$(PINAVM):
+	cd $$(dirname $(PINAVM)) && $(MAKE) $$(basename $(PINAVM))

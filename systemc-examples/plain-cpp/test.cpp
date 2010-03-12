@@ -21,7 +21,14 @@ void pinapa_callback();
 
 int sc_main(int argc, char **argv)
 {
-	printf("sc_main() called\n");
+	std::cout << "sc_main() called\n";
+	std::cout << std::endl;
 	pinapa_callback();
+	return 0;
+}
+
+extern "C" int main (int argc, char **argv) {
+	std::cout << "main() called\n";
+	std::cout << std::endl;
 	return 0;
 }
