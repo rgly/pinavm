@@ -133,17 +133,6 @@ int load_and_run_sc_main(std::string & InputFile)
 	// So that JIT-ed code can call pinapa_callback.
 	sys::DynamicLibrary::AddSymbol("pinapa_callback", (void *)pinapa_callback);
 
-	// Let the program access libstdc++
-	// TODO: get rid of hardcoded path
-	const char *libname = "/usr/local/soft/gcc/4.4.0/lib/libstdc++.so";
-	if (sys::DynamicLibrary::LoadLibraryPermanently(libname, &ErrorMsg)) {
-		errs() << "error loading dynamic library '" << libname << "': "
-		       << ErrorMsg << "\n";
-		exit(1);		
-	} else {
-		TRACE_2("libstdc++ loaded\n");
-	}
-
 	// Load the bitcode...
 	Module *Mod = NULL;
 	if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFile,&ErrorMsg)){
