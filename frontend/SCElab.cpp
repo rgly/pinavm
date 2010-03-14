@@ -303,6 +303,9 @@ SCElab::complete()
 {
 	sc_core::sc_thread_handle thread_p;
 
+	// MM: why do this here? stopping the execution of the
+	// elaboration after calling end_of_elaboration seems a much
+	// better idea than calling it ourselves.
 	// To call the "end_of_elaboration()" methods.
 	sc_core::sc_get_curr_simcontext()->initialize(true);
 

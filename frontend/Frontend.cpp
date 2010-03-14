@@ -29,6 +29,8 @@ Frontend::Frontend(Module * M)
 
 Frontend::~Frontend()
 {
+	// MM: it's safe to delete a NULL pointer => the if()s are
+	// MM: unnecessary.
 	if (this->sccfactory)
 		delete this->sccfactory;
 
@@ -119,6 +121,9 @@ bool Frontend::run()
 	vector < Process * >::iterator endIt = this->elab->getProcesses()->end();
 	std::vector < Function * >*fctStack = new std::vector < Function * >();
 
+	if (processIt == endIt) {
+		TRACE_1("WARNING: No process found.\n");
+	}
 	if (this->inlineFunctions) {
 								
 		for (; processIt < endIt; processIt++) {
@@ -157,6 +162,7 @@ bool Frontend::run()
 		fctStack->push_back(proc->getMainFct());
 		proc->addUsedFunction(proc->getMainFct());
 		this->scjit->setCurrentProcess(proc);
+		TRACE_2("Process:" << proc->getName());
 		while (!fctStack->empty()) {
 			Function *F = fctStack->back();
 			fctStack->pop_back();

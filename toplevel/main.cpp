@@ -163,7 +163,7 @@ int load_and_run_sc_main(std::string & InputFile)
 
 	EE->RegisterJITEventListener(createOProfileJITEventListener());
 
-	// TODO: manage --args correctly.
+	// TODO: manage multiple arguments correctly.
 
 	// Add the module's name to the start of the vector of arguments to main().
 	InputArgv.push_back("main.exe");
@@ -194,6 +194,7 @@ int load_and_run_sc_main(std::string & InputFile)
 	// Run static constructors.
 	EE->runStaticConstructorsDestructors(false);
 
+	TRACE_2("Running elaboration\n");
 	// Run main.
 	int Result = EE->runFunctionAsMain(EntryFn, InputArgv, environ);
 
