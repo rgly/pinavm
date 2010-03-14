@@ -7,6 +7,8 @@
 #include "llvm/InstrTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/Mangler.h"
+#include "llvm/MC/MCAsmInfo.h"
 
 #include "Port.hpp"
 #include "Channel.hpp"
@@ -170,7 +172,7 @@ PromelaWriter::printSimpleType(formatted_raw_ostream & Out,
 			const Type * Ty, bool isSigned,
 			const std::string & NameSoFar)
 {
-	assert((Ty->isPrimitiveType() || Ty->isInteger()
+	assert((Ty->isPrimitiveType() || Ty->isIntegerTy()
 			|| isa < VectorType > (Ty))
 		&& "Invalid type for printSimpleType");
 
@@ -217,7 +219,7 @@ PromelaWriter::printSimpleType(std::ostream & Out, const Type * Ty,
 			bool isSigned,
 			const std::string & NameSoFar)
 {
-	assert((Ty->isPrimitiveType() || Ty->isInteger()
+	assert((Ty->isPrimitiveType() || Ty->isIntegerTy()
 			|| isa < VectorType > (Ty))
 		&& "Invalid type for printSimpleType");
 
@@ -271,7 +273,7 @@ PromelaWriter::printType(formatted_raw_ostream & Out,
 			bool isSigned, const std::string & NameSoFar,
 			bool IgnoreName, const AttrListPtr & PAL)
 {
-	if (Ty->isPrimitiveType() || Ty->isInteger() || isa < VectorType > (Ty)) {
+	if (Ty->isPrimitiveType() || Ty->isIntegerTy() || isa < VectorType > (Ty)) {
 		printSimpleType(Out, Ty, isSigned, NameSoFar);
 		return Out;
 	}
@@ -402,7 +404,7 @@ PromelaWriter::printType(std::ostream & Out,
 			bool isSigned, const std::string & NameSoFar,
 			bool IgnoreName, const AttrListPtr & PAL)
 {
-	if (Ty->isPrimitiveType() || Ty->isInteger()
+	if (Ty->isPrimitiveType() || Ty->isIntegerTy()
 		|| isa < VectorType > (Ty)) {
 		printSimpleType(Out, Ty, isSigned, NameSoFar);
 		return Out;
@@ -1348,7 +1350,7 @@ bool PromelaWriter::printConstExprCast(const ConstantExpr * CE, bool Static)
 	}
 	if (NeedsExplicitCast) {
 		Out << "((";
-		if (Ty->isInteger()
+		if (Ty->isIntegerTy()
 			&& Ty != Type::getInt1Ty(Ty->getContext()))
 			printSimpleType(Out, Ty, TypeIsSigned);
 		else
@@ -1417,7 +1419,7 @@ std::string PromelaWriter::GetValueName(const Value * Operand)
 
 	// Mangle globals with the standard mangler interface for LLC compatibility.
 	if (const GlobalValue * GV = dyn_cast < GlobalValue > (Operand)) {
-		res = Mang->getMangledName(GV);
+		res = Mang->getNameWithPrefix(GV);
 		return replaceAll(res, ".", "-");
 	}
 	std::string Name = Operand->getName();
@@ -1455,7 +1457,7 @@ void PromelaWriter::writeInstComputationInline(Instruction & I)
 	// We can't currently support integer types other than 1, 8, 16, 32, 64.
 	// Validate this.
 	const Type *Ty = I.getType();
-	if (Ty->isInteger() && (Ty != Type::getInt1Ty(I.getContext()) &&
+	if (Ty->isIntegerTy() && (Ty != Type::getInt1Ty(I.getContext()) &&
 					Ty != Type::getInt8Ty(I.getContext()) &&
 					Ty != Type::getInt16Ty(I.getContext()) &&
 					Ty != Type::getInt32Ty(I.getContext()) &&
@@ -1652,7 +1654,7 @@ void PromelaWriter::writeOperandWithCast(Value * Operand,
 		return;
 	}
 	// Should this be a signed comparison?  If so, convert to signed.
-	bool castIsSigned = Cmp.isSignedPredicate();
+	bool castIsSigned = Cmp.isSigned();
 
 	// If the operand was a pointer, convert to a large integer type.
 	const Type *OpTy = Operand->getType();
@@ -2065,7 +2067,7 @@ bool PromelaWriter::fillContainedStructs(const Type * Ty, std::set <const Type *
 	bool isEmpty = true;
 
 	// Don't walk through pointers.
-	if (isa < PointerType > (Ty) || Ty->isPrimitiveType() || Ty->isInteger())
+	if (isa < PointerType > (Ty) || Ty->isPrimitiveType() || Ty->isIntegerTy())
 		return false;
 	
 	// Print all contained types first.
@@ -2185,7 +2187,7 @@ PromelaWriter::isSystemCStruct(const StructType* ty)
 bool
 PromelaWriter::isSystemCType(const Type* ty)
 {
-	if (ty->isPrimitiveType() || ty->isInteger())
+	if (ty->isPrimitiveType() || ty->isIntegerTy())
 		return false;
 
 	return true;
@@ -2204,8 +2206,8 @@ static inline bool isFPIntBitCast(const Instruction & I)
 		return false;
 	const Type *SrcTy = I.getOperand(0)->getType();
 	const Type *DstTy = I.getType();
-	return (SrcTy->isFloatingPoint() && DstTy->isInteger()) ||
-		(DstTy->isFloatingPoint() && SrcTy->isInteger());
+	return (SrcTy->isFloatingPointTy() && DstTy->isIntegerTy()) ||
+		(DstTy->isFloatingPointTy() && SrcTy->isIntegerTy());
 }
 
 void PromelaWriter::printFunction(Function & F, bool inlineFct)
@@ -2890,7 +2892,10 @@ void PromelaWriter::lowerIntrinsics(Function & F)
 					case Intrinsic::setjmp:
 					case Intrinsic::longjmp:
 					case Intrinsic::prefetch:
-					case Intrinsic::dbg_stoppoint:
+						// MM: don't know what
+						//this was, but it
+						//doesn't exist anymore.
+						//case Intrinsic::dbg_stoppoint:
 					case Intrinsic::powi:
 					case Intrinsic::x86_sse_cmp_ss:
 					case Intrinsic::x86_sse_cmp_ps:
@@ -3165,7 +3170,7 @@ PromelaWriter::printGlobalVariables(Mangler* mang)
 	Out << "/*---- Global variables ----*/\n";
 	for (; globalIt < globalEnd; ++globalIt) {
 		GlobalValue* gv = *globalIt;
-		printType(Out, gv->getType(), false, mang->getMangledName(gv));
+		printType(Out, gv->getType(), false, mang->getNameWithPrefix(gv));
 		Out << ";\n";
 	}
 }
@@ -3651,6 +3656,8 @@ bool PromelaWriter::visitBuiltinCall(CallInst & I, Intrinsic::ID ID,
 		Out << "0; *((void**)&" << GetValueName(&I)
 		    << ") = __builtin_stack_save()";
 		return true;
+/*
+MM: don't know what this was, but doesn't exist anymore.
 	case Intrinsic::dbg_stoppoint:{
 		// If we use writeOperand directly we get a "u" suffix which is rejected
 		// by gcc.
@@ -3664,6 +3671,7 @@ bool PromelaWriter::visitBuiltinCall(CallInst & I, Intrinsic::ID ID,
 		    << " \"" << dir << '/' << file << "\"\n";
 		return true;
 	}
+*/
 	case Intrinsic::x86_sse_cmp_ss:
 	case Intrinsic::x86_sse_cmp_ps:
 	case Intrinsic::x86_sse2_cmp_sd:
@@ -3736,11 +3744,6 @@ void PromelaWriter::visitInlineAsm(CallInst & CI)
 	triggerError(Out, "Cannot handle inline ASM\n");
 }
 
-void PromelaWriter::visitMallocInst(MallocInst & I)
-{
-	llvm_unreachable("lowerallocations pass didn't work!");
-}
-
 void PromelaWriter::visitAllocaInst(AllocaInst & I)
 {
 	TRACE_4("visitAllocaInst()\n");
@@ -3754,11 +3757,6 @@ void PromelaWriter::visitAllocaInst(AllocaInst & I)
 		writeOperand(I.getOperand(0));
 	}
 	Out << ')';
-}
-
-void PromelaWriter::visitFreeInst(FreeInst & I)
-{
-	llvm_unreachable("lowerallocations pass didn't work!");
 }
 
 void
@@ -4081,8 +4079,10 @@ bool PromelaWriter::runOnModule(Module & M)
 	IL->AddPrototypes(M);
 
 	// Ensure that all structure types have names...
-	Mang = new Mangler(M);
-	Mang->markCharUnacceptable('.');
+	TAsm = new PromelaBEMCAsmInfo();
+	Mang = new Mangler(*TAsm);
+// MM: doesn't exist anymore. Not sure what to put instead.
+//	Mang->markCharUnacceptable('.');
 
 	// Keep track of which functions are static ctors/dtors so they can have
 	// an attribute added to their prototypes.

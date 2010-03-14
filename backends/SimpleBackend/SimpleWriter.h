@@ -23,16 +23,16 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetRegistry.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstVisitor.h"
-#include "llvm/Support/Mangler.h"
+#include "llvm/Target/Mangler.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/System/Host.h"
 #include "llvm/Config/config.h"
@@ -59,6 +59,15 @@ enum SpecialGlobalClass {
   NotPrinted
 };
 
+// Borrowed from CBEMCAsmInfo in CBackend.cpp
+class SimpleBEMCAsmInfo : public MCAsmInfo {
+public:
+	SimpleBEMCAsmInfo() {
+		this->GlobalPrefix = "";
+		this->PrivateGlobalPrefix = "";
+	}
+};
+
 /// SimpleWriter - This class is the main chunk of code that converts an LLVM
 /// module to a "Simple" translation unit.
 class SimpleWriter : public ModulePass, public InstVisitor<SimpleWriter> {
@@ -67,7 +76,7 @@ class SimpleWriter : public ModulePass, public InstVisitor<SimpleWriter> {
   Mangler *Mang;
   LoopInfo *LI;
   const Module *TheModule;
-  const TargetAsmInfo* TAsm;
+  const SimpleBEMCAsmInfo* TAsm;
   const TargetData* TD;
   std::map<const Type *, std::string> TypeNames;
   std::map<const ConstantFP *, unsigned> FPConstantMap;
@@ -201,9 +210,7 @@ public:
   void visitInlineAsm(CallInst &I);
   bool visitBuiltinCall(CallInst &I, Intrinsic::ID ID, bool &WroteCallee);
 
-  void visitMallocInst(MallocInst &I);
   void visitAllocaInst(AllocaInst &I);
-  void visitFreeInst  (FreeInst   &I);
   void visitLoadInst  (LoadInst   &I);
   void visitStoreInst (StoreInst  &I);
   void visitGetElementPtrInst(GetElementPtrInst &I);

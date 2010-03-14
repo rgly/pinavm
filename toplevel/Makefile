@@ -62,3 +62,6 @@ llvm-version:
 debug-config:
 	@echo CXXFLAGS=$(CXXFLAGS)
 	@echo LDLIBS=$(LDLIBS)
+
+clean:
+	$(RM) $(OBJS) $(UTILS_OBJS) $(FRONTEND_OBJS) $(BACKENDS_OBJS)

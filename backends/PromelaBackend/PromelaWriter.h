@@ -23,7 +23,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/CallSite.h"
@@ -32,7 +32,7 @@
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstVisitor.h"
-#include "llvm/Support/Mangler.h"
+#include "llvm/Target/Mangler.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/System/Host.h"
 #include "llvm/Config/config.h"
@@ -62,6 +62,15 @@ enum SpecialGlobalClass {
   NotPrinted
 };
 
+// Borrowed from CBEMCAsmInfo in CBackend.cpp
+class PromelaBEMCAsmInfo : public MCAsmInfo {
+public:
+	PromelaBEMCAsmInfo() {
+		this->GlobalPrefix = "";
+		this->PrivateGlobalPrefix = "";
+	}
+};
+
 /// PromelaWriter - This class is the main chunk of code that converts an LLVM
 /// module to a "Promela" translation unit.
 class PromelaWriter : public ModulePass, public InstVisitor<PromelaWriter> {
@@ -70,7 +79,7 @@ class PromelaWriter : public ModulePass, public InstVisitor<PromelaWriter> {
   Mangler *Mang;
   LoopInfo *LI;
   const Module *TheModule;
-  const TargetAsmInfo* TAsm;
+  const PromelaBEMCAsmInfo *TAsm;
   const TargetData* TD;
   std::map<const Type *, std::string> TypeNames;
   std::map<const ConstantFP *, unsigned> FPConstantMap;

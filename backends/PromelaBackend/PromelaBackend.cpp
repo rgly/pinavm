@@ -1,13 +1,11 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
-#include "llvm/ModuleProvider.h"
 #include "llvm/PassManager.h"
 #include "llvm/Pass.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/CodeGen/FileWriters.h"
 #include "llvm/CodeGen/LinkAllAsmWriterComponents.h"
 #include "llvm/CodeGen/LinkAllCodegenComponents.h"
 #include "llvm/CodeGen/ObjectCodeEmitter.h"
@@ -49,7 +47,7 @@ void launch_promelabackend(Frontend * fe,
 	if (OutputFilename != "-") {
 
 		std::string error;
-		raw_fd_ostream *FDOut = new raw_fd_ostream(OutputFilename.c_str(), true, true, error);
+		raw_fd_ostream *FDOut = new raw_fd_ostream(OutputFilename.c_str(), error);
 		if (!error.empty()) {
 			errs() << error << '\n';
 			delete FDOut;
@@ -69,7 +67,8 @@ void launch_promelabackend(Frontend * fe,
 	Passes.add(new TargetData(llvmMod));
 	Passes.add(createVerifierPass());
 	Passes.add(createGCLoweringPass());
-	Passes.add(createLowerAllocationsPass(true));
+// MM: useless since free instruction became a normal function call.
+//	Passes.add(createLowerAllocationsPass(true));
 	Passes.add(createLowerInvokePass());
 	Passes.add(createCFGSimplificationPass());	// clean up after lower invoke.
 //	Passes.add(new PromelaBackendNameAllUsedStructsAndMergeFunctions());

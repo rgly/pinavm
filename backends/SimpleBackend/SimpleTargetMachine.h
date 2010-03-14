@@ -19,8 +19,9 @@ namespace llvm {
     virtual bool addPassesToEmitWholeFile(PassManager &PM,
 					  formatted_raw_ostream &Out,
 					  CodeGenFileType FileType,
-					  CodeGenOpt::Level OptLevel);
-    
+					  CodeGenOpt::Level OptLevel,
+					  bool DisableVerify = true);
+
     virtual const TargetData*
     getTargetData() const {
       return 0;
