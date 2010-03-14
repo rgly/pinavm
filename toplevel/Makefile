@@ -1,8 +1,8 @@
-SRCS = ${wildcard *.cpp}
+SRCS = ${filter-out pinavm.cpp, ${wildcard *.cpp}}
 TARGET = libpinapa.so
 TARGET_EXE = pinavm
-all: $(TARGET)
 both: $(TARGET) $(TARGET_EXE)
+all: $(TARGET)
 
 ROOT=..
 include $(ROOT)/Makefile.common
@@ -11,7 +11,12 @@ BACKENDSDIR = $(ROOT)/backends
 FRONTENDDIR = $(ROOT)/frontend
 UTILSDIR = $(ROOT)/utils
 
-SYSTEMC_OBJS = $(SYSTEMCROOT)/lib-linux/libsystemc.a
+# We can't just link against libsystemc.a, since linking against a
+# static library would take only the usefull symbols. pinavm doesn't
+# use all of SystemC's symbols, and the platform may use some that we
+# don't use directly => we have to take all .o files to make sure the
+# symbols will be there when the elaboration will require it.
+SYSTEMC_OBJS = ${shell find $(DOWNLOAD_AND_COMPILE_DIR)/systemc-2.2.0-gcc/objdir/ -name \*.o}
 
 FRONTEND_CXX = ${wildcard $(ROOT)/frontend/*.cpp}
 FRONTEND_SRC = $(FRONTEND_CXX) ${wildcard $(ROOT)/frontend/*.hpp}
@@ -58,11 +63,14 @@ $(TARGET): frontend backends utils $(OBJS)
 	g++ -shared -o $@ $(ALL_OBJS) $(LDFLAGS) $(LDLIBS)
 
 
-main-load-bc.o: main.cpp
+toplevel-load-bc.o: toplevel.cpp
 	$(CXX) -c $< -o $@ $(CXXFLAGS) -DLOAD_PLATFORM_BC $(CXXEXTRAFLAGS)
 
-$(TARGET_EXE): frontend backends utils main-load-bc.o $(filter-out main.o, $(OBJS))
-	g++ -o $@ $(filter-out main.o, $(ALL_OBJS)) main-load-bc.o $(LDFLAGS) $(LDLIBS)
+libpinavm.so: frontend backends utils toplevel-load-bc.o $(filter-out toplevel.o, $(OBJS))
+	g++ -shared -o $@ $(filter-out toplevel.o, $(ALL_OBJS)) toplevel-load-bc.o $(LDFLAGS) $(LDLIBS)
+
+pinavm: pinavm.cpp libpinavm.so
+	g++ -o $@ pinavm.cpp -lpinavm -L . -Wl,-rpath $(PWD)
 
 llvm-version:
 	llvm-config --version

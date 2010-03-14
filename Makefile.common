@@ -53,7 +53,7 @@ clean:
 	$(RM) *.d *.o $(TARGET)
 endif
 
-%.o: %.cpp $(filter-out %.d, $(MAKEFILE_LIST))
+%.o: %.cpp # $(filter-out %.d, $(MAKEFILE_LIST))
 	$(CXX) -c $< -o $@ $(CPPFLAGS) $(CXXFLAGS) $(CXXEXTRAFLAGS) $(CXXFLAGS.$*)
 
 # "user-friendly" output of make for commands the students may not

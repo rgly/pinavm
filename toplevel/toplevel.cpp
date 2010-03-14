@@ -131,7 +131,7 @@ int load_and_run_sc_main(std::string & InputFile)
 	InitializeNativeTarget();
 
 	// So that JIT-ed code can call pinapa_callback.
-	sys::DynamicLibrary::AddSymbol("pinapa_callback", (void *)pinapa_callback);
+	//sys::DynamicLibrary::AddSymbol("pinapa_callback", (void *)pinapa_callback);
 
 	// Load the bitcode...
 	Module *Mod = NULL;
@@ -217,7 +217,7 @@ int load_and_run_sc_main(std::string & InputFile)
 	}
 }
 
-int main(int argc, char **argv)
+int toplevel_main(int argc, char **argv)
 {
 //	llvm_shutdown_obj X;	// Call llvm_shutdown() on exit.
 
