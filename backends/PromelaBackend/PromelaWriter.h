@@ -23,7 +23,6 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/CallSite.h"
@@ -62,15 +61,6 @@ enum SpecialGlobalClass {
   NotPrinted
 };
 
-// Borrowed from CBEMCAsmInfo in CBackend.cpp
-class PromelaBEMCAsmInfo : public MCAsmInfo {
-public:
-	PromelaBEMCAsmInfo() {
-		this->GlobalPrefix = "";
-		this->PrivateGlobalPrefix = "";
-	}
-};
-
 /// PromelaWriter - This class is the main chunk of code that converts an LLVM
 /// module to a "Promela" translation unit.
 class PromelaWriter : public ModulePass, public InstVisitor<PromelaWriter> {
@@ -79,7 +69,14 @@ class PromelaWriter : public ModulePass, public InstVisitor<PromelaWriter> {
   Mangler *Mang;
   LoopInfo *LI;
   const Module *TheModule;
-  const PromelaBEMCAsmInfo *TAsm;
+  /* MM: the C backend uses a derived class from MCAsmInfo. But the
+     version of llvm I'm using compiles MCAsmInfo with -fno-rtti while
+     we need -frtti (otherwise, systemc.h doesn't compile), and
+     deriving a rtti class from a no-rtti doesn't link. For now, let's
+     just take MCAsmInfo as it is, we'll play with per-file
+     compilation option later if needed.
+     */
+  const MCAsmInfo *TAsm;
   const TargetData* TD;
   std::map<const Type *, std::string> TypeNames;
   std::map<const ConstantFP *, unsigned> FPConstantMap;

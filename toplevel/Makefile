@@ -31,9 +31,17 @@ CXXFLAGS += -I$(FRONTENDDIR)
 CXXFLAGS += -I$(BACKENDSDIR)/SimpleBackend -I$(BACKENDSDIR)/PromelaBackend
 CXXFLAGS += -I$(UTILSDIR)
 
-# llvm-config sometimes includes -fno-rtti -fno-exceptions, but we don't want this.
+# llvm-config sometimes includes -fno-rtti -fno-exceptions, but we don't want this:
+# systemc.h is not compilable with -fno-rtti!
 CXXFLAGS += `llvm-config --cxxflags jit bitreader bitwriter native` \
 	-frtti -fexceptions
+
+# These files define classes that inherit from LLVM classes, which are
+# compiled with -fno-rtti as of svn version 98434 (14 mach 2010) while
+# we need -frtti (see above), and deriving a rtti class from a no-rtti
+# doesn't link. So, these two files are compiled without rtti.
+CXXFLAGS.../backends/PromelaBackend/PromelaTargetMachine=-fno-rtti -fno-exceptions
+CXXFLAGS.../backends/SimpleBackend/SimpleTargetMachine=-fno-rtti -fno-exceptions
 
 LDLIBS += `llvm-config --ldflags --libs jit interpreter nativecodegen bitreader selectiondag`
 

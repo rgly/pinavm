@@ -59,6 +59,8 @@ enum SpecialGlobalClass {
   NotPrinted
 };
 
+/*
+  MM: see PromelaBackend.h for my remark about rtti
 // Borrowed from CBEMCAsmInfo in CBackend.cpp
 class SimpleBEMCAsmInfo : public MCAsmInfo {
 public:
@@ -67,6 +69,7 @@ public:
 		this->PrivateGlobalPrefix = "";
 	}
 };
+*/
 
 /// SimpleWriter - This class is the main chunk of code that converts an LLVM
 /// module to a "Simple" translation unit.
@@ -76,7 +79,7 @@ class SimpleWriter : public ModulePass, public InstVisitor<SimpleWriter> {
   Mangler *Mang;
   LoopInfo *LI;
   const Module *TheModule;
-  const SimpleBEMCAsmInfo* TAsm;
+  const MCAsmInfo* TAsm;
   const TargetData* TD;
   std::map<const Type *, std::string> TypeNames;
   std::map<const ConstantFP *, unsigned> FPConstantMap;

@@ -4075,7 +4075,7 @@ bool SimpleWriter::runOnModule(Module & M)
 	IL->AddPrototypes(M);
 
 	// Ensure that all structure types have names...
-	TAsm = new SimpleBEMCAsmInfo();
+	TAsm = new MCAsmInfo();
 	Mang = new Mangler(*TAsm);
 
 	// Keep track of which functions are static ctors/dtors so they can have
