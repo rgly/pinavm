@@ -55,6 +55,10 @@ static cl::opt < std::string >
 Args("args", cl::desc("<input args>"),
 	      cl::init(""), cl::value_desc("string"));
 
+static cl::opt < std::string >
+Scbc("scbc", cl::desc("<bitcode file linked with SystemC>"),
+     cl::init(""), cl::value_desc("filename"));
+
 /*
 TODO: this would be better than Args, to allow having multiple arguments.
 static cl::list<std::string>
@@ -96,7 +100,7 @@ void pinapa_callback()
 		disable_debug_msg = false;
 	}
 
-	Frontend *fe = launch_frontend(InputFilename, InlineFcts);
+	Frontend *fe = launch_frontend(Scbc, InlineFcts);
 
 	if (PrintIR) {
 		fe->printIR();
