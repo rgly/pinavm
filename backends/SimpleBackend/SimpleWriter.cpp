@@ -2269,7 +2269,7 @@ SimpleWriter::getValueDependencies(Value* value,
 				Function* fCalled = callInst->getCalledFunction();
 				TRACE_7("Treating CallInst \n");
 
-				if (! this->sccfactory->handlerExists(fCalled, callInst->getParent(), callInst)) {
+				if (! this->sccfactory->handlerExists(fCalled, callInst->getParent(), callInst, fCalled)) {
 					for (User::op_iterator opit = callInst->op_begin(), opend = callInst->op_end(); opit != opend; ++opit) {
 						Value* op = *opit; 
 						Function::arg_iterator argI = fCalled->arg_begin(), argE = fCalled->arg_end();
@@ -3429,7 +3429,7 @@ SimpleWriter::visitSCConstruct(SCConstruct * scc)
 
 void SimpleWriter::visitCallInst(CallInst & I)
 {
-	std::map <CallInst*, std::map<Process*, SCConstruct*> >::iterator itC;
+	std::map <Instruction*, std::map<Process*, SCConstruct*> >::iterator itC;
 	CallInst* pI = cast<CallInst>(pointerToInst);
 	itC = this->sccfactory->getConstructs()->find(pI);
 	if (itC != this->sccfactory->getConstructs()->end()) {

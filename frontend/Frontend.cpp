@@ -129,20 +129,31 @@ bool Frontend::run()
 			for (Function::iterator bb = F->begin(), be = F->end(); bb != be; ++bb) {
 				BasicBlock::iterator i = bb->begin(), ie = bb->end();
 				while (i != ie) {
-					CallInst *callInst = dyn_cast < CallInst > (&*i);
-					if (callInst) {
-						if (! this->sccfactory->handlerExists(F, &*bb, callInst)) {
-							TRACE_6("CallInst : " << callInst << "\n");
-							TRACE_6("CalledFct : " << callInst->getCalledFunction() << "\n");
-							callInst->dump();
-							TRACE_4("Call not handled : " << callInst->getCalledFunction()->getNameStr() << "\n");
-							TRACE_4("Inlining function : " << callInst->getCalledFunction()->getNameStr() << "\n");
-							llvm::InlineFunction(callInst);
-							// InlineFunction invalidates iterators => restart loop.
-							goto start_for;
-						}
+					Function* calledFunction = NULL;
+					Instruction* currentInst = &*i;
+					bool isInvoke = false;
+					if (CallInst *callInst = dyn_cast < CallInst > (currentInst)) {
+						calledFunction =  callInst->getCalledFunction();
+					} else if(InvokeInst *invokeInst = dyn_cast < InvokeInst > (currentInst)) {
+						calledFunction =  invokeInst->getCalledFunction();
+						isInvoke = true;
+					} 
+					
+					if (! calledFunction) {
+						TRACE_6("Encountered call to function pointer. Not parsing it.\n");
+					} else if (! this->sccfactory->handlerExists(F, &*bb, currentInst, calledFunction)) {
+						TRACE_6("CallInst : " << currentInst << "\n");
+						TRACE_6("CalledFct : " << calledFunction << "\n");
+						currentInst->dump();
+						TRACE_4("Call not handled : " << calledFunction->getNameStr() << "\n");
+						TRACE_4("Inlining function : " << calledFunction->getNameStr() << "\n");
+						if (isInvoke)
+							llvm::InlineFunction(dyn_cast<InvokeInst>(currentInst));
+						else
+							llvm::InlineFunction(dyn_cast<CallInst>(currentInst));
+						// InlineFunction invalidates iterators => restart loop.
+						goto start_for;
 					}
-					BasicBlock::iterator tmpend = bb->end();
 					i++;
 				}
 			}
@@ -158,30 +169,40 @@ bool Frontend::run()
 		proc->addUsedFunction(proc->getMainFct());
 		this->scjit->setCurrentProcess(proc);
 		while (!fctStack->empty()) {
-			Function *F = fctStack->back();
+			Function* F = fctStack->back();
 			fctStack->pop_back();
 			TRACE_3("Parsing Function : " << F->getNameStr() << "\n");
 			for (Function::iterator bb = F->begin(), be = F->end(); bb != be; ++bb) {
 				BasicBlock::iterator i = bb->begin(), ie = bb->end();
+				bool callB; 
 				while (i != ie) {
-					CallInst *callInst = dyn_cast < CallInst > (&*i);
-					if (callInst) {
-						if (callInst->getCalledFunction() == NULL) {
-							TRACE_6("Encountered call to function pointer. Not parsing it.\n");
-						} else if (callInst->getCalledFunction()->getIntrinsicID() != Intrinsic::not_intrinsic) {
-							TRACE_6("Encountered call to intrinsic function \"" << callInst->getCalledFunction()->getNameStr() << "\" (id = " << callInst->getCalledFunction()->getIntrinsicID() << "). Not parsing it.\n");
-						} else if (! sccfactory->handle(proc, F, &*bb, callInst)) {
-							TRACE_6("CallInst : " << callInst << "\n");
-							TRACE_6("CalledFct : " << callInst->getCalledFunction() << "\n");
-							callInst->dump();
-							TRACE_4("Call not handled : " << callInst->getCalledFunction()->getNameStr() << "\n");
-							fctStack->push_back(callInst->getCalledFunction());
-							proc->addUsedFunction(callInst->getCalledFunction());
-						}
-					} else {
+					callB = false;
+					Function* calledFunction = NULL;
+					Instruction* currentInst = &*i;
+					if (CallInst *callInst = dyn_cast < CallInst > (currentInst)) {
+						callB = true;
+						calledFunction =  callInst->getCalledFunction();
+					} else if(InvokeInst *invokeInst = dyn_cast < InvokeInst > (currentInst)) {
+						callB = true;
+						calledFunction =  invokeInst->getCalledFunction();
+					}
+					
+					if (! calledFunction) {
+						TRACE_6("Encountered call to function pointer. Not parsing it.\n");
+					} else if (! this->sccfactory->handle(proc, F, &*bb, currentInst, calledFunction)) {
+						TRACE_6("CallInst : " << currentInst << "\n");
+						TRACE_6("CalledFct : " << calledFunction << "\n");
+						currentInst->dump();
+						TRACE_4("Call not handled : " << calledFunction->getNameStr() << "\n");
+						fctStack->push_back(calledFunction);
+						proc->addUsedFunction(calledFunction);
+						
+					} else if (calledFunction->getIntrinsicID() != Intrinsic::not_intrinsic) {
+						TRACE_6("Encountered call to intrinsic function \"" << calledFunction->getNameStr() << "\" (id = " << calledFunction->getIntrinsicID() << "). Not parsing it.\n");
+					}
+					if (! callB) {
 						fillGlobalVars(&*i);
 					}
-					BasicBlock::iterator tmpend = bb->end();
 					i++;
 				}
 			}

@@ -6,18 +6,17 @@
 
 using namespace llvm;
 
-SCConstruct *DefaultTimeHandler::handle(Function * fct, BasicBlock * bb,
-					CallInst * callInst)
+SCConstruct *DefaultTimeHandler::handle(Function * fct, BasicBlock * bb, Instruction* callInst, Function* calledFunction)
 {
 	TRACE_3("Handling call to wait(int)... ");
 	Value *arg = callInst->getOperand(2);
 
 	if (arg->getType()->isInteger()) {
-		int time_waited = this->scjit->jitInt(fct, arg);
+		int time_waited = this->scjit->jitInt(fct, callInst, arg);
 		TRACE_3("Int time waited: " << time_waited << "\n");
 		return new DefaultTimeConstruct(time_waited);
 	} else if (arg->getType()->isFloatingPoint()) {
-		double time_waited = this->scjit->jitDouble(fct, arg);
+		double time_waited = this->scjit->jitDouble(fct, callInst, arg);
 		TRACE_3("Double time waited: " << time_waited << "\n");
 		return new DefaultTimeConstruct(time_waited);
 	} else {
@@ -25,8 +24,7 @@ SCConstruct *DefaultTimeHandler::handle(Function * fct, BasicBlock * bb,
 	}
 }
 
-void DefaultTimeHandler::insertInMap(std::map < Function *,
-				     SCConstructHandler * >*scchandlers)
+void DefaultTimeHandler::insertInMap(std::map < Function *, SCConstructHandler * >*scchandlers)
 {
 	SCConstructHandler::insertInMap(scchandlers,
 					"_ZN7sc_core9sc_module4waitEi");

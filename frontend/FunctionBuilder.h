@@ -54,16 +54,18 @@ class FunctionBuilder {
   Function* origFct;
   Function* fctToJit;
   Value* res;
+  Instruction* targetInst;
 
   bool mark(Value* arg);
   void markUsefulInstructions();
   void cloneBlocks ();
+  std::vector<Instruction*>* predecessors;
 
  public:
-  FunctionBuilder(Function* origFunction, Function* functionToJit, Value* resValue);
+  FunctionBuilder(Function* origFunction, Function* functionToJit, Instruction* inst, Value* resValue);
   ~FunctionBuilder();
   Function* buildFct();
-
+  bool isBeforeTargetInst(Value* v);
 };
 
 #endif

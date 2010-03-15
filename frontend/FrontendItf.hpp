@@ -19,6 +19,7 @@
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/PassNameParser.h"
 #include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/CodeGen/Passes.h"
 
 #include "config.h"
 
@@ -50,6 +51,11 @@ Frontend *launch_frontend(std::string InputFilename, bool inlineFcts)
 	// Check that the module is well formed on completion of optimization
 	FunctionPass *vp = createVerifierPass();
 	Passes.add(vp);
+
+//	Passes.add(createGCLoweringPass());
+//	Passes.add(createLowerAllocationsPass(true));
+	Passes.add(createLowerInvokePass());
+	Passes.add(createCFGSimplificationPass());	// clean up after lower invoke.
 
 	// Pinapa pass
 	FrontendPass *fep = new FrontendPass();

@@ -1666,146 +1666,6 @@ void PromelaWriter::writeOperandWithCast(Value * Operand,
 	Out << ")";
 }
 
-// generateCompilerSpecificCode - This is where we add conditional compilation
-// directives to cater to specific compilers as need be.
-//
-static void generateCompilerSpecificCode(formatted_raw_ostream & Out,
-					const TargetData * TD)
-{
-	// Alloca is hard to get, and we don't want to include stdlib.h here.
-	Out << "/* get a declaration for alloca */\n"
-	    << "#if defined(__CYGWIN__) || defined(__MINGW32__)\n"
-	    << "#define  alloca(x) __builtin_alloca((x))\n"
-	    << "#define _alloca(x) __builtin_alloca((x))\n"
-	    << "#elif defined(__APPLE__)\n"
-	    << "extern void *__builtin_alloca(unsigned long);\n"
-	    << "#define alloca(x) __builtin_alloca(x)\n"
-	    << "#define longjmp _longjmp\n"
-	    << "#define setjmp _setjmp\n"
-	    << "#elif defined(__sun__)\n"
-	    << "#if defined(__sparcv9)\n"
-	    << "extern void *__builtin_alloca(unsigned long);\n"
-	    << "#else\n"
-	    << "extern void *__builtin_alloca(unsigned int);\n"
-	    << "#endif\n"
-	    << "#define alloca(x) __builtin_alloca(x)\n"
-	    <<
-		"#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__arm__)\n"
-	    << "#define alloca(x) __builtin_alloca(x)\n" <<
-		"#elif defined(_MSC_VER)\n" << "#define inline _inline\n" <<
-		"#define alloca(x) _alloca(x)\n" << "#else\n" <<
-		"#include <alloca.h>\n" << "#endif\n\n";
-
-	// We output GCC specific attributes to preserve 'linkonce'ness on globals.
-	// If we aren't being compiled with GCC, just drop these attributes.
-	Out <<
-		"#ifndef __GNUC__  /* Can only support \"linkonce\" vars with GCC */\n"
-	    << "#define __attribute__(X)\n" << "#endif\n\n";
-
-	// On Mac OS X, "external weak" is spelled "__attribute__((weak_import))".
-	Out << "#if defined(__GNUC__) && defined(__APPLE_CC__)\n"
-	    << "#define __EXTERNAL_WEAK__ __attribute__((weak_import))\n"
-	    << "#elif defined(__GNUC__)\n"
-	    << "#define __EXTERNAL_WEAK__ __attribute__((weak))\n"
-	    << "#else\n" << "#define __EXTERNAL_WEAK__\n" << "#endif\n\n";
-
-	// For now, turn off the weak linkage attribute on Mac OS X. (See above.)
-	Out << "#if defined(__GNUC__) && defined(__APPLE_CC__)\n"
-	    << "#define __ATTRIBUTE_WEAK__\n"
-	    << "#elif defined(__GNUC__)\n"
-	    << "#define __ATTRIBUTE_WEAK__ __attribute__((weak))\n"
-	    << "#else\n" << "#define __ATTRIBUTE_WEAK__\n" << "#endif\n\n";
-
-	// Add hidden visibility support. FIXME: APPLE_CC?
-	Out << "#if defined(__GNUC__)\n"
-	    <<
-		"#define __HIDDEN__ __attribute__((visibility(\"hidden\")))\n"
-	    << "#endif\n\n";
-
-	// Define NaN and Inf as GCC builtins if using GCC, as 0 otherwise
-	// From the GCC documentation:
-	//
-	//   double __builtin_nan (const char *str)
-	//
-	// This is an implementation of the ISO C99 function nan.
-	//
-	// Since ISO C99 defines this function in terms of strtod, which we do
-	// not implement, a description of the parsing is in order. The string is
-	// parsed as by strtol; that is, the base is recognized by leading 0 or
-	// 0x prefixes. The number parsed is placed in the significand such that
-	// the least significant bit of the number is at the least significant
-	// bit of the significand. The number is truncated to fit the significand
-	// field provided. The significand is forced to be a quiet NaN.
-	//
-	// This function, if given a string literal, is evaluated early enough
-	// that it is considered a compile-time constant.
-	//
-	//   float __builtin_nanf (const char *str)
-	//
-	// Similar to __builtin_nan, except the return type is float.
-	//
-	//   double __builtin_inf (void)
-	//
-	// Similar to __builtin_huge_val, except a warning is generated if the
-	// target floating-point format does not support infinities. This
-	// function is suitable for implementing the ISO C99 macro INFINITY.
-	//
-	//   float __builtin_inff (void)
-	//
-	// Similar to __builtin_inf, except the return type is float.
-	Out << "#ifdef __GNUC__\n"
-	    <<
-		"#define LLVM_NAN(NanStr)   __builtin_nan(NanStr)   /* Double */\n"
-	    <<
-		"#define LLVM_NANF(NanStr)  __builtin_nanf(NanStr)  /* Float */\n"
-	    <<
-		"#define LLVM_NANS(NanStr)  __builtin_nans(NanStr)  /* Double */\n"
-	    <<
-		"#define LLVM_NANSF(NanStr) __builtin_nansf(NanStr) /* Float */\n"
-	    <<
-		"#define LLVM_INF           __builtin_inf()         /* Double */\n"
-	    <<
-		"#define LLVM_INFF          __builtin_inff()        /* Float */\n"
-	    << "#define LLVM_PREFETCH(addr,rw,locality) "
-		"__builtin_prefetch(addr,rw,locality)\n" <<
-		"#define __ATTRIBUTE_CTOR__ __attribute__((constructor))\n" <<
-		"#define __ATTRIBUTE_DTOR__ __attribute__((destructor))\n" <<
-		"#define LLVM_ASM           __asm__\n" << "#else\n" <<
-		"#define LLVM_NAN(NanStr)   ((double)0.0)           /* Double */\n"
-	    <<
-		"#define LLVM_NANF(NanStr)  0.0F                    /* Float */\n"
-	    <<
-		"#define LLVM_NANS(NanStr)  ((double)0.0)           /* Double */\n"
-	    <<
-		"#define LLVM_NANSF(NanStr) 0.0F                    /* Float */\n"
-	    <<
-		"#define LLVM_INF           ((double)0.0)           /* Double */\n"
-	    <<
-		"#define LLVM_INFF          0.0F                    /* Float */\n"
-	    <<
-		"#define LLVM_PREFETCH(addr,rw,locality)            /* PREFETCH */\n"
-	    << "#define __ATTRIBUTE_CTOR__\n" <<
-		"#define __ATTRIBUTE_DTOR__\n" << "#define LLVM_ASM(X)\n" <<
-		"#endif\n\n";
-
-	Out << "#if __GNUC__ < 4 /* Old GCC's, or compilers not GCC */ \n"
-	    << "#define __builtin_stack_save() 0   /* not implemented */\n"
-	    << "#define __builtin_stack_restore(X) /* noop */\n"
-	    << "#endif\n\n";
-
-	// Output typedefs for 128-bit integers. If these are needed with a
-	// 32-bit target or with a C compiler that doesn't support mode(TI),
-	// more drastic measures will be needed.
-	Out << "#if __GNUC__ && __LP64__ /* 128-bit integer types */\n"
-	    << "typedef int __attribute__((mode(TI))) llvmInt128;\n"
-	    << "typedef unsigned __attribute__((mode(TI))) llvmUInt128;\n"
-	    << "#endif\n\n";
-
-	// Output target-specific code that should be inserted into main.
-	Out <<
-		"#define CODE_FOR_MAIN() /* Any target-specific code for main()*/\n";
-}
-
 /// FindStaticTors - Given a static ctor/dtor list, unpack its contents into
 /// the StaticTors set.
 static void FindStaticTors(GlobalVariable * GV,
@@ -3423,7 +3283,7 @@ PromelaWriter::visitSCConstruct(SCConstruct * scc)
 
 void PromelaWriter::visitCallInst(CallInst & I)
 {
-	std::map <CallInst*, std::map<Process*, SCConstruct*> >::iterator itC;
+	std::map <Instruction*, std::map<Process*, SCConstruct*> >::iterator itC;
 	CallInst* pI = cast<CallInst>(pointerToInst);
 	itC = this->sccfactory->getConstructs()->find(pI);
 	if (itC != this->sccfactory->getConstructs()->end()) {
@@ -3504,7 +3364,7 @@ void PromelaWriter::visitCallInst(CallInst & I)
 		Function* pf = pI->getParent()->getParent();
 		if (cf->getArgumentList().size() != 0) {
 			Value* arg = pI->getOperand(1);
-			void* mod = this->scjit->jitAddr(pf, arg);
+			void* mod = this->scjit->jitAddr(pf, pI, arg);
 			TRACE_4("################# Module jitted : " << mod << "\n");
 			TRACE_4("################# IRModule associated : " << this->elab->getIRModule(mod) << "\n");
 		}

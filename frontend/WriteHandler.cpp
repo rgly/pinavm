@@ -6,15 +6,14 @@
 
 using namespace llvm;
 
-SCConstruct *WriteHandler::handle(Function * fct, BasicBlock * bb,
-				  CallInst * callInst)
+SCConstruct *WriteHandler::handle(Function * fct, BasicBlock * bb, Instruction* callInst, Function* calledFunction)
 {
 	WriteConstruct* ret;
 	char buffer[15];
 
 	TRACE_3("Handling call to write()\n");
-	Value *arg = callInst->getOperand(1);
-	void *portAddr = this->scjit->jitAddr(fct, arg);
+	Value *arg = callInst->getAttributes(1);
+	void *portAddr = this->scjit->jitAddr(fct, callInst, arg);
 	TRACE_4("Address jitted : " << portAddr << "\n");
 	Port *po = this->scjit->getElab()->getPort(portAddr);
 	TRACE_3("Port written : " << po << "\n");
@@ -25,20 +24,19 @@ SCConstruct *WriteHandler::handle(Function * fct, BasicBlock * bb,
 		
 		if (valueType->isInteger()) {
 			if (((IntegerType*) valueType)->getBitWidth() == 1) {
-				char* valuePointer= (char*) this->scjit->jitAddr(fct, value);
-				int boolValue = (int) *valuePointer;
+				int boolValue = this->scjit->jitBool(fct, callInst, value);
 				if (boolValue) {
 					ret = new WriteConstruct(po, "true");
 				} else {
 					ret = new WriteConstruct(po, "false");				
 				}
 			} else {
-				int intValue = this->scjit->jitInt(fct, value);
+				int intValue = this->scjit->jitInt(fct, callInst, value);
 				sprintf(buffer, "%d", intValue);
 				ret = new WriteConstruct(po, buffer);
 			}
 		} else if(valueType->getTypeID() == Type::DoubleTyID) {
-			double doubleValue = this->scjit->jitDouble(fct, value);
+			double doubleValue = this->scjit->jitDouble(fct, callInst, value);
 			sprintf(buffer, "%f", doubleValue);
 			ret = new WriteConstruct(po, buffer);
 		} else if (valueType->getTypeID() == Type::PointerTyID) {
@@ -53,4 +51,6 @@ SCConstruct *WriteHandler::handle(Function * fct, BasicBlock * bb,
 void WriteHandler::insertInMap(std::map < Function *, SCConstructHandler * >*scchandlers)
 {
 	SCConstructHandler::insertInMap(scchandlers, "_ZN7sc_core8sc_inoutIbE5writeERKb");
+	SCConstructHandler::insertInMap(scchandlers, "_ZN7sc_core8sc_inoutIiE5writeERKi");
+	SCConstructHandler::insertInMap(scchandlers, "_ZN7sc_core8sc_inoutIN5sc_dt7sc_uintILi8EEEE5writeERKS3_");
 }
