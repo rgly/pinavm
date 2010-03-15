@@ -123,12 +123,13 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 		
 		match = "N7sc_core9sc_signalI";
 		if (itfTypeName.find(match) == 0) {
-			size_t found = itfTypeName.find_last_of("EE");
+			
+			size_t found = itfTypeName.find_first_of("E");
 			sprintf(temp, "%d", (int) found);
 			TRACE_4("Found : " << temp << "\n");
 			sprintf(temp, "%d", (int) match.size());
 			TRACE_4("match size : " << temp << "\n");		
-			size_t typeLength = found - match.size() - 1;
+			size_t typeLength = found - match.size();
 			sprintf(temp, "%d", (int) typeLength);
 			TRACE_4("typeLength : " << temp << "\n");
 			variableTypeName = itfTypeName.substr(match.size(), typeLength);
@@ -142,6 +143,10 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 				itfType = Type::getInt32Ty(getGlobalContext());
 				if (itfType)
 					TRACE_4("Integer type found !\n");
+			} else if(variableTypeName == "N5sc_dt7sc_uintILi8") {
+				itfType = Type::getInt32Ty(getGlobalContext());
+				if (itfType)
+					TRACE_4("Unsigned integer type found !\n");
 			} else {
 				itfType = this->llvmMod->getTypeSymbolTable().lookup(itfTypeName);
 				

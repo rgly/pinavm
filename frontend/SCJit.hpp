@@ -65,11 +65,11 @@ struct SCJit {
 	SCElab *getElab();
 	void setCurrentProcess(Process * process);
 	Process *getCurrentProcess();
-	void *jitAddr(Function * f, Value * arg);
-	int jitInt(Function * f, Value * arg);
-	double jitDouble(Function * f, Value * arg);
-	bool jitBool(Function * f, Value * arg);
-	Function *buildFct(Function * f, FunctionType * FT, Value * arg);
+	void *jitAddr(Function * f, Instruction* inst, Value * arg);
+	int jitInt(Function * f, Instruction* inst, Value * arg);
+	double jitDouble(Function * f, Instruction* inst, Value * arg);
+	bool jitBool(Function * f, Instruction* inst, Value * arg);
+	Function *buildFct(Function * f, FunctionType * FT, Instruction* inst, Value * arg);
 	Module *getModule();
 };
 

@@ -17,8 +17,8 @@ class TimeHandler:public SCConstructHandler {
 	int time;
 
       public:
-	 TimeHandler(SCJit * jit):SCConstructHandler(jit) {
-	} int getTime();
+	 TimeHandler(SCJit * jit):SCConstructHandler(jit) {}
+	int getTime();
 };
 
 #endif

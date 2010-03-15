@@ -4,11 +4,13 @@
 
 FunctionBuilder::FunctionBuilder(Function * origFunction,
 				Function * functionToJit,
+				Instruction* inst,
 				Value * resValue)
 {
 	this->origFct = origFunction;
 	this->fctToJit = functionToJit;
 	this->res = resValue;
+	this->targetInst = inst;
 }
 
 FunctionBuilder::~FunctionBuilder()
@@ -59,10 +61,8 @@ bool FunctionBuilder::mark(Value * arg)
 	}
 
 
-	if (isa < Constant > (arg) || isa < GlobalValue > (arg)
-	    || isa < BitCastInst > (arg)) {
-		TRACE_6
-		    ("** Arg is an arg or constant or global value or bitcast\n");
+	if (isa < Constant > (arg) || isa < GlobalValue > (arg) || isa < BitCastInst > (arg)) {
+		TRACE_6("** Arg is a constant or global value or bitcast\n");
 		return false;
 	}
 
@@ -82,12 +82,17 @@ bool FunctionBuilder::mark(Value * arg)
 
 	currentBlock = argAsInst->getParent();
 	if (find(used_bb.begin(), used_bb.end(), currentBlock) == used_bb.end()) {
-		TRACE_5("Block useful :" << currentBlock->
-			getNameStr() << "\n");
+		TRACE_5("Block useful :" << currentBlock->getNameStr() << "\n");
 		used_bb.push_back(currentBlock);
 	}
 
 	return true;
+}
+
+bool
+FunctionBuilder::isBeforeTargetInst(Value* v)
+{
+	return find(this->predecessors->begin(), this->predecessors->end(), v) != this->predecessors->end();
 }
 
 void FunctionBuilder::markUsefulInstructions()
@@ -96,28 +101,38 @@ void FunctionBuilder::markUsefulInstructions()
 	
 	while (!temp_queue.empty()) {
 		Instruction *inst = temp_queue.back();
-		User::op_iterator opit = inst->op_begin(), opend = inst->op_end();
-
 		temp_queue.pop_back();
+
+		TRACE_5("Marking inst " << inst << "\n");
+		inst->dump();
 		
-		/*** Visit each argument of the instruction ***/
+		/********************* Visit each use  ***************/
+		Value::use_iterator I = inst->use_begin(), E = inst->use_end();
+		TRACE_6("> Visiting uses...\n");
+		for (; I != E; ++I) {
+			Value *v = *I;
+			TRACE_6("Use : " << v << "\n");
+			v->dump();
+			/*** Mark the instruction and the associated basicblock as useful ***/
+			if (isBeforeTargetInst(v))
+				mark(v);
+		}
+		TRACE_6("> Uses visited\n");
+
+		
+		/*********** Visit each argument of the instruction ***********/
+		TRACE_6("> Visiting args...\n");
+		User::op_iterator opit = inst->op_begin(), opend = inst->op_end();
 		for (; opit != opend; ++opit) {
 			arg = *opit;
-			
+			TRACE_6("Arg : " << arg << ")\n");
+			arg->dump();
+
 			/*** Mark the instruction and the associated basicblock as useful ***/
-			if (!mark(arg))
-				continue;
-			
-			Value::use_iterator I = arg->use_begin(), E = arg->use_end();
-			/*** Visit each use of the arg ***/
-			for (; I != E; ++I) {
-				Value *v = *I;
-				
-				/*** Mark the instruction and the associated basicblock as useful ***/
-				if (!mark(v))
-					continue;
-			}
+			if (isBeforeTargetInst(arg))
+				mark(arg);
 		}
+		TRACE_5("... marking done for inst : " << inst << "\n");
 	}
 }
 
@@ -153,6 +168,19 @@ Function *FunctionBuilder::buildFct()
 		TRACE_5("\n");
 		return this->fctToJit;
 	}
+	bool end = false;
+	this->predecessors = new std::vector<Instruction*>();
+	for (Function::iterator bb = this->origFct->begin(), be = this->origFct->end(); bb != be && !end; ++bb) {
+		BasicBlock::iterator i = bb->begin(), ie = bb->end();
+		while (i != ie && ! end) {
+			Instruction* currentInst = &*i;
+			if (currentInst == this->targetInst)
+				end = true;
+			else
+				this->predecessors->push_back(currentInst);
+			i++;
+		}
+	}
 
 	/*********** Determine which instructions are useful ***********/
 	TRACE_5("Marking useful basic blocks and instructions\n");
@@ -177,7 +205,6 @@ Function *FunctionBuilder::buildFct()
 	Function::iterator origbb = origFct->begin(), origbe = origFct->end();;
 	//  Function::iterator clonebb = cloneFct->begin(), clonebe = cloneFct->end(); ;
 	std::map < std::string, Value * >namedValues;
-	Instruction *lastInst = NULL;
 	BasicBlock *lastBlock = NULL;
 	BasicBlock *NewBB;
 	BasicBlock *oldCurrentBlock = NULL;
@@ -189,8 +216,7 @@ Function *FunctionBuilder::buildFct()
 		TRACE_6("Current block : " << currentBlock->getNameStr() << "\n");
 		
 		/*** ...get the corresponding block in the fctToJit if it exists ***/
-		if (find(used_bb.begin(), used_bb.end(), currentBlock) ==
-			used_bb.end()) {
+		if (find(used_bb.begin(), used_bb.end(), currentBlock) == used_bb.end()) {
 			TRACE_6("   not useful\n");
 			continue;
 		}
@@ -224,16 +250,25 @@ Function *FunctionBuilder::buildFct()
 				/* - all variables used have been added in the ValueMap when they have been defined           */
 				/* - the basic blocks are already in the ValueMap (necessary for branch instructions)             */
 				ValueMap[origInst] = NewInst;
-				lastInst = NewInst;
 			}
 			origInstIt++;
 		}
 		oldCurrentBlock = NewBB;
 	}
+	IRBuilder <> retBuilder(lastBlock);
+	bool resIsPointer = isa<PointerType>(this->res->getType());
+	bool returnIsPointer = isa<PointerType>(this->fctToJit->getReturnType());
 
+	if (resIsPointer && ! returnIsPointer) {
+		LoadInst* li = retBuilder.CreateLoad(ValueMap[this->res]);
+		retBuilder.CreateRet(li);
+	} else {
+		retBuilder.CreateRet(ValueMap[this->res]);
+	}
+	
 	TRACE_6("Number of basic blocks : " << this->fctToJit->getBasicBlockList().size() << "\n");
 	TRACE_6("Entry block : " << &this->fctToJit->getEntryBlock() << "\n");
 	TRACE_6("Before CreateRet, lastBlock = " << lastBlock << "\n");
-	IRBuilder <> (lastBlock).CreateRet(lastInst);
+	delete this->predecessors;
 	return this->fctToJit;
 }

@@ -14,9 +14,10 @@ using namespace llvm;
 
 struct ZeroTimeHandler:public TimeHandler {
       public:
-	ZeroTimeHandler(SCJit * jit):TimeHandler(jit) {
-	} SCConstruct *handle(llvm::Function * fct, BasicBlock * bb,
-			      CallInst * callInst);
+	ZeroTimeHandler(SCJit * jit):TimeHandler(jit) {}
+
+	SCConstruct *handle(llvm::Function * fct, BasicBlock * bb, Instruction* callInst, Function* calledFunction);
+
 	void insertInMap(std::map < Function *,
 			 SCConstructHandler * >*scchandlers);
 };

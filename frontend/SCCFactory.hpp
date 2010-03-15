@@ -21,14 +21,14 @@ struct SCCFactory {
 
       private:
 	std::map < Function *, SCConstructHandler * >scchandlers;
-	std::map <CallInst *, std::map<Process*, SCConstruct *> > scc;
+	std::map <Instruction *, std::map<Process*, SCConstruct *> > scc;
 
       public:
 	SCCFactory(SCJit * jit);
 	~SCCFactory();
-	bool handle(Process* proc, llvm::Function * fct, BasicBlock * bb, CallInst * callInst);
-	std::map <CallInst *, std::map<Process*, SCConstruct *> >* getConstructs();
-	bool handlerExists(llvm::Function * fct, BasicBlock * bb, CallInst * callInst);
+	bool handle(Process* proc, llvm::Function * fct, BasicBlock * bb, Instruction* callInst, Function* calledFunction);
+	std::map <Instruction *, std::map<Process*, SCConstruct *> >* getConstructs();
+	bool handlerExists(llvm::Function * fct, BasicBlock * bb, Instruction* callInst, Function* calledFunction);
 };
 
 #endif
