@@ -235,22 +235,9 @@ int toplevel_main(int argc, char **argv)
 
 		sys::PrintStackTraceOnErrorSignal();
 
-#ifdef LOAD_PLATFORM_BC
 		TRACE_1("Loading and running bitcode file\n");
 		// load_bc_and_run_sc_main(argc, argv, environ);
 		load_and_run_sc_main(InputFilename);
-#else
-		TRACE_1("Executing SystemC elaboration\n");
-		if (Args != "") {
-			
-			char* arguments[2];
-			arguments[0] = argv[0];
-			std::string s = Args;
-			arguments[1] = (char*) s.c_str();
-			launch_systemc(2, arguments);
-		} else
-			launch_systemc(0, NULL);
-#endif
 	} catch(const std::string & msg) {
 		errs() << argv[0] << ": " << msg << "\n";
 	} catch(...) {

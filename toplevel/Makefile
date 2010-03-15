@@ -1,8 +1,7 @@
 SRCS = ${filter-out pinavm.cpp, ${wildcard *.cpp}}
-TARGET = libpinapa.so
 TARGET_EXE = pinavm
-both: $(TARGET) $(TARGET_EXE)
-all: $(TARGET)
+
+all: $(TARGET_EXE)
 
 ROOT=..
 include $(ROOT)/Makefile.common
@@ -59,15 +58,8 @@ backends: $(BACKENDS_SRC) $(BACKENDS_OBJS)
 utils: $(UTILS_SRC) $(UTILS_OBJS)
 	cd $(UTILSDIR) && $(MAKE) all
 
-$(TARGET): frontend backends utils $(OBJS)
+libpinavm.so: frontend backends utils $(OBJS)
 	g++ -shared -o $@ $(ALL_OBJS) $(LDFLAGS) $(LDLIBS)
-
-
-toplevel-load-bc.o: toplevel.cpp
-	$(CXX) -c $< -o $@ $(CXXFLAGS) -DLOAD_PLATFORM_BC $(CXXEXTRAFLAGS)
-
-libpinavm.so: frontend backends utils toplevel-load-bc.o $(filter-out toplevel.o, $(OBJS))
-	g++ -shared -o $@ $(filter-out toplevel.o, $(ALL_OBJS)) toplevel-load-bc.o $(LDFLAGS) $(LDLIBS)
 
 pinavm: pinavm.cpp libpinavm.so
 	g++ -o $@ pinavm.cpp -lpinavm -L . -Wl,-rpath $(PWD)
