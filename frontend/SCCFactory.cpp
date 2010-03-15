@@ -26,7 +26,7 @@ SCCFactory::~SCCFactory()
 		delete scch;
 	}
 
-	for (std::map < CallInst *, std::map<Process*, SCConstruct *> >::iterator it =
+	for (std::map < Instruction *, std::map<Process*, SCConstruct *> >::iterator it =
 		     this->scc.begin(); it != this->scc.end(); it++) {
 		std::map<Process*, SCConstruct *> aMap = it->second;
 		for (std::map<Process*, SCConstruct *>::iterator itM = aMap.begin(); itM != aMap.end(); itM++) {
@@ -37,33 +37,31 @@ SCCFactory::~SCCFactory()
 	}
 }
 
-std::map <CallInst *, std::map<Process*, SCConstruct *> >* SCCFactory::getConstructs()
+std::map <Instruction *, std::map<Process*, SCConstruct *> >* SCCFactory::getConstructs()
 {
 	return &this->scc;
 }
 
-
-bool SCCFactory::handle(Process* proc, llvm::Function * fct, BasicBlock * bb, CallInst * callInst)
+bool
+SCCFactory::handle(Process* proc, llvm::Function * fct, BasicBlock * bb, Instruction* callInst, Function* calledFunction)
 {
 	Function *calledFct;
 	SCConstructHandler *scch;
 
-	calledFct = callInst->getCalledFunction();
-
 	std::map < Function *, SCConstructHandler * >::iterator it;
-	it = this->scchandlers.find(calledFct);
+	it = this->scchandlers.find(calledFunction);
 
 	if (it != scchandlers.end()) {
 		scch = it->second;
-		this->scc[callInst][proc] = scch->handle(fct, bb, callInst);
+		this->scc[callInst][proc] = scch->handle(fct, bb, callInst, calledFunction);
 		return true;
 	} else {
 		return false;
 	}
 }
 
-bool SCCFactory::handlerExists(llvm::Function * fct, BasicBlock * bb, CallInst * callInst)
+bool
+SCCFactory::handlerExists(llvm::Function * fct, BasicBlock * bb, Instruction* callInst, Function* calledFunction)
 {
-	Function * calledFct = callInst->getCalledFunction();
-	return this->scchandlers.find(calledFct) != this->scchandlers.end();
+	return this->scchandlers.find(calledFunction) != this->scchandlers.end();
 }

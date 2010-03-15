@@ -27,5 +27,5 @@ Port *ReadConstruct::getPort()
 
 std::string ReadConstruct::toString()
 {
-	return "read(TODO : get value)";
+	return "Read() in port : " + this->port->getName();
 }

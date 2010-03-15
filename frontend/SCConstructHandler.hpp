@@ -23,11 +23,8 @@ class SCConstructHandler {
       public:
 	SCConstructHandler(SCJit * jit);
 	SCConstructHandler();
-	virtual SCConstruct *handle(llvm::Function * fct, BasicBlock * bb,
-				    CallInst * callInst) = 0;
-	void insertInMap(std::map < Function *,
-			 SCConstructHandler * >*scchandlers,
-			 std::string fctName);
+	virtual SCConstruct *handle(Function * fct, BasicBlock * bb, Instruction * callInst, Function* calledFunction) = 0;
+	void insertInMap(std::map < Function *, SCConstructHandler * >*scchandlers, std::string fctName);
 };
 
 #endif

@@ -17,11 +17,10 @@ using namespace llvm;
 
 struct DefaultTimeHandler:public TimeHandler {
       public:
-	DefaultTimeHandler(SCJit * jit):TimeHandler(jit) {
-	} SCConstruct *handle(Function * fct, BasicBlock * bb,
-			      CallInst * callInst);
-	void insertInMap(std::map < Function *,
-			 SCConstructHandler * >*scchandlers);
+	DefaultTimeHandler(SCJit * jit):TimeHandler(jit) {}
+
+	SCConstruct *handle(Function * fct, BasicBlock * bb, Instruction * callInst, Function* calledFunction);
+	void insertInMap(std::map < Function *, SCConstructHandler * >*scchandlers);
 };
 
 #endif

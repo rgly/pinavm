@@ -7,13 +7,12 @@
 
 using namespace llvm;
 
-SCConstruct *EventHandler::handle(Function * fct, BasicBlock * bb,
-				  CallInst * callInst)
+SCConstruct *EventHandler::handle(Function * fct, BasicBlock * bb, Instruction* callInst, Function* calledFunction)
 {
 	TRACE_3("Handling call to wait(event)\n");
 
 	Value *arg = callInst->getOperand(2);
-	void *eventAddr = this->scjit->jitAddr(fct, arg);
+	void *eventAddr = this->scjit->jitAddr(fct, callInst, arg);
 	TRACE_4("Address jitted : " << eventAddr << "\n");
 	if (eventAddr == NULL) {
 		return new EventConstruct(arg);
@@ -24,8 +23,7 @@ SCConstruct *EventHandler::handle(Function * fct, BasicBlock * bb,
 	}
 }
 
-void EventHandler::insertInMap(std::map < Function *,
-			       SCConstructHandler * >* scchandlers)
+void EventHandler::insertInMap(std::map < Function *, SCConstructHandler * >* scchandlers)
 {
 	SCConstructHandler::insertInMap(scchandlers, (std::string) "_ZN7sc_core9sc_module4waitERKNS_8sc_eventE");
 }

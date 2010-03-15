@@ -11,6 +11,7 @@ using namespace llvm;
 struct SCElab;
 struct SCCFactory;
 struct SCJit;
+struct Process;
 
 extern int launch_systemc(int argc, char *argv[]);
 

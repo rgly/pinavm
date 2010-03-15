@@ -74,32 +74,38 @@ void Process::printIR(SCCFactory * sccfactory)
 {
 	Function *F;
 	bool printBB = false;
-	std::vector < Function * >*fctStack = new std::vector < Function * >();
-	fctStack->push_back(this->mainFct);
-	std::map < CallInst *, std::map<Process*, SCConstruct * > >* constructs = sccfactory->getConstructs();
-	std::map < CallInst *, std::map<Process*, SCConstruct * > >::iterator itC;
 
-	while (!fctStack->empty()) {
-		F = fctStack->back();
-		fctStack->pop_back();
+	std::map < Instruction *, std::map<Process*, SCConstruct * > >* constructs = sccfactory->getConstructs();
+	std::map < Instruction *, std::map<Process*, SCConstruct * > >::iterator itC;
+	
+	for (std::vector < Function * >::iterator itF = this->usedFunctions.begin(); itF < this->usedFunctions.end(); ++itF) {
+		Function *F = *itF;
 		TRACE("Function : " << F->getNameStr() << "\n");
 		for (Function::iterator bb = F->begin(), be = F->end(); bb != be; ++bb) {
 			TRACE("   BasicBlock : " << bb->getNameStr() << "\n");
 			BasicBlock::iterator i = bb->begin(), ie = bb->end();
 			printBB = false;
+			bool isACall = false;
 			while (i != ie) {
-				CallInst *callInst = dyn_cast < CallInst > (&*i);
+				Function* calledFunction;
+				Instruction* currentInst = &*i;
+				if (CallInst *callInst = dyn_cast < CallInst > (currentInst)) {
+					calledFunction = callInst->getCalledFunction();
+					isACall = true;
+				} else if (InvokeInst *invokeInst = dyn_cast < InvokeInst > (currentInst)) {
+					calledFunction = invokeInst->getCalledFunction();
+					isACall = true;
+				}
 				if (printBB) {
 					printBB = false;
-					TRACE("   (stay in block " << bb->getNameStr() << ")\n");
 				}
-				if (callInst) {
-					if ((itC = constructs->find(callInst)) != constructs->end()) {
+				if (isACall) {
+					if ((itC = constructs->find(currentInst)) != constructs->end()) {
 						map<Process*, SCConstruct*> CbyP = itC->second;
 						SCConstruct *scc = CbyP.find(this)->second;
-						TRACE("    SCC Construct : " << scc->toString() << "\n");
-					} else if (callInst->getCalledFunction()->getIntrinsicID() == Intrinsic::not_intrinsic) {
-						fctStack->push_back(callInst->getCalledFunction());
+						TRACE("    ---> SCC Construct : " << scc->toString() << "\n");
+					} else if (! calledFunction) {
+						TRACE("    Call function pointer\n");
 					}
 				}
 				i++;

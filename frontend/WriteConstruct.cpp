@@ -28,7 +28,10 @@ Port *WriteConstruct::getPort()
 
 std::string WriteConstruct::toString()
 {
-	return "read(TODO : get value)";
+	if (this->value != "")
+		return "Write(" + this->value + ") to port : " + this->port->getName();
+	else
+		return "Write(? was not able to jit ?)";
 }
 
 std::string WriteConstruct::getValue()
