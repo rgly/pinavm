@@ -20,8 +20,8 @@ source "$PINAVM_DIR"/config.sh
 # re-running the script after installing llvm-gcc works.
 # The user will need anyway to set his $PATH properly
 # but there's a hint for that at the end of the script.
-PATH="${PATH}:$INSTALL_PATH_LLVMGCC/bin"
-PATH="${PATH}:$INSTALL_PATH_LLVM/bin"
+PATH="$INSTALL_PATH_LLVMGCC/bin:${PATH}"
+PATH="$INSTALL_PATH_LLVM/bin:${PATH}"
 export PATH
 
 # ##### INITIALIZATION #####
@@ -79,8 +79,8 @@ $(basename $0) done.
 If the script installed llvm-gcc and llvm, you need to add
 the following to your shell's config file (~/.bashrc or so):
 
-PATH=\"\${PATH}:$INSTALL_PATH_LLVMGCC/bin\"
-PATH=\"\${PATH}:$INSTALL_PATH_LLVM/bin\"
+PATH=\"$INSTALL_PATH_LLVMGCC/bin:\${PATH}\"
+PATH=\"$INSTALL_PATH_LLVM/bin:\${PATH}\"
 export PATH
 
 You can now try to compile and run an example with
