@@ -4075,8 +4075,8 @@ bool SimpleWriter::runOnModule(Module & M)
 	IL->AddPrototypes(M);
 
 	// Ensure that all structure types have names...
-	TAsm = new MCAsmInfo();
-	Mang = new Mangler(*TAsm);
+	TCtx = new MCContext(*TAsm);
+	Mang = new Mangler(*TCtx, *TD);
 
 	// Keep track of which functions are static ctors/dtors so they can have
 	// an attribute added to their prototypes.

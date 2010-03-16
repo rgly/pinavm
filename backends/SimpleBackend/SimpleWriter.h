@@ -26,6 +26,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -79,6 +80,7 @@ class SimpleWriter : public ModulePass, public InstVisitor<SimpleWriter> {
   Mangler *Mang;
   LoopInfo *LI;
   const Module *TheModule;
+  MCContext *TCtx;
   const MCAsmInfo* TAsm;
   const TargetData* TD;
   std::map<const Type *, std::string> TypeNames;

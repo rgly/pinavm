@@ -35,6 +35,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/System/Host.h"
 #include "llvm/Config/config.h"
+#include "llvm/MC/MCContext.h"
 
 #include <map>
 #include <vector>
@@ -77,6 +78,7 @@ class PromelaWriter : public ModulePass, public InstVisitor<PromelaWriter> {
      compilation option later if needed.
      */
   const MCAsmInfo *TAsm;
+  MCContext *TCtx;
   const TargetData* TD;
   std::map<const Type *, std::string> TypeNames;
   std::map<const ConstantFP *, unsigned> FPConstantMap;

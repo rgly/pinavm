@@ -3939,8 +3939,8 @@ bool PromelaWriter::runOnModule(Module & M)
 	IL->AddPrototypes(M);
 
 	// Ensure that all structure types have names...
-	TAsm = new MCAsmInfo();
-	Mang = new Mangler(*TAsm);
+	TCtx = new MCContext(*TAsm);
+	Mang = new Mangler(*TCtx, *TD);
 // MM: doesn't exist anymore. Not sure what to put instead.
 //	Mang->markCharUnacceptable('.');
 
