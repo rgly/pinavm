@@ -37,10 +37,6 @@ ifndef OPTFLAGS
 OPTFLAGS=-mem2reg -disable-opt -disable-inlining
 endif
 
-ifndef PINAPALIB
-PINAPALIB=/home/marquet/git/llvm-front-end/toplevel/libpinapa.so
-endif
-
 ifndef SYSTEMCLIB
 SYSTEMCLIB=$(INTACTSYSTEMCROOT)/lib-linux/libsystemc.a
 endif
@@ -52,7 +48,7 @@ endif
 GCC_SSA=${patsubst %.$(SUF),%.$(SUF).ssa,$(SRC)}
 LLOPT=${patsubst %.ll,%.opt.ll,$(LL)}
 
-all: main.exe main.opt.sc.bc
+all: main.opt.sc.bc
 
 include ${SCOOT_HOME}/common.mk
 
@@ -78,9 +74,6 @@ gcc-ssa: $(GCC_SSA)
 
 %.bc: %.$(SUF) Makefile
 	llvm-$(COMP) $(LLVMGCCFLAGS) -emit-llvm -c $< -o $@ $(INCLUDE)
-
-%.exe: %.$(SUF) Makefile $(PINAPALIB)
-	$(COMP) $< -o $@ $(PINAPALIB) $(SYSTEMCLIB) $(CPPSCFLAGS)
 
 %.simu: %.$(SUF) Makefile
 	$(COMP) $< -o $@ $(SYSTEMCLIB) $(CPPSCFLAGS)

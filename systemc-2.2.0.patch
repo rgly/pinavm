@@ -534,7 +534,7 @@ diff -rupNB -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_simcontext.cpp src/sys
  #include "sysc/utils/sc_mempool.h"
  #include "sysc/utils/sc_utils_ids.h"
  
-+extern "C" void pinapa_callback();
++extern "C" void pinavm_callback();
  namespace sc_core {
  
  sc_stop_mode stop_mode = SC_STOP_FINISH_DELTA;
@@ -620,7 +620,7 @@ diff -rupNB -x '*~' /tmp/systemc-2.2.0/src/sysc/kernel/sc_simcontext.cpp src/sys
          return;
      }
 -    context->simulate( duration );
-+    pinapa_callback();
++    pinavm_callback();
  }
  
  void

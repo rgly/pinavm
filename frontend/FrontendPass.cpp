@@ -36,4 +36,4 @@ void FrontendPass::getAnalysisUsage(AnalysisUsage & AU) const
 }
 
 char FrontendPass::ID = 42;
-static RegisterPass < FrontendPass > X("pinapa", "Pinapa pass");
+static RegisterPass < FrontendPass > X("pinavm", "PinaVM pass");

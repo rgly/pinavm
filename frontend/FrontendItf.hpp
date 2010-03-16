@@ -57,7 +57,7 @@ Frontend *launch_frontend(std::string InputFilename, bool inlineFcts)
 	Passes.add(createLowerInvokePass());
 	Passes.add(createCFGSimplificationPass());	// clean up after lower invoke.
 
-	// Pinapa pass
+	// PinaVM pass
 	FrontendPass *fep = new FrontendPass();
 	fep->setInlineFunctions(inlineFcts);
 	Passes.add(fep);

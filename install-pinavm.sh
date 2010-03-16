@@ -69,7 +69,7 @@ fi
 
 install_systemc_gcc
 ( install_systemc_llvm )
-compile_pinapa
+compile_pinavm
 
 date
 echo "

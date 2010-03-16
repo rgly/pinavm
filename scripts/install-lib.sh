@@ -62,11 +62,11 @@ install_llvm() {
 patch_systemc() {
     patch -p0 < ${PINAVM_DIR}/systemc-2.2.0.patch
 
-    ##### Link to Pinapa #########
+    ##### Link to PinaVM #########
     sed -i -e's/main(/launch_systemc(/' ./src/sysc/kernel/sc_main.cpp
-    sed -i -e's/namespace sc_core {/extern void pinapa_callback();\nnamespace sc_core {/' \
+    sed -i -e's/namespace sc_core {/extern void pinavm_callback();\nnamespace sc_core {/' \
         ./src/sysc/kernel/sc_simcontext.cpp
-    sed -i -e's/context->simulate( *duration *);/pinapa_callback();/' \
+    sed -i -e's/context->simulate( *duration *);/pinavm_callback();/' \
 	./src/sysc/kernel/sc_simcontext.cpp
 }
 
@@ -183,10 +183,10 @@ install_systemc_llvm () {
 }
 
 ###############################
-########### PINAPA ############
+########### PINAVM ############
 ###############################
-compile_pinapa () {
-    echo "Building pinapa..."
+compile_pinavm () {
+    echo "Building PinaVM..."
     cd ${SRC_ROOT_DIR}/toplevel
     make
 }

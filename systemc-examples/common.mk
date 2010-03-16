@@ -42,10 +42,6 @@ ifndef OPTFLAGS
 OPTFLAGS=-mem2reg -disable-opt -disable-inlining
 endif
 
-ifndef PINAPALIB
-PINAPALIB=$(ROOT)/toplevel/libpinapa.so
-endif
-
 ifndef SYSTEMCLIB
 SYSTEMCLIB=$(INSTALL_PATH_SYSTEMC_GCC)/lib-linux/libsystemc.a
 endif
@@ -84,9 +80,6 @@ gcc-ssa: $(GCC_SSA)
 
 %.bc: %.$(SUF) Makefile
 	llvm-$(COMP) $(LLVMGCCFLAGS) -emit-llvm -c $< -o $@ $(INCLUDE)
-
-%.exe: %.$(SUF) Makefile $(PINAPALIB)
-	$(COMP) $< -o $@ $(PINAPALIB) $(SYSTEMCLIB) $(CPPSCFLAGS)
 
 %.simu: %.$(SUF) Makefile
 	$(COMP) $< -o $@ $(SYSTEMCLIB) $(CPPSCFLAGS)

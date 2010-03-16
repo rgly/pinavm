@@ -21,7 +21,7 @@ using namespace std;
 extern "C" int sc_main(int argc, char **argv);
 
 int sc_main(int argc, char **argv) {
-	cout << "sc_main from pinapavm.cpp called." << endl;
+	cout << "sc_main from pinavm.cpp called." << endl;
 	cout << "This function is only usefull at link time, but should never be called" << endl;
 	abort();
 }

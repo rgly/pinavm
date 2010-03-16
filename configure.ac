@@ -6,7 +6,7 @@
 AC_PREREQ(2.59)
 
 # Initialization of the configure script
-AC_INIT([pinapa],[1.0])
+AC_INIT([pinavm],[1.0])
 
 # Path to a source file of the project
 AC_CONFIG_SRCDIR([doc/INSTALL])

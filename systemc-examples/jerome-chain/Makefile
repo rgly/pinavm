@@ -1,6 +1,6 @@
 SRC = main.cpp
 
-all: main.exe main.opt.sc.bc
+all: main.opt.sc.bc
 promela: ok.3.pr
 .PHONY: all promela diff
 

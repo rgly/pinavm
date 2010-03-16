@@ -86,11 +86,11 @@ InlineFcts("inline", cl::desc("Inline all functions"));
 bool disable_debug_msg;
 
 extern "C"
-void pinapa_callback();
+void pinavm_callback();
 
-void pinapa_callback()
+void pinavm_callback()
 {
-	TRACE_1("Entering Pinapa (callback), building module\n");
+	TRACE_1("Entering PinaVM (callback), building module\n");
 
 	if (DisableDbgMsg) {
 		disable_debug_msg = true;
@@ -132,8 +132,8 @@ int load_and_run_sc_main(std::string & InputFile)
 	// usable by the JIT.
 	InitializeNativeTarget();
 
-	// So that JIT-ed code can call pinapa_callback.
-	//sys::DynamicLibrary::AddSymbol("pinapa_callback", (void *)pinapa_callback);
+	// So that JIT-ed code can call pinavm_callback.
+	//sys::DynamicLibrary::AddSymbol("pinavm_callback", (void *)pinavm_callback);
 
 	// Load the bitcode...
 	Module *Mod = NULL;

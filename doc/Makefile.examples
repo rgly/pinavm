@@ -36,10 +36,6 @@ ifndef OPTFLAGS
 OPTFLAGS=-mem2reg -disable-opt
 endif
 
-ifndef PINAPALIB
-PINAPALIB=/home/marquet/git/llvm-front-end/frontend/essai.so
-endif
-
 ifndef SYSTEMCLIB
 SYSTEMCLIB=$(SYSTEMCROOT)/lib-linux/libsystemc.a
 endif
@@ -75,9 +71,6 @@ gcc-ssa: $(GCC_SSA)
 
 %.bc: %.ll Makefile
 	llvm-as -f $*.ll -o $*.bc
-
-%.exe: %.$(SUF) Makefile
-	$(COMP) $< -o $@ $(PINAPALIB) $(SYSTEMCLIB) $(CPPSCFLAGS)
 
 # -fdump-tree-ssa works only if -O is provided.
 %.$(SUF).ssa: %.$(SUF) Makefile ../include.mk
