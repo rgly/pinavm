@@ -44,8 +44,8 @@ install_llvm() {
 
     echo "Building llvm..."
     cd "$DOWNLOAD_AND_COMPILE_DIR"
-    git clone git://repo.or.cz/llvm.git llvm
-    cd llvm
+    svn checkout http://llvm.org/svn/llvm-project/llvm/branches/release_27/ llvm-2.7
+    cd llvm-2.7
     test -d objdir || mkdir objdir
     cd objdir
     ../configure ${llvm_configure_flags}
