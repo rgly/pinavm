@@ -10,7 +10,7 @@ ok.%.pr: main.opt.sc.bc main.bc
 # Keep a backup of the target.
 	-$(RM) $@.bak
 	-mv $@ $@.bak
-	../../toplevel/pinavm -print-ir -print-elab -b promela -o ok.3.pr -scbc main.opt.sc.bc main.bc -inline -args $*
+	../../toplevel/pinavm -print-ir -print-elab -b promela -o ok.3.pr main.bc -inline -args $*
 
 diff:
 	diff -u ok.3.pr ok.3.pr.bak

@@ -2,7 +2,7 @@
 .SECONDARY:
 SHELL = /bin/sh
 
-#include $(ROOT)/config.mk
+include $(ROOT)/config.mk
 
 $(ROOT)/config.mk:
 	@cd $(ROOT) && $(MAKE) config.mk

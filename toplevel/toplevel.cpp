@@ -55,10 +55,6 @@ static cl::opt < std::string >
 Args("args", cl::desc("<input args>"),
 	      cl::init(""), cl::value_desc("string"));
 
-static cl::opt < std::string >
-Scbc("scbc", cl::desc("<bitcode file linked with SystemC>"),
-     cl::init(""), cl::value_desc("filename"));
-
 /*
 TODO: this would be better than Args, to allow having multiple arguments.
 static cl::list<std::string>
@@ -90,6 +86,8 @@ InlineFcts("inline", cl::desc("Inline all functions"));
 bool disable_debug_msg;
 
 extern "C"
+void pinapa_callback();
+
 void pinapa_callback()
 {
 	TRACE_1("Entering Pinapa (callback), building module\n");
@@ -100,7 +98,7 @@ void pinapa_callback()
 		disable_debug_msg = false;
 	}
 
-	Frontend *fe = launch_frontend(Scbc, InlineFcts);
+	Frontend *fe = launch_frontend(InputFilename, InlineFcts);
 
 	if (PrintIR) {
 		fe->printIR();

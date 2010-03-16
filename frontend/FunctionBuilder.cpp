@@ -114,7 +114,7 @@ void FunctionBuilder::markUsefulInstructions()
 			TRACE_6("Use : " << v << "\n");
 			v->dump();
 			/*** Mark the instruction and the associated basicblock as useful ***/
-			if (isBeforeTargetInst(v))
+			if (isBeforeTargetInst(v) && isa<StoreInst>(v))
 				mark(v);
 		}
 		TRACE_6("> Uses visited\n");
@@ -129,8 +129,7 @@ void FunctionBuilder::markUsefulInstructions()
 			arg->dump();
 
 			/*** Mark the instruction and the associated basicblock as useful ***/
-			if (isBeforeTargetInst(arg))
-				mark(arg);
+			mark(arg);
 		}
 		TRACE_5("... marking done for inst : " << inst << "\n");
 	}
