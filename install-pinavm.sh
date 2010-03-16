@@ -53,14 +53,16 @@ fi
 if [ ! -r "$(llvm-config --includedir)/llvm/LLVMContext.h" ] && \
     [ ! -r "$(llvm-config --includedir)/LLVMContext.h" ] ; then
     echo "LLVM doesn't seem to be installed on your system."
-    echo "you can install it yourself (aptitude install llvm-dev does the"
+    echo "you can install it yourself (aptitude install llvm-snapshot does the"
     echo "trick on Debian systems), or let me do it (but it takes a long time)"
     do_you_want install_llvm
 fi
 
-if ! version_greater "$(llvm-config --version)" 2.6; then
-    echo "LLVM's version is $(llvm-config --version), which isn't >= 2.6."
-    echo "It's unlikely that anything work unless LLVM >= 2.6 is installed"
+echo "Using llvm-config: $(which llvm-config)"
+
+if ! [ "$(llvm-config --version | sed 's/svn//')" = 2.7 ]; then
+    echo "LLVM's version is $(llvm-config --version), while I expected 2.7 or 2.7svn."
+    echo "It's unlikely that anything work unless LLVM >= 2.7svn is installed"
     echo "(and the corresponding llvm-config executable be at the front of your PATH)."
     do_you_want install_llvm
 fi

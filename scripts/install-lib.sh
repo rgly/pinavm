@@ -44,9 +44,8 @@ install_llvm() {
 
     echo "Building llvm..."
     cd "$DOWNLOAD_AND_COMPILE_DIR"
-    test -f llvm-2.6.tar.gz || wget http://llvm.org/releases/2.6/llvm-2.6.tar.gz
-    tar xzf llvm-2.6.tar.gz
-    cd llvm-2.6
+    git clone git://repo.or.cz/llvm.git llvm
+    cd llvm
     test -d objdir || mkdir objdir
     cd objdir
     ../configure ${llvm_configure_flags}

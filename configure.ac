@@ -33,7 +33,7 @@ AC_ARG_WITH(tools-dir,
              [AC_MSG_ERROR([Please specify --with-tools-dir=...])])
 
 DOWNLOAD_AND_COMPILE_DIR="${TOOLS_DIR}/download"
-INSTALL_PATH_LLVM=${TOOLS_DIR}/lib/llvm-2.6
+INSTALL_PATH_LLVM=${TOOLS_DIR}/lib/llvm-2.7
 INSTALL_PATH_LLVMGCC=${TOOLS_DIR}/lib/llvm-gcc
 INSTALL_PATH_SYSTEMC_LLVM=${TOOLS_DIR}/lib/systemc-2.2.0-llvm
 INSTALL_PATH_SYSTEMC_GCC=${TOOLS_DIR}/lib/systemc-2.2.0-gcc
