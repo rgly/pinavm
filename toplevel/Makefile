@@ -49,16 +49,7 @@ CXXFLAGS.../backends/SimpleBackend/SimpleTargetMachine=-fno-rtti -fno-exceptions
 
 LDLIBS += `llvm-config --ldflags --libs jit interpreter nativecodegen bitreader selectiondag`
 
-frontend: $(FRONTEND_SRC) $(FRONTEND_OBJS)
-	cd $(FRONTENDDIR) && $(MAKE) all
-
-backends: $(BACKENDS_SRC) $(BACKENDS_OBJS)
-	cd $(BACKENDSDIR) && $(MAKE) all
-
-utils: $(UTILS_SRC) $(UTILS_OBJS)
-	cd $(UTILSDIR) && $(MAKE) all
-
-libpinavm.so: frontend backends utils $(OBJS)
+libpinavm.so: $(FRONTEND_OBJS) $(BACKENDS_OBJS) $(UTILS_OBJS) $(OBJS)
 	g++ -shared -o $@ $(ALL_OBJS) $(LDFLAGS) $(LDLIBS)
 
 pinavm: pinavm.cpp libpinavm.so
