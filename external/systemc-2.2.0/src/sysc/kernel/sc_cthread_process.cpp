@@ -129,11 +129,11 @@ void sc_cthread_process::prepare_for_simulation()
 //
 // This is the object instance constructor for this class.
 //------------------------------------------------------------------------------
-sc_cthread_process::sc_cthread_process( const char* name_p, 
+sc_cthread_process::sc_cthread_process( const char* name_p, const char* type_p, 
     bool free_host, SC_ENTRY_FUNC method_p, 
     sc_process_host* host_p, const sc_spawn_options* opt_p 
 ):
-    sc_thread_process(name_p, free_host, method_p, host_p, opt_p)
+	sc_thread_process(name_p, type_p, free_host, method_p, host_p, opt_p)
 {
     m_dont_init = false;
     m_process_kind = SC_CTHREAD_PROC_;

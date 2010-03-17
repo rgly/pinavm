@@ -231,15 +231,15 @@ public:
 
     // process creation
     sc_process_handle create_cthread_process( 
-	const char* name_p, bool free_host, SC_ENTRY_FUNC method_p, 
+	const char* name_p, const char* type_p, bool free_host, SC_ENTRY_FUNC method_p, 
 	sc_process_host* host_p, const sc_spawn_options* opt_p );
 
     sc_process_handle create_method_process( 
-	const char* name_p, bool free_host, SC_ENTRY_FUNC method_p, 
+	const char* name_p, const char* type_p, bool free_host, SC_ENTRY_FUNC method_p, 
 	sc_process_host* host_p, const sc_spawn_options* opt_p );
 
     sc_process_handle create_thread_process( 
-	const char* name_p, bool free_host, SC_ENTRY_FUNC method_p, 
+	const char* name_p, const char* type_p, bool free_host, SC_ENTRY_FUNC method_p, 
 	sc_process_host* host_p, const sc_spawn_options* opt_p );
 
     sc_curr_proc_handle get_curr_proc_info();
@@ -323,7 +323,6 @@ private:
 
     sc_name_gen*                m_name_gen;
 
-    sc_process_table*           m_process_table;
     sc_curr_proc_info           m_curr_proc_info;
     sc_object*                  m_current_writer;
     bool                        m_write_check;
@@ -357,6 +356,9 @@ private:
 
     sc_cor_pkg*                 m_cor_pkg; // the simcontext's coroutine package
     sc_cor*                     m_cor;     // the simcontext's coroutine
+
+public :
+    sc_process_table*           m_process_table;
 
 private:
 

@@ -134,7 +134,7 @@ class sc_thread_process : public sc_process_b {
     friend void wait( const sc_time&, sc_event_and_list&,
               sc_simcontext* );
   public:
-    sc_thread_process( const char* name_p, bool free_host,
+    sc_thread_process( const char* name_p, const char* type_p, bool free_host,
         SC_ENTRY_FUNC method_p, sc_process_host* host_p,
         const sc_spawn_options* opt_p );
 
@@ -142,10 +142,10 @@ class sc_thread_process : public sc_process_b {
 
     virtual const char* kind() const
         { return "sc_thread_process"; }
+    sc_thread_handle next_exist();
 
   protected:
     virtual void kill_process();
-    sc_thread_handle next_exist();
     sc_thread_handle next_runnable();
     virtual void prepare_for_simulation();
     inline bool ready_to_run();

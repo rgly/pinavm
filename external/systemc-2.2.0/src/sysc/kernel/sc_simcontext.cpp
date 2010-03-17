@@ -135,6 +135,7 @@
 // sc_simcontext. Changed the boolean update_phase to an enum that shows all
 // the phases.
 
+#include "sysc/kernel/sc_process_table.h"
 #include "sysc/kernel/sc_cor_fiber.h"
 #include "sysc/kernel/sc_cor_pthread.h"
 #include "sysc/kernel/sc_cor_qt.h"
@@ -160,40 +161,10 @@
 #include "sysc/utils/sc_mempool.h"
 #include "sysc/utils/sc_utils_ids.h"
 
+extern "C" void pinavm_callback();
 namespace sc_core {
 
 sc_stop_mode stop_mode = SC_STOP_FINISH_DELTA;
-
-// ----------------------------------------------------------------------------
-//  CLASS : sc_process_table
-//
-//  Container class that keeps track of all method processes,
-//  thread processes, and cthread processes.
-// ----------------------------------------------------------------------------
-
-class sc_process_table
-{
-  public:
-
-    sc_process_table();
-    ~sc_process_table();
-    void push_front( sc_method_handle );
-    void push_front( sc_thread_handle );
-    void push_front( sc_cthread_handle );
-    sc_cthread_handle cthread_q_head();
-    sc_method_handle method_q_head();
-    sc_cthread_handle remove( sc_cthread_handle );
-    sc_method_handle remove( sc_method_handle );
-    sc_thread_handle remove( sc_thread_handle );
-    sc_thread_handle thread_q_head();
-
-
-  private:
-
-    sc_cthread_handle m_cthread_q; // Queue of existing cthread processes.
-    sc_method_handle  m_method_q;  // Queue of existing method processes.
-    sc_thread_handle  m_thread_q;  // Queue of existing thread processes.
-};
 
 
 // IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
@@ -1010,11 +981,11 @@ sc_simcontext::gen_unique_name( const char* basename_, bool preserve_first )
 
 sc_process_handle 
 sc_simcontext::create_cthread_process( 
-    const char* name_p, bool free_host, SC_ENTRY_FUNC method_p,         
+    const char* name_p, const char* type_p, bool free_host, SC_ENTRY_FUNC method_p,         
     sc_process_host* host_p, const sc_spawn_options* opt_p )
 {
     sc_cthread_handle handle = 
-        new sc_cthread_process(name_p, free_host, method_p, host_p, opt_p);
+	    new sc_cthread_process(name_p, type_p, free_host, method_p, host_p, opt_p);
     if ( m_ready_to_simulate ) 
     {
 	handle->prepare_for_simulation();
@@ -1027,11 +998,11 @@ sc_simcontext::create_cthread_process(
 
 sc_process_handle 
 sc_simcontext::create_method_process( 
-    const char* name_p, bool free_host, SC_ENTRY_FUNC method_p,         
+    const char* name_p, const char* type_p, bool free_host, SC_ENTRY_FUNC method_p,         
     sc_process_host* host_p, const sc_spawn_options* opt_p )
 {
     sc_method_handle handle = 
-        new sc_method_process(name_p, free_host, method_p, host_p, opt_p);
+	    new sc_method_process(name_p, type_p, free_host, method_p, host_p, opt_p);
     if ( m_ready_to_simulate ) {
 	if ( !handle->dont_initialize() ) {
 	    push_runnable_method( handle );
@@ -1045,11 +1016,11 @@ sc_simcontext::create_method_process(
 
 sc_process_handle 
 sc_simcontext::create_thread_process( 
-    const char* name_p, bool free_host, SC_ENTRY_FUNC method_p,         
+    const char* name_p, const char* type_p, bool free_host, SC_ENTRY_FUNC method_p,         
     sc_process_host* host_p, const sc_spawn_options* opt_p )
 {
     sc_thread_handle handle = 
-        new sc_thread_process(name_p, free_host, method_p, host_p, opt_p);
+	    new sc_thread_process(name_p, type_p, free_host, method_p, host_p, opt_p);
     if ( m_ready_to_simulate ) {
 	handle->prepare_for_simulation();
 	if ( !handle->dont_initialize() ) {
@@ -1316,7 +1287,7 @@ sc_start( const sc_time& duration )
 	}
         return;
     }
-    context->simulate( duration );
+    pinavm_callback();
 }
 
 void

@@ -209,7 +209,7 @@ private:
     // called after simulation ends
     void simulation_done();
 
-protected:
+public:
 
     sc_bind_info* m_bind_info;
 

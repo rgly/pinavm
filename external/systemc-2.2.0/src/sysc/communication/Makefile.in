@@ -120,8 +120,10 @@ H_FILES = \
 	sc_signal_resolved.h \
 	sc_signal_resolved_ports.h \
 	sc_signal_rv.h \
-	sc_signal_rv_ports.h 
-
+	sc_signal_rv_ports.h \
+	sc_bind_elem.h \
+	sc_bind_info.h \
+	sc_bind_ef.h
 
 noinst_HEADERS = $(H_FILES)
 

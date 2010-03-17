@@ -293,7 +293,7 @@ class sc_process_b : public sc_object {
     };
 
   public:
-    sc_process_b( const char* name_p, bool free_host,
+    sc_process_b( const char* name_p, const char* type_p, bool free_host,
         SC_ENTRY_FUNC method_p, sc_process_host* host_p,
         const sc_spawn_options* opt_p );
     virtual ~sc_process_b();
@@ -347,6 +347,8 @@ class sc_process_b : public sc_object {
     const char*                 file;
     int                         lineno;
     int                         proc_id;
+    sc_process_host*             m_semantics_host_p;   // Host for semantics.
+    std::vector<const sc_event*> m_static_events;   // Static events waiting on.
 
   protected:
     std::vector<sc_object*>      m_child_objects;  // Child processes.
@@ -364,15 +366,17 @@ class sc_process_b : public sc_object {
     bool                         m_reset_level;    // Level for reset.
     sc_reset*                    m_reset_p;        // Reset object.
     sc_process_b*                m_runnable_p;     // sc_runnable link
-    sc_process_host*             m_semantics_host_p;   // Host for semantics.
     SC_ENTRY_FUNC                m_semantics_method_p; // Method for semantics.
-    std::vector<const sc_event*> m_static_events;   // Static events waiting on.
     sc_event*                    m_term_event_p;    // Terminated event.
     process_throw_type           m_throw_type;      // Throw type.
     bool                         m_timed_out;       // True if we timed out.
     sc_event*                    m_timeout_event_p; // Timeout event.
     trigger_t                    m_trigger_type;    // Type of trigger using.
     bool                         m_zombie;          // True if terminated.
+
+ public:
+    const char* func_process;
+    const char* type_process;
 
   protected:
     static sc_process_b* m_delete_next_p;          // Next process to delete.

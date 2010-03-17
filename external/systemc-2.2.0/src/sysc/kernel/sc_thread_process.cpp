@@ -170,12 +170,12 @@ void sc_thread_process::prepare_for_simulation()
 //
 // This is the object instance constructor for this class.
 //------------------------------------------------------------------------------
-sc_thread_process::sc_thread_process( const char* name_p, bool free_host,
+sc_thread_process::sc_thread_process( const char* name_p, const char* type_p, bool free_host,
     SC_ENTRY_FUNC method_p, sc_process_host* host_p, 
     const sc_spawn_options* opt_p 
 ):
     sc_process_b(
-        name_p && name_p[0] ? name_p : sc_gen_unique_name("thread_p"), 
+	    name_p && name_p[0] ? name_p : sc_gen_unique_name("thread_p"), type_p,
         free_host, method_p, host_p, opt_p),
         m_cor_p(0), m_stack_size(SC_DEFAULT_STACK_SIZE), 
         m_wait_cycle_n(0)

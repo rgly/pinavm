@@ -94,7 +94,7 @@ private:
     void simulation_done();
 
 
-private:
+public:
 
     sc_simcontext*          m_simc;
     std::vector<sc_module*> m_module_vec;
