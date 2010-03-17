@@ -68,7 +68,8 @@ if ! [ "$(llvm-config --version | sed 's/svn//')" = 2.7 ]; then
 fi
 
 install_systemc_gcc
-( install_systemc_llvm )
+# No longer usefull.
+# ( install_systemc_llvm )
 compile_pinavm
 
 date

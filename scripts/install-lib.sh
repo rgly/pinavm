@@ -59,31 +59,15 @@ install_llvm() {
 ########## SYSTEMC (normal install) ############
 ################################################
 
-patch_systemc() {
-    patch -p0 < ${PINAVM_DIR}/systemc-2.2.0.patch
-
-    ##### Link to PinaVM #########
-    sed -i -e's/main(/launch_systemc(/' ./src/sysc/kernel/sc_main.cpp
-    sed -i -e's/namespace sc_core {/extern void pinavm_callback();\nnamespace sc_core {/' \
-        ./src/sysc/kernel/sc_simcontext.cpp
-    sed -i -e's/context->simulate( *duration *);/pinavm_callback();/' \
-	./src/sysc/kernel/sc_simcontext.cpp
-}
-
 install_systemc_gcc () {
-    cd "$DOWNLOAD_AND_COMPILE_DIR"
-    rm -fr systemc-2.2.0-gcc
-    test -f systemc-2.2.0.tgz || wget http://www-verimag.imag.fr/~moy/cours/tlm/systemc/systemc-2.2.0.tgz
-    tar xzf systemc-2.2.0.tgz
-    mv systemc-2.2.0 systemc-2.2.0-gcc
-    cd systemc-2.2.0-gcc
+    cd "$PINAVM_DIR"/external/systemc-2.2.0
 
-    patch_systemc
+    ./autogen.sh
 
-    rm -rf objdir
-    mkdir objdir
-    cd objdir
-    chmod +x ../configure
+    rm -rf objdir-gcc
+    mkdir objdir-gcc
+    cd objdir-gcc
+
     # most ./configure scripts create the target, but it seems SystemC's doesn't ...
     mkdir -p "$INSTALL_PATH_SYSTEMC_GCC"
     ../configure --prefix="$INSTALL_PATH_SYSTEMC_GCC"
@@ -168,6 +152,7 @@ build_systemc_for_llvm () {
 	(cd "$INSTALL_PATH_SYSTEMC_LLVM/include/"; tar -xf -)
 }
 
+# deprecated.
 install_systemc_llvm () {
     echo "Installing SystemC (patched and compiled with LLVM) ..."
     cd "$DOWNLOAD_AND_COMPILE_DIR"
@@ -176,8 +161,6 @@ install_systemc_llvm () {
     tar xzf systemc-2.2.0.tgz
     mv systemc-2.2.0 systemc-2.2.0-llvm
     cd systemc-2.2.0-llvm
-
-    patch_systemc
 
     build_systemc_for_llvm
 }

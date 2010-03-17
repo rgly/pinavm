@@ -15,7 +15,9 @@ UTILSDIR = $(ROOT)/utils
 # use all of SystemC's symbols, and the platform may use some that we
 # don't use directly => we have to take all .o files to make sure the
 # symbols will be there when the elaboration will require it.
-SYSTEMC_OBJS = ${shell find $(DOWNLOAD_AND_COMPILE_DIR)/systemc-2.2.0-gcc/objdir/ -name \*.o}
+SYSTEMC_OBJS = ${shell find ../external/systemc-2.2.0/objdir-gcc/ -name \*.o}
+rebuild-systemc:
+	cd ../external/systemc-2.2.0/objdir-gcc/ && $(MAKE) && $(MAKE) install
 
 FRONTEND_CXX = ${wildcard $(ROOT)/frontend/*.cpp}
 FRONTEND_SRC = $(FRONTEND_CXX) ${wildcard $(ROOT)/frontend/*.hpp}
