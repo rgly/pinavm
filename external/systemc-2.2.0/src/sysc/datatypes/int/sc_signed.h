@@ -732,7 +732,7 @@ public:
     // copy constructor
 
     sc_signed_bitref_r( const sc_signed_bitref_r& a )
-	: m_index( a.m_index ), m_obj_p( a.m_obj_p )
+	: sc_value_base(a), m_index( a.m_index ), m_obj_p( a.m_obj_p )
 	{}
 
     // capacity
@@ -909,7 +909,7 @@ public:
     // copy constructor
 
     sc_signed_subref_r( const sc_signed_subref_r& a )
-	: m_left( a.m_left ), m_obj_p( a.m_obj_p ), m_right( a.m_right )
+	: sc_value_base(a), m_left( a.m_left ), m_obj_p( a.m_obj_p ), m_right( a.m_right )
 	{}
 
 

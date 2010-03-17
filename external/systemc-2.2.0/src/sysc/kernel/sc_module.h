@@ -359,7 +359,7 @@ protected:
 
     // Catch uses of watching:
     void watching( bool expr )
-        { SC_REPORT_ERROR(SC_ID_WATCHING_NOT_ALLOWED_,""); }
+        { (void) expr; SC_REPORT_ERROR(SC_ID_WATCHING_NOT_ALLOWED_,""); }
 
     // These are protected so that user derived classes can refer to them.
     sc_sensitive     sensitive;

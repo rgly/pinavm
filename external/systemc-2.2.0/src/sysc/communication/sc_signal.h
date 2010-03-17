@@ -384,6 +384,7 @@ public: // constructors and destructor:
 
     void trace( sc_trace_file* tf ) const
 	{
+       (void) tf;
 	    sc_deprecated_trace();
 #           ifdef DEBUG_SYSTEMC
 	        sc_trace( tf, read(), name() ); 
@@ -626,6 +627,7 @@ class sc_signal<sc_dt::sc_logic>
 
     void trace( sc_trace_file* tf ) const
 	{
+      (void) tf;
 	    sc_deprecated_trace();
 #           ifdef DEBUG_SYSTEMC
 	        sc_trace( tf, read(), name() ); 

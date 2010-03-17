@@ -143,7 +143,10 @@ class sc_process_monitor {
         spm_exit = 0
     };
     virtual ~sc_process_monitor() {}
-    virtual void signal(sc_thread_handle thread_p, int type) {}
+    virtual void signal(sc_thread_handle thread_p, int type) {
+        (void) thread_p;
+        (void) type;
+    }
 };
 
 //------------------------------------------------------------------------------

@@ -58,7 +58,10 @@
 // the source.
 //
 
+#include <cstdlib>
+#include <string.h>
 #include "sysc/utils/sc_report.h"
+using namespace std;
 
 
 namespace sc_core {

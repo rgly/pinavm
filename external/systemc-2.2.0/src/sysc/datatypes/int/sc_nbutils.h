@@ -908,7 +908,7 @@ copy_digits_unsigned(small_type &us,
                      int unb, int und, sc_digit *ud,
                      int vnb, int vnd, const sc_digit *vd)
 {
-
+  (void) vnb;
   if (und <= vnd)
     vec_copy(und, ud, vd);
 
@@ -953,6 +953,7 @@ inline
 void
 is_bad_double(double v)
 {
+  (void) v;
 // Windows throws exception.
 #if !defined(WIN32) && !defined(i386) && !defined(__x86_64__) && !defined( __EDG__ )
 #if defined( __hpux ) && defined( isfinite )

@@ -235,7 +235,7 @@ public:
 	{ m_data[i] = w; }
 
     sc_digit get_cword( int i ) const
-	{ return SC_DIGIT_ZERO; }
+	{ (void) i; return SC_DIGIT_ZERO; }
 
     void set_cword( int i, sc_digit w );
 
@@ -310,6 +310,7 @@ inline
 void
 sc_bv_base::set_cword( int i, sc_digit w )
 {
+   (void) i;
     if( w ) {
 	SC_REPORT_WARNING( sc_core::SC_ID_SC_BV_CANNOT_CONTAIN_X_AND_Z_, 0 );
     }
