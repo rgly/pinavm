@@ -1,12 +1,12 @@
 SRC = main.cpp
 
-all: main.opt.sc.bc
+all: main.bc
 promela: ok.3.pr
 .PHONY: all promela diff
 
 include ../common.mk
 
-ok.%.pr: main.opt.sc.bc main.bc
+ok.%.pr: main.bc
 # Keep a backup of the target.
 	-$(RM) $@.bak
 	-mv $@ $@.bak
