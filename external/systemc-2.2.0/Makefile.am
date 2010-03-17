@@ -32,7 +32,6 @@
 
 SUBDIRS = \
 	src \
-	examples \
 	.
 
 INST_FILES = \
@@ -43,8 +42,7 @@ INST_FILES = \
 	LICENSE \
 	NEWS \
 	README \
-	RELEASENOTES \
-	docs
+	RELEASENOTES
 
 debug:
 	$(MAKE) all CXXFLAGS="$(EXTRA_CXXFLAGS) $(DEBUG_CXXFLAGS)"
