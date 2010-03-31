@@ -17,7 +17,7 @@ UTILSDIR = $(ROOT)/utils
 # symbols will be there when the elaboration will require it.
 SYSTEMC_OBJS = ${shell find ../external/systemc-2.2.0/objdir-gcc/ -name \*.o}
 rebuild-systemc:
-	cd ../external/systemc-2.2.0/objdir-gcc/ && $(MAKE) && $(MAKE) install
+	cd ../external/systemc-2.2.0/objdir-gcc/ && $(MAKE) pthreads_debug && $(MAKE) install
 
 FRONTEND_CXX = ${wildcard $(ROOT)/frontend/*.cpp}
 FRONTEND_SRC = $(FRONTEND_CXX) ${wildcard $(ROOT)/frontend/*.hpp}
