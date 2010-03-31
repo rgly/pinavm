@@ -57,7 +57,27 @@ CXX_COMP=`basename $CXX`
 AR_TOOL="ar cru"
 
 case "$target" in
-    powerpc-apple-macosx*|*darwin*)
+    i386-apple-darwin*)
+                EXTRA_CXXFLAGS="-Wall"
+                DEBUG_CXXFLAGS="-g"
+                OPT_CXXFLAGS="-O3"
+                TARGET_ARCH="macosx"
+                CC="$CXX"
+                CFLAGS="$EXTRA_CXXFLAGS $OPT_CXXFLAGS"
+                AS=as
+                QT_ARCH="iX86"
+                ;;
+    x86_64-apple-darwin*)
+                EXTRA_CXXFLAGS="-Wall"
+                DEBUG_CXXFLAGS="-g"
+                OPT_CXXFLAGS="-O3"
+                TARGET_ARCH="macosx"
+                CC="$CXX"
+                CFLAGS="$EXTRA_CXXFLAGS $OPT_CXXFLAGS"
+	        AS=as
+                QT_ARCH="x86_64"
+                ;;
+    powerpc-apple-macosx*)
         case "$CXX_COMP" in
             CC)
                 EXTRA_CXXFLAGS=""
@@ -85,7 +105,7 @@ echo "$as_me: error: \"sorry...compiler not supported\"" >&2;}
 	AS=as
         QT_ARCH="powerpc-apple-macosx"
         ;;
-    sparc-sun-solaris*) 
+    sparc-sun-solaris*)
         case "$CXX_COMP" in
             CC)
                 EXTRA_CXXFLAGS=""
@@ -223,31 +243,31 @@ dnl Create the Makefiles.
 dnl
 
 AC_OUTPUT(
- Makefile 
- src/Makefile 
- src/sysc/Makefile 
- src/sysc/communication/Makefile 
- src/sysc/datatypes/Makefile 
- src/sysc/datatypes/bit/Makefile 
- src/sysc/datatypes/fx/Makefile 
- src/sysc/datatypes/int/Makefile 
- src/sysc/datatypes/misc/Makefile 
- src/sysc/kernel/Makefile 
- src/sysc/tracing/Makefile 
- src/sysc/qt/Makefile 
- src/sysc/utils/Makefile 
- src/sysc/packages/Makefile 
- src/sysc/packages/boost/Makefile 
- src/sysc/packages/boost/bind/Makefile 
- src/sysc/packages/boost/config/Makefile 
- src/sysc/packages/boost/config/compiler/Makefile 
- src/sysc/packages/boost/config/platform/Makefile 
- src/sysc/packages/boost/config/stdlib/Makefile 
- src/sysc/packages/boost/mpl/Makefile 
- src/sysc/packages/boost/mpl/aux_/Makefile 
- src/sysc/packages/boost/mpl/aux_/config/Makefile 
- src/sysc/packages/boost/detail/Makefile 
- src/sysc/packages/boost/utility/Makefile 
+ Makefile
+ src/Makefile
+ src/sysc/Makefile
+ src/sysc/communication/Makefile
+ src/sysc/datatypes/Makefile
+ src/sysc/datatypes/bit/Makefile
+ src/sysc/datatypes/fx/Makefile
+ src/sysc/datatypes/int/Makefile
+ src/sysc/datatypes/misc/Makefile
+ src/sysc/kernel/Makefile
+ src/sysc/tracing/Makefile
+ src/sysc/qt/Makefile
+ src/sysc/utils/Makefile
+ src/sysc/packages/Makefile
+ src/sysc/packages/boost/Makefile
+ src/sysc/packages/boost/bind/Makefile
+ src/sysc/packages/boost/config/Makefile
+ src/sysc/packages/boost/config/compiler/Makefile
+ src/sysc/packages/boost/config/platform/Makefile
+ src/sysc/packages/boost/config/stdlib/Makefile
+ src/sysc/packages/boost/mpl/Makefile
+ src/sysc/packages/boost/mpl/aux_/Makefile
+ src/sysc/packages/boost/mpl/aux_/config/Makefile
+ src/sysc/packages/boost/detail/Makefile
+ src/sysc/packages/boost/utility/Makefile
  src/sysc/packages/boost/utility/detail/Makefile
 )
 
