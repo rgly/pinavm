@@ -57,7 +57,7 @@ CXX_COMP=`basename $CXX`
 AR_TOOL="ar cru"
 
 case "$target" in
-    powerpc-apple-macosx*)
+    powerpc-apple-macosx*|*darwin*)
         case "$CXX_COMP" in
             CC)
                 EXTRA_CXXFLAGS=""
