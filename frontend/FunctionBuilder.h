@@ -29,7 +29,6 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include <llvm/Support/MemoryBuffer.h>
-#include <llvm/ModuleProvider.h>
 #include <llvm/Bitcode/ReaderWriter.h>
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include "llvm/Support/IRBuilder.h"
