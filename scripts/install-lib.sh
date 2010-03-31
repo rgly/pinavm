@@ -111,6 +111,14 @@ install_llvm_gcc () {
 ####################################################
 
 build_systemc_for_llvm () {
+    case $(uname) in
+	Darwin)
+	    SC_ARCH=macosx
+	    ;;
+	Linux)
+	    SC_ARCH=linux
+	    ;;
+    esac
     export CXX="llvm-g++ --emit-llvm"
     export RANLIB="echo this is the old ranlib command on file :"
 
@@ -157,9 +165,9 @@ build_systemc_for_llvm () {
 
     llvm-link -f -o libsystemc.a $(find src/sysc/ -name "*.a")
 
-    mkdir -p "$INSTALL_PATH_SYSTEMC_LLVM"/lib-linux
+    mkdir -p "$INSTALL_PATH_SYSTEMC_LLVM"/lib-"$SC_ARCH"
     mkdir -p "$INSTALL_PATH_SYSTEMC_LLVM"/include/sysc
-    cp libsystemc.a "$INSTALL_PATH_SYSTEMC_LLVM"/lib-linux/
+    cp libsystemc.a "$INSTALL_PATH_SYSTEMC_LLVM"/lib-"$SC_ARCH"/
 
     cd ../src/
     # copy files keeping the directory structure
