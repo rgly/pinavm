@@ -81,13 +81,29 @@ install_systemc_gcc () {
 ########## LLVM-GCC ###########
 ###############################
 install_llvm_gcc () {
+    case $(uname) in
+	Darwin)
+	    LLVM_GCC_BASE=llvm-gcc-4.2-2.6-i386-darwin9
+	    LLVM_GCC_TAR="$LLVM_GCC_BASE".tar.gz
+	    LLVM_GCC_URL=http://llvm.org/releases/2.6/$LLVM_GCC_TAR
+	    ;;
+	Linux)
+	    LLVM_GCC_BASE=llvm-gcc-4.2-2.6-i686-linux
+	    LLVM_GCC_TAR="$LLVM_GCC_BASE".tar.gz
+	    LLVM_GCC_URL=http://llvm.org/releases/2.6/$LLVM_GCC_TAR
+	    ;;
+	*)
+	    echo "Unsupported platform $(uname), sorry"
+	    exit
+    esac
+    
     echo "Building llvm-gcc..."
     cd "$DOWNLOAD_AND_COMPILE_DIR"
-    test -f "llvm-gcc-4.2-2.6-i686-linux.tar.gz" || \
-	wget http://llvm.org/releases/2.6/llvm-gcc-4.2-2.6-i686-linux.tar.gz
-    tar xzf llvm-gcc-4.2-2.6-i686-linux.tar.gz
+    test -f "LLVM_GCC_TAR" || \
+	wget "$LLVM_GCC_URL"
+    tar xzf "$LLVM_GCC_TAR"
     rm -rf "$INSTALL_PATH_LLVMGCC"
-    mv llvm-gcc-4.2-2.6-i686-linux "$INSTALL_PATH_LLVMGCC"
+    mv "$LLVM_GCC_BASE" "$INSTALL_PATH_LLVMGCC"
 }
 
 ####################################################
@@ -95,6 +111,14 @@ install_llvm_gcc () {
 ####################################################
 
 build_systemc_for_llvm () {
+    case $(uname) in
+	Darwin)
+	    SC_ARCH=macosx
+	    ;;
+	Linux)
+	    SC_ARCH=linux
+	    ;;
+    esac
     export CXX="llvm-g++ --emit-llvm"
     export RANLIB="echo this is the old ranlib command on file :"
 
@@ -141,9 +165,9 @@ build_systemc_for_llvm () {
 
     llvm-link -f -o libsystemc.a $(find src/sysc/ -name "*.a")
 
-    mkdir -p "$INSTALL_PATH_SYSTEMC_LLVM"/lib-linux
+    mkdir -p "$INSTALL_PATH_SYSTEMC_LLVM"/lib-"$SC_ARCH"
     mkdir -p "$INSTALL_PATH_SYSTEMC_LLVM"/include/sysc
-    cp libsystemc.a "$INSTALL_PATH_SYSTEMC_LLVM"/lib-linux/
+    cp libsystemc.a "$INSTALL_PATH_SYSTEMC_LLVM"/lib-"$SC_ARCH"/
 
     cd ../src/
     # copy files keeping the directory structure
