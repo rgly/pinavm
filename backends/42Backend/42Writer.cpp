@@ -340,7 +340,7 @@ _42Writer::printType(formatted_raw_ostream & Out,
 			}
 			Idx++;
 		}
-		TRACE_4("\n/**** struct elements printed ****/\n");
+		TRACE_4("\n/*** struct elements printed ****/\n");
 		Out << '}';
 		return Out;
 	}
@@ -2334,7 +2334,7 @@ void _42Writer::visitReturnInst(ReturnInst & I)
 	string inputData=Automat.toString_eventsWaited();
 	string outputData=Automat.toString_eventsNotified();
 	string transition="{"+inputData+"}op/{"+outputData+"}";
-	int i=Automat.addState(1);
+	int i=Automat.addState(Final);
 	int j=Automat.get_lastBuildState();
 	Automat.addTransition(j,i,transition);
 	Automat.set_lastBuildState(i);
@@ -2447,41 +2447,44 @@ void _42Writer::printBranchToBlock(BasicBlock * CurBB,
 //
 void _42Writer::visitBranchInst(BranchInst & I)
 {
+        Out << "IF DETECTE";
 	if (I.isConditional()) {
-//		if (isGotoCodeNecessary(I.getParent(), I.getSuccessor(0))) {
-			Out << "    if\n";
-			Out << "        :: ";
+		if (isGotoCodeNecessary(I.getParent(), I.getSuccessor(0))) {
+			Out << "  if ";
 			writeOperand(I.getCondition());
-			Out << " -> "; 
-			
-			if (printPHICopiesForSuccessor(I.getParent(), I.getSuccessor(0), 2))
-				Out << ";        \n";
-			printBranchToBlock(I.getParent(), I.getSuccessor(0), 2);
-			
-			Out << "\n        :: true -> ";
+			Out << " \n  then\n    ";
 
-// 			if (isGotoCodeNecessary(I.getParent(), I.getSuccessor(1))) {
-			if (printPHICopiesForSuccessor(I.getParent(), I.getSuccessor(1), 2))
-				Out << ";        \n";
-			printBranchToBlock(I.getParent(), I.getSuccessor(1), 2);
-			
-//			}
-// 		} else {
-// 			// First goto not necessary, assume second one is...
-// 			Out << "  if\n";
-// 			Out << "    :: ";
-// 			writeOperand(I.getCondition());
-// 			Out << " -> ";
-// 			printPHICopiesForSuccessor(I.getParent(),
-// 						I.getSuccessor(1), 2);
-// 			printBranchToBlock(I.getParent(),
-// 					I.getSuccessor(1), 2);
-// 		}
+			printPHICopiesForSuccessor(I.getParent(),
+						I.getSuccessor(0), 2);
+			printBranchToBlock(I.getParent(),
+					I.getSuccessor(0), 2);
 
-		Out << "\n    fi;\n";
+			if (isGotoCodeNecessary
+				(I.getParent(), I.getSuccessor(1))) {
+				Out << "  else\n    ";
+				printPHICopiesForSuccessor(I.getParent(),
+							I.
+							getSuccessor(1),
+							2);
+				printBranchToBlock(I.getParent(),
+						I.getSuccessor(1), 2);
+			}
+		} else {
+			// First goto not necessary, assume second one is...
+			Out << "  if (not ";
+			writeOperand(I.getCondition());
+			Out << "  \n  then\n    ";
+
+			printPHICopiesForSuccessor(I.getParent(),
+						I.getSuccessor(1), 2);
+			printBranchToBlock(I.getParent(),
+					I.getSuccessor(1), 2);
+		}
+
+		Out << "  endif;\n";
 	} else {
-		if (printPHICopiesForSuccessor(I.getParent(), I.getSuccessor(0), 0))
-			Out << ";    \n";
+		printPHICopiesForSuccessor(I.getParent(),
+					I.getSuccessor(0), 0);
 		printBranchToBlock(I.getParent(), I.getSuccessor(0), 0);
 	}
 	Out << "\n";
@@ -3195,7 +3198,7 @@ _42Writer::buildContract()
 
 			LI = &getAnalysis < LoopInfo > (*F);
 
-			int i=Automat.addState(-1);
+			int i=Automat.addState(Initial);
 			Automat.set_lastBuildState(i);
 			
 			printFunction(*F, false);
@@ -3250,7 +3253,7 @@ _42Writer::visitSCConstruct(SCConstruct * scc)
 		    string inputData=Automat.toString_eventsWaited();
 		    string outputData=Automat.toString_eventsNotified();
 		    string transition="{"+inputData+"}op/{"+outputData+"}";
-		    int i=Automat.addState(0);
+		    int i=Automat.addState(Intermediate);
 		    int j=Automat.get_lastBuildState();
 		    Automat.addTransition(j,i,transition);
 		    Automat.set_lastBuildState(i);

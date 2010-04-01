@@ -10,9 +10,12 @@ SC_MODULE(thread){
     int a=0;
     a++;
     wait(e1);
+    wait(e2);
     e2.notify();
+    e3.notify();
     wait(e3);
     e4.notify();
+    wait(e4);
   }
 
 
@@ -20,7 +23,7 @@ SC_MODULE(thread){
   thread(sc_module_name name){
     SC_THREAD(T1);
     sensitive << e1 << e2 << e3 << e4; /* penser a ajouter tous les
-                         evenements mentionnes dans T1 */
+    //        evenements mentionnes dans T1 */
   }
 };
 

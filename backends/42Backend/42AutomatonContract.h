@@ -11,20 +11,22 @@
 using namespace std;
 using namespace llvm;
 
+typedef enum{Initial,Intermediate,Final} StateStatus;
+
 struct transition{
   int    numStateSink;
   string transitionLab;
 };
 
 struct state{
-  int  InitialFinal;
+  StateStatus  Status;   /* type enumere */
   int  numState;
-  list<transition> *pointerListTransition; 
+  vector<transition> *pointerListTransition; /* mieux vaut mettre un vector */
 };
 
 class _42AutomatonContract {
 private:
-  list<state> listState;
+  vector<state> listState;
   bool existNotify;
   bool existWait;
   vector<string> eventsWaited;
@@ -32,7 +34,7 @@ private:
   int lastBuildState;
 public:
   _42AutomatonContract();
-  int  addState(int isInitial);
+  int  addState(StateStatus Status);
   void addTransition(int numeStateSrc, int numStateSink, string transitionLab);
   void printDrawContract(formatted_raw_ostream &o);
   bool get_existNotify();

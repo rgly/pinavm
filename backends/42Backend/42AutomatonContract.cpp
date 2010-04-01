@@ -14,12 +14,12 @@ _42AutomatonContract::_42AutomatonContract(){
   existWait=false;
 }
 
-int _42AutomatonContract::addState(int _isInitial){
+int _42AutomatonContract::addState(StateStatus _Status){
   state newState;
 
-  newState.InitialFinal=_isInitial;
+  newState.Status=_Status;
   newState.numState=this->listState.size();
-  newState.pointerListTransition=new list<transition>;
+  newState.pointerListTransition=new vector<transition>;
 
   (this->listState).push_back(newState);
 
@@ -28,7 +28,7 @@ int _42AutomatonContract::addState(int _isInitial){
 
 void _42AutomatonContract::addTransition(int _numStateSrc, int _numStateSink, string _transitionLab){
   transition newTransition;
-  list<state>::iterator it;
+  vector<state>::iterator it;
 
   newTransition.numStateSink=_numStateSink;
   newTransition.transitionLab=_transitionLab;
@@ -43,16 +43,16 @@ void _42AutomatonContract::addTransition(int _numStateSrc, int _numStateSink, st
 }
 
 void _42AutomatonContract::printDrawContract(formatted_raw_ostream &o){
-  list<state>::iterator it1;
-  list<transition>::iterator it2;
+  vector<state>::iterator it1;
+  vector<transition>::iterator it2;
 
   for(it1=(this->listState).begin(); it1!=(this->listState).end(); it1++){
     o << "STATE_" << it1->numState;
     
-    if((it1->InitialFinal)==-1)
+    if((it1->Status)==Initial)
       o << " (initial) : \n";
     else{
-      if((it1->InitialFinal)==1)
+      if((it1->Status)==Final)
 	o << " (final) : \n";
       else
 	o << " : \n";
