@@ -6,6 +6,7 @@
 #include "FrontendPass.hpp"
 #include "Frontend.hpp"
 
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/Module.h"
 #include "llvm/Support/PassNameParser.h"
 #include "llvm/Bitcode/ReaderWriter.h"
@@ -53,7 +54,7 @@ Frontend *launch_frontend(std::string InputFilename, bool inlineFcts)
 	Passes.add(vp);
 
 //	Passes.add(createGCLoweringPass());
-//	Passes.add(createLowerAllocationsPass(true));
+	//	Passes.add(createLowerAllocationsPass(true));
 	Passes.add(createLowerInvokePass());
 	Passes.add(createCFGSimplificationPass());	// clean up after lower invoke.
 

@@ -111,16 +111,20 @@ void FunctionBuilder::markUsefulInstructions()
 		TRACE_6("> Visiting uses...\n");
 		for (; I != E; ++I) {
 			Value *v = *I;
+			Instruction* vAsInst = dyn_cast<Instruction>(v);
 			TRACE_6("Use : " << v << "\n");
 			v->dump();
 			/*** Mark the instruction and the associated basicblock as useful ***/
-			if (isBeforeTargetInst(v) && isa<StoreInst>(v))
+			if (isBeforeTargetInst(v) && ((isa<StoreInst>(v) && vAsInst->getOperand(1) == inst) ||
+							isa<CallInst>(v)))
+			{
 				mark(v);
-		}
-		TRACE_6("> Uses visited\n");
+			}
+	}
+	TRACE_6("> Uses visited\n");
 
-		
-		/*********** Visit each argument of the instruction ***********/
+	
+	/*********** Visit each argument of the instruction ***********/
 		TRACE_6("> Visiting args...\n");
 		User::op_iterator opit = inst->op_begin(), opend = inst->op_end();
 		for (; opit != opend; ++opit) {

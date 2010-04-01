@@ -133,7 +133,7 @@ inline sc_process_handle sc_spawn(
 	if ( !opt_p || !opt_p->is_method() )
 	{
             sc_process_handle thread_handle = context_p->create_thread_process( 
-		    name_p, (const char*) 0, true,
+		    name_p, true,
 		    SC_MAKE_FUNC_PTR(sc_spawn_object<T>,semantics), 
 		    spawn_p, opt_p 
 	    );
@@ -142,7 +142,7 @@ inline sc_process_handle sc_spawn(
 	else
 	{
             sc_process_handle method_handle = context_p->create_method_process( 
-		    name_p, (const char*) 0, true,
+		    name_p, true,
 		    SC_MAKE_FUNC_PTR(sc_spawn_object<T>,semantics), 
 		    spawn_p, opt_p 
 	    );

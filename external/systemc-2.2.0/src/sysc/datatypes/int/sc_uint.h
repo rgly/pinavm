@@ -168,7 +168,7 @@ public:
 
     sc_uint( int a )
 	: sc_uint_base( W )
-	{ sc_uint_base::operator = ( a ); }
+	{sc_uint_base::operator = ( a ); printf("KM 4\n");}
 
     sc_uint( int64 a )
 	: sc_uint_base( W )

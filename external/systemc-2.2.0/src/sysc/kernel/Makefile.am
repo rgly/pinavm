@@ -61,13 +61,7 @@ H_FILES = \
 	sc_time.h \
 	sc_ver.h \
 	sc_wait.h \
-	sc_wait_cthread.h \
-	sc_method_process.h \
-	sc_module_registry.h \
-	sc_name_gen.h \
-	sc_thread_process.h \
-	sc_cthread_process.h \
-	sc_process_table.h
+	sc_wait_cthread.h 
 
 NO_H_FILES = \
 	sc_cor_fiber.h \

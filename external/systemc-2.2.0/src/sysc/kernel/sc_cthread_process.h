@@ -113,7 +113,7 @@ class sc_cthread_process : public sc_thread_process {
               sc_simcontext* );
 
   public:
-    sc_cthread_process( const char* name_p, const char* type_p, bool free_host,
+    sc_cthread_process( const char* name_p, bool free_host,
         SC_ENTRY_FUNC method_p, sc_process_host* host_p,
         const sc_spawn_options* opt_p );
     virtual ~sc_cthread_process();

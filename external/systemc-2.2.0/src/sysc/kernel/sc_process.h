@@ -143,10 +143,7 @@ class sc_process_monitor {
         spm_exit = 0
     };
     virtual ~sc_process_monitor() {}
-    virtual void signal(sc_thread_handle thread_p, int type) {
-        (void) thread_p;
-        (void) type;
-    }
+    virtual void signal(sc_thread_handle thread_p, int type) {}
 };
 
 //------------------------------------------------------------------------------
@@ -293,7 +290,7 @@ class sc_process_b : public sc_object {
     };
 
   public:
-    sc_process_b( const char* name_p, const char* type_p, bool free_host,
+    sc_process_b( const char* name_p, bool free_host,
         SC_ENTRY_FUNC method_p, sc_process_host* host_p,
         const sc_spawn_options* opt_p );
     virtual ~sc_process_b();
@@ -376,7 +373,6 @@ class sc_process_b : public sc_object {
 
  public:
     const char* func_process;
-    const char* type_process;
 
   protected:
     static sc_process_b* m_delete_next_p;          // Next process to delete.

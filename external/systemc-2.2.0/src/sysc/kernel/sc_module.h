@@ -359,7 +359,7 @@ protected:
 
     // Catch uses of watching:
     void watching( bool expr )
-        { (void) expr; SC_REPORT_ERROR(SC_ID_WATCHING_NOT_ALLOWED_,""); }
+        { SC_REPORT_ERROR(SC_ID_WATCHING_NOT_ALLOWED_,""); }
 
     // These are protected so that user derived classes can refer to them.
     sc_sensitive     sensitive;
@@ -473,8 +473,7 @@ extern sc_module* sc_module_dynalloc(sc_module*);
 
 // the SC_HAS_PROCESS macro call must be followed by a ;
 #define SC_HAS_PROCESS(user_module_name)                                      \
-	typedef user_module_name SC_CURRENT_USER_MODULE;		      \
-    user_module_name* typeHelper;
+	typedef user_module_name SC_CURRENT_USER_MODULE;		      
 
 // The this-> construct on sensitive operators in the macros below is
 // required for gcc 4.x when a templated class has a templated parent that is
@@ -486,29 +485,29 @@ extern sc_module* sc_module_dynalloc(sc_module*);
 // class A : public B<X>
 
 
-#define declare_method_process(handle, name, type, host_tag, func)   \
+#define declare_method_process(handle, name, host_tag, func)   \
     {		                                                    \
         ::sc_core::sc_process_handle handle =                      \
 	    sc_core::sc_get_curr_simcontext()->create_method_process( \
-		    name,  type, false, SC_MAKE_FUNC_PTR( host_tag, func ), \
+		    name,  false, SC_MAKE_FUNC_PTR( host_tag, func ), \
 		this, 0 ); \
         this->sensitive << handle;                                        \
         this->sensitive_pos << handle;                                    \
         this->sensitive_neg << handle;                                    \
     }
 
-#define declare_thread_process(handle, name, type, host_tag, func)   \
+#define declare_thread_process(handle, name, host_tag, func)   \
     {                                                               \
         ::sc_core::sc_process_handle handle =                      \
 	     sc_core::sc_get_curr_simcontext()->create_thread_process( \
-		     name, type, false,				       \
+		     name, false,				       \
                  SC_MAKE_FUNC_PTR( host_tag, func ), this, 0 ); \
         this->sensitive << handle;                                        \
         this->sensitive_pos << handle;                                    \
         this->sensitive_neg << handle;                                    \
     }
 
-#define declare_cthread_process(handle, name, type, host_tag, func, edge) \
+#define declare_cthread_process(handle, name, host_tag, func, edge) \
     {                                                               \
         ::sc_core::sc_process_handle handle =                     \
 	     sc_core::sc_get_curr_simcontext()->create_cthread_process( \
@@ -518,27 +517,21 @@ extern sc_module* sc_module_dynalloc(sc_module*);
     }
 
 #define SC_CTHREAD(func, edge)                                                \
-    typeHelper = this;                                                        \
     declare_cthread_process( func ## _handle,                                 \
                              #func,                                           \
-			     typeid(*typeHelper).name(),		      \
                              SC_CURRENT_USER_MODULE,                          \
                              func,                                            \
                              edge )
 
 #define SC_METHOD(func)                                                       \
-    typeHelper = this;                                                        \
     declare_method_process( func ## _handle,                                  \
                             #func,                                            \
-			     typeid(*typeHelper).name(),		      \
                             SC_CURRENT_USER_MODULE,                           \
                             func )
 
 #define SC_THREAD(func)                                                       \
-    typeHelper = this;                                                        \
     declare_thread_process( func ## _handle,                                  \
                             #func,                                            \
-			    typeid(*typeHelper).name(),	        	      \
                             SC_CURRENT_USER_MODULE,                           \
                             func )
 

@@ -166,7 +166,7 @@ Function *SCJit::buildFct(Function * f, FunctionType * FT, Instruction* inst, Va
 	return fctToJit;
 }
 
-void fillArgsType(Function * f, std::vector < const Type * >*argsType)
+void SCJit::fillArgsType(Function * f, std::vector < const Type * >*argsType)
 {
 	const Type *t = f->getArgumentList().front().getType();
 	argsType->push_back(t);
@@ -189,37 +189,6 @@ void *SCJit::jitAddr(Function * f, Instruction* inst, Value * arg)
 	IRModule* mod = this->getCurrentProcess()->getModule();
 	TRACE_4("********************* SC MODULE : " << mod << "\n");
 	void *res = fct(this->elab->getSCModule(mod));
-
-	fctToJit->dropAllReferences();
-	ee->freeMachineCodeForFunction(fctToJit);
-	fctToJit->eraseFromParent();
-
-	return res;
-}
-
-
-int SCJit::jitInt(Function * f, Instruction* inst, Value * arg)
-{
-	Function *fctToJit;
-	const std::vector < const Type *>argsType;
-
-	TRACE_5("jitInt() \n");
-
-	fillArgsType(f, (std::vector < const Type * >*) &argsType);
-	FunctionType *FT;
-	if (isa<PointerType>(arg->getType()))
-		FT = FunctionType::get(arg->getType(), argsType, false);
-	else
-		FT = FunctionType::get(IntegerType::get(getGlobalContext(), 32), argsType, false);
-
-	fctToJit = buildFct(f, FT, inst, arg);
-
-	int (*fct) (sc_core::sc_module *) =
-		(int (*)(sc_core::sc_module *)) ee->getPointerToFunction(fctToJit);
-
-	IRModule* mod = this->getCurrentProcess()->getModule();
-	TRACE_4("********************* SC MODULE : " << mod << "\n");
-	int res = fct(this->elab->getSCModule(mod));
 
 	fctToJit->dropAllReferences();
 	ee->freeMachineCodeForFunction(fctToJit);
@@ -277,4 +246,35 @@ bool SCJit::jitBool(Function * f, Instruction* inst, Value * arg)
 		return false;
 	else
 		return true;
+}
+
+int
+SCJit::jitInt(Function * f, Instruction* inst, Value * arg) {
+	Function *fctToJit;
+	const std::vector < const Type *>argsType;
+	
+	TRACE_5("jitInt() \n");
+	
+	fillArgsType(f, (std::vector < const Type * >*) &argsType);
+	FunctionType *FT;
+	if (isa<PointerType>(arg->getType())) {
+		const Type* pt = dyn_cast<PointerType>(arg->getType())->getElementType();
+		FT = FunctionType::get(pt, argsType, false);
+	} else
+		FT = FunctionType::get(arg->getType(), argsType, false);
+	
+	fctToJit = buildFct(f, FT, inst, arg);
+	
+	int (*fct) (sc_core::sc_module *) =
+		(int (*)(sc_core::sc_module *)) ee->getPointerToFunction(fctToJit);
+	
+	IRModule* mod = this->getCurrentProcess()->getModule();
+	TRACE_4("********************* SC MODULE : " << mod << "\n");
+	int res = fct(this->elab->getSCModule(mod));
+	
+	fctToJit->dropAllReferences();
+	ee->freeMachineCodeForFunction(fctToJit);
+	fctToJit->eraseFromParent();
+	
+	return res;
 }

@@ -141,12 +141,12 @@ void sc_method_process::kill_process()
 //
 // This is the object instance constructor for this class.
 //------------------------------------------------------------------------------
-sc_method_process::sc_method_process( const char* name_p, const char* type_p,
+sc_method_process::sc_method_process( const char* name_p,
     bool free_host, SC_ENTRY_FUNC method_p, 
     sc_process_host* host_p, const sc_spawn_options* opt_p 
 ):
     sc_process_b(
-	    name_p && name_p[0] ? name_p : sc_gen_unique_name("method_p"), type_p,
+	    name_p && name_p[0] ? name_p : sc_gen_unique_name("method_p"),
         free_host, method_p, host_p, opt_p)
 {
 

@@ -162,6 +162,7 @@
 #include "sysc/utils/sc_utils_ids.h"
 
 extern "C" void pinavm_callback();
+extern void pinavm_callback();
 namespace sc_core {
 
 sc_stop_mode stop_mode = SC_STOP_FINISH_DELTA;
@@ -981,11 +982,11 @@ sc_simcontext::gen_unique_name( const char* basename_, bool preserve_first )
 
 sc_process_handle 
 sc_simcontext::create_cthread_process( 
-    const char* name_p, const char* type_p, bool free_host, SC_ENTRY_FUNC method_p,         
+    const char* name_p, bool free_host, SC_ENTRY_FUNC method_p,         
     sc_process_host* host_p, const sc_spawn_options* opt_p )
 {
     sc_cthread_handle handle = 
-	    new sc_cthread_process(name_p, type_p, free_host, method_p, host_p, opt_p);
+	    new sc_cthread_process(name_p, free_host, method_p, host_p, opt_p);
     if ( m_ready_to_simulate ) 
     {
 	handle->prepare_for_simulation();
@@ -998,11 +999,11 @@ sc_simcontext::create_cthread_process(
 
 sc_process_handle 
 sc_simcontext::create_method_process( 
-    const char* name_p, const char* type_p, bool free_host, SC_ENTRY_FUNC method_p,         
+    const char* name_p, bool free_host, SC_ENTRY_FUNC method_p,         
     sc_process_host* host_p, const sc_spawn_options* opt_p )
 {
     sc_method_handle handle = 
-	    new sc_method_process(name_p, type_p, free_host, method_p, host_p, opt_p);
+	    new sc_method_process(name_p, free_host, method_p, host_p, opt_p);
     if ( m_ready_to_simulate ) {
 	if ( !handle->dont_initialize() ) {
 	    push_runnable_method( handle );
@@ -1016,11 +1017,11 @@ sc_simcontext::create_method_process(
 
 sc_process_handle 
 sc_simcontext::create_thread_process( 
-    const char* name_p, const char* type_p, bool free_host, SC_ENTRY_FUNC method_p,         
+    const char* name_p, bool free_host, SC_ENTRY_FUNC method_p,         
     sc_process_host* host_p, const sc_spawn_options* opt_p )
 {
     sc_thread_handle handle = 
-	    new sc_thread_process(name_p, type_p, free_host, method_p, host_p, opt_p);
+	    new sc_thread_process(name_p, free_host, method_p, host_p, opt_p);
     if ( m_ready_to_simulate ) {
 	handle->prepare_for_simulation();
 	if ( !handle->dont_initialize() ) {

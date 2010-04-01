@@ -26,14 +26,6 @@ ifndef EXE
 EXE=${patsubst %.$(SUF),%.exe,$(SRC)}
 endif
 
-ifndef CPPLLVMSCFLAGS
-CPPLLVMSCFLAGS=-I$(INSTALL_PATH_SYSTEMC_LLVM)/ -I$(INSTALL_PATH_SYSTEMC_LLVM)/include -I$(INSTALL_PATH_SYSTEMC_LLVM)/include/sysc
-endif
-
-ifndef LLVMGCCFLAGS
-LLVMGCCFLAGS=-fno-inline-functions $(CPPLLVMSCFLAGS)
-endif
-
 ifndef CPPFLAGS
 CPPFLAGS=-fno-inline-functions
 endif
@@ -50,6 +42,9 @@ ifndef CPPSCFLAGS
 CPPSCFLAGS=-I$(INSTALL_PATH_SYSTEMC_GCC)/ -I$(INSTALL_PATH_SYSTEMC_GCC)/include -I$(INSTALL_PATH_SYSTEMC_GCC)/include/sysc
 endif
 
+ifndef LLVMGCCFLAGS
+LLVMGCCFLAGS=-fno-inline-functions $(CPPSCFLAGS)
+endif
 
 GCC_SSA=${patsubst %.$(SUF),%.$(SUF).ssa,$(SRC)}
 LLOPT=${patsubst %.ll,%.opt.ll,$(LL)}
@@ -57,6 +52,12 @@ LLOPT=${patsubst %.ll,%.opt.ll,$(LL)}
 ifdef SCOOT_HOME
 include ${SCOOT_HOME}/common.mk
 endif
+
+PINAVM=../../toplevel/pinavm
+.PHONY: $(PINAVM)
+$(PINAVM):
+	cd $$(dirname $(PINAVM)) && $(MAKE) $$(basename $(PINAVM))
+
 
 ll: $(LL)
 llopt: $(LLOPT)
@@ -78,7 +79,7 @@ gcc-ssa: $(GCC_SSA)
 %.ll: %.bc Makefile
 	llvm-dis -f $*.bc -o $*.ll
 
-%.bc: %.$(SUF) Makefile
+%.bc: %.$(SUF) Makefile $(PINAVM)
 	llvm-$(COMP) $(LLVMGCCFLAGS) -emit-llvm -c $< -o $@ $(INCLUDE)
 
 %.simu: %.$(SUF) Makefile
@@ -104,8 +105,3 @@ clean:
 
 realclean: clean
 	$(RM) *~ 
-
-PINAVM=../../toplevel/pinavm
-.PHONY: $(PINAVM)
-$(PINAVM):
-	cd $$(dirname $(PINAVM)) && $(MAKE) $$(basename $(PINAVM))

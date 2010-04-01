@@ -31,7 +31,7 @@ std::string WriteConstruct::toString()
 	if (this->value != "")
 		return "Write(" + this->value + ") to port : " + this->port->getName();
 	else
-		return "Write(? was not able to jit ?)";
+		return "Write(? was not able to jit ?) to port " + this->port->getName();
 }
 
 std::string WriteConstruct::getValue()

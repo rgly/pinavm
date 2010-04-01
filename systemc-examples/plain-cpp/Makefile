@@ -1,11 +1,16 @@
-test.bc: test.cpp
-	llvm-g++ -o $@ --emit-llvm -c $<
+SRC = main.cpp
 
-a.out.bc: test.bc
-	llvm-ld -lstdc++ -disable-opt $<
+all: main.bc
+promela: ok.pr
+.PHONY: all promela diff
 
-run-lli: a.out.bc
-	lli -load=/net/bauges/local/moy/usr/src/llvm-gcc-4.2-2.6-i686-linux/lib/libstdc++.so $<
+include ../common.mk
 
-clean:
-	$(RM) *.bc *.ll
+ok.%.pr: main.bc
+# Keep a backup of the target.
+	-$(RM) $@.bak
+	-mv $@ $@.bak
+	../../toplevel/pinavm -print-ir -print-elab -b promela -o ok.$*.pr main.bc -inline -args $*
+
+diff:
+	diff -u ok.pr ok.pr.bak

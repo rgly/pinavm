@@ -7,6 +7,9 @@
 #include <iostream>
 #include <algorithm>
 
+#include "sysc/datatypes/int/sc_uint.h"
+
+
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -65,12 +68,52 @@ struct SCJit {
 	SCElab *getElab();
 	void setCurrentProcess(Process * process);
 	Process *getCurrentProcess();
+	void fillArgsType(Function * f, std::vector < const Type * >*argsType);
 	void *jitAddr(Function * f, Instruction* inst, Value * arg);
 	int jitInt(Function * f, Instruction* inst, Value * arg);
 	double jitDouble(Function * f, Instruction* inst, Value * arg);
 	bool jitBool(Function * f, Instruction* inst, Value * arg);
 	Function *buildFct(Function * f, FunctionType * FT, Instruction* inst, Value * arg);
 	Module *getModule();
+
+	template<class RetTy>
+	RetTy jitType(Function * f, Instruction* inst, Value * arg) {
+		Function *fctToJit;
+		const std::vector < const Type *>argsType;
+		
+		TRACE_5("jitInt() \n");
+		
+		fillArgsType(f, (std::vector < const Type * >*) &argsType);
+		FunctionType *FT;
+		if (isa<PointerType>(arg->getType())) {
+			const Type* pt = dyn_cast<PointerType>(arg->getType())->getElementType();
+			FT = FunctionType::get(pt, argsType, false);
+		} else
+			FT = FunctionType::get(arg->getType(), argsType, false);
+		
+		fctToJit = buildFct(f, FT, inst, arg);
+		
+		RetTy (*fct) (sc_core::sc_module *) =
+			(RetTy (*)(sc_core::sc_module *)) ee->getPointerToFunction(fctToJit);
+		
+		IRModule* mod = this->getCurrentProcess()->getModule();
+		TRACE_4("********************* SC MODULE : " << mod << "\n");
+		RetTy res = fct(this->elab->getSCModule(mod));
+		
+		RetTy* retp = &res;
+		sc_dt::sc_uint<8> retUint = *((sc_dt::sc_uint<8>*) retp);
+
+		TRACE_3("Result of jit in jitType : \n");
+		TRACE_3((int) retUint.to_int());
+		TRACE_3("\n");
+
+		fctToJit->dropAllReferences();
+		ee->freeMachineCodeForFunction(fctToJit);
+		fctToJit->eraseFromParent();
+		
+		return res;
+	}
+	
 };
 
 #endif

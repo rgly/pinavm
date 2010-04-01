@@ -82,7 +82,7 @@ inline void sc_runnable::init()
     if ( !m_methods_push_head )
     {
         m_methods_push_head = 
-            new sc_method_process((const char*)0, (const char*)0, true, (SC_ENTRY_FUNC)0, 0, 0);
+            new sc_method_process((const char*)0, true, (SC_ENTRY_FUNC)0, 0, 0);
         m_methods_push_head->dont_initialize(true);
     }
     m_methods_push_tail = m_methods_push_head;
@@ -92,7 +92,7 @@ inline void sc_runnable::init()
     if ( !m_threads_push_head )
     {
         m_threads_push_head = 
-            new sc_thread_process((const char*)0, (const char*)0, true, (SC_ENTRY_FUNC)0, 0, 0);
+            new sc_thread_process((const char*)0, true, (SC_ENTRY_FUNC)0, 0, 0);
         m_threads_push_head->dont_initialize(true);
     }
 	m_threads_push_head->set_next_runnable(SC_NO_THREADS);
