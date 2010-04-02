@@ -51,11 +51,11 @@ CXXFLAGS.../backends/SimpleBackend/SimpleTargetMachine=-fno-rtti -fno-exceptions
 
 LDLIBS += `llvm-config --ldflags --libs jit interpreter nativecodegen bitreader selectiondag`
 
-libpinavm.so: $(FRONTEND_OBJS) $(BACKENDS_OBJS) $(UTILS_OBJS) $(OBJS)
-	g++ -shared -o $@ $(ALL_OBJS) $(LDFLAGS) $(LDLIBS)
+# libpinavm.so: $(FRONTEND_OBJS) $(BACKENDS_OBJS) $(UTILS_OBJS) $(OBJS)
+# 	g++ -shared -o $@ $(ALL_OBJS) $(LDFLAGS) $(LDLIBS)
 
-pinavm: pinavm.cpp libpinavm.so
-	g++ -o $@ pinavm.cpp -lpinavm -L . -Wl,-rpath $(PWD)
+pinavm: pinavm.cpp $(FRONTEND_OBJS) $(BACKENDS_OBJS) $(UTILS_OBJS) $(OBJS)
+	g++ -rdynamic -o $@ pinavm.cpp $(ALL_OBJS) $(LDFLAGS) $(LDLIBS)
 
 llvm-version:
 	llvm-config --version
