@@ -61,7 +61,7 @@ H_FILES = \
 	sc_time.h \
 	sc_ver.h \
 	sc_wait.h \
-	sc_wait_cthread.h 
+	sc_wait_cthread.h
 
 NO_H_FILES = \
 	sc_cor_fiber.h \
@@ -74,8 +74,8 @@ NO_H_FILES = \
 	sc_name_gen.h \
 	sc_object_manager.h \
 	sc_runnable_int.h \
-	sc_simcontext_int.h
-	sc_thread_process.h 
+	sc_simcontext_int.h \
+	sc_thread_process.h
 
 noinst_HEADERS = $(H_FILES)
 
@@ -83,7 +83,6 @@ CXX_FILES = \
 	sc_attribute.cpp \
 	sc_cor_fiber.cpp \
 	sc_cor_pthread.cpp \
-	sc_cor_qt.cpp \
 	sc_cthread_process.cpp \
 	sc_event.cpp \
 	sc_join.cpp \
