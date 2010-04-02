@@ -127,7 +127,7 @@ int load_and_run_sc_main(std::string & InputFile)
 
 	// Lot of copy-paste from lli.cpp
 	LLVMContext &Context = getGlobalContext();
-	
+
 	// If we have a native target, initialize it to ensure it is linked in and
 	// usable by the JIT.
 	InitializeNativeTarget();
@@ -141,7 +141,7 @@ int load_and_run_sc_main(std::string & InputFile)
 		Mod = getLazyBitcodeModule(Buffer, Context, &ErrorMsg);
 		if (!Mod) delete Buffer;
 	}
-  
+
 	if (!Mod) {
 		errs() << "error loading program '" << InputFile << "': "
 		       << ErrorMsg << "\n";
@@ -185,25 +185,25 @@ int load_and_run_sc_main(std::string & InputFile)
 
 	// TODO: is this usefull?
 	// If the program doesn't explicitly call exit, we will need the Exit
-	// function later on to make an explicit call, so get the function now. 
+	// function later on to make an explicit call, so get the function now.
 	Constant *Exit = Mod->getOrInsertFunction("exit", Type::getVoidTy(Context),
 						  Type::getInt32Ty(Context),
 						  NULL);
-	
+
 	// Reset errno to zero on entry to main.
 	errno = 0;
-	
+
 	// Run static constructors.
 	EE->runStaticConstructorsDestructors(false);
 
 	TRACE_2("Running elaboration\n");
 	// Run main.
-	int Result = EE->runFunctionAsMain(EntryFn, InputArgv, environ);
+	int Result = EE->runFunctionAsMain(EntryFn, InputArgv, NULL);
 
 	// Run static destructors.
 	EE->runStaticConstructorsDestructors(true);
-	
-	// If the program didn't call exit explicitly, we should call it now. 
+
+	// If the program didn't call exit explicitly, we should call it now.
 	// This ensures that any atexit handlers get called correctly.
 	if (Function *ExitF = dyn_cast<Function>(Exit)) {
 		std::vector<GenericValue> Args;
