@@ -101,7 +101,7 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 
 	if ((it = this->portsMap.find(port)) == this->portsMap.end()) {
 
-		sprintf(buffer, "%lx", (intptr_t) port);
+		sprintf(buffer, "%lx", (unsigned long) port);
 		string portName = mod->getUniqueName() + "_0x" + buffer;
 
 		sc_core::sc_interface* itf = port->get_interface();
@@ -202,7 +202,7 @@ Event *SCElab::addEvent(Process * process, sc_core::sc_event * event)
 	IRModule *mod = process->getModule();
 	if ((it = this->eventsMap.find(event)) == this->eventsMap.end()) {
 		char buffer[10];
-		sprintf(buffer, "%lx", (intptr_t) event);
+		sprintf(buffer, "%lx", (unsigned long) event);
 		string eventName = mod->getUniqueName() + "_0x" + buffer;
 		e = new Event(eventName);
 		this->events.push_back(e);
