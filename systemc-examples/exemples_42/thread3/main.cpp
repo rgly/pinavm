@@ -1,0 +1,44 @@
+#include "systemc.h"
+
+using namespace sc_core;
+using namespace std;
+
+SC_MODULE(thread){
+  sc_event e1,e2,e3,e4;
+
+  void T1(){
+    int a=0;
+    int b=0;
+    wait(e1);
+    if(a==0){
+      e2.notify();
+      wait(e3);
+      b++;
+      if(b==0){
+	b=b+4;
+      }
+      else{
+	e4.notify();
+      }
+    }
+    else{
+      a++;
+    }
+    wait(e2);
+  }
+
+
+  SC_HAS_PROCESS(thread);
+  thread(sc_module_name name){
+    SC_THREAD(T1);
+    sensitive << e1 << e2 << e3 << e4; /* penser a ajouter tous les
+    //        evenements mentionnes dans T1 */
+  }
+};
+
+
+int sc_main(int argc, char *argv[]){
+  thread MyFirstThread("toto");
+  sc_start();
+  return 0;
+}

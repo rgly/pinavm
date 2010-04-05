@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE contract PUBLIC "toto-CT" "contract.dtd">
+<contract interface="toto-ITF" name="toto-CT">
+
+proctype _ZN6thread2T1Ev_pnumber_0()
+{
+atomic {
+int llvm_cbe_alloca_20_point;
+    int llvm_cbe_tmp__1;
+    int llvm_cbe_tmp__2;
+    int llvm_cbe_tmp__3;
+    
+    /*OutputLValue*/ llvm_cbe_alloca_20_point = 0;
+  ;
+llvm_cbe_bb:
+  ;
+  ;
+    /*OutputLValue*/ llvm_cbe_tmp__1 = 0 + 1;
+llvm_cbe_bb1:
+    /*OutputLValue*/ llvm_cbe_tmp__2 = llvm_cbe_tmp__1 + 4;
+
+llvm_cbe_bb2:
+  ;
+
+  endif;
+
+llvm_cbe_bb4:
+    /*OutputLValue*/ llvm_cbe_tmp__3 = 0 + 1;
+
+  endif;
+
+llvm_cbe_bb5:
+  ;
+finished[0] = true;
+}
+}
+
+---------------- Contract in a drawing ------------------
+STATE_0 (initial) : 
+----> STATE_1 : {toto_0xbfa45418_0;}op/{toto_0xbfa45458;}
+----> STATE_3 : {toto_0xbfa45418_0;}op/{}
+STATE_1 : 
+----> STATE_2 : {toto_0xbfa45498_0;}op/{}
+----> STATE_2 : {toto_0xbfa45498_0;}op/{toto_0xbfa454d8;}
+STATE_2 : 
+----> STATE_3 : {}op/{}
+STATE_3 : 
+----> STATE_4 : {toto_0xbfa45458_0;}op/{}
+STATE_4 (final) : 

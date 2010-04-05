@@ -10,10 +10,12 @@ SC_MODULE(thread){
     int a=0;
     a++;
     wait(e1);
-    wait(e2);
+    wait(e1);
     e2.notify();
     e3.notify();
+    e2.notify();
     wait(e3);
+    wait(e2);
     e4.notify();
     wait(e4);
   }

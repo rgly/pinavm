@@ -1515,10 +1515,12 @@ void PromelaWriter::writeOperandDeref(Value * Operand)
 
 void PromelaWriter::writeOperandInternal(Value * Operand, bool Static)
 {
+        Out<<"AAAAAAAAAAAAAAAAA\n";
 	if (Instruction * I = dyn_cast < Instruction > (Operand))
 		// Should we inline this instruction to build a tree?
 		if (isInlinableInst(*I) && !isDirectAlloca(I)) {
 			Out << '(';
+			Out << "LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL\n";
 			writeInstComputationInline(*I);
 			Out << ')';
 			return;

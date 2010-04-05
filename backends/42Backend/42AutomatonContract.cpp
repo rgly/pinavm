@@ -1,4 +1,4 @@
-#include <list>
+#include <set>
 #include <vector>
 #include <iostream>
 #include "llvm/Support/raw_ostream.h"
@@ -12,6 +12,107 @@ using namespace llvm;
 _42AutomatonContract::_42AutomatonContract(){
   existNotify=false;
   existWait=false;
+  ifDetected=false;
+}
+
+void _42AutomatonContract::set_stateStatus(int _numState,StateStatus _Status){
+  vector<state>::iterator it;
+
+  it=(this->listState).begin();
+
+  while(it->numState!=_numState){
+    it++;
+  }
+
+  it->Status=_Status;
+}
+
+bool _42AutomatonContract::get_existNotify(){
+  return this->existNotify;
+}
+
+void _42AutomatonContract::set_existNotify(bool exist){
+  this->existNotify=exist;
+}
+
+bool _42AutomatonContract::get_existWait(){
+  return this->existWait;
+}
+
+void _42AutomatonContract::set_existWait(bool exist){
+  this->existWait=exist;
+}
+
+int _42AutomatonContract::get_lastBuildState(){
+  return this->lastBuildState;
+}
+
+void _42AutomatonContract::set_lastBuildState(int number){
+  this->lastBuildState=number;
+}
+
+bool _42AutomatonContract::get_ifDetected(){
+  return this->ifDetected;
+}
+
+void _42AutomatonContract::set_ifDetected(bool detected){
+  this->ifDetected=detected;
+}
+
+vector<string> _42AutomatonContract::get_eventsWaited(){
+  return this->eventsWaited;
+}
+
+void _42AutomatonContract::set_eventsWaited(vector<string> eventsWaited){
+  for(unsigned int i(0);i<(eventsWaited).size();++i){
+    pushEventWaited(eventsWaited[i]);
+  }
+}
+
+vector<string> _42AutomatonContract::get_eventsNotified(){
+  return this->eventsNotified;
+}
+
+void _42AutomatonContract::set_eventsNotified(vector<string> eventsNotified){
+  for(unsigned int i(0);i<(eventsNotified).size();++i){
+    pushEventNotified(eventsNotified[i]);
+  }
+}
+
+string _42AutomatonContract::toString_eventsWaited(){
+  string s;
+
+  for(unsigned int i(0);i<(this->eventsWaited).size();++i){
+    s=s+(this->eventsWaited)[i]+";";
+  }
+
+  return s;
+}
+  
+string _42AutomatonContract::toString_eventsNotified(){
+  string s;
+
+  for(unsigned int i(0);i<(this->eventsNotified).size();++i){
+    s=s+(this->eventsNotified)[i]+";";
+  }
+
+  return s;
+}
+
+void _42AutomatonContract::clearEventsWaited(){
+  (this->eventsWaited).clear();
+}
+
+void _42AutomatonContract::clearEventsNotified(){
+  (this->eventsNotified).clear();
+}
+
+void _42AutomatonContract::pushEventWaited(string event){
+  (this->eventsWaited).push_back(event);
+}
+
+void _42AutomatonContract::pushEventNotified(string event){
+  (this->eventsNotified).push_back(event);
 }
 
 int _42AutomatonContract::addState(StateStatus _Status){
@@ -64,66 +165,22 @@ void _42AutomatonContract::printDrawContract(formatted_raw_ostream &o){
   }
 }
 
-
-bool _42AutomatonContract::get_existNotify(){
-  return this->existNotify;
+void _42AutomatonContract::addBasicBlockVisited(string name){
+  (this->BBVisited).insert(name);
 }
 
-void _42AutomatonContract::set_existNotify(bool exist){
-  this->existNotify=exist;
+bool _42AutomatonContract::isBasicBlockAlreadyVisited(string name){
+  if((this->BBVisited).find(name)==(this->BBVisited).end())
+    return false;
+  else
+    return true;
 }
 
-bool _42AutomatonContract::get_existWait(){
-  return this->existWait;
-}
 
-void _42AutomatonContract::set_existWait(bool exist){
-  this->existWait=exist;
-}
 
-int _42AutomatonContract::get_lastBuildState(){
-  return this->lastBuildState;
-}
 
-void _42AutomatonContract::set_lastBuildState(int number){
-  this->lastBuildState=number;
-}
 
-string _42AutomatonContract::toString_eventsWaited(){
-  string s;
 
-  for(unsigned int i(0);i<(this->eventsWaited).size();++i){
-    s=s+(this->eventsWaited)[i]+";";
-  }
-
-  return s;
-}
-  
-string _42AutomatonContract::toString_eventsNotified(){
-  string s;
-
-  for(unsigned int i(0);i<(this->eventsNotified).size();++i){
-    s=s+(this->eventsNotified)[i]+";";
-  }
-
-  return s;
-}
-
-void _42AutomatonContract::clearEventsWaited(){
-  (this->eventsWaited).clear();
-}
-
-void _42AutomatonContract::clearEventsNotified(){
-  (this->eventsNotified).clear();
-}
-
-void _42AutomatonContract::pushEventWaited(string event){
-  (this->eventsWaited).push_back(event);
-}
-
-void _42AutomatonContract::pushEventNotified(string event){
-  (this->eventsNotified).push_back(event);
-}
 
 
 

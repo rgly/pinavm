@@ -25,9 +25,6 @@
 #include "utils.h"
 #include "config.h"
 
-#include "42AutomatonContract.h"
-#include <list>
-
 static Instruction* pointerToInst;
 static Process* currentProcess;
 
@@ -340,7 +337,7 @@ _42Writer::printType(formatted_raw_ostream & Out,
 			}
 			Idx++;
 		}
-		TRACE_4("\n/*** struct elements printed ****/\n");
+		TRACE_4("\n/**** struct elements printed ****/\n");
 		Out << '}';
 		return Out;
 	}
@@ -1475,8 +1472,8 @@ void _42Writer::writeInstComputationInline(Instruction & I)
 	if (I.getType() == Type::getInt1Ty(I.getContext()) && !isa < ICmpInst > (I) && !isa < FCmpInst > (I))
 		NeedBoolTrunc = true;
 
-	//if (NeedBoolTrunc)
-	//Out << "((";
+	if (NeedBoolTrunc)
+		Out << "((";
 
 	TRACE_4("/***** Visiting " << I.getOpcodeName() << " ( writeInstComputationInline() ) ******/ \n");
 //	Out << "/***** Visiting " << I.getOpcodeName() << " ( writeInstComputationInline() ) ******/ \n";
@@ -1485,8 +1482,8 @@ void _42Writer::writeInstComputationInline(Instruction & I)
 	TRACE_4("\n");
 	TRACE_4("/***** Visited " << I.getOpcodeName() << "******/ \n");
 
-	//if (NeedBoolTrunc)
-	//Out << ")&1)";
+	if (NeedBoolTrunc)
+		Out << ")&1)";
 }
 
 /// isAddressExposed - Return true if the specified value's name needs to
@@ -2213,7 +2210,64 @@ static inline bool isFPIntBitCast(const Instruction & I)
 
 void _42Writer::printFunction(Function & F, bool inlineFct)
 {
+	/// isStructReturn - Should this function actually return a struct by-value?
+// 	bool isStructReturn = F.hasStructRetAttr();
 
+	printFunctionSignature(&F, false, inlineFct);
+	Out << "\n";
+	Out << "{\n";
+
+	if (! inlineFct)
+		Out << "atomic {\n";
+
+
+	// If this is a struct return function, handle the result with magic.
+// 	if (isStructReturn) {
+// 		triggerError(Out, "NYI : function returning a struct.");
+// 		const Type *StructTy =
+// 			cast < PointerType >
+// 			(F.arg_begin()->getType())->getElementType();
+// 		Out << "  ";
+// 		printType(Out, StructTy, false, "StructReturn");
+// 		Out << ";  /* Struct return temporary */\n";
+
+// 		Out << "  ";
+// 		printType(Out, F.arg_begin()->getType(), false,
+// 			GetValueName(F.arg_begin()));
+// 		Out << " = &StructReturn;\n";
+// 	}
+
+	TRACE_5("42Writer > printing locals\n");
+
+	// print local variable information for the function
+	for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ++I) {
+		if (const AllocaInst * AI = isDirectAlloca(&*I)) {
+			printType(Out, AI->getAllocatedType(), false, GetValueName(AI));
+			Out << ";\n    ";
+			
+		} else if (I->getType() != Type::getVoidTy(F.getContext()) && !isInlinableInst(*I) && ! isSystemCType(I->getType())) {
+// 			TRACE_7("Adding new local variable : " << GetValueName(&*I) << "  ->  " );
+// 			I->dump();
+
+			printType(Out, I->getType(), false, GetValueName(&*I));
+			Out << ";\n    ";
+
+			if (isa < PHINode > (*I)) {	// Print out PHI node temporaries as well...
+				printType(Out, I->getType(), false, GetValueName(&*I) +	"__PHI_TEMPORARY");
+				Out << ";\n    ";
+			}
+		}
+		// We need a temporary for the BitCast to use so it can pluck a value out
+		// of a union to do the BitCast. This is separate from the need for a
+		// variable to hold the result of the BitCast. 
+		if (isFPIntBitCast(*I)) {
+			ErrorMsg << "NYI : bitcast ????";
+			triggerError(Out);
+			Out << "    llvmBitCastUnion " << GetValueName(&*I)
+			    << "__BITCAST_TEMPORARY;\n";
+		}
+	}
+	Out << "\n";
 	TRACE_5("42Writer > printing basic blocks\n");
 
 	// print the basic blocks
@@ -2226,6 +2280,16 @@ void _42Writer::printFunction(Function & F, bool inlineFct)
 		}
 	}
 
+	if (currentProcess->getPid() == 0 &&  this->insertBug) {
+		Out << "    assert(false);\n";
+	} else {
+		Out << "finished[" << currentProcess->getPid() << "] = true;\n";
+	}
+
+	if (! inlineFct)
+		Out << "}\n";
+       
+	Out << "}\n\n";
 }
 
 void _42Writer::printLoop(Loop * L)
@@ -2249,6 +2313,7 @@ void _42Writer::printLoop(Loop * L)
 
 void _42Writer::printBasicBlock(BasicBlock * BB)
 {
+    if(!Automat.isBasicBlockAlreadyVisited(BB->getNameStr())){
 	TRACE_6("42Writer > printing basic block : " << BB->getNameStr() << "\n");
 
 	// Don't print the label for the basic block if there are no uses, or if
@@ -2263,28 +2328,40 @@ void _42Writer::printBasicBlock(BasicBlock * BB)
 			break;
 		}
 
+	if (NeedsLabel)
+		Out << GetValueName(BB) << ":\n";
+
 	// Output all of the instructions in the basic block...
+
 	for (BasicBlock::iterator II = BB->begin(), E = --BB->end();
 	     II != E; ++II) {
-		if (!isInlinableInst(*II) && !isDirectAlloca(II) && !isSystemCType(II->getType())) {
-		  //if (II->getType() != Type::getVoidTy(BB->getContext()) && !isInlineAsm(*II)) {
+	  	if (!isInlinableInst(*II) && !isDirectAlloca(II)) {
+	  	if (II->getType() !=
+	  		Type::getVoidTy(BB->getContext())
+	  		&& !isInlineAsm(*II)) {
 //        TRACE_4("\n/**** before outputLValue ****/\n");
-		  //	outputLValue(II);
-		  //} else {
-		  //	Out << "    ";
-		  //}
-			pointerToInst = &*II;
-			writeInstComputationInline(*II);
-			//Out << ";\n";
-		} else {
-			TRACE_4("/***** SKIPPING inlinable inst or direct alloca ****/\n");
-		}
+	  		outputLValue(II);
+	  	} else {
+	  		Out << "  ";
+	  	}
+	  	pointerToInst = &*II;
+	  	writeInstComputationInline(*II);
+	  	Out << ";\n";
+	  } else {
+	  	TRACE_4("/***** SKIPPING inlinable inst or direct alloca ****/\n");
+	  }
 	}
+
+	Automat.addBasicBlockVisited(BB->getNameStr());
+	
 
 	TRACE_4("/***** Visit terminator : " << *BB->getTerminator()->getOpcodeName() << "*****/\n");
 	// Don't emit prefix or suffix for the terminator.
 	visit(*BB->getTerminator());
 	TRACE_4("/***** Visited terminator ****/\n");
+	}
+
+    
 
 }
 
@@ -2294,50 +2371,62 @@ void _42Writer::printBasicBlock(BasicBlock * BB)
 //
 void _42Writer::visitReturnInst(ReturnInst & I)
 {
-	TRACE_4("/***** Visiting return inst ****/\n");
+  TRACE_4("/***** Visiting return inst ****/\n");
 
-	// If this is a struct return function, return the temporary struct.
-// 	bool isStructReturn =
-// 		I.getParent()->getParent()->hasStructRetAttr();
+  // If this is a struct return function, return the temporary struct.
+  // 	bool isStructReturn =
+  // 		I.getParent()->getParent()->hasStructRetAttr();
 
-// 	if (isStructReturn) {
-// 		Out << "  return StructReturn;\n";
-// 		return;
-// 	}
-	// Don't output a void return if this is the last basic block in the function
-	if (I.getNumOperands() == 0 &&
-		&*--I.getParent()->getParent()->end() == I.getParent() &&
-		!I.getParent()->size() == 1) {
-		return;
-	}
+  // 	if (isStructReturn) {
+  // 		Out << "  return StructReturn;\n";
+  // 		return;
+  // 	}
+  // Don't output a void return if this is the last basic block in the function
+  if (I.getNumOperands() == 0 &&
+      &*--I.getParent()->getParent()->end() == I.getParent() &&
+      !I.getParent()->size() == 1) {
+    return;
+  }
 
-	TRACE_4("/**** Nb operands : " << I.
-		getNumOperands() << "****/\n");
+  TRACE_4("/**** Nb operands : " << I.
+	  getNumOperands() << "****/\n");
 
-	if (I.getNumOperands() >= 1) {
-//     Out << "  {\n";
-//     Out << "    ";
-//     printType(Out, I.getParent()->getParent()->getReturnType());
-		Out << "   llvm_cbe_mrv_temp = ";
-		for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
-			Out << "    ";
-			writeOperand(I.getOperand(i));
-			if (i != e - 1)
-				Out << ",";
-			Out << "\n";
-		}
-		Out << "    ;\n";
-		Out << "    return llvm_cbe_mrv_temp;\n";
-		return;
-	}
+  if (I.getNumOperands() >= 1) {
+    //     Out << "  {\n";
+    //     Out << "    ";
+    //     printType(Out, I.getParent()->getParent()->getReturnType());
+    Out << "   llvm_cbe_mrv_temp = ";
+    for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
+      Out << "    ";
+      writeOperand(I.getOperand(i));
+      if (i != e - 1)
+	Out << ",";
+      Out << "\n";
+    }
+    Out << "    ;\n";
+    Out << "    return llvm_cbe_mrv_temp;\n";
+    return;
+  }
 	
-	string inputData=Automat.toString_eventsWaited();
-	string outputData=Automat.toString_eventsNotified();
-	string transition="{"+inputData+"}op/{"+outputData+"}";
-	int i=Automat.addState(Final);
-	int j=Automat.get_lastBuildState();
-	Automat.addTransition(j,i,transition);
-	Automat.set_lastBuildState(i);
+  string inputData=Automat.toString_eventsWaited();
+  string outputData=Automat.toString_eventsNotified();
+  string transition;
+  if(Automat.get_ifDetected() && !Automat.get_existWait()){
+    if(Automat.get_existNotify()){    
+      transition="{"+inputData+"}/{"+outputData+"}";
+    }
+    else{
+      Automat.set_stateStatus(Automat.get_lastBuildState(),Final);
+    }
+  }
+  else{
+    transition="{"+inputData+"}op/{"+outputData+"}";
+  }
+  int i=Automat.addState(Final);
+  int j=Automat.get_lastBuildState();
+  Automat.addTransition(j,i,transition);
+  Automat.set_lastBuildState(i);
+  Automat.set_ifDetected(false);
 	
 }
 
@@ -2447,47 +2536,109 @@ void _42Writer::printBranchToBlock(BasicBlock * CurBB,
 //
 void _42Writer::visitBranchInst(BranchInst & I)
 {
-        Out << "IF DETECTE";
-	if (I.isConditional()) {
-		if (isGotoCodeNecessary(I.getParent(), I.getSuccessor(0))) {
-			Out << "  if ";
-			writeOperand(I.getCondition());
-			Out << " \n  then\n    ";
+  TRACE_4("/***** visitBranchInst() *****/\n");
+  if (I.isConditional()) {
+    if (isGotoCodeNecessary(I.getParent(), I.getSuccessor(0))) {
+      /*Out << "  if ";
+	writeOperand(I.getCondition());
+	Out << " \n  then\n    ";
 
-			printPHICopiesForSuccessor(I.getParent(),
-						I.getSuccessor(0), 2);
-			printBranchToBlock(I.getParent(),
-					I.getSuccessor(0), 2);
+	printPHICopiesForSuccessor(I.getParent(),
+	I.getSuccessor(0), 2);
+	printBranchToBlock(I.getParent(),
+	I.getSuccessor(0), 2);
 
-			if (isGotoCodeNecessary
-				(I.getParent(), I.getSuccessor(1))) {
-				Out << "  else\n    ";
-				printPHICopiesForSuccessor(I.getParent(),
-							I.
-							getSuccessor(1),
-							2);
-				printBranchToBlock(I.getParent(),
-						I.getSuccessor(1), 2);
-			}
-		} else {
-			// First goto not necessary, assume second one is...
-			Out << "  if (not ";
-			writeOperand(I.getCondition());
-			Out << "  \n  then\n    ";
+	if (isGotoCodeNecessary
+	(I.getParent(), I.getSuccessor(1))) {
+	Out << "  else\n    ";
+	printPHICopiesForSuccessor(I.getParent(),
+	I.
+	getSuccessor(1),
+	2);
+	printBranchToBlock(I.getParent(),
+	I.getSuccessor(1), 2);
+	}*/
 
-			printPHICopiesForSuccessor(I.getParent(),
-						I.getSuccessor(1), 2);
-			printBranchToBlock(I.getParent(),
-					I.getSuccessor(1), 2);
-		}
+      int lastBuildStateBeforeIfElse=Automat.get_lastBuildState();
 
-		Out << "  endif;\n";
-	} else {
-		printPHICopiesForSuccessor(I.getParent(),
-					I.getSuccessor(0), 0);
-		printBranchToBlock(I.getParent(), I.getSuccessor(0), 0);
-	}
-	Out << "\n";
+      vector<string> eventsWaitedBeforeIfElse  =Automat.get_eventsWaited();
+      vector<string> eventsNotifiedBeforeIfElse=Automat.get_eventsNotified();
+
+      bool existNotifyBeforeIfElse=Automat.get_existNotify();
+      bool existWaitBeforeIfElse  =Automat.get_existWait();
+		  
+      //printPHICopiesForSuccessor(I.getParent(),I.getSuccessor(0), 2);
+      //printBranchToBlock(I.getParent(),I.getSuccessor(0), 2);
+      printBasicBlock((I.getSuccessor(0)));
+      Automat.addBasicBlockVisited(I.getSuccessor(0)->getNameStr());
+    
+
+      int lastBuildStateBranchIf=Automat.get_lastBuildState();
+      int finalCommonStateIfElse=Automat.addState(Intermediate);
+      string inputData =Automat.toString_eventsWaited();
+      string outputData=Automat.toString_eventsNotified();
+      string transition="{"+inputData+"}op/{"+outputData+"}";
+      Automat.addTransition(lastBuildStateBranchIf,finalCommonStateIfElse,transition);
+
+      Automat.clearEventsWaited();
+      Automat.clearEventsNotified();
+
+      Automat.set_eventsWaited(eventsWaitedBeforeIfElse);
+      Automat.set_eventsNotified(eventsNotifiedBeforeIfElse);
+
+
+      if (isGotoCodeNecessary(I.getParent(), I.getSuccessor(1))) {
+
+	Automat.set_lastBuildState(lastBuildStateBeforeIfElse);
+	Automat.set_existNotify(existNotifyBeforeIfElse);
+	Automat.set_existWait(existWaitBeforeIfElse);
+
+	//printPHICopiesForSuccessor(I.getParent(),I.getSuccessor(1),2);
+	//printBranchToBlock(I.getParent(),I.getSuccessor(1), 2);
+	printBasicBlock((I.getSuccessor(1)));
+	Automat.addBasicBlockVisited(I.getSuccessor(1)->getNameStr());
+
+
+
+	int lastBuildStateBranchElse=Automat.get_lastBuildState();
+	string inputData =Automat.toString_eventsWaited();
+	string outputData=Automat.toString_eventsNotified();
+	string transition="{"+inputData+"}op/{"+outputData+"}";
+	Automat.addTransition(lastBuildStateBranchElse,finalCommonStateIfElse,transition);
+      }
+      else{
+	string inputData =Automat.toString_eventsWaited();
+	string outputData=Automat.toString_eventsNotified();
+	string transition="{"+inputData+"}op/{"+outputData+"}";
+	Automat.addTransition(lastBuildStateBeforeIfElse,finalCommonStateIfElse,transition);
+      }
+
+      Automat.set_lastBuildState(finalCommonStateIfElse);
+      Automat.set_existNotify(false);
+      Automat.set_existWait(false);
+      Automat.set_ifDetected(true);
+      Automat.clearEventsWaited();
+      Automat.clearEventsNotified();
+
+    } else {
+      // First goto not necessary, assume second one is...
+      Out << "  if (not ";
+      writeOperand(I.getCondition());
+      Out << "  \n  then\n    ";
+
+      printPHICopiesForSuccessor(I.getParent(),
+				 I.getSuccessor(1), 2);
+      printBranchToBlock(I.getParent(),
+			 I.getSuccessor(1), 2);
+    }
+
+    Out << "  endif;\n";
+  } else {
+    /*	printPHICopiesForSuccessor(I.getParent(),
+	I.getSuccessor(0), 0);
+	printBranchToBlock(I.getParent(), I.getSuccessor(0), 0);*/
+  }
+  Out << "\n";
 }
 
 // PHI nodes get copied into temporary values at the end of predecessor basic
@@ -3086,41 +3237,29 @@ _42Writer::printWaitEventPrimitive()
 }
 
 
-
 void
-_42Writer::printPrimitives()
+_42Writer::printHeader()
 {
-	Out << "\n\n/*---- Encoding ----*/\n";
-	printCodingGlobals();
-	printWaitTimePrimitive();
-	printNotifyPrimitive();
-	printWaitEventPrimitive();
+  vector < Process * >::iterator processIt = this->elab->getProcesses()->begin();
+  Process *proc = *processIt;
+  const std::string modName = proc->getModule()->getUniqueName();
+
+  TRACE_2("42Writer > Emitting Header Section \n");
+  Out << "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
+  Out << "<!DOCTYPE contract PUBLIC \"" << modName << "-CT\" \"contract.dtd\">\n";
+  Out << "<contract interface=\"" << modName << "-ITF\" name=\"" << modName << "-CT\">\n";
 }
 
-void
-_42Writer::printGlobalVariables(Mangler* mang)
-{
-	vector < GlobalValue * >::iterator globalIt = this->elab->getGlobalVariables()->begin();
-	vector < GlobalValue * >::iterator globalEnd = this->elab->getGlobalVariables()->end();
-
-	TRACE_2("42Writer > Emitting Global variables\n");
-
-	Out << "/*---- Global variables ----*/\n";
-	for (; globalIt < globalEnd; ++globalIt) {
-		GlobalValue* gv = *globalIt;
-		printType(Out, gv->getType(), false, mang->getMangledName(gv));
-		Out << ";\n";
-	}
-}
 
 void
-_42Writer::printProcesses()
+_42Writer::buildContract()
 {
+
+        TRACE_2("42Writer > Building Contract \n");
+
 	vector < Process * >::iterator processIt = this->elab->getProcesses()->begin();
 	vector < Process * >::iterator endIt = this->elab->getProcesses()->end();
 
-	TRACE_2("42Writer > Emitting Processes\n");
-	Out << "\n\n/*---- Threads ----*/\n";
 	for (; processIt < endIt; ++processIt) {
 
 		Process *proc = *processIt;
@@ -3149,71 +3288,22 @@ _42Writer::printProcesses()
 			// Output all floating point constants that cannot be printed accurately.
 			printFloatingPointConstants(*F);
 
-			printFunction(*F, false);
-		}
-	}
-}
-
-
-void
-_42Writer::printHeader()
-{
-	vector < Process * >::iterator processIt = this->elab->getProcesses()->begin();
-	Process *proc = *processIt;
-	const std::string modName = proc->getModule()->getUniqueName();
-
-	TRACE_2("42Writer > Emitting Header Section \n");
-	Out << "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
-	Out << "<!DOCTYPE contract PUBLIC \"" << modName << "-CT\" \"contract.dtd\">\n";
-	Out << "<contract interface=\"" << modName << "-ITF\" name=\"" << modName << "-CT\">\n";
-}
-
-void
-_42Writer::buildContract()
-{
-  TRACE_2("42Writer > Building Contract \n");
-
-	vector < Process * >::iterator processIt = this->elab->getProcesses()->begin();
-	vector < Process * >::iterator endIt = this->elab->getProcesses()->end();
-
-	for (; processIt < endIt; ++processIt) {
-
-		Process *proc = *processIt;
-		std::vector < Function * >*usedFcts = proc->getUsedFunctions();
-		currentProcess = proc;
-		this->scjit->setCurrentProcess(currentProcess);
-		TRACE_3("42Writer > printing process : " << proc->getName() << "\n");
-		TRACE_3("Info : nb of used functions : " << usedFcts->size() << "\n");
-
-		for (std::vector < Function * >::iterator itF = usedFcts->begin();
-		     itF < usedFcts->end(); ++itF) {
-
-			Function *F = *itF;
-			TRACE_4("42Writer > printing function : " << F->getNameStr() << "\n");
-
-			// Do not codegen any 'available_externally' functions at all, they have
-			// definitions outside the translation unit.
-			if (F->hasAvailableExternallyLinkage())
-				continue;
-
-			LI = &getAnalysis < LoopInfo > (*F);
-
 			int i=Automat.addState(Initial);
 			Automat.set_lastBuildState(i);
-			
+
 			printFunction(*F, false);
 		}
 	}
 }
-
 
 void
 _42Writer::drawContract(formatted_raw_ostream &o)
 {
-	TRACE_2("42Writer > Drawing Contract \n");
-	Out << "---------------- Contract in a drawing ------------------\n";
-        Automat.printDrawContract(o);
+  TRACE_2("42Writer > Drawing Contract \n");
+  Out << "---------------- Contract in a drawing ------------------\n";
+  Automat.printDrawContract(o);
 }
+
 
 std::string
 _42Writer::getEventName(Process* proc, Event* event)
@@ -3232,137 +3322,147 @@ _42Writer::getEventName(Process* proc, Event* event)
 void
 _42Writer::visitSCConstruct(SCConstruct * scc)
 {
-	TimeConstruct* tc;
-	NotifyConstruct* notifyC;
-	EventConstruct* eventC;	
-	ReadConstruct* rc;
-	WriteConstruct* wc;
-	Event* event;
-	Port* port;
-	vector<Channel*>* channels;
-	vector<Channel*>::iterator channelsIt;
-	SimpleChannel* sc;
+  TimeConstruct* tc;
+  NotifyConstruct* notifyC;
+  EventConstruct* eventC;	
+  ReadConstruct* rc;
+  WriteConstruct* wc;
+  Event* event;
+  Port* port;
+  vector<Channel*>* channels;
+  vector<Channel*>::iterator channelsIt;
+  SimpleChannel* sc;
 
-	TRACE_4("/***** visitSCConstruct() *****/\n");
-	switch(scc->getID()) {
-	case WAITEVENTCONSTRUCT:
-		eventC = (EventConstruct*) scc;
-		event = eventC->getWaitedEvent();
-		if (eventC->isStaticallyFound()) {
-		  if(Automat.get_existNotify()){
-		    string inputData=Automat.toString_eventsWaited();
-		    string outputData=Automat.toString_eventsNotified();
-		    string transition="{"+inputData+"}op/{"+outputData+"}";
-		    int i=Automat.addState(Intermediate);
-		    int j=Automat.get_lastBuildState();
-		    Automat.addTransition(j,i,transition);
-		    Automat.set_lastBuildState(i);
-		    Automat.clearEventsWaited();
-		    Automat.clearEventsNotified();
-		    Automat.pushEventWaited(getEventName(currentProcess,event));
-		    Automat.set_existNotify(false);
-		    Automat.set_existWait(true);
-		  }
-		  else{
-		    Automat.pushEventWaited(getEventName(currentProcess,event));
-		    Automat.set_existWait(true);
-		  }
-		  //Out << "wait_" << getEventName(currentProcess, event) << "();\n";
-		} else {
-			Out << "/* TODO: wait_e() on event not determined statically  */";
-                        /* todo */
-		}
-		break;
-	case NOTIFYCONSTRUCT:
-		notifyC = (NotifyConstruct*) scc;
-		if (notifyC->isStaticallyFound()) {
-			event = notifyC->getNotifiedEvent();
-			Automat.pushEventNotified(getEventName(NULL,event));
-			Automat.set_existNotify(true);
-			//Automat.addTransition(0,Automat.addState(false),"{}op/" + getEventName(NULL,event) + "{}");
-			//Out << "    notify_" << getEventName(NULL, event) << "(" << currentProcess->getPid() << ");\n";
-		} else {
-			Out << "/* TODO: notify() event not determined statically */";
-			/* todo */
-		}
-		break;
-	case TIMECONSTRUCT:
-		tc = (TimeConstruct*) scc;
-		if (tc->isStaticallyFound()) {
-			Out << "wait(" << currentProcess->getPid() << ", ";
-			Out << intToString(tc->getTime());
-			Out << ")";
-		} else {
-			Out << "/* Todo: wait() time not determined statically */";
-			/* todo */
-		}
-		break;
-	case READCONSTRUCT:
-		rc = (ReadConstruct*) scc;
-		port = rc->getPort();
-		
-		if (port->getChannelID() == SIMPLE_CHANNEL) {
-			if (port->getChannels()->size() != 1 ) {
-				ERROR("Reading in a port binded to more than one channel is not possible\n");
-			} else {
-				SimpleChannel* sc = (SimpleChannel*) port->getChannel();
-				Out << "/* read() on simpleport */\n";
-				sc->getGlobalVariableName();
-			}
-		} else {
-			Out << "/* TODO : read() on a non simple channel */";
-			/* todo */
-		}
-		break;
-	case WRITECONSTRUCT:
-		wc = (WriteConstruct*) scc;		
-		port = wc->getPort();
-		channels = port->getChannels();
-		
-		switch(port->getChannelID()) {
-		case SIMPLE_CHANNEL:
-			for (channelsIt = channels->begin() ; channelsIt != channels->end() ; ++channelsIt) {
-				sc = (SimpleChannel*) *channelsIt;
-//			if (port->getGlobalVariableType()->getTypeID() != Type::PointerTyID) {
-				Out << "/* write() on simpleport */\n";
-				Out << sc->getGlobalVariableName() << " = " << wc->getValue();
- 				if (channelsIt != channels->end())
- 					Out << ";\n";
-//			}
-			break;
-		case FORWARDING_CHANNEL:
-			Out << "/* TODO : write() on a forwarding channel */";
-			/* todo */
-			for (channelsIt = channels->begin() ; channelsIt != channels->end() ; ++channelsIt) {
-				/* NYI */
-			}
-			break;
-		case FIFO_CHANNEL:
-			Out << "/* TODO : write() on a FIFO */";
-			/* todo */
-			for (channelsIt = channels->begin() ; channelsIt != channels->end() ; ++channelsIt) {
-				/* NYI */
-			}
-			break;
-		case CLOCK_CHANNEL:
-			/* IMPOSSIBLE case */
-			ERROR("How can we write on a CLOCK channel ??\n");
-			break;
-		default:
-			Out << "/* write() on port ??? */\n";
-			break;
- 		}
-
-// 		if (wc->isStaticallyFound()) {
-// 			Out << wc->getGlobalVariable() << " = " << wc->getValue() << "\n";
-// 		} else {
-			/* todo */
- 		}
-		break;
-	default:
-		ErrorMsg << "Construction not managed in Simple backend: " << scc->getID();
-		triggerError(Out);
+  TRACE_4("/***** visitSCConstruct() *****/\n");
+  switch(scc->getID()) {
+  case WAITEVENTCONSTRUCT:
+    eventC = (EventConstruct*) scc;
+    event = eventC->getWaitedEvent();
+    if (eventC->isStaticallyFound()) {
+      if(Automat.get_existNotify() || Automat.get_existWait()){
+	string inputData=Automat.toString_eventsWaited();
+	string outputData=Automat.toString_eventsNotified();
+	string transition;
+	if(Automat.get_ifDetected()){
+	  transition="{"+inputData+"}/{"+outputData+"}";
 	}
+	else{
+	  transition="{"+inputData+"}op/{"+outputData+"}";
+	}
+	int i=Automat.addState(Intermediate);
+	int j=Automat.get_lastBuildState();
+	Automat.addTransition(j,i,transition);
+	Automat.set_lastBuildState(i);
+	Automat.clearEventsWaited();
+	Automat.clearEventsNotified();
+	Automat.pushEventWaited(getEventName(currentProcess,event));
+	Automat.set_existNotify(false);
+	Automat.set_existWait(true);
+	Automat.set_ifDetected(false);
+
+      }
+      else{
+
+	Automat.pushEventWaited(getEventName(currentProcess,event));
+	Automat.set_existWait(true);
+
+      }
+      //Out << "wait_" << getEventName(currentProcess, event) << "();\n";
+    } else {
+      Out << "/* TODO: wait_e() on event not determined statically  */";
+      /* todo */
+    }
+    break;
+  case NOTIFYCONSTRUCT:
+    notifyC = (NotifyConstruct*) scc;
+    if (notifyC->isStaticallyFound()) {
+      event = notifyC->getNotifiedEvent();
+      Automat.pushEventNotified(getEventName(NULL,event));
+      Automat.set_existNotify(true);
+      //Automat.addTransition(0,Automat.addState(false),"{}op/" + getEventName(NULL,event) + "{}");
+      //Out << "    notify_" << getEventName(NULL, event) << "(" << currentProcess->getPid() << ");\n";
+    } else {
+      Out << "/* TODO: notify() event not determined statically */";
+      /* todo */
+    }
+    break;
+  case TIMECONSTRUCT:
+    tc = (TimeConstruct*) scc;
+    if (tc->isStaticallyFound()) {
+      Out << "wait(" << currentProcess->getPid() << ", ";
+      Out << intToString(tc->getTime());
+      Out << ")";
+    } else {
+      Out << "/* Todo: wait() time not determined statically */";
+      /* todo */
+    }
+    break;
+  case READCONSTRUCT:
+    rc = (ReadConstruct*) scc;
+    port = rc->getPort();
+		
+    if (port->getChannelID() == SIMPLE_CHANNEL) {
+      if (port->getChannels()->size() != 1 ) {
+	ERROR("Reading in a port binded to more than one channel is not possible\n");
+      } else {
+	SimpleChannel* sc = (SimpleChannel*) port->getChannel();
+	Out << "/* read() on simpleport */\n";
+	sc->getGlobalVariableName();
+      }
+    } else {
+      Out << "/* TODO : read() on a non simple channel */";
+      /* todo */
+    }
+    break;
+  case WRITECONSTRUCT:
+    wc = (WriteConstruct*) scc;		
+    port = wc->getPort();
+    channels = port->getChannels();
+		
+    switch(port->getChannelID()) {
+    case SIMPLE_CHANNEL:
+      for (channelsIt = channels->begin() ; channelsIt != channels->end() ; ++channelsIt) {
+	sc = (SimpleChannel*) *channelsIt;
+	//			if (port->getGlobalVariableType()->getTypeID() != Type::PointerTyID) {
+	Out << "/* write() on simpleport */\n";
+	Out << sc->getGlobalVariableName() << " = " << wc->getValue();
+	if (channelsIt != channels->end())
+	  Out << ";\n";
+	//			}
+	break;
+      case FORWARDING_CHANNEL:
+	Out << "/* TODO : write() on a forwarding channel */";
+	/* todo */
+	for (channelsIt = channels->begin() ; channelsIt != channels->end() ; ++channelsIt) {
+	  /* NYI */
+	}
+	break;
+      case FIFO_CHANNEL:
+	Out << "/* TODO : write() on a FIFO */";
+	/* todo */
+	for (channelsIt = channels->begin() ; channelsIt != channels->end() ; ++channelsIt) {
+	  /* NYI */
+	}
+	break;
+      case CLOCK_CHANNEL:
+	/* IMPOSSIBLE case */
+	ERROR("How can we write on a CLOCK channel ??\n");
+	break;
+      default:
+	Out << "/* write() on port ??? */\n";
+	break;
+      }
+
+      // 		if (wc->isStaticallyFound()) {
+      // 			Out << wc->getGlobalVariable() << " = " << wc->getValue() << "\n";
+      // 		} else {
+      /* todo */
+    }
+    break;
+  default:
+    ErrorMsg << "Construction not managed in Simple backend: " << scc->getID();
+    triggerError(Out);
+  }
 }
 
 void _42Writer::visitCallInst(CallInst & I)
@@ -4018,51 +4118,52 @@ LLVMInitialize42BackendTarget()
  ***************** Main functions ******************************************
  **************************************************************************/
 
+
 bool _42Writer::runOnModule(Module & M)
 {
-	TD = new TargetData(&M);
-	IL = new IntrinsicLowering(*TD);
-	IL->AddPrototypes(M);
+  TD = new TargetData(&M);
+  IL = new IntrinsicLowering(*TD);
+  IL->AddPrototypes(M);
 
-	// Ensure that all structure types have names...
-	Mang = new Mangler(M);
-	Mang->markCharUnacceptable('.');
-
-
-	/* Print header outputfile(xml file) */
-	printHeader();
-
-	/* Write contract */
-	buildContract();
-
-	/* Draw contract */
-	drawContract(Out);
+  // Ensure that all structure types have names...
+  Mang = new Mangler(M);
+  Mang->markCharUnacceptable('.');
 
 
+  /* Print header outputfile(xml file) */
+  printHeader();
+
+  /* Write contract */
+  buildContract();
+
+  /* Draw contract */
+  drawContract(Out);
 
 
-	/* Fill types table */
-	/* printModuleTypes(M.getTypeSymbolTable());*/
+
+
+  /* Fill types table */
+  /* printModuleTypes(M.getTypeSymbolTable());*/
 	
-	/* Print Global variables from the program */
-	/* printGlobalVariables(Mang);*/
+  /* Print Global variables from the program */
+  /* printGlobalVariables(Mang);*/
 	
-	/* Print all stuff relative to encoding */
-	/* printPrimitives();*/
+  /* Print all stuff relative to encoding */
+  /* printPrimitives();*/
 
-	/* Print all processes and functions */
-	/* printProcesses();*/
+  /* Print all processes and functions */
+  /* printProcesses();*/
 
 
-	// Free memory...
-	delete IL;
-	delete TD;
-	delete Mang;
-	FPConstantMap.clear();
-	TypeNames.clear();
-	ByValParams.clear();
-	intrinsicPrototypesAlreadyGenerated.clear();
-	return false;
+  // Free memory...
+  delete IL;
+  delete TD;
+  delete Mang;
+  FPConstantMap.clear();
+  TypeNames.clear();
+  ByValParams.clear();
+  intrinsicPrototypesAlreadyGenerated.clear();
+  return false;
 
 }
 
@@ -4078,3 +4179,4 @@ const char *_42Writer::getPassName() const
 }
 
 char _42Writer::ID = 0;
+
