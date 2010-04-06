@@ -52,6 +52,7 @@ H_FILES = \
 	sc_object.h \
 	sc_process.h \
 	sc_process_handle.h \
+	sc_process_table.h \
 	sc_reset.h \
 	sc_runnable.h \
 	sc_sensitive.h \
@@ -61,21 +62,21 @@ H_FILES = \
 	sc_time.h \
 	sc_ver.h \
 	sc_wait.h \
-	sc_wait_cthread.h 
+	sc_module_registry.h \
+	sc_name_gen.h \
+	sc_thread_process.h \
+	sc_cthread_process.h \
+	sc_method_process.h \
+	sc_wait_cthread.h
 
 NO_H_FILES = \
 	sc_cor_fiber.h \
 	sc_cor_pthread.h \
 	sc_cor_qt.h \
-	sc_cthread_process.h \
 	sc_macros_int.h \
-	sc_method_process.h \
-	sc_module_registry.h \
-	sc_name_gen.h \
 	sc_object_manager.h \
 	sc_runnable_int.h \
 	sc_simcontext_int.h
-	sc_thread_process.h 
 
 noinst_HEADERS = $(H_FILES)
 
@@ -83,7 +84,6 @@ CXX_FILES = \
 	sc_attribute.cpp \
 	sc_cor_fiber.cpp \
 	sc_cor_pthread.cpp \
-	sc_cor_qt.cpp \
 	sc_cthread_process.cpp \
 	sc_event.cpp \
 	sc_join.cpp \

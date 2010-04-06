@@ -13,7 +13,6 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Assembly/Writer.h"
-#include "llvm/Support/Streams.h"
 
 
 #include "sysc/kernel/sc_process_table.h"
@@ -44,7 +43,7 @@ SCElab::~SCElab()
 	this->eventsMap.clear();
 	this->portsMap.clear();
 	this->ir2scModules.clear();
-	
+
 	FUtils::deleteVector < IRModule * >(&this->modules);
 	FUtils::deleteVector < Process * >(&this->processes);
 	FUtils::deleteVector < Event * >(&this->events);
@@ -101,13 +100,13 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 	std::map < sc_core::sc_port_base *, Port * >::iterator it;
 
 	if ((it = this->portsMap.find(port)) == this->portsMap.end()) {
-		
-		sprintf(buffer, "%x", (int) port);
-		std::string portName = mod->getUniqueName() + "_0x" + buffer;
-		
+
+		sprintf(buffer, "%lx", (unsigned long) port);
+		string portName = mod->getUniqueName() + "_0x" + buffer;
+
 		sc_core::sc_interface* itf = port->get_interface();
 //	sc_core::sc_port_b<bool>* pb = (sc_core::sc_port_b<bool>*) port;
-		
+
 //	const char* typeName = typeid(*(pb->m_interface)).name();
 		const char* typeName = typeid(*itf).name();
 //		N7sc_core5sc_inIbEE
@@ -116,19 +115,19 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 		std::string variableTypeName("");
 		Channel* ch;
 		std::map < sc_core::sc_interface*, Channel * >::iterator itM;
-		
+
 		TRACE_4("m_interface of port is: " << itfTypeName << "\n");
 		sprintf(temp, "%d", (int) itfTypeName.size());
 		TRACE_4("Found : " << temp << "\n");
-		
+
 		match = "N7sc_core9sc_signalI";
 		if (itfTypeName.find(match) == 0) {
-			
+
 			size_t found = itfTypeName.find_first_of("E");
 			sprintf(temp, "%d", (int) found);
 			TRACE_4("Found : " << temp << "\n");
 			sprintf(temp, "%d", (int) match.size());
-			TRACE_4("match size : " << temp << "\n");		
+			TRACE_4("match size : " << temp << "\n");
 			size_t typeLength = found - match.size();
 			sprintf(temp, "%d", (int) typeLength);
 			TRACE_4("typeLength : " << temp << "\n");
@@ -149,7 +148,7 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 					TRACE_4("Unsigned integer type found !\n");
 			} else {
 				itfType = this->llvmMod->getTypeSymbolTable().lookup(itfTypeName);
-				
+
 				if (itfType) {
 					TRACE_4("Type found !\n");
 				} else {
@@ -164,7 +163,7 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 				ch = new SimpleChannel((Type*) itfType, variableTypeName);
 				this->channels.push_back(ch);
 				this->channelsMap.insert(this->channelsMap.end(), pair < sc_core::sc_interface *, Channel * >(itf, ch));
-				
+
 				TRACE_4("New channel !\n");
 			} else {
 				ch = itM->second;
@@ -173,7 +172,7 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 			TRACE_2("Add (sc_port_base) " << port << " -> (SIMPLE_PORT) " << theNewPort << " with channel " << ch << "\n");
 			theNewPort->addChannel(ch);
 		}
-		match = "N7sc_core8sc_clockE";		
+		match = "N7sc_core8sc_clockE";
 		if (itfTypeName.find(match) == 0) {
 			theNewPort = new Port(mod, portName);
 			if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
@@ -189,7 +188,7 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 		mod->addPort(theNewPort);
 		this->ports.push_back(theNewPort);
 		this->portsMap.insert(this->portsMap.end(), pair < sc_core::sc_port_base *, Port * >(port, theNewPort));
-		
+
 	}  else {
 		theNewPort = it->second;
 	}
@@ -204,8 +203,8 @@ Event *SCElab::addEvent(Process * process, sc_core::sc_event * event)
 	IRModule *mod = process->getModule();
 	if ((it = this->eventsMap.find(event)) == this->eventsMap.end()) {
 		char buffer[10];
-		sprintf(buffer, "%x", (int) event);
-		std::string eventName = mod->getUniqueName() + "_0x" + buffer;
+		sprintf(buffer, "%lx", (unsigned long) event);
+		string eventName = mod->getUniqueName() + "_0x" + buffer;
 		e = new Event(eventName);
 		this->events.push_back(e);
 		this->eventsMap[event] = e;
@@ -268,7 +267,7 @@ SCElab::getProcesses()
 {
 	return &this->processes;
 }
- 
+
 std::vector < Event * >*
 SCElab::getEvents()
 {
