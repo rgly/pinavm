@@ -5,7 +5,7 @@
 // output ports declared immediately after the module declarations
 // This will add two bits together(a,b), with a carry in(cin) and
 // output the sum(sum) and a carry out(cout).
-#define PINAPA
+//#define PINAPA
 
 SC_MODULE (BIT_ADDER)
 {

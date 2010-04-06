@@ -4,17 +4,17 @@
 
 SC_MODULE(Memory) {
 public:
-	enum Function {
+	typedef enum Function_e {
 		FUNC_NONE,
 		FUNC_READ,
 		FUNC_WRITE
-	};
-	enum RETSignal {
+	} Function;
+	typedef enum RETSignal_e {
 		RSIG_NONE,
 		RSIG_READ_FIN,
 		RSIG_WRITE_FIN,
 		RSIG_ERROR
-	};
+	} RETSignal;
 	sc_in<bool> Port_CLK;
 	sc_in<Function> Port_Func;
 	sc_in<int> Port_Addr;
@@ -22,7 +22,7 @@ public:
 	sc_out<RETSignal> Port_DoneSig;
 	SC_CTOR(Memory) {
 		SC_METHOD(execute);
-//		sensitive_neg(Port_CLK);
+		sensitive << Port_CLK;
 		m_clkCnt = 0;
 		m_curAddr = 0;
 		m_curData = 0;
@@ -104,10 +104,10 @@ public:
 	sc_inout<int> Port_MemData;
 	SC_CTOR(CPU) {
 		SC_METHOD(execCycle);
-		sensitive_pos(Port_CLK);
+		sensitive << Port_CLK;
 		dont_initialize();
 		SC_METHOD(memDone);
-		sensitive(Port_MemDone);
+		sensitive << Port_MemDone;
 		dont_initialize();
 		m_waitMem = false;
 	}

@@ -1,7 +1,7 @@
 #include <systemc.h>
 
 #define NB_COMPONENTS 4
-#define KASCPAR
+//#define KASCPAR
 
 SC_MODULE(DEMULTIPLEXER)
 {

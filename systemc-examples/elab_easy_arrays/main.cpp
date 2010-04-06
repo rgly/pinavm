@@ -3,7 +3,7 @@
 //using namespace sc_core;
 
 //#define NS * 1e-9
-#define KASCPAR
+//#define KASCPAR
 
 SC_MODULE(Writer)
 {

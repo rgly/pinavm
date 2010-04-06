@@ -107,7 +107,8 @@ public:
 	SC_CTOR(mon)
 	{
 		SC_THREAD(StimGen);
-		sensitive << Clk.pos() << A << B;
+//		sensitive << Clk.pos() << A << B;
+		sensitive << A << B;
 	}
 };
 
@@ -152,7 +153,7 @@ int sc_main(int argc, char* argv[])
 	Monitor1.F(FSig);
 	Monitor1.Clk(TestClk);
 
-	sc_start(-1);  // run forever
+	sc_start();  // run forever
 
 	return 0;
 }
