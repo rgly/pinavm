@@ -95,7 +95,8 @@ FunctionBuilder::isBeforeTargetInst(Value* v)
 	return find(this->predecessors->begin(), this->predecessors->end(), v) != this->predecessors->end();
 }
 
-void FunctionBuilder::markUsefulInstructions()
+int
+FunctionBuilder::markUsefulInstructions()
 {
 	Value *arg;
 	
@@ -129,14 +130,18 @@ void FunctionBuilder::markUsefulInstructions()
 		User::op_iterator opit = inst->op_begin(), opend = inst->op_end();
 		for (; opit != opend; ++opit) {
 			arg = *opit;
-			TRACE_6("Arg : " << arg << ")\n");
+			TRACE_6("Arg : " << arg << "\n");
 			arg->dump();
 
 			/*** Mark the instruction and the associated basicblock as useful ***/
-			mark(arg);
+			if (isBeforeTargetInst(arg))
+				mark(arg);
+			else if (isa<PHINode>(arg))
+				return 1;
 		}
 		TRACE_5("... marking done for inst : " << inst << "\n");
 	}
+	return 0;
 }
 
 void FunctionBuilder::cloneBlocks()
@@ -188,7 +193,9 @@ Function *FunctionBuilder::buildFct()
 	/*********** Determine which instructions are useful ***********/
 	TRACE_5("Marking useful basic blocks and instructions\n");
 	mark(res);
-	markUsefulInstructions();
+	
+	if (markUsefulInstructions())
+		return NULL;
 	
 	/**************** Clone blocks *******************/
 	TRACE_5("Cloning basic blocks\n");

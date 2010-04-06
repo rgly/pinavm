@@ -47,6 +47,8 @@ Frontend *launch_frontend(std::string InputFilename, bool inlineFcts)
 
 	// Add an appropriate TargetData instance for this module...
 	TargetData *td = new TargetData(M);
+// 	Passes.add(createLoopSimplifyPass());
+// 	Passes.add(createLoopUnrollPass());
 	Passes.add(td);
 
 	// Check that the module is well formed on completion of optimization

@@ -74,7 +74,7 @@ void IRModule::printElab(int sep, string prefix)
 	std::vector < Process * >::iterator itProcesses;
 	std::vector < Port * >::iterator itPorts;
 	this->printPrefix(sep, prefix);
-	TRACE("Module : " << this << "\n");
+	TRACE("Module : " << this->name << "\n");
 	for (itPorts = this->ports.begin(); itPorts < this->ports.end(); ++itPorts) {
 		Port* port = *itPorts;
 		port->printElab(sep + 3, prefix);

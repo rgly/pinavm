@@ -68,9 +68,9 @@ struct SCJit {
 	Process *getCurrentProcess();
 	void fillArgsType(Function * f, std::vector < const Type * >*argsType);
 	void *jitAddr(Function * f, Instruction* inst, Value * arg);
-	int jitInt(Function * f, Instruction* inst, Value * arg);
-	double jitDouble(Function * f, Instruction* inst, Value * arg);
-	bool jitBool(Function * f, Instruction* inst, Value * arg);
+	int jitInt(Function * f, Instruction* inst, Value * arg, bool* errb);
+	double jitDouble(Function * f, Instruction* inst, Value * arg, bool* errb);
+	bool jitBool(Function * f, Instruction* inst, Value * arg, bool* errb);
 	Function *buildFct(Function * f, FunctionType * FT, Instruction* inst, Value * arg);
 	Module *getModule();
 

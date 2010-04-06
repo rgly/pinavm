@@ -54,7 +54,7 @@ SCElab::~SCElab()
 IRModule *SCElab::addModule(sc_core::sc_module * mod)
 {
 	const char *moduleType = typeid(*mod).name();
-	string moduleName = (string) mod->name();
+	std::string moduleName = (std::string) mod->name();
 	IRModule *m = new IRModule(moduleType, moduleName);
 	this->modules.push_back(m);
 	this->modulesMap.insert(this->modulesMap.end(),
@@ -69,11 +69,11 @@ IRModule *SCElab::addModule(sc_core::sc_module * mod)
 Process *SCElab::addProcess(IRModule * mod,
 			    sc_core::sc_process_b * process)
 {
-	string fctName(process->func_process);
-	string modType = mod->getModuleType();
-	string moduleName = mod->getUniqueName();
-	string mainFctName = "_ZN" + modType + utostr(fctName.size()) + fctName + "Ev";
-	string processName = moduleName + "_" + mainFctName;
+	std::string fctName(process->func_process);
+	std::string modType = mod->getModuleType();
+	std::string moduleName = mod->getUniqueName();
+	std::string mainFctName = "_ZN" + modType + utostr(fctName.size()) + fctName + "Ev";
+	std::string processName = moduleName + "_" + mainFctName;
 	Function *mainFct = this->llvmMod->getFunction(mainFctName);
 
 //   Function* fct;
@@ -93,7 +93,7 @@ Process *SCElab::addProcess(IRModule * mod,
 
 Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 {
-	string match;
+	std::string match;
 	char buffer[10];
 	char temp[10];
 
@@ -103,7 +103,7 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 	if ((it = this->portsMap.find(port)) == this->portsMap.end()) {
 		
 		sprintf(buffer, "%x", (int) port);
-		string portName = mod->getUniqueName() + "_0x" + buffer;
+		std::string portName = mod->getUniqueName() + "_0x" + buffer;
 		
 		sc_core::sc_interface* itf = port->get_interface();
 //	sc_core::sc_port_b<bool>* pb = (sc_core::sc_port_b<bool>*) port;
@@ -112,8 +112,8 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 		const char* typeName = typeid(*itf).name();
 //		N7sc_core5sc_inIbEE
 
-		string itfTypeName(typeName);
-		string variableTypeName("");
+		std::string itfTypeName(typeName);
+		std::string variableTypeName("");
 		Channel* ch;
 		std::map < sc_core::sc_interface*, Channel * >::iterator itM;
 		
@@ -153,7 +153,8 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 				if (itfType) {
 					TRACE_4("Type found !\n");
 				} else {
-					ERROR("SCElab.addPort() -> interface type not found " << variableTypeName << "\n");
+					itfType = Type::getInt32Ty(getGlobalContext());
+					TRACE_4("SCElab.addPort() -> interface type not found -> consider enum (32 bits integer) " << variableTypeName << "\n");
 				}
 			}
 			TRACE_4("typeName of variable accessed through port : " << variableTypeName << "\n");
@@ -204,7 +205,7 @@ Event *SCElab::addEvent(Process * process, sc_core::sc_event * event)
 	if ((it = this->eventsMap.find(event)) == this->eventsMap.end()) {
 		char buffer[10];
 		sprintf(buffer, "%x", (int) event);
-		string eventName = mod->getUniqueName() + "_0x" + buffer;
+		std::string eventName = mod->getUniqueName() + "_0x" + buffer;
 		e = new Event(eventName);
 		this->events.push_back(e);
 		this->eventsMap[event] = e;
@@ -239,7 +240,7 @@ Event *SCElab::getEvent(void *eventAddr)
 	return this->eventsMap.find((sc_core::sc_event *) eventAddr)->second;
 }
 
-void SCElab::printElab(int sep, string prefix)
+void SCElab::printElab(int sep, std::string prefix)
 {
 	std::vector < IRModule * >::iterator itM;
 	this->printPrefix(sep, prefix);
@@ -302,17 +303,32 @@ std::vector < GlobalValue * >* SCElab::getGlobalVariables()
 	return & this->globalVariables;
 }
 
+void
+SCElab::addProcessAndEvents(sc_core::sc_process_b *theProcess, sc_core::sc_module * mod)
+{
+	IRModule *m = this->getIRModule(mod);
+	Process *process = this->addProcess(m, theProcess);
+	
+	std::vector < const sc_core::sc_event * >eventsVector = theProcess->m_static_events;
+	vector < const sc_core::sc_event * >::iterator it;
+	for (it = eventsVector.begin(); it < eventsVector.end(); it++) {
+		sc_core::sc_event * ev = (sc_core::sc_event *) * it;
+		this->addEvent(process, ev);
+	}
+}
+
 
 void
 SCElab::complete()
 {
 	sc_core::sc_thread_handle thread_p;
+	sc_core::sc_method_handle method_p;
 
 	// MM: why do this here? stopping the execution of the
 	// elaboration after calling end_of_elaboration seems a much
 	// better idea than calling it ourselves.
 	// To call the "end_of_elaboration()" methods.
-	sc_core::sc_get_curr_simcontext()->initialize(true);
+//	sc_core::sc_get_curr_simcontext()->initialize(true);
 
 	//------- Get modules and ports --------
 	vector < sc_core::sc_module * >modules =
@@ -334,14 +350,12 @@ SCElab::complete()
 	for (thread_p = processes->thread_q_head(); thread_p; thread_p = thread_p->next_exist()) {
 		sc_core::sc_process_b * theProcess = thread_p;
 		sc_core::sc_module * mod = (sc_core::sc_module *) thread_p->m_semantics_host_p;
-		IRModule *m = this->getIRModule(mod);
-		Process *process = this->addProcess(m, theProcess);
+		addProcessAndEvents(theProcess, mod);
+	}
 
-		std::vector < const sc_core::sc_event * >eventsVector = theProcess->m_static_events;
-		vector < const sc_core::sc_event * >::iterator it;
-		for (it = eventsVector.begin(); it < eventsVector.end(); it++) {
-			sc_core::sc_event * ev = (sc_core::sc_event *) * it;
-			this->addEvent(process, ev);
-		}
+	for (method_p = processes->method_q_head(); method_p; method_p = method_p->next_exist()) {
+		sc_core::sc_method_process* theP = method_p;
+		sc_core::sc_module * mod = (sc_core::sc_module *) theP->m_semantics_host_p;
+		addProcessAndEvents(theP, mod);
 	}
 }

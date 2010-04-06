@@ -80,6 +80,7 @@ class SCElab : public ElabMember
   void addGlobalVariable(GlobalValue *globalVar);
   std::vector < GlobalValue * >* getGlobalVariables();
 
+  void addProcessAndEvents(sc_core::sc_process_b *theProcess, sc_core::sc_module * mod);
   void complete();
 
 };

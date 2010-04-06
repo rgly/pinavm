@@ -29,18 +29,14 @@ Frontend::Frontend(Module * M)
 
 Frontend::~Frontend()
 {
-	// MM: it's safe to delete a NULL pointer => the if()s are
-	// MM: unnecessary.
-	if (this->sccfactory)
-		delete this->sccfactory;
+	delete this->sccfactory;
 
 	if (this->scjit) {
 		this->scjit->doFinalization();
 		delete this->scjit;
 	}
 
-	if (this->elab)
-		delete this->elab;
+	delete this->elab;
 
 }
 

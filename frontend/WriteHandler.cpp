@@ -15,8 +15,13 @@ SCConstruct *WriteHandler::handle(Function * fct, BasicBlock * bb, Instruction* 
 
 	TRACE_3("Handling call to write()\n");
 	Value *arg = callInst->getOperand(1);
+	Value *value = callInst->getOperand(2);
+
 	void *portAddr = this->scjit->jitAddr(fct, callInst, arg);
 	TRACE_4("Address jitted : " << portAddr << "\n");
+	if (portAddr == NULL)
+		return new WriteConstruct(NULL, value);
+
 	Port *po = this->scjit->getElab()->getPort(portAddr);
 	TRACE_3("Port written : " << po << "\n");
 

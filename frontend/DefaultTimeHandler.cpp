@@ -10,13 +10,14 @@ SCConstruct *DefaultTimeHandler::handle(Function * fct, BasicBlock * bb, Instruc
 {
 	TRACE_3("Handling call to wait(int)... ");
 	Value *arg = callInst->getOperand(2);
+	bool errb = false;
 
 	if (arg->getType()->isIntegerTy()) {
-		int time_waited = this->scjit->jitInt(fct, callInst, arg);
+		int time_waited = this->scjit->jitInt(fct, callInst, arg, &errb);
 		TRACE_3("Int time waited: " << time_waited << "\n");
 		return new DefaultTimeConstruct(time_waited);
 	} else if (arg->getType()->isFloatingPointTy()) {
-		double time_waited = this->scjit->jitDouble(fct, callInst, arg);
+		double time_waited = this->scjit->jitDouble(fct, callInst, arg, &errb);
 		TRACE_3("Double time waited: " << time_waited << "\n");
 		return new DefaultTimeConstruct(time_waited);
 	} else {

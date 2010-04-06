@@ -28,10 +28,16 @@ Port *WriteConstruct::getPort()
 
 std::string WriteConstruct::toString()
 {
-	if (this->value != "")
-		return "Write(" + this->value + ") to port : " + this->port->getName();
+	std::string portName;
+	if (this->port == NULL)
+		portName = "UNKNOWN";
 	else
-		return "Write(? was not able to jit ?) to port " + this->port->getName();
+		portName = this->port->getName();
+
+	if (this->value != "")
+		return "Write(" + this->value + ") to port : " + portName;
+	else
+		return "Write(? was not able to jit ?) to port " + portName;
 }
 
 std::string WriteConstruct::getValue()

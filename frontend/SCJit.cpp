@@ -132,7 +132,10 @@ Function *SCJit::buildFct(Function * f, FunctionType * FT, Instruction* inst, Va
 	TRACE_4("Building fctToJit : " << fctToJit->getNameStr() << " " << fctToJit << "\n");
 
 	FunctionBuilder fb(f, fctToJit, inst, arg);
-	fb.buildFct();
+	if (fb.buildFct() == NULL) {
+		TRACE_5("[WARNINING] Unable to build Function to Jit\n");
+		return NULL;
+	}
 
 	TRACE_5("------------ fctToJit completed ---------------\n");
 	PRINT_5(fctToJit->dump());
@@ -184,6 +187,9 @@ void *SCJit::jitAddr(Function * f, Instruction* inst, Value * arg)
 	    FunctionType::get(arg->getType(), argsType, false);
 
 	fctToJit = buildFct(f, FT, inst, arg);
+	if (fctToJit == NULL) {
+		return NULL;
+	}
 
 	void *(*fct) (sc_core::sc_module *) = (void *(*)(sc_core::sc_module *)) ee->getPointerToFunction(fctToJit);
 	IRModule* mod = this->getCurrentProcess()->getModule();
@@ -197,7 +203,7 @@ void *SCJit::jitAddr(Function * f, Instruction* inst, Value * arg)
 	return res;
 }
 
-double SCJit::jitDouble(Function * f, Instruction* inst, Value * arg)
+double SCJit::jitDouble(Function * f, Instruction* inst, Value * arg, bool* errb)
 {
 	Function *fctToJit;
 	const std::vector < const Type *>argsType;
@@ -207,6 +213,10 @@ double SCJit::jitDouble(Function * f, Instruction* inst, Value * arg)
 	FunctionType *FT = FunctionType::get(Type::getDoubleTy(getGlobalContext()), argsType, false);
 
 	fctToJit = buildFct(f, FT, inst, arg);
+	if (fctToJit == NULL) {
+		*errb = true;
+		return 0;
+	}
 
 	double (*fct) (sc_core::sc_module *) =
 		(double (*)(sc_core::sc_module *)) ee->getPointerToFunction(fctToJit);
@@ -221,7 +231,7 @@ double SCJit::jitDouble(Function * f, Instruction* inst, Value * arg)
 	return res;
 }
 
-bool SCJit::jitBool(Function * f, Instruction* inst, Value * arg)
+bool SCJit::jitBool(Function * f, Instruction* inst, Value * arg, bool* errb)
 {
 	Function *fctToJit;
 	const std::vector < const Type *>argsType;
@@ -231,6 +241,10 @@ bool SCJit::jitBool(Function * f, Instruction* inst, Value * arg)
 	FunctionType *FT =  FunctionType::get(Type::getInt8Ty(getGlobalContext()), argsType, false);
 
 	fctToJit = buildFct(f, FT, inst, arg);
+	if (fctToJit == NULL) {
+		*errb = true;
+		return false;
+	}
 
 	int (*fct) (sc_core::sc_module *) =
 	    (int (*)(sc_core::sc_module *)) ee->getPointerToFunction(fctToJit);
@@ -249,7 +263,7 @@ bool SCJit::jitBool(Function * f, Instruction* inst, Value * arg)
 }
 
 int
-SCJit::jitInt(Function * f, Instruction* inst, Value * arg) {
+SCJit::jitInt(Function * f, Instruction* inst, Value * arg, bool* errb) {
 	Function *fctToJit;
 	const std::vector < const Type *>argsType;
 	
@@ -264,7 +278,11 @@ SCJit::jitInt(Function * f, Instruction* inst, Value * arg) {
 		FT = FunctionType::get(arg->getType(), argsType, false);
 	
 	fctToJit = buildFct(f, FT, inst, arg);
-	
+	if (fctToJit == NULL) {
+		*errb = true;
+		return 0;
+	}
+
 	int (*fct) (sc_core::sc_module *) =
 		(int (*)(sc_core::sc_module *)) ee->getPointerToFunction(fctToJit);
 	

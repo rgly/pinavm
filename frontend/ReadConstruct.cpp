@@ -27,5 +27,11 @@ Port *ReadConstruct::getPort()
 
 std::string ReadConstruct::toString()
 {
-	return "Read() in port : " + this->port->getName();
+	std::string portName;
+	if (this->port == NULL)
+		portName = "UNKNOWN";
+	else
+		portName = this->port->getName();
+
+	return "Read() in port : " + portName;
 }

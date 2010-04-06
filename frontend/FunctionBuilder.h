@@ -56,7 +56,7 @@ class FunctionBuilder {
   Instruction* targetInst;
 
   bool mark(Value* arg);
-  void markUsefulInstructions();
+  int markUsefulInstructions();
   void cloneBlocks ();
   std::vector<Instruction*>* predecessors;
 

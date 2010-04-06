@@ -13,6 +13,9 @@ SCConstruct *ReadHandler::handle(Function * fct, BasicBlock * bb, Instruction * 
 	TRACE_3("Handling call to read()\n");
 	Value *arg = callInst->getOperand(1);
 	void *portAddr = this->scjit->jitAddr(fct, callInst, arg);
+	if (portAddr == NULL)
+		return new ReadConstruct(NULL, callInst);
+
 	TRACE_4("Address jitted : " << portAddr << "\n");
 	Port *p = this->scjit->getElab()->getPort(portAddr);
 	TRACE_3("Port read : " << p << "\n");
