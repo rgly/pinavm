@@ -21,14 +21,26 @@ class sc_process_table
     void push_front( sc_method_handle );
     void push_front( sc_thread_handle );
     void push_front( sc_cthread_handle );
-    sc_cthread_handle cthread_q_head();
-    sc_method_handle method_q_head();
     sc_cthread_handle remove( sc_cthread_handle );
     sc_method_handle remove( sc_method_handle );
     sc_thread_handle remove( sc_thread_handle );
-    sc_thread_handle thread_q_head();
 
 
+    inline sc_cthread_handle cthread_q_head()
+    {
+	    return m_cthread_q;
+    }
+
+    inline sc_method_handle method_q_head()
+    {
+	    return m_method_q;
+    }
+
+    inline sc_thread_handle thread_q_head()
+    {
+	    return m_thread_q;
+    }
+    
   private:
 
     sc_cthread_handle m_cthread_q; // Queue of existing cthread processes.

@@ -227,20 +227,6 @@ sc_process_table::~sc_process_table()
 }
 
 inline
-sc_cthread_handle 
-sc_process_table::cthread_q_head()
-{
-    return m_cthread_q;
-}
-
-inline
-sc_method_handle 
-sc_process_table::method_q_head()
-{
-    return m_method_q;
-}
-
-inline
 void
 sc_process_table::push_front( sc_method_handle handle_ )
 {
@@ -326,13 +312,6 @@ sc_process_table::remove( sc_thread_handle handle_ )
 	}
     }
     return 0;
-}
-
-inline
-sc_thread_handle 
-sc_process_table::thread_q_head()
-{
-    return m_thread_q;
 }
 
 
