@@ -33,8 +33,9 @@ private:
   vector<string> eventsWaited;
   vector<string> eventsNotified;
   int lastBuildState;
-  bool ifDetected;
+  bool structIfElseDetectedJustBefore;
   set<string> BBVisited;
+  string nameBasicBlockAfterIf;
 public:
   _42AutomatonContract();
 
@@ -49,14 +50,17 @@ public:
   int  get_lastBuildState();
   void set_lastBuildState(int number);
 
-  bool get_ifDetected();
-  void set_ifDetected(bool detected);
+  bool get_structIfElseDetectedJustBefore();
+  void set_structIfElseDetectedJustBefore(bool detected);
 
   vector<string> get_eventsWaited();
   void           set_eventsWaited(vector<string> eventsWaited);
 
   vector<string> get_eventsNotified();
   void           set_eventsNotified(vector<string> eventsNotified);
+
+  string get_nameBasicBlockAfterIf();
+  void   set_nameBasicBlockAfterIf(string name);
 
   string toString_eventsWaited();
   string toString_eventsNotified();

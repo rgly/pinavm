@@ -12,7 +12,8 @@ using namespace llvm;
 _42AutomatonContract::_42AutomatonContract(){
   existNotify=false;
   existWait=false;
-  ifDetected=false;
+  structIfElseDetectedJustBefore=false;
+  string nameBasicBlock="";
 }
 
 void _42AutomatonContract::set_stateStatus(int _numState,StateStatus _Status){
@@ -51,12 +52,12 @@ void _42AutomatonContract::set_lastBuildState(int number){
   this->lastBuildState=number;
 }
 
-bool _42AutomatonContract::get_ifDetected(){
-  return this->ifDetected;
+bool _42AutomatonContract::get_structIfElseDetectedJustBefore(){
+  return this->structIfElseDetectedJustBefore;
 }
 
-void _42AutomatonContract::set_ifDetected(bool detected){
-  this->ifDetected=detected;
+void _42AutomatonContract::set_structIfElseDetectedJustBefore(bool detected){
+  this->structIfElseDetectedJustBefore=detected;
 }
 
 vector<string> _42AutomatonContract::get_eventsWaited(){
@@ -78,6 +79,17 @@ void _42AutomatonContract::set_eventsNotified(vector<string> eventsNotified){
     pushEventNotified(eventsNotified[i]);
   }
 }
+
+string _42AutomatonContract::get_nameBasicBlockAfterIf(){
+  string s;
+  s=this->nameBasicBlockAfterIf;
+  return s;
+}
+
+void _42AutomatonContract::set_nameBasicBlockAfterIf(string name){
+  this->nameBasicBlockAfterIf=name;
+}
+  
 
 string _42AutomatonContract::toString_eventsWaited(){
   string s;

@@ -219,8 +219,6 @@ public:
 
   void visitInstruction(Instruction &I);
 
-  void outputLValue(Instruction *I);
-
   bool isGotoCodeNecessary(BasicBlock *From, BasicBlock *To);
   bool printPHICopiesForSuccessor(BasicBlock *CurBlock,
 				  BasicBlock *Successor, unsigned Indent);

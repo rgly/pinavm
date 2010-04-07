@@ -1,10 +1,1 @@
--- Dans thread2 :
-   Si on ne met pas le ELSE, il y a un bug :
-   probleme de distinction entre un ELSE et
-   une absence de ELSE, puisque dans les 2 cas,
-   on a un branchement lorsque la condition du IF 
-   n'est pas respectee
-
--- Dans thread3 :
-   La transition STATE_2 --> STATE_3 devrait se faire
-   sans 'op'
+Aucun bug connu à ce jour
