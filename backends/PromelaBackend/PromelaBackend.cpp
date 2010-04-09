@@ -6,7 +6,7 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/CodeGen/LinkAllAsmWriterComponents.h"
+//#include "llvm/CodeGen/LinkAllAsmWriterComponents.h"
 #include "llvm/CodeGen/LinkAllCodegenComponents.h"
 #include "llvm/CodeGen/ObjectCodeEmitter.h"
 #include "llvm/Config/config.h"

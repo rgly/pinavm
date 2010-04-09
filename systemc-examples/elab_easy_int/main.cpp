@@ -32,6 +32,11 @@ public:
 	
  	void essaiwrite();
 
+	int example(int x) {
+		int res = x + 42;
+		return res;
+	}
+
 	void main() {
 		if (isHead == false) {
 			while (in.read() != 5) {
@@ -39,10 +44,13 @@ public:
 	                        wait(5, SC_NS);
 			}
 		}
+
+		example(0);
 		notified = true;
 		essaiwrite();
 	}
-
+	
+	
 };
 
 void Component::essaiwrite()
