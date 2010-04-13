@@ -92,6 +92,7 @@ class PromelaWriter : public ModulePass, public InstVisitor<PromelaWriter> {
   bool relativeClocks;
   bool eventsAsBool;
   bool insertBug;
+  std::set < const Type *>StructPrinted;
 
 public:
   static char ID;
@@ -146,7 +147,7 @@ public:
 
   void printModule(Module *M);
   void printModuleTypes(const TypeSymbolTable &ST);
-  bool fillContainedStructs(const Type *Ty, std::set<const Type *> *);
+  bool fillContainedStructs(const Type *Ty, bool fill);
   void printFloatingPointConstants(Function &F);
   void printFloatingPointConstants(const Constant *C);
   void printFunctionSignature(const Function *F, bool Prototype, bool inlineFct);

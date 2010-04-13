@@ -16,7 +16,8 @@ SC_MODULE(MyModule)
 {
 	MyModule* initiator;
 	sc_event e;
-	
+	int dm;
+
 	SC_HAS_PROCESS(MyModule);
 	MyModule(sc_module_name name)
 	{
@@ -39,7 +40,7 @@ SC_MODULE(MyModule)
 SC_MODULE(Source)
 {
 	MyModule* initiator;
-	
+	int ds;	
 	
 	SC_HAS_PROCESS(Source);
 	Source(sc_module_name name, int number_)

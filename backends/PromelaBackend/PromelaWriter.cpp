@@ -274,13 +274,19 @@ PromelaWriter::printType(formatted_raw_ostream & Out,
 			const Type * Ty,
 			bool isSigned, const std::string & NameSoFar,
 			bool IgnoreName, const AttrListPtr & PAL)
-{
+{	
 	if (Ty->isPrimitiveType() || Ty->isIntegerTy() || isa < VectorType > (Ty)) {
 		printSimpleType(Out, Ty, isSigned, NameSoFar);
 		return Out;
 	}
 	// Check to see if the type is named.
 	if (!IgnoreName || isa < OpaqueType > (Ty)) {
+		if (isSystemCType(Ty))
+			return Out;
+
+		while (isa<PointerType>(Ty)) {
+			Ty = cast<PointerType>(Ty)->getElementType();
+		}
 		std::map < const Type *, std::string >::iterator ITN = TypeNames.find(Ty), ETN = TypeNames.end();
 		if (ITN != ETN) {
 			std::string tName = ITN->second;
@@ -328,6 +334,7 @@ PromelaWriter::printType(formatted_raw_ostream & Out,
 		Out << NameSoFar + " {\n";
 		unsigned Idx = 0;
 		bool fieldPrinted = false;
+		
 		for (StructType::element_iterator I = STy->element_begin(), E = STy->element_end(); I != E; ++I) {
 			TRACE_4("\n/**** Dumping struct element in printType() ****/\n");
 			if (! isSystemCType(*I)) {
@@ -352,8 +359,7 @@ PromelaWriter::printType(formatted_raw_ostream & Out,
 
 		TRACE_4("/**** Handling PointerTy type in printType() ****/\n");
 
-		if (isa < ArrayType > (PTy->getElementType()) ||
-			isa < VectorType > (PTy->getElementType()))
+		if (isa < ArrayType > (PTy->getElementType()) || isa < VectorType > (PTy->getElementType()))
 			ptrName = "(" + ptrName + ")";
 
 		if (!PAL.isEmpty())
@@ -415,11 +421,16 @@ PromelaWriter::printType(std::ostream & Out,
 	if (!IgnoreName || isa < OpaqueType > (Ty)) {
 		if (isSystemCType(Ty))
 			return Out;
+		while (isa<PointerType>(Ty)) {
+			Ty = cast<PointerType>(Ty)->getElementType();
+		}
 
-		std::map < const Type *, std::string >::iterator I = TypeNames.find(Ty);
-		if (I != TypeNames.end())
-			return Out << I->second << ' ' << NameSoFar;
-	}
+ 		std::map < const Type *, std::string >::iterator I = TypeNames.find(Ty);
+ 		if (I != TypeNames.end()) {
+			std::string tName = I->second;
+			return Out << tName << " " << NameSoFar;
+		}
+ 	}
 
 	switch (Ty->getTypeID()) {
 	case Type::FunctionTyID:{
@@ -1422,7 +1433,7 @@ std::string PromelaWriter::GetValueName(const Value * Operand)
 	// Mangle globals with the standard mangler interface for LLC compatibility.
 	if (const GlobalValue * GV = dyn_cast < GlobalValue > (Operand)) {
 		res = Mang->getNameWithPrefix(GV);
-		return replaceAll(res, ".", "-");
+		return replaceAll(res, ".", "_");
 	}
 	std::string Name = Operand->getName();
 
@@ -1449,7 +1460,7 @@ std::string PromelaWriter::GetValueName(const Value * Operand)
 	}
 
 	res = "llvm_cbe_" + VarName;
-	return replaceAll(res, ".", "-");
+	return replaceAll(res, ".", "_");
 }
 
 /// writeInstComputationInline - Emit the computation for the specified
@@ -1825,7 +1836,8 @@ void PromelaWriter::printFloatingPointConstants(const Constant * C)
 void
 PromelaWriter::insertTypeName(const Type* Ty, std::string TyName)
 {
-	this->TypeNames[Ty] = replaceAll(TyName, ".", "-");
+	TRACE_4(" Type inserted: " << Ty << "   " << replaceAll(TyName, ".", "_") << "\n");
+	this->TypeNames[Ty] = replaceAll(TyName, ".", "_");
 }
 
 int
@@ -1839,7 +1851,6 @@ PromelaWriter::getTypeNamesSize()
 ///
 void PromelaWriter::printModuleTypes(const TypeSymbolTable & TST)
 {
- 	std::set < const Type *>StructPrinted;
 	TRACE_2("PromelaWriter > Emitting types\n");
 	Out << "\n\n/*---- Types ----*/\n";
 
@@ -1868,15 +1879,15 @@ void PromelaWriter::printModuleTypes(const TypeSymbolTable & TST)
 		Function::arg_iterator argI = proc->getMainFct()->arg_begin();
 		const Value* moduleArg = &*argI;		
 		const PointerType* PTy = cast<PointerType>(moduleArg->getType());
-		fillContainedStructs(PTy->getElementType(), &StructPrinted);
+		fillContainedStructs(PTy->getElementType(), true);
 	}
 
 	std::set < const Type *>::iterator itS;
-	for (itS = StructPrinted.begin() ; itS != StructPrinted.end(); ++itS) {
+	for (itS = this->StructPrinted.begin() ; itS != this->StructPrinted.end(); ++itS) {
 		// Print structure type out.
 		const Type* Ty = *itS;
 		std::string Name = TypeNames[Ty];
-		TRACE_5("Emitting type " << Name << "\n");
+		TRACE_5("Emitting type " << Name << "  " << Ty<< "\n");
 		Out << "typedef ";
 		printType(Out, Ty, true, Name, true);
 		Out << ";\n\n";
@@ -1924,26 +1935,36 @@ void PromelaWriter::printModuleTypes(const TypeSymbolTable & TST)
 //
 // TODO:  Make this work properly with vector types
 //
-bool PromelaWriter::fillContainedStructs(const Type * Ty, std::set <const Type * >* StructPrinted)
+bool PromelaWriter::fillContainedStructs(const Type * Ty, bool fill)
 {
 	bool isEmpty = true;
-
+	std::string Name = TypeNames[Ty];
+//	TRACE_5("FillContainedStruct:" << Name << "\n");
 	// Don't walk through pointers.
-	if (isa < PointerType > (Ty) || Ty->isPrimitiveType() || Ty->isIntegerTy())
+	if (isa < PointerType > (Ty) || Ty->isPrimitiveType() || Ty->isIntegerTy()) {
+//		TRACE_5(" -> return false\n");
 		return false;
+	}
 	
 	// Print all contained types first.
 	for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end(); I != E; ++I) {
 		Type* subTy = *I;
-		if (isSystemCType(subTy))
+		std::string SubName = TypeNames[subTy];
+//		TRACE_5("Consider subtype: " << SubName << "\n");
+		if (isSystemCType(subTy)) {
+//			TRACE_5(" -> continue\n");
 			continue;
+		}
 		
-		if (! fillContainedStructs(subTy, StructPrinted))
+		if (! fillContainedStructs(subTy, fill))
 			isEmpty = false;
 	}
 	if (isa < StructType > (Ty) || isa < ArrayType > (Ty)) {
-		if (StructPrinted != NULL && ! isEmpty)
-			StructPrinted->insert(Ty);
+//		TRACE_5("isa struct or isa array:" << Name << "\n");
+		if (fill && ! isEmpty) {
+//			TRACE_5("insert:" << Name << "\n");
+			this->StructPrinted.insert(Ty);
+		}
 	}
 
 	return isEmpty;
@@ -2035,7 +2056,8 @@ PromelaWriter::isTypeEmpty(const Type* ty)
  		ty = cast<PointerType>(ty)->getElementType();
 	}
 
-	return fillContainedStructs(ty, NULL);
+//	return Ty->getTypeID() == Type::StructTyID
+	return fillContainedStructs(ty, false);
 }
 
 bool
@@ -2043,7 +2065,7 @@ PromelaWriter::isSystemCStruct(const StructType* ty)
 {
  	std::string typeName = this->TypeNames.find(ty)->second;
 	TRACE_7("------------------------> isSystemCStruct > " << typeName << "\n");
- 	return typeName.substr(0, 16).compare("struct-sc_core::") == 0 || typeName.substr(0, 12).compare("struct-std::") == 0;
+ 	return typeName.substr(0, 16).compare("struct_sc_core::") == 0 || typeName.substr(0, 12).compare("struct_std::") == 0;
 }
 
 bool
@@ -2052,14 +2074,12 @@ PromelaWriter::isSystemCType(const Type* ty)
 	if (ty->isPrimitiveType() || ty->isIntegerTy())
 		return false;
 
-	return true;
+ 	while (isa<PointerType>(ty)) {
+ 		ty = cast<PointerType>(ty)->getElementType();
+ 	}
 
-// 	while (isa<PointerType>(ty)) {
-// 		ty = cast<PointerType>(ty)->getElementType();
-// 	}
-
-// 	std::string typeName = this->TypeNames.find(ty)->second;
-// 	return typeName.substr(0, 16).compare("struct.sc_core::") == 0 || typeName.substr(0, 12).compare("struct.std::") == 0;
+ 	std::string typeName = this->TypeNames.find(ty)->second;
+ 	return typeName.substr(0, 16).compare("struct_sc_core::") == 0 || typeName.substr(0, 12).compare("struct_std::") == 0;
 }
 
 static inline bool isFPIntBitCast(const Instruction & I)
@@ -3772,23 +3792,7 @@ void PromelaWriter::visitStoreInst(StoreInst & I)
 			I.getAlignment());
 	Out << " = /* visitStore */";
 	Value *Operand = I.getOperand(0);
-	Constant *BitMask = 0;
-	if (const IntegerType * ITy =
-		dyn_cast < IntegerType > (Operand->getType())) {
-		if (!ITy->isPowerOf2ByteWidth()) {
-			// We have a bit width that doesn't match an even power-of-2 byte
-			// size. Consequently we must & the value with the type's bit mask
-			BitMask = ConstantInt::get(ITy, ITy->getBitMask());
-		}
-	}
-	if (BitMask)
-		Out << "((";
 	writeOperand(Operand);
-	if (BitMask) {
-		Out << ") & ";
-		printConstant(BitMask, false);
-		Out << ")";
-	}
 }
 
 void PromelaWriter::visitGetElementPtrInst(GetElementPtrInst & I)
@@ -4002,16 +4006,28 @@ bool PromelaWriter::runOnModule(Module & M)
 // 	}
 	/* Fill types table */
 	printModuleTypes(M.getTypeSymbolTable());
+
+	Function::arg_iterator argI = (*(this->elab->getProcesses()->begin()))->getMainFct()->arg_begin();
+	const Value* moduleArg = &*argI;		
+	const PointerType* PTy = cast<PointerType>(moduleArg->getType());
+	TRACE_4("############################# " << PTy << "  " << TypeNames[PTy->getElementType()] << "\n");
 	
 	/* Print Global variables from the program */
 	printGlobalVariables(Mang);
+
+
+	argI = (*(this->elab->getProcesses()->begin()))->getMainFct()->arg_begin();
+	moduleArg = &*argI;		
+	PTy = cast<PointerType>(moduleArg->getType());
+	TRACE_4("***************************** " << PTy << "  " << TypeNames[PTy->getElementType()] << "\n");
+
 	
 	/* Print all stuff relative to encoding */
 	printPrimitives();
 
 	/* Print all processes and functions */
 	printProcesses();
-
+	
 	/* Print init section (launch processes */
 	printInitSection();
 

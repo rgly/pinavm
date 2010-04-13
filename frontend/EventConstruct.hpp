@@ -11,11 +11,14 @@ using namespace llvm;
 struct Event;
 
 struct EventConstruct:public SCConstruct {
-	protected:Event * event;
-      public:
-	EventConstruct(Value* missingValue);
+protected:
+	Event * event;
+	Value * missingEvent;
+public:
+	EventConstruct(Value* missingE);
 	EventConstruct(Event * e);
 	void setWaitedEvent(Event * e);
+	Value* getMissingEvent();
 	Event *getWaitedEvent();
 	std::string toString();
 };

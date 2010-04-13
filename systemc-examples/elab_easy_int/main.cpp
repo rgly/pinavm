@@ -1,7 +1,7 @@
 #include <systemc.h>
 
 //using namespace sc_core;
-#define KASCPAR
+//#define KASCPAR
 
 #define NS * 1e-9
 

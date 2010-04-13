@@ -8,6 +8,13 @@ ReadConstruct::ReadConstruct(Port * p, Value* callInst)
 	this->callInstruction = callInst;
 }
 
+ReadConstruct::ReadConstruct(Value* callInst) : SCConstruct(false)
+{
+	this->id = READCONSTRUCT;
+	this->port = NULL;
+	this->callInstruction = callInst;
+}
+
 Value*
 ReadConstruct::getCallInst()
 {

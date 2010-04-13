@@ -6,14 +6,23 @@ WriteConstruct::WriteConstruct(Port * p, string valueAsString)
 	this->id = WRITECONSTRUCT;
 	this->port = p;
 	this->value = valueAsString;
-	this->staticallyFound = true;
 }
 
-WriteConstruct::WriteConstruct(Port * p, Value* missingValue) : SCConstruct(missingValue)
+WriteConstruct::WriteConstruct(Port * p, Value* missingV)
 {
 	this->id = WRITECONSTRUCT;
 	this->port = p;
+	this->missingValue = missingV;
 }
+
+WriteConstruct::WriteConstruct(Value* missingP, Value* missingV) : SCConstruct(false)
+{
+	this->id = WRITECONSTRUCT;
+	this->port = NULL;
+	this->missingPort = missingP;
+	this->missingValue = missingV;
+}
+
 
 void
  WriteConstruct::setPort(Port * p)
@@ -24,6 +33,16 @@ void
 Port *WriteConstruct::getPort()
 {
 	return this->port;
+}
+
+Value *WriteConstruct::getMissingValue()
+{
+	return this->missingValue;
+}
+
+Value *WriteConstruct::getMissingPort()
+{
+	return this->missingPort;
 }
 
 std::string WriteConstruct::toString()

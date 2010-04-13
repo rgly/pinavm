@@ -8,6 +8,13 @@ NotifyConstruct::NotifyConstruct(Event * e)
 	this->id = NOTIFYCONSTRUCT;
 }
 
+NotifyConstruct::NotifyConstruct(Value * missingE) : SCConstruct(false)
+{
+	this->event = NULL;
+	this->missingEvent = missingE;
+	this->id = NOTIFYCONSTRUCT;
+}
+
 void
  NotifyConstruct::setNotifiedEvent(Event * e)
 {

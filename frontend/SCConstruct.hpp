@@ -25,15 +25,14 @@ struct SCConstruct {
 	string threadName;
 	construct_id id;
 	bool staticallyFound;
-	Value* dynValue;
+	Value* dynAddress;
 
       public:
 	SCConstruct();
-	SCConstruct(Value* missingValue);
+	SCConstruct(bool found);
 	virtual string toString() = 0;
 	string getThreadName();
 	construct_id getID();
-	Value* getMissingValue();
 	bool isStaticallyFound();
 };
 
