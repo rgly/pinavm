@@ -13,7 +13,12 @@ _42AutomatonContract::_42AutomatonContract(){
   existNotify=false;
   existWait=false;
   structIfElseDetectedJustBefore=false;
-  string nameBasicBlock="";
+  visitingIfBranch=false;
+  visitingElseBranch=false;
+  existReturnInstInIfBranch=false;
+  existReturnInstInElseBranch=false;
+  nameBasicBlockAfterIf="";
+  // SCConstruct=Undefined;
 }
 
 void _42AutomatonContract::set_stateStatus(int _numState,StateStatus _Status){
@@ -26,6 +31,46 @@ void _42AutomatonContract::set_stateStatus(int _numState,StateStatus _Status){
   }
 
   it->Status=_Status;
+}
+
+/*FirstSCConstruct _42AutomatonContract::get_firstSCConstruct(){
+  return this-> SCConstruct;
+}
+
+void set_firstSCConstruct(FirstSCConstruct _SCConstruct){
+  this->SCConstruct=_SCConstruct;
+  }*/
+
+bool _42AutomatonContract::get_visitingIfBranch(){
+  return this->visitingIfBranch;
+}
+
+void _42AutomatonContract::set_visitingIfBranch(bool visiting){
+  this->visitingIfBranch=visiting;
+}
+
+bool _42AutomatonContract::get_visitingElseBranch(){
+  return this->visitingElseBranch;
+}
+
+void _42AutomatonContract::set_visitingElseBranch(bool visiting){
+  this->visitingElseBranch=visiting;
+}
+
+bool _42AutomatonContract::get_existReturnInstInIfBranch(){
+  return this->existReturnInstInIfBranch;
+}
+
+void _42AutomatonContract::set_existReturnInstInIfBranch(bool exist){
+  this->existReturnInstInIfBranch=exist;
+}
+
+bool _42AutomatonContract::get_existReturnInstInElseBranch(){
+  return this->existReturnInstInElseBranch;
+}
+
+void _42AutomatonContract::set_existReturnInstInElseBranch(bool exist){
+  this->existReturnInstInElseBranch=exist;
 }
 
 bool _42AutomatonContract::get_existNotify(){
@@ -188,9 +233,24 @@ bool _42AutomatonContract::isBasicBlockAlreadyVisited(string name){
     return true;
 }
 
+/*bool _42AutomatonContract::isEmptyEventsWaited(){
+  return this->eventsWaited.empty();
+}
+
+bool _42AutomatonContract::isEmptyEventsNotified(){
+  return this->eventsNotified.empty();
+  }*/
 
 
+string _42AutomatonContract::get_lastBasicBlock(){
+  string s;
+  s=this->lastBasicBlock;
+  return s;
+}
 
+void _42AutomatonContract::set_lastBasicBlock(string name){
+  this->lastBasicBlock=name;
+}
 
 
 

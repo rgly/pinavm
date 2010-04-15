@@ -2200,9 +2200,15 @@ void _42Writer::printFunction(Function & F, bool inlineFct)
   //printFunctionSignature(&F, false, inlineFct);
 
   TRACE_5("42Writer > printing basic blocks\n");
-
+  string name;
+  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
+    name=BB->getNameStr();
+  }
+  Automat.set_lastBasicBlock(name);
   // print the basic blocks
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
+    //string name=E->getNameStr();
+    // Automat.set_lastBasicBlock(name);
     if (Loop * L = LI->getLoopFor(BB)) {
       if (L->getHeader() == BB && L->getParentLoop() == 0)
 	printLoop(L);
@@ -2264,33 +2270,31 @@ void _42Writer::visitReturnInst(ReturnInst & I)
 {
   TRACE_4("/***** Visiting return inst ****/\n");
 
-  if (I.getNumOperands() == 0 &&
-      &*--I.getParent()->getParent()->end() == I.getParent() &&
-      !I.getParent()->size() == 1) {
-    return;
-  }
-
-	
-  string inputData=Automat.toString_eventsWaited();
-  string outputData=Automat.toString_eventsNotified();
-  string transition;
-  if(Automat.get_structIfElseDetectedJustBefore() && !Automat.get_existWait()){
-    if(Automat.get_existNotify()){    
-      transition="{"+inputData+"}/{"+outputData+"}";
-    }
-    else{
-      Automat.set_stateStatus(Automat.get_lastBuildState(),Final);
-    }
+  if(Automat.get_visitingIfBranch()){
+    Automat.set_existReturnInstInIfBranch(true);
   }
   else{
-    transition="{"+inputData+"}op/{"+outputData+"}";
+    if(Automat.get_visitingElseBranch()){
+      Automat.set_existReturnInstInElseBranch(true);
+    }
+    else{
+      if(Automat.get_existWait() || Automat.get_existNotify()){
+	string inputData=Automat.toString_eventsWaited();
+	string outputData=Automat.toString_eventsNotified();
+	string transition;
+	if(Automat.get_structIfElseDetectedJustBefore()){
+	  transition="{"+inputData+"}/{"+outputData+"}";
+	}
+	else{
+	  transition="{"+inputData+"}op/{"+outputData+"}";
+	}
+	//int i=Automat.addState(Final);
+	int i=Automat.addState(Intermediate);
+	int j=Automat.get_lastBuildState();
+	Automat.addTransition(j,i,transition);
+      }
+    }
   }
-  int i=Automat.addState(Final);
-  int j=Automat.get_lastBuildState();
-  Automat.addTransition(j,i,transition);
-  Automat.set_lastBuildState(i);
-  Automat.set_structIfElseDetectedJustBefore(false);
-	
 }
 
 void _42Writer::visitSwitchInst(SwitchInst & SI)
@@ -2409,9 +2413,26 @@ void _42Writer::visitBranchInst(BranchInst & I)
 
       bool existNotifyBeforeIfElse=Automat.get_existNotify();
       bool existWaitBeforeIfElse  =Automat.get_existWait();
-		  
-      printBasicBlock((I.getSuccessor(0)));
-      Automat.addBasicBlockVisited(I.getSuccessor(0)->getNameStr());
+
+      bool isThereIfElseJustBefore=Automat.get_structIfElseDetectedJustBefore();
+
+      string nameBasicBlockAfterIfBeforeIfElse=Automat.get_nameBasicBlockAfterIf();
+
+      bool visitingIfBranchBeforeIfElse=Automat.get_visitingIfBranch();
+      bool visitingElseBranchBeforeIfElse=Automat.get_visitingElseBranch();
+
+      Function::iterator BasicBlockBranchIfIterator=I.getSuccessor(0);
+
+      Automat.set_visitingIfBranch(true);
+      while(BasicBlockBranchIfIterator->getNameStr()!=I.getSuccessor(1)->getNameStr() && 
+	    !Automat.get_existReturnInstInIfBranch()){
+	Out << "BB IF =" << BasicBlockBranchIfIterator->getNameStr() << "\n";
+	  printBasicBlock(BasicBlockBranchIfIterator);
+	  Automat.addBasicBlockVisited(BasicBlockBranchIfIterator->getNameStr());
+	  ++BasicBlockBranchIfIterator;
+      }
+      Automat.set_visitingIfBranch(false);
+    
     
       int lastBuildStateBranchIf=Automat.get_lastBuildState();
       int finalCommonStateIfElse=Automat.addState(Intermediate);
@@ -2433,14 +2454,20 @@ void _42Writer::visitBranchInst(BranchInst & I)
       Automat.set_eventsWaited(eventsWaitedBeforeIfElse);
       Automat.set_eventsNotified(eventsNotifiedBeforeIfElse);
 
-      Automat.set_structIfElseDetectedJustBefore(false);
+      Automat.set_structIfElseDetectedJustBefore(isThereIfElseJustBefore);
 
       if (isGotoCodeNecessary(I.getParent(), I.getSuccessor(1))) {
 	string nameBasicBlock=Automat.get_nameBasicBlockAfterIf();
-	if(nameBasicBlock==I.getSuccessor(1)->getNameStr()){
+	if(nameBasicBlock==I.getSuccessor(1)->getNameStr() || I.getSuccessor(1)->getNameStr()=="return"){
 	  string inputData =Automat.toString_eventsWaited();
 	  string outputData=Automat.toString_eventsNotified();
-	  string transition="{"+inputData+"}op/{"+outputData+"}";
+	  string transition;
+	  if(Automat.get_structIfElseDetectedJustBefore()){
+	    transition="{"+inputData+"}/{"+outputData+"}";
+	  }
+	  else{
+	    transition="{"+inputData+"}op/{"+outputData+"}";
+	  }
 	  Automat.addTransition(lastBuildStateBeforeIfElse,finalCommonStateIfElse,transition);
 	}
 	else{
@@ -2448,8 +2475,23 @@ void _42Writer::visitBranchInst(BranchInst & I)
 	  Automat.set_existNotify(existNotifyBeforeIfElse);
 	  Automat.set_existWait(existWaitBeforeIfElse);
 
-	  printBasicBlock((I.getSuccessor(1)));
-	  Automat.addBasicBlockVisited(I.getSuccessor(1)->getNameStr());
+	  Function::iterator BasicBlockBranchElseIterator=I.getSuccessor(1);
+	  Automat.set_visitingElseBranch(true);
+	  while(BasicBlockBranchElseIterator->getNameStr()!=Automat.get_nameBasicBlockAfterIf() && 
+		BasicBlockBranchElseIterator->getNameStr()!=Automat.get_lastBasicBlock()        &&
+		!Automat.get_existReturnInstInElseBranch()){
+	    Out << "BB ELSE =" << BasicBlockBranchElseIterator->getNameStr() << "\n";
+	    printBasicBlock(BasicBlockBranchElseIterator);
+	    Automat.addBasicBlockVisited(BasicBlockBranchElseIterator->getNameStr());
+	    ++BasicBlockBranchElseIterator;
+	  }
+
+	  if(BasicBlockBranchElseIterator->getNameStr()==Automat.get_lastBasicBlock()){
+	    printBasicBlock(BasicBlockBranchElseIterator);
+	    Automat.addBasicBlockVisited(BasicBlockBranchElseIterator->getNameStr());
+	  }
+
+	  Automat.set_visitingElseBranch(false);
 
 	  int lastBuildStateBranchElse=Automat.get_lastBuildState();
 
@@ -2462,8 +2504,6 @@ void _42Writer::visitBranchInst(BranchInst & I)
 	    transition="{"+inputData+"}op/{"+outputData+"}";
 	  }
 	  Automat.addTransition(lastBuildStateBranchElse,finalCommonStateIfElse,transition);
-
-	  Automat.set_structIfElseDetectedJustBefore(false);
 	}
       }
 
@@ -2473,7 +2513,11 @@ void _42Writer::visitBranchInst(BranchInst & I)
       Automat.set_structIfElseDetectedJustBefore(true);
       Automat.clearEventsWaited();
       Automat.clearEventsNotified();
-
+      Automat.set_visitingIfBranch(visitingIfBranchBeforeIfElse);
+      Automat.set_visitingElseBranch(visitingElseBranchBeforeIfElse);
+      Automat.set_existReturnInstInIfBranch(false);
+      Automat.set_existReturnInstInElseBranch(false);
+      Automat.set_nameBasicBlockAfterIf(nameBasicBlockAfterIfBeforeIfElse);
     } 
     else {
       Out << " Problem in visitBranchInst : TODO !!! \n";
@@ -3188,6 +3232,13 @@ _42Writer::visitSCConstruct(SCConstruct * scc)
     eventC = (EventConstruct*) scc;
     event = eventC->getWaitedEvent();
     if (eventC->isStaticallyFound()) {
+      int lastBuildState=Automat.get_lastBuildState();
+      if(lastBuildState==0 && !Automat.get_existNotify() && !Automat.get_existWait()){
+	int k=Automat.addState(Intermediate);
+	Automat.addTransition(0,k,"{}op/{}");
+	Automat.set_lastBuildState(k);
+      }
+
       if(Automat.get_existNotify() || Automat.get_existWait()){
 	string inputData=Automat.toString_eventsWaited();
 	string outputData=Automat.toString_eventsNotified();
@@ -3211,11 +3262,9 @@ _42Writer::visitSCConstruct(SCConstruct * scc)
 
       }
       else{
-
 	Automat.pushEventWaited(getEventName(currentProcess,event));
 	Automat.set_existWait(true);
 	Automat.set_structIfElseDetectedJustBefore(false);
-
       }
       //Out << "wait_" << getEventName(currentProcess, event) << "();\n";
     } else {

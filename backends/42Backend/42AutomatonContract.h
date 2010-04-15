@@ -13,6 +13,7 @@ using namespace llvm;
 
 
 typedef enum{Initial,Intermediate,Final} StateStatus;
+//typedef enum{Wait,Notify,Undefined} FirstSCConstruct;
 
 struct transition{
   int    numStateSink;
@@ -36,10 +37,33 @@ private:
   bool structIfElseDetectedJustBefore;
   set<string> BBVisited;
   string nameBasicBlockAfterIf;
+  bool visitingIfBranch;
+  bool visitingElseBranch;
+  string lastBasicBlock;
+  bool existReturnInstInIfBranch;
+  bool existReturnInstInElseBranch;
+  //  FirstSCConstruct SCConstruct;
+  /*  bool isEmptyEventsWaited;
+      bool isEmptyEventsNotified;*/
 public:
   _42AutomatonContract();
 
   void set_stateStatus(int _numState,StateStatus _Status);
+
+  //  FirstSCConstruct get_firstSCConstruct();
+  //void set_firstSCConstruct(FirstSCConstruct _SCConstruct);
+
+  bool get_visitingIfBranch();
+  void set_visitingIfBranch(bool visiting);
+
+  bool get_visitingElseBranch();
+  void set_visitingElseBranch(bool visiting);
+
+  bool get_existReturnInstInIfBranch();
+  void set_existReturnInstInIfBranch(bool exist);
+
+  bool get_existReturnInstInElseBranch();
+  void set_existReturnInstInElseBranch(bool exist);
 
   bool get_existNotify();
   void set_existNotify(bool exist);
@@ -78,6 +102,12 @@ public:
 
   void addBasicBlockVisited(string name);
   bool isBasicBlockAlreadyVisited(string name);
+
+  string get_lastBasicBlock();
+  void   set_lastBasicBlock(string name);
+
+  /*  bool isEmptyEventsWaited();
+      bool isEmptyEventsNotified();*/
 };
 
 #endif
