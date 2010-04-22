@@ -1,8 +1,6 @@
 /*
 Test the presence of a IF..THEN..ELSE
 in a IF branch at the beginning of the process
-
-!!!!!!!!!!!!!!!! BUG !!!!!!!!!!!!!!!!!!!!!!!!
 */
 
 #include "systemc.h"

@@ -1,8 +1,6 @@
 /*
 Test a IF..THEN..ELSE
 at the middle of the process
-
-!!!!!!!!!!!!!!!!!! BUG !!!!!!!!!!!!!!!!!
 */
 
 #include "systemc.h"

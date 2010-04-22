@@ -3,18 +3,28 @@
 <contract interface="toto-ITF" name="toto-CT">
 0BB IF =bb
 0 + 1(.field2)BB IF =bb1
- + 1BB ELSE =bb2
- + 10 + 1BB IF =bb1
+ + 1ababababababababababab
+zzzzzzzzzzzzzzzzzzzzzzzzzzz
+name =bb2
+after =
+BB ELSE =bb2
+ + 1++ =bb4
+BB IF =bb1
 BB IF =bb2
----------------- Contract in a drawing ------------------
+ababababababababababab
+zzzzzzzzzzzzzzzzzzzzzzzzzzz
+name =bb4
+after =
+fffffffffffffffffffffff
+0 + 1---------------- Contract in a drawing ------------------
 STATE_0 (initial) : 
 ----> STATE_1 : {}op/{}
-----> STATE_4 : {}op/{}
+----> STATE_4 : {}op/{toto_0xbffe6428;}
 STATE_1 : 
-----> STATE_2 : {toto_0xbff096e8_0;}op/{toto_0xbff09728;}
-----> STATE_3 : {toto_0xbff096e8_0;}op/{}
+----> STATE_2 : {toto_0xbffe63a8_0;}op/{toto_0xbffe63e8;}
+----> STATE_3 : {toto_0xbffe63a8_0;}op/{}
 STATE_2 : 
 ----> STATE_4 : {}/{}
 STATE_3 : 
-----> STATE_2 : {toto_0xbff09728_0;}op/{toto_0xbff09768;}
+----> STATE_2 : {toto_0xbffe63e8_0;}op/{}
 STATE_4 : 

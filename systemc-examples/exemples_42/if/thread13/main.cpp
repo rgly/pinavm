@@ -1,8 +1,6 @@
 /*
 Test 3 imbricate IF..THEN..ELSE
 in a IF branch
-
-!!!!!!!!!!!!!!!!!!! BUG !!!!!!!!!!!!!!!!!
 */
 
 #include "systemc.h"

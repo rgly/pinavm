@@ -5,5 +5,5 @@
 STATE_0 (initial) : 
 ----> STATE_1 : {}op/{}
 STATE_1 : 
-----> STATE_2 : {toto_0xbfb7e9c8_0;}op/{toto_0xbfb7ea08;toto_0xbfb7ea48;}
-STATE_2 (final) : 
+----> STATE_2 : {toto_0xbfb10098_0;}op/{toto_0xbfb100d8;toto_0xbfb10118;}
+STATE_2 : 

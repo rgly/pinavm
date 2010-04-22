@@ -2457,6 +2457,7 @@ void _42Writer::visitBranchInst(BranchInst & I)
       Automat.set_structIfElseDetectedJustBefore(isThereIfElseJustBefore);
 
       if (isGotoCodeNecessary(I.getParent(), I.getSuccessor(1))) {
+	Out << "ababababababababababab\n";
 	string nameBasicBlock=Automat.get_nameBasicBlockAfterIf();
 	if(nameBasicBlock==I.getSuccessor(1)->getNameStr() || I.getSuccessor(1)->getNameStr()=="return"){
 	  string inputData =Automat.toString_eventsWaited();
@@ -2474,8 +2475,12 @@ void _42Writer::visitBranchInst(BranchInst & I)
 	  Automat.set_lastBuildState(lastBuildStateBeforeIfElse);
 	  Automat.set_existNotify(existNotifyBeforeIfElse);
 	  Automat.set_existWait(existWaitBeforeIfElse);
-
+	  Out << "zzzzzzzzzzzzzzzzzzzzzzzzzzz\n";
 	  Function::iterator BasicBlockBranchElseIterator=I.getSuccessor(1);
+	  Out << "name =" << BasicBlockBranchElseIterator->getNameStr() << "\n";
+	  Out << "after =" << Automat.get_nameBasicBlockAfterIf() << "\n";
+	  if(BasicBlockBranchElseIterator->getNameStr()==Automat.get_nameBasicBlockAfterIf())
+	    Out << "EUREKKKKKKKKKKA\n";
 	  Automat.set_visitingElseBranch(true);
 	  while(BasicBlockBranchElseIterator->getNameStr()!=Automat.get_nameBasicBlockAfterIf() && 
 		BasicBlockBranchElseIterator->getNameStr()!=Automat.get_lastBasicBlock()        &&
@@ -2484,9 +2489,13 @@ void _42Writer::visitBranchInst(BranchInst & I)
 	    printBasicBlock(BasicBlockBranchElseIterator);
 	    Automat.addBasicBlockVisited(BasicBlockBranchElseIterator->getNameStr());
 	    ++BasicBlockBranchElseIterator;
+	    Out << "++ =" << BasicBlockBranchElseIterator->getNameStr() << "\n";
 	  }
 
-	  if(BasicBlockBranchElseIterator->getNameStr()==Automat.get_lastBasicBlock()){
+	  if(BasicBlockBranchElseIterator->getNameStr()==Automat.get_lastBasicBlock() &&
+	     !Automat.get_existReturnInstInElseBranch() &&
+	     BasicBlockBranchElseIterator->getNameStr()!=Automat.get_nameBasicBlockAfterIf()){
+	    Out << "fffffffffffffffffffffff\n";
 	    printBasicBlock(BasicBlockBranchElseIterator);
 	    Automat.addBasicBlockVisited(BasicBlockBranchElseIterator->getNameStr());
 	  }

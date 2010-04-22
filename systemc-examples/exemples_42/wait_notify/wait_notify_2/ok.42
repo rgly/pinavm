@@ -3,7 +3,7 @@
 <contract interface="toto-ITF" name="toto-CT">
 00 + 1---------------- Contract in a drawing ------------------
 STATE_0 (initial) : 
-----> STATE_1 : {}op/{toto_0xbf9f2968;toto_0xbf9f29a8;}
+----> STATE_1 : {}op/{toto_0xbf951d98;toto_0xbf951dd8;}
 STATE_1 : 
-----> STATE_2 : {toto_0xbf9f2928_0;}op/{}
-STATE_2 (final) : 
+----> STATE_2 : {toto_0xbf951d58_0;}op/{}
+STATE_2 : 
