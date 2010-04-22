@@ -1,23 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE contract PUBLIC "toto-CT" "contract.dtd">
 <contract interface="toto-ITF" name="toto-CT">
-0(.field1)BB IF =bb
-0 + 1ababababababababababab
-zzzzzzzzzzzzzzzzzzzzzzzzzzz
-name =bb1
-after =bb2
-BB ELSE =bb1
-0 + 1++ =bb2
+printBasicBlock =entry
+0(.field1)printBasicBlock =bb
+0 + 1printBasicBlock =bb1
+0 + 1printBasicBlock =bb2
 ---------------- Contract in a drawing ------------------
 STATE_0 (initial) : 
 ----> STATE_1 : {}op/{}
 STATE_1 : 
-----> STATE_2 : {toto_0xbfe94968_0;}op/{toto_0xbfe94928;toto_0xbfe949a8;}
-----> STATE_3 : {toto_0xbfe94968_0;}op/{toto_0xbfe94928;toto_0xbfe949a8;toto_0xbfe94928;}
+----> STATE_2 : {toto_0xbfa4dbd8_0;}op/{toto_0xbfa4db98;toto_0xbfa4dc18;}
+----> STATE_3 : {toto_0xbfa4dbd8_0;}op/{toto_0xbfa4db98;toto_0xbfa4dc18;toto_0xbfa4db98;}
 STATE_2 : 
-----> STATE_3 : {toto_0xbfe94928_0;}op/{}
+----> STATE_3 : {toto_0xbfa4db98_0;}op/{}
 STATE_3 : 
-----> STATE_4 : {toto_0xbfe94968_0;}op/{}
+----> STATE_4 : {toto_0xbfa4dbd8_0;}op/{}
 STATE_4 : 
-----> STATE_5 : {toto_0xbfe94968_0;}op/{}
+----> STATE_5 : {toto_0xbfa4dbd8_0;}op/{}
 STATE_5 : 

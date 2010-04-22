@@ -1,54 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE contract PUBLIC "toto-CT" "contract.dtd">
 <contract interface="toto-ITF" name="toto-CT">
-0BB IF =bb
-0 + 1BB IF =bb1
-BB IF =bb2
-ababababababababababab
-zzzzzzzzzzzzzzzzzzzzzzzzzzz
-name =bb3
-after =bb4
-BB ELSE =bb3
-++ =bb4
-BB IF =bb2
-BB IF =bb3
-BB IF =bb4
-ababababababababababab
-zzzzzzzzzzzzzzzzzzzzzzzzzzz
-name =bb5
-after =
-BB ELSE =bb5
-++ =bb7
-BB IF =bb1
-BB IF =bb2
-BB IF =bb3
-BB IF =bb4
-BB IF =bb5
-ababababababababababab
-zzzzzzzzzzzzzzzzzzzzzzzzzzz
-name =bb7
-after =
-fffffffffffffffffffffff
+printBasicBlock =entry
+0printBasicBlock =bb
+0 + 1printBasicBlock =bb1
+printBasicBlock =bb2
+printBasicBlock =bb3
+printBasicBlock =bb4
+printBasicBlock =bb5
+printBasicBlock =bb7
 ---------------- Contract in a drawing ------------------
 STATE_0 (initial) : 
-----> STATE_1 : {}op/{toto_0xbffcc268;}
-----> STATE_9 : {}op/{toto_0xbffcc268;toto_0xbffcc2a8;}
+----> STATE_1 : {}op/{toto_0xbfa1b1e8;}
+----> STATE_9 : {}op/{toto_0xbfa1b1e8;toto_0xbfa1b228;}
 STATE_1 : 
-----> STATE_2 : {toto_0xbffcc268_0;}op/{toto_0xbffcc2e8;}
-----> STATE_8 : {toto_0xbffcc268_0;}op/{toto_0xbffcc268;}
+----> STATE_2 : {toto_0xbfa1b1e8_0;}op/{toto_0xbfa1b268;}
+----> STATE_8 : {toto_0xbfa1b1e8_0;}op/{toto_0xbfa1b1e8;}
 STATE_2 : 
-----> STATE_3 : {toto_0xbffcc2a8_0;}op/{toto_0xbffcc2e8;}
-----> STATE_6 : {toto_0xbffcc2a8_0;}op/{toto_0xbffcc2e8;}
+----> STATE_3 : {toto_0xbfa1b228_0;}op/{toto_0xbfa1b268;}
+----> STATE_6 : {toto_0xbfa1b228_0;}op/{toto_0xbfa1b268;}
 STATE_3 : 
-----> STATE_4 : {toto_0xbffcc328_0;}op/{}
+----> STATE_4 : {toto_0xbfa1b2a8_0;}op/{}
 STATE_4 : 
-----> STATE_5 : {toto_0xbffcc328_0;}op/{toto_0xbffcc328;}
+----> STATE_5 : {toto_0xbfa1b2a8_0;}op/{toto_0xbfa1b2a8;}
 STATE_5 : 
-----> STATE_7 : {toto_0xbffcc2e8_0;}op/{}
+----> STATE_7 : {toto_0xbfa1b268_0;}op/{}
 STATE_6 : 
-----> STATE_5 : {toto_0xbffcc268_0;}op/{}
+----> STATE_5 : {toto_0xbfa1b1e8_0;}op/{}
 STATE_7 : 
 ----> STATE_9 : {}/{}
 STATE_8 : 
-----> STATE_7 : {toto_0xbffcc268_0;}op/{}
+----> STATE_7 : {toto_0xbfa1b1e8_0;}op/{}
 STATE_9 : 

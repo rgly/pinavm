@@ -1,15 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE contract PUBLIC "toto-CT" "contract.dtd">
 <contract interface="toto-ITF" name="toto-CT">
-0---------------- Contract in a drawing ------------------
+printBasicBlock =entry
+0printBasicBlock =bb
+printBasicBlock =bb1
+printBasicBlock =bb2
+printBasicBlock =bb3
+printBasicBlock =bb4
+---------------- Contract in a drawing ------------------
 STATE_0 (initial) : 
 ----> STATE_1 : {}op/{}
 ----> STATE_3 : {}op/{}
 STATE_1 : 
-----> STATE_2 : {toto_0xbfd6fc88_0;}op/{}
+----> STATE_2 : {toto_0xbfdb77e8_0;}op/{}
 STATE_2 : 
-----> STATE_4 : {toto_0xbfd6fd08_0;}op/{}
-----> STATE_4 : {toto_0xbfd6fd48_0;}op/{}
+----> STATE_4 : {toto_0xbfdb7868_0;}op/{}
+----> STATE_4 : {toto_0xbfdb78a8_0;}op/{}
 STATE_3 : 
-----> STATE_2 : {toto_0xbfd6fcc8_0;}op/{}
+----> STATE_2 : {toto_0xbfdb7828_0;}op/{}
 STATE_4 : 
