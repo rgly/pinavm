@@ -17,7 +17,10 @@ _42AutomatonContract::_42AutomatonContract(){
   visitingElseBranch=false;
   existReturnInstInIfBranch=false;
   existReturnInstInElseBranch=false;
+  whileDetected=false;
+  endWhileDetected=false;
   nameBasicBlockAfterIf="";
+  // nameFirstBasicBlockIf="";
   // SCConstruct=Undefined;
 }
 
@@ -71,6 +74,22 @@ bool _42AutomatonContract::get_existReturnInstInElseBranch(){
 
 void _42AutomatonContract::set_existReturnInstInElseBranch(bool exist){
   this->existReturnInstInElseBranch=exist;
+}
+
+bool _42AutomatonContract::get_whileDetected(){
+  return this->whileDetected;
+}
+
+void _42AutomatonContract::set_whileDetected(bool detected){
+  this->whileDetected=detected;
+}
+
+bool _42AutomatonContract::get_endWhileDetected(){
+  return this->endWhileDetected;
+}
+
+void _42AutomatonContract::set_endWhileDetected(bool detected){
+  this->endWhileDetected=detected;
 }
 
 bool _42AutomatonContract::get_existNotify(){
@@ -135,6 +154,15 @@ void _42AutomatonContract::set_nameBasicBlockAfterIf(string name){
   this->nameBasicBlockAfterIf=name;
 }
   
+/*string _42AutomatonContract::get_nameFirstBasicBlockIf(){
+  string s;
+  s=this->nameFirstBasicBlockIf;
+  return s;
+}
+
+void _42AutomatonContract::set_nameFirstBasicBlockIf(string name){
+  this->nameFirstBasicBlockIf=name;
+  }*/
 
 string _42AutomatonContract::toString_eventsWaited(){
   string s;

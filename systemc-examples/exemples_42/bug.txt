@@ -1,1 +1,9 @@
-Aucun bug connu a ce jour
+BUG connus :
+-- Dans while/thread6/ :
+   Le dernier WAIT (apres le WHILE) n'est pas traite.
+   Il semble que le frontend soit bugge : le WAIT ne semble
+   pas se trouver dans le bon BasicBlock.
+-- Dans while/thread7/ :
+   Confusion entre le branchement a la fin des instructions
+   d'un WHILE, et le branchement correspondant au debut
+   d'un nouveau WHILE

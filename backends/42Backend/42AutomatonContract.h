@@ -37,11 +37,14 @@ private:
   bool structIfElseDetectedJustBefore;
   set<string> BBVisited;
   string nameBasicBlockAfterIf;
+  //string nameFirstBasicBlockIf;
   bool visitingIfBranch;
   bool visitingElseBranch;
   string lastBasicBlock;
   bool existReturnInstInIfBranch;
   bool existReturnInstInElseBranch;
+  bool whileDetected;
+  bool endWhileDetected;
   //  FirstSCConstruct SCConstruct;
   /*  bool isEmptyEventsWaited;
       bool isEmptyEventsNotified;*/
@@ -65,6 +68,12 @@ public:
   bool get_existReturnInstInElseBranch();
   void set_existReturnInstInElseBranch(bool exist);
 
+  bool get_whileDetected();
+  void set_whileDetected(bool detected);
+
+  bool get_endWhileDetected();
+  void set_endWhileDetected(bool detected);
+
   bool get_existNotify();
   void set_existNotify(bool exist);
 
@@ -85,6 +94,9 @@ public:
 
   string get_nameBasicBlockAfterIf();
   void   set_nameBasicBlockAfterIf(string name);
+
+  //string get_nameFirstBasicBlockIf();
+  //void   set_nameFirstBasicBlockIf(string name);
 
   string toString_eventsWaited();
   string toString_eventsNotified();
