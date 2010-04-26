@@ -40,6 +40,7 @@ private:
   //string nameFirstBasicBlockIf;
   bool visitingIfBranch;
   bool visitingElseBranch;
+  bool visitingWhileBranch;
   string lastBasicBlock;
   bool existReturnInstInIfBranch;
   bool existReturnInstInElseBranch;
@@ -61,6 +62,9 @@ public:
 
   bool get_visitingElseBranch();
   void set_visitingElseBranch(bool visiting);
+
+  bool get_visitingWhileBranch();
+  void set_visitingWhileBranch(bool visiting);
 
   bool get_existReturnInstInIfBranch();
   void set_existReturnInstInIfBranch(bool exist);

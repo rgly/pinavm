@@ -15,6 +15,7 @@ _42AutomatonContract::_42AutomatonContract(){
   structIfElseDetectedJustBefore=false;
   visitingIfBranch=false;
   visitingElseBranch=false;
+  visitingWhileBranch=false;
   existReturnInstInIfBranch=false;
   existReturnInstInElseBranch=false;
   whileDetected=false;
@@ -58,6 +59,14 @@ bool _42AutomatonContract::get_visitingElseBranch(){
 
 void _42AutomatonContract::set_visitingElseBranch(bool visiting){
   this->visitingElseBranch=visiting;
+}
+
+bool _42AutomatonContract::get_visitingWhileBranch(){
+  return this->visitingWhileBranch;
+}
+
+void _42AutomatonContract::set_visitingWhileBranch(bool visiting){
+  this->visitingWhileBranch=visiting;
 }
 
 bool _42AutomatonContract::get_existReturnInstInIfBranch(){

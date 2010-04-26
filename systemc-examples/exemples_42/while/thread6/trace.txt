@@ -1,0 +1,82 @@
+############### Printing IR ###############
+************ IR for process 0xcfe2428*************
+Function : _ZN6thread2T1Ev
+   BasicBlock : entry
+    SCC Construct : WAIT(toto_0xbfd277f8)
+   BasicBlock : bb
+    SCC Construct : WAIT(toto_0xbfd27838)
+   BasicBlock : bb1
+   BasicBlock : bb2
+    SCC Construct : WAIT(toto_0xbfd27838)
+   BasicBlock : return
+
+############### Printing ELAB ###############
+Module : 0xcfe2360
+
+    process : 0xcfe2428
+      Event : 0x89be5e0 ("toto_0xbfd277f8")
+      Event : 0x89bde28 ("toto_0xbfd27838")
+
+   **> 42Writer > Emitting Header Section 
+   **> 42Writer > Building Contract 
+           #################### SET Process : 0xcfe2428
+           #################### Associated module : 0xcfe2360
+      -> 42Writer > printing process : toto__ZN6thread2T1Ev_pid0
+      -> Info : nb of used functions : 1
+           42Writer > printing function : _ZN6thread2T1Ev
+              42Writer > printing basic blocks
+                 42Writer > printing basic block : entry
+           /***** Visiting bitcast ( writeInstComputationInline() ) ******/ 
+           /***** visitCastInst ****/
+           /**** writeOperand() ****/
+           /**** Printing constant ****/
+           
+           /***** Visited bitcast******/ 
+           /***** SKIPPING inlinable inst or direct alloca ****/
+           /***** SKIPPING inlinable inst or direct alloca ****/
+           /***** Visiting call ( writeInstComputationInline() ) ******/ 
+           /***** visitCallInst ****/
+           /***** visitSCConstruct() *****/
+           
+           /***** Visited call******/ 
+           /***** Visit terminator : b*****/
+           /***** visitBranchInst() NOT CONDITIONAL *****/
+                 42Writer > printing basic block : bb1
+           /***** Visiting phi ( writeInstComputationInline() ) ******/ 
+           /***** visitPHINode ****/
+           /**** writeOperand() ****/
+           
+           /***** Visited phi******/ 
+           /***** SKIPPING inlinable inst or direct alloca ****/
+           /***** SKIPPING inlinable inst or direct alloca ****/
+           /***** SKIPPING inlinable inst or direct alloca ****/
+           /***** Visiting call ( writeInstComputationInline() ) ******/ 
+           /***** visitCallInst ****/
+           /***** visitSCConstruct() *****/
+           C'est ici que c'est bizarre : pourquoi un SCConstruct,
+           alors que bb1 ne devrait a priori comporter que le
+           branchement conditionnel lie a l'evaluation de la condition
+           du WHILE ...
+           
+           /***** Visited call******/ 
+           /***** Visit terminator : b*****/
+           /***** visitBranchInst() CONDITIONAL *****/
+                 42Writer > printing basic block : bb
+           /***** Visiting add ( writeInstComputationInline() ) ******/ 
+           /**** visitBinaryOperator() ****/
+           /**** writeOperand() ****/
+           /**** writeOperand() ****/
+           /**** Printing constant ****/
+           
+           /***** Visited add******/ 
+           /***** Visit terminator : b*****/
+           /***** visitBranchInst() NOT CONDITIONAL *****/
+           /***** Visited terminator ****/
+           /***** Visited terminator ****/
+           /***** Visited terminator ****/
+                 42Writer > printing basic block : return
+           /***** Visit terminator : r*****/
+           /***** Visiting return inst ****/
+           /***** Visited terminator ****/
+   **> 42Writer > Drawing Contract 
+###> Shutdown...

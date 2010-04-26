@@ -2236,7 +2236,7 @@ void _42Writer::printBasicBlock(BasicBlock * BB)
 {
   if(!Automat.isBasicBlockAlreadyVisited(BB->getNameStr())){
     TRACE_6("42Writer > printing basic block : " << BB->getNameStr() << "\n");
-    Out << "printBasicBlock =" << BB->getNameStr() << "\n";
+
     // Output all of the instructions in the basic block...
 
     for (BasicBlock::iterator II = BB->begin(), E = --BB->end();
@@ -2407,13 +2407,16 @@ void _42Writer::visitBranchInst(BranchInst & I)
     TRACE_4("/***** visitBranchInst() CONDITIONAL *****/\n");
 
     if (isGotoCodeNecessary(I.getParent(), I.getSuccessor(0))) {
-      if(Automat.get_whileDetected()){
+      if(Automat.get_whileDetected() && !Automat.get_visitingWhileBranch()){
 	Function::iterator BasicBlockBranchWhileIterator=I.getSuccessor(0);
+
+	Automat.set_visitingWhileBranch(true);
 	while(!Automat.get_endWhileDetected()){
 	  printBasicBlock(BasicBlockBranchWhileIterator);
 	  Automat.addBasicBlockVisited(BasicBlockBranchWhileIterator->getNameStr());
 	  ++BasicBlockBranchWhileIterator;
 	}
+	Automat.set_visitingWhileBranch(false);
       }
       else{
 	//string name=I.getSuccessor(0)->getNameStr();
@@ -2549,8 +2552,12 @@ void _42Writer::visitBranchInst(BranchInst & I)
   } 
   else {
     TRACE_4("/***** visitBranchInst() NOT CONDITIONAL *****/\n");
-    if(!Automat.get_visitingIfBranch() && !Automat.get_whileDetected()){
+    if(!Automat.get_visitingIfBranch() && !Automat.get_visitingElseBranch()){
+      if(!Automat.get_visitingWhileBranch() || 
+	 (Automat.get_visitingWhileBranch() && !Automat.isBasicBlockAlreadyVisited(I.getSuccessor(0)->getNameStr()))){
+	bool visitingWhileBeforeThis=Automat.get_visitingWhileBranch();
 	bool whileDetectedBeforeThis=Automat.get_whileDetected();
+	Automat.set_visitingWhileBranch(false);
 	Automat.set_whileDetected(true);
 
 	int lastBuildStateBeforeWhile=Automat.get_lastBuildState();
@@ -2590,27 +2597,56 @@ void _42Writer::visitBranchInst(BranchInst & I)
 	}
 	Automat.addTransition(lastBuildStateBranchWhile,firstStateWhile,transitionLastStateWhile);
 
-	//int firstStateAfterWhile=Automat.addState(Intermediate);             !!! Ces 3 lignes en commentaires sont
-	//Automat.addTransition(firstStateWhile,firstStateAfterWhile,"{}/{}"); !!! probablement en fait necessaires
-
-	//Automat.set_lastBuildState(firstStateAfterWhile);
-	Automat.set_lastBuildState(firstStateWhile);
+	if(visitingWhileBeforeThis){
+	  Automat.set_lastBuildState(firstStateWhile);
+	}
+	else{
+	  int firstStateAfterWhile=Automat.addState(Intermediate);             
+	  Automat.addTransition(firstStateWhile,firstStateAfterWhile,"{}op/{}"); 
+	  Automat.set_lastBuildState(firstStateAfterWhile);
+	}
 
 	Automat.set_existNotify(false);
 	Automat.set_existWait(false);
 	Automat.clearEventsWaited();
 	Automat.clearEventsNotified();
 
+	Automat.set_visitingWhileBranch(visitingWhileBeforeThis);
 	Automat.set_whileDetected(whileDetectedBeforeThis);
 	Automat.set_endWhileDetected(false);
-      
-    }
-    else{
-      if(!Automat.get_visitingIfBranch() && Automat.get_whileDetected()){
-	Automat.set_endWhileDetected(true);
       }
       else{
+	Automat.set_endWhileDetected(true);
+      }
+    }
+    else{
+      BasicBlock *BB=I.getSuccessor(0);
+      Function::iterator BasicBlockIterator=I.getParent();
+      ++BasicBlockIterator;
+      string nameNextBasicBlock=GetValueName(BasicBlockIterator);
+      BasicBlock::iterator II = BB->begin();
+      BasicBlock::iterator E = --BB->end();
+      int a=0;
+      while(II != E) {
+	if (!isInlinableInst(*II) && !isDirectAlloca(II)) {
+	  a++;
+	}
+	else {}
+	++II;
+      }
+
+      if(a!=0){
 	Automat.set_nameBasicBlockAfterIf(I.getSuccessor(0)->getNameStr());
+      }
+      else{
+	if((*BB->getTerminator()).getNumSuccessors()==2){
+	  if(GetValueName((*BB->getTerminator()).getSuccessor(0))==nameNextBasicBlock){
+	    Automat.set_whileDetected(true);
+	  }
+	  else{
+	    Automat.set_nameBasicBlockAfterIf(I.getSuccessor(0)->getNameStr());
+	  }
+	}
       }
     }
   }
@@ -2622,8 +2658,8 @@ void _42Writer::visitBranchInst(BranchInst & I)
 void _42Writer::visitPHINode(PHINode & I)
 {
   TRACE_4("/***** visitPHINode ****/\n");
-  writeOperand(&I);
-  Out << "__PHI_TEMPORARY";
+  // writeOperand(&I);
+  //Out << "__PHI_TEMPORARY";
 }
 
 

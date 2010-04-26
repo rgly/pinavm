@@ -1,7 +1,5 @@
 /*
 Test three imbricate WHILE
-
-!!!!!!!!!!!!! BUG !!!!!!!!!!!!!
 */
 
 #include "systemc.h"
