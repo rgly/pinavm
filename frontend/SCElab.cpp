@@ -160,7 +160,7 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 			TRACE_4("type of variable accessed through port : " << itfType << "\n");
 			theNewPort = new Port(mod, portName);
 			if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
-				ch = new SimpleChannel((Type*) itfType, variableTypeName);
+				ch = new SimpleChannel((Type*) itfType, itfTypeName);
 				this->channels.push_back(ch);
 				this->channelsMap.insert(this->channelsMap.end(), pair < sc_core::sc_interface *, Channel * >(itf, ch));
 

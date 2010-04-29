@@ -13,6 +13,7 @@ protected:
 
 public:
 	ReadConstruct(Port * p, Value* callInst);
+	ReadConstruct(Value* callInst);
 	Value* getCallInst();
 	void setPort(Port * e);
 	Port *getPort();

@@ -3,9 +3,10 @@
 
 using namespace llvm;
 
-EventConstruct::EventConstruct(Value* missingValue) : SCConstruct(missingValue)
+EventConstruct::EventConstruct(Value* missingE) : SCConstruct(false)
 {
 	this->id = WAITEVENTCONSTRUCT;
+	this->missingEvent = missingE;
 }
 
 EventConstruct::EventConstruct(Event * e)
@@ -23,6 +24,12 @@ void
 Event *EventConstruct::getWaitedEvent()
 {
 	return this->event;
+}
+
+Value*
+EventConstruct::getMissingEvent()
+{
+	return this->missingEvent;
 }
 
 std::string EventConstruct::toString()

@@ -11,11 +11,10 @@ SCConstruct::SCConstruct()
 	this->staticallyFound = true;
 }
 
-SCConstruct::SCConstruct(Value* missingValue)
+SCConstruct::SCConstruct(bool found)
 {
 	this->threadName = "NYI: SCConstruct::threadName";
-	this->staticallyFound = false;
-	this->dynValue = missingValue;
+	this->staticallyFound = found;
 }
 
 string
@@ -28,12 +27,6 @@ construct_id
 SCConstruct::getID()
 {
 	return this->id;
-}
-
-Value*
-SCConstruct::getMissingValue()
-{
-	return this->dynValue;
 }
 
 bool

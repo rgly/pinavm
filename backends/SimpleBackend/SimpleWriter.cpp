@@ -2061,7 +2061,9 @@ void SimpleWriter::printFunctionSignature(const Function * F,
 		printType(Out, itRet->second, true, itRet->first);    
 	}
 	
-	printType(Out, RetTy, true, "llvm_cbe_mrv_temp");  
+	if (RetTy->getTypeID() != Type::VoidTyID) {
+		printType(Out, RetTy, true, "llvm_cbe_mrv_temp");  
+	}
 	Out << ")";
 }
 
@@ -2102,7 +2104,7 @@ SimpleWriter::fillDependencies(const Function* F,
 			const Value* currentArg = &*argI;
 			std::vector<pair<std::string, const Type*> >* argDeps = new std::vector<pair<std::string, const Type*> >();
 			argPrefix = prefix + GetValueName(currentArg);
-			// Get the memory locations accessed through this prarameter 			
+			// Get the memory locations accessed through this prarameter
 			getValueDependencies((Value*) currentArg, argPrefix, argDeps, ret, allDepsByValue, allDepsByName);
 			addVectors(argDeps, args);
 		}
@@ -2200,11 +2202,20 @@ SimpleWriter::getValueDependencies(Value* value,
 		Value* currentValue = *(visited.begin());
 		std::string currentName = (*allDepsByValue)[currentValue];
 		const Type *currentTy = (*allDepsByName)[currentName];
+		visited.erase(visited.begin());
 
-		if (isa<PointerType>(currentTy)) {
+		TRACE_7("GetValueDependencies loop 1 \n");
+
+		while (isa<PointerType>(currentTy)) {
 			currentTy = cast<PointerType>(currentTy)->getElementType();        
 		}
-		const StructType* cst = cast<StructType>(currentTy);
+		TRACE_7("GetValueDependencies loop 2 \n");
+
+		const StructType* cst;
+		if (isa<StructType>(currentTy))
+			cst = cast<StructType>(currentTy);
+		else
+			continue;
 
 		TRACE_7("Current value is : " << currentValue << "\n");
 		currentValue->dump();
@@ -2251,7 +2262,7 @@ SimpleWriter::getValueDependencies(Value* value,
 						(*allDepsByName)[name] = fieldType;
 						visited.push_back(getEltPtrInst);
 						
-						TRACE_7("Added to visited : " << getEltPtrInst << "  " << name << "\n");
+						TRACE_7("Added to visited (inside loop): " << getEltPtrInst << "  " << name << "\n");
 					} else {
 						TRACE_7("Already visited : " << getEltPtrInst << "  " << name << "\n");
 					}
@@ -2295,8 +2306,9 @@ SimpleWriter::getValueDependencies(Value* value,
 				ERROR("getValueDepencencies() > Else case ????? ");
 			}
 		}
-		visited.erase(visited.begin());
 	}
+	TRACE_7("Done : getValueDependencies\n");
+
 }
 
 static inline bool isFPIntBitCast(const Instruction & I)
@@ -3397,7 +3409,7 @@ SimpleWriter::visitSCConstruct(SCConstruct * scc)
 				sc = (SimpleChannel*) *channelsIt;
 //			if (port->getGlobalVariableType()->getTypeID() != Type::PointerTyID) {
 				Out << "/* write() on simpleport */\n";
-				Out << sc->getGlobalVariableName() << " = " << wc->getValue();
+				Out << sc->getGlobalVariableName() << " = " << GetValueName(wc->getMissingValue());
 				if (channelsIt != channels->end())
 					Out << ";\n";
 			}

@@ -1,5 +1,11 @@
 #include "TimeConstruct.hpp"
 
+TimeConstruct::TimeConstruct(Value* missingT) : SCConstruct(false)
+{
+	this->id = TIMECONSTRUCT;
+	this->missingTime = missingT;
+}
+
 TimeConstruct::TimeConstruct(int t)
 {
 	this->id = TIMECONSTRUCT;

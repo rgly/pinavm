@@ -13,11 +13,15 @@ struct Event;
 
 struct NotifyConstruct:public SCConstruct {
 
-	protected:Event * event;
-      public:
+protected:
+	Event * event;
+	Value * missingEvent;
+public:
 	NotifyConstruct(Event * e);
+	NotifyConstruct(Value * missingE);
 	void setNotifiedEvent(Event * e);
 	Event *getNotifiedEvent();
+	Value* getMissingEvent();
 	string toString();
 };
 
