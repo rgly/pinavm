@@ -53,7 +53,7 @@ ifdef SCOOT_HOME
 include ${SCOOT_HOME}/common.mk
 endif
 
-PINAVM=../../toplevel/pinavm
+PINAVM=$(ROOT)/toplevel/pinavm
 .PHONY: $(PINAVM)
 $(PINAVM):
 	cd $$(dirname $(PINAVM)) && $(MAKE) $$(basename $(PINAVM))

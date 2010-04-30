@@ -1,5 +1,9 @@
 SRC = main.cpp
 
-all: main.exe main.opt.sc.bc
+ROOT=../../../../
+all: main.bc
 
-include ../../../common.mk
+include $(ROOT)/systemc-examples/common.mk
+
+ok.42: main.bc
+	$(PINAVM) -print-ir -print-elab -b 42 -o $@ main.bc
