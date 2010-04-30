@@ -12,7 +12,7 @@ SCConstruct *NotifyHandler::handle(Function * fct, BasicBlock * bb, Instruction*
 	void *eventAddr = this->scjit->jitAddr(fct, callInst, arg);
 	TRACE_4("Address jitted : " << eventAddr << "\n");
 	if (eventAddr == NULL)
-		return new NotifyConstruct(NULL);
+		return new NotifyConstruct((Value*)NULL);
 
 	Event *e = this->scjit->getElab()->getEvent(eventAddr);
 	TRACE_3("Event notified : " << (void *) e << " (" << e->toString() << ") \n");

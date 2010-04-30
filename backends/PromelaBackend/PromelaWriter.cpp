@@ -7,6 +7,7 @@
 #include "llvm/InstrTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
@@ -1475,7 +1476,7 @@ void PromelaWriter::writeInstComputationInline(Instruction & I)
 					Ty != Type::getInt16Ty(I.getContext()) &&
 					Ty != Type::getInt32Ty(I.getContext()) &&
 					Ty != Type::getInt64Ty(I.getContext()))) {
-		report_fatal_error("The Simple backend does not currently support integer types"
+		llvm_report_error("The Simple backend does not currently support integer types"
 				"of widths other than 1, 8, 16, 32, 64.\n"
 				"This is being tracked as PR 4158.");
 	}
@@ -3472,7 +3473,7 @@ bool PromelaWriter::visitBuiltinCall(CallInst & I, Intrinsic::ID ID,
 				"The C backend does not currently supoprt zero "
 			    << "argument varargs functions, such as '" <<
 				I.getParent()->getParent()->getName() << "'!";
-			report_fatal_error(Msg.str());
+			llvm_report_error(Msg.str());
 		}
 		writeOperand(--I.getParent()->getParent()->arg_end());
 		Out << ')';
@@ -3946,8 +3947,11 @@ bool PromelaWriter::runOnModule(Module & M)
 
 	// Ensure that all structure types have names...
 	TAsm = new MCAsmInfo();
-	MCContext* mcc = new MCContext(*TAsm);
-	Mang = new Mangler(*mcc, *TD);
+	Mang = new Mangler(*TAsm);
+// LLVM > 2.7 will require this:
+//	MCContext* mcc = new MCContext(*TAsm);
+//	Mang = new Mangler(*mcc, *TD);
+
 // MM: doesn't exist anymore. Not sure what to put instead.
 //	Mang->markCharUnacceptable('.');
 

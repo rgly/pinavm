@@ -15,7 +15,7 @@ triggerError(formatted_raw_ostream & Out)
 {
 	Out.flush();
 	delete &Out;
-	report_fatal_error(ErrorMsg.str());
+	llvm_report_error(ErrorMsg.str());
 }
 
 void triggerError(formatted_raw_ostream & Out, std::string msg)
