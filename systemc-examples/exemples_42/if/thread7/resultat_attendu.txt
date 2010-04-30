@@ -1,0 +1,11 @@
+STATE_0 (initial) : 
+----> STATE_1 : {}op/{}
+----> STATE_4 : {}op/{e2;e3;}
+STATE_1 : 
+----> STATE_2 : {e1;}op/{}
+----> STATE_3 : {e1;}op/{}
+STATE_2 : 
+----> STATE_3 : {e2;}op/{}
+STATE_3 : 
+----> STATE_4 : {}/{}
+STATE_4 : 

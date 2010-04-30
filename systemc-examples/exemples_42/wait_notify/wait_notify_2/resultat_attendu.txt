@@ -1,0 +1,5 @@
+STATE_0 (initial) : 
+----> STATE_1 : {}op/{e2;e3;}
+STATE_1 : 
+----> STATE_2 : {e1;}op/{}
+STATE_2 : 

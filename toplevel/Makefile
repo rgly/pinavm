@@ -34,7 +34,7 @@ ALL_OBJS = $(OBJS) $(UTILS_OBJS) $(FRONTEND_OBJS) $(BACKENDS_OBJS) $(SYSTEMC_OBJ
 
 CXXFLAGS += -I$(SYSTEMC)/include
 CXXFLAGS += -I$(FRONTENDDIR)
-CXXFLAGS += -I$(BACKENDSDIR)/SimpleBackend -I$(BACKENDSDIR)/PromelaBackend
+CXXFLAGS += -I$(BACKENDSDIR)/SimpleBackend -I$(BACKENDSDIR)/PromelaBackend -I$(BACKENDSDIR)/42Backend
 CXXFLAGS += -I$(UTILSDIR)
 
 # llvm-config sometimes includes -fno-rtti -fno-exceptions, but we don't want this:

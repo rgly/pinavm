@@ -1,0 +1,6 @@
+BUG connus :
+-- Dans while/thread6/ :
+   Le dernier WAIT (apres le WHILE) n'est pas traite.
+   Il semble que le frontend soit bugge : le WAIT ne semble
+   pas se trouver dans le bon BasicBlock.
+-- Dans if_and_while/thread2/

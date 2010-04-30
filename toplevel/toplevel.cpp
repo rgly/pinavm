@@ -32,6 +32,7 @@ using namespace llvm;
 #include "FrontendItf.hpp"
 #include "SimpleBackend.h"
 #include "PromelaBackend.h"
+#include "42Backend.h"
 
 // get a -load option.
 //#include "llvm/Support/PluginLoader.h"
@@ -112,6 +113,8 @@ void pinavm_callback()
 			launch_simplebackend(fe, OutputFilename, EventsAsBool, RelativeClocks);
 		} else if (Backend == "promela" || Backend == "Promela") {
 			launch_promelabackend(fe, OutputFilename, EventsAsBool, RelativeClocks, Bug);
+		} else if (Backend == "42") {
+		        launch_42backend(fe, OutputFilename, EventsAsBool, RelativeClocks, Bug);
 		} else {
 			ERROR("Backend " << Backend << " unknown\n");
 		}
