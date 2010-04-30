@@ -48,6 +48,7 @@ CXXFLAGS += `llvm-config --cxxflags jit bitreader bitwriter native` \
 # doesn't link. So, these two files are compiled without rtti.
 CXXFLAGS.../backends/PromelaBackend/PromelaTargetMachine=-fno-rtti -fno-exceptions
 CXXFLAGS.../backends/SimpleBackend/SimpleTargetMachine=-fno-rtti -fno-exceptions
+CXXFLAGS.../backends/42Backend/42TargetMachine=-fno-rtti -fno-exceptions
 
 LDLIBS += `llvm-config --ldflags --libs jit interpreter nativecodegen bitreader selectiondag`
 

@@ -7,6 +7,7 @@
 #include "llvm/InstrTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/MC/MCAsmInfo.h"
 
 #include "Port.hpp"
 #include "Channel.hpp"
@@ -170,7 +171,7 @@ _42Writer::printSimpleType(formatted_raw_ostream & Out,
 			   const Type * Ty, bool isSigned,
 			   const std::string & NameSoFar)
 {
-  assert((Ty->isPrimitiveType() || Ty->isInteger()
+  assert((Ty->isPrimitiveType() || Ty->isIntegerTy()
 	  || isa < VectorType > (Ty))
 	 && "Invalid type for printSimpleType");
 
@@ -217,7 +218,7 @@ _42Writer::printSimpleType(std::ostream & Out, const Type * Ty,
 			   bool isSigned,
 			   const std::string & NameSoFar)
 {
-  assert((Ty->isPrimitiveType() || Ty->isInteger()
+  assert((Ty->isPrimitiveType() || Ty->isIntegerTy()
 	  || isa < VectorType > (Ty))
 	 && "Invalid type for printSimpleType");
 
@@ -271,7 +272,7 @@ _42Writer::printType(formatted_raw_ostream & Out,
 		     bool isSigned, const std::string & NameSoFar,
 		     bool IgnoreName, const AttrListPtr & PAL)
 {
-  if (Ty->isPrimitiveType() || Ty->isInteger() || isa < VectorType > (Ty)) {
+  if (Ty->isPrimitiveType() || Ty->isIntegerTy() || isa < VectorType > (Ty)) {
     printSimpleType(Out, Ty, isSigned, NameSoFar);
     return Out;
   }
@@ -402,7 +403,7 @@ _42Writer::printType(std::ostream & Out,
 		     bool isSigned, const std::string & NameSoFar,
 		     bool IgnoreName, const AttrListPtr & PAL)
 {
-  if (Ty->isPrimitiveType() || Ty->isInteger()
+  if (Ty->isPrimitiveType() || Ty->isIntegerTy()
       || isa < VectorType > (Ty)) {
     printSimpleType(Out, Ty, isSigned, NameSoFar);
     return Out;
@@ -1348,7 +1349,7 @@ bool _42Writer::printConstExprCast(const ConstantExpr * CE, bool Static)
   }
   if (NeedsExplicitCast) {
     Out << "((";
-    if (Ty->isInteger()
+    if (Ty->isIntegerTy()
 	&& Ty != Type::getInt1Ty(Ty->getContext()))
       printSimpleType(Out, Ty, TypeIsSigned);
     else
@@ -1417,7 +1418,7 @@ std::string _42Writer::GetValueName(const Value * Operand)
 
     // Mangle globals with the standard mangler interface for LLC compatibility.
     if (const GlobalValue * GV = dyn_cast < GlobalValue > (Operand)) {
-      res = Mang->getMangledName(GV);
+      res = Mang->getNameWithPrefix(GV);
       return replaceAll(res, ".", "-");
     }
   std::string Name = Operand->getName();
@@ -1455,7 +1456,7 @@ void _42Writer::writeInstComputationInline(Instruction & I)
   // We can't currently support integer types other than 1, 8, 16, 32, 64.
   // Validate this.
   const Type *Ty = I.getType();
-  if (Ty->isInteger() && (Ty != Type::getInt1Ty(I.getContext()) &&
+  if (Ty->isIntegerTy() && (Ty != Type::getInt1Ty(I.getContext()) &&
 			  Ty != Type::getInt8Ty(I.getContext()) &&
 			  Ty != Type::getInt16Ty(I.getContext()) &&
 			  Ty != Type::getInt32Ty(I.getContext()) &&
@@ -1639,7 +1640,7 @@ void _42Writer::writeOperandWithCast(Value * Operand,
     return;
   }
   // Should this be a signed comparison?  If so, convert to signed.
-  bool castIsSigned = Cmp.isSignedPredicate();
+  bool castIsSigned = Cmp.isSigned();
 
   // If the operand was a pointer, convert to a large integer type.
   const Type *OpTy = Operand->getType();
@@ -2052,7 +2053,7 @@ bool _42Writer::fillContainedStructs(const Type * Ty, std::set <const Type * >* 
   bool isEmpty = true;
 
   // Don't walk through pointers.
-  if (isa < PointerType > (Ty) || Ty->isPrimitiveType() || Ty->isInteger())
+  if (isa < PointerType > (Ty) || Ty->isPrimitiveType() || Ty->isIntegerTy())
     return false;
 	
   // Print all contained types first.
@@ -2172,7 +2173,7 @@ _42Writer::isSystemCStruct(const StructType* ty)
 bool
 _42Writer::isSystemCType(const Type* ty)
 {
-  if (ty->isPrimitiveType() || ty->isInteger())
+  if (ty->isPrimitiveType() || ty->isIntegerTy())
     return false;
 
   return true;
@@ -2191,8 +2192,8 @@ static inline bool isFPIntBitCast(const Instruction & I)
     return false;
   const Type *SrcTy = I.getOperand(0)->getType();
   const Type *DstTy = I.getType();
-  return (SrcTy->isFloatingPoint() && DstTy->isInteger()) ||
-    (DstTy->isFloatingPoint() && SrcTy->isInteger());
+  return (SrcTy->isFloatingPointTy() && DstTy->isIntegerTy()) ||
+    (DstTy->isFloatingPointTy() && SrcTy->isIntegerTy());
 }
 
 void _42Writer::printFunction(Function & F, bool inlineFct)
@@ -3001,7 +3002,6 @@ void _42Writer::lowerIntrinsics(Function & F)
 	  case Intrinsic::setjmp:
 	  case Intrinsic::longjmp:
 	  case Intrinsic::prefetch:
-	  case Intrinsic::dbg_stoppoint:
 	  case Intrinsic::powi:
 	  case Intrinsic::x86_sse_cmp_ss:
 	  case Intrinsic::x86_sse_cmp_ps:
@@ -3489,7 +3489,7 @@ _42Writer::visitSCConstruct(SCConstruct * scc)
 void _42Writer::visitCallInst(CallInst & I)
 {
   TRACE_4("/***** visitCallInst ****/\n");
-  std::map <CallInst*, std::map<Process*, SCConstruct*> >::iterator itC;
+  std::map <Instruction*, std::map<Process*, SCConstruct*> >::iterator itC;
   CallInst* pI = cast<CallInst>(pointerToInst);
   itC = this->sccfactory->getConstructs()->find(pI);
   if (itC != this->sccfactory->getConstructs()->end()) {
@@ -3570,7 +3570,7 @@ void _42Writer::visitCallInst(CallInst & I)
     Function* pf = pI->getParent()->getParent();
     if (cf->getArgumentList().size() != 0) {
       Value* arg = pI->getOperand(1);
-      void* mod = this->scjit->jitAddr(pf, arg);
+      void* mod = this->scjit->jitAddr(pf, pI, arg);
       TRACE_4("################# Module jitted : " << mod << "\n");
       TRACE_4("################# IRModule associated : " << this->elab->getIRModule(mod) << "\n");
     }
@@ -3718,19 +3718,6 @@ bool _42Writer::visitBuiltinCall(CallInst & I, Intrinsic::ID ID,
     Out << "0; *((void**)&" << GetValueName(&I)
 	<< ") = __builtin_stack_save()";
     return true;
-  case Intrinsic::dbg_stoppoint:{
-    // If we use writeOperand directly we get a "u" suffix which is rejected
-    // by gcc.
-    DbgStopPointInst & SPI =
-      cast < DbgStopPointInst > (I);
-    std::string dir;
-    GetConstantStringInfo(SPI.getDirectory(), dir);
-    std::string file;
-    GetConstantStringInfo(SPI.getFileName(), file);
-    Out << "\n#line " << SPI.getLine()
-	<< " \"" << dir << '/' << file << "\"\n";
-    return true;
-  }
   case Intrinsic::x86_sse_cmp_ss:
   case Intrinsic::x86_sse_cmp_ps:
   case Intrinsic::x86_sse2_cmp_sd:
@@ -3804,12 +3791,6 @@ void _42Writer::visitInlineAsm(CallInst & CI)
   triggerError(Out, "Cannot handle inline ASM\n");
 }
 
-void _42Writer::visitMallocInst(MallocInst & I)
-{
-  TRACE_4("/***** visitMallocInst ****/\n");
-  llvm_unreachable("lowerallocations pass didn't work!");
-}
-
 void _42Writer::visitAllocaInst(AllocaInst & I)
 {
 
@@ -3824,12 +3805,6 @@ void _42Writer::visitAllocaInst(AllocaInst & I)
     writeOperand(I.getOperand(0));
   }
   Out << ')';
-}
-
-void _42Writer::visitFreeInst(FreeInst & I)
-{
-  TRACE_4("/***** visitFreeInst ****/\n");
-  llvm_unreachable("lowerallocations pass didn't work!");
 }
 
 void
@@ -4164,8 +4139,10 @@ bool _42Writer::runOnModule(Module & M)
   IL->AddPrototypes(M);
 
   // Ensure that all structure types have names...
-  Mang = new Mangler(M);
-  Mang->markCharUnacceptable('.');
+  TAsm = new MCAsmInfo();
+  Mang = new Mangler(*TAsm);
+// MM: doesn't exist anymore. Not sure what to put instead.
+//  Mang->markCharUnacceptable('.');
 
 
   /* Print header outputfile(xml file) */

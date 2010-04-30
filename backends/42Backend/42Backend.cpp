@@ -50,7 +50,7 @@ void launch_42backend(Frontend * fe,
 	if (OutputFilename != "-") {
 
 		std::string error;
-		raw_fd_ostream *FDOut = new raw_fd_ostream(OutputFilename.c_str(), true, true, error);
+		raw_fd_ostream *FDOut = new raw_fd_ostream(OutputFilename.c_str(), error);
 		if (!error.empty()) {
 			errs() << error << '\n';
 			delete FDOut;
@@ -70,7 +70,6 @@ void launch_42backend(Frontend * fe,
 	Passes.add(new TargetData(llvmMod));
 	Passes.add(createVerifierPass());
 	Passes.add(createGCLoweringPass());
-	Passes.add(createLowerAllocationsPass(true));
 	Passes.add(createLowerInvokePass());
 	Passes.add(createCFGSimplificationPass());	// clean up after lower invoke.
 //	Passes.add(new 42BackendNameAllUsedStructsAndMergeFunctions());

@@ -32,7 +32,7 @@
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstVisitor.h"
-#include "llvm/Support/Mangler.h"
+#include "llvm/Target/Mangler.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/System/Host.h"
 #include "llvm/Config/config.h"
@@ -72,7 +72,7 @@ class _42Writer : public ModulePass, public InstVisitor<_42Writer> {
   Mangler *Mang;
   LoopInfo *LI;
   const Module *TheModule;
-  const TargetAsmInfo* TAsm;
+  const MCAsmInfo* TAsm;
   const TargetData* TD;
   std::map<const Type *, std::string> TypeNames;
   std::map<const ConstantFP *, unsigned> FPConstantMap;
@@ -202,9 +202,7 @@ public:
   void visitInlineAsm(CallInst &I);
   bool visitBuiltinCall(CallInst &I, Intrinsic::ID ID, bool &WroteCallee);
 
-  void visitMallocInst(MallocInst &I);
   void visitAllocaInst(AllocaInst &I);
-  void visitFreeInst  (FreeInst   &I);
   void visitLoadInst  (LoadInst   &I);
   void visitStoreInst (StoreInst  &I);
   void visitGetElementPtrInst(GetElementPtrInst &I);
