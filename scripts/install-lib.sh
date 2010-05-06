@@ -1,5 +1,11 @@
 #! /bin/echo please-dont-execute-this-file-but-source-it:
 
+create_compile_dir_maybe () {
+    test -d "$DOWNLOAD_AND_COMPILE_DIR" || \
+	(echo "$DOWNLOAD_AND_COMPILE_DIR does not exist, creating it" && \
+	mkdir -p "$DOWNLOAD_AND_COMPILE_DIR")
+}
+
 # true if $1 has a greater version number than $2.
 version_greater () {
     major_1=$(echo "$1" | sed 's/\..*//')
@@ -38,6 +44,7 @@ test_version_greater () {
 ########## LLVM ###############
 ###############################
 install_llvm() {
+    create_compile_dir_maybe
     test -d "$INSTALL_PATH_LLVM" || \
 	(echo "$INSTALL_PATH_LLVM does not exist, creating it" && \
 	mkdir -p "$INSTALL_PATH_LLVM")
@@ -68,12 +75,7 @@ install_systemc_gcc () {
     mkdir objdir-gcc
     cd objdir-gcc
 
-    # most ./configure scripts create the target, but it seems SystemC's doesn't ...
-    mkdir -p "$INSTALL_PATH_SYSTEMC_GCC"
-    ../configure --prefix="$INSTALL_PATH_SYSTEMC_GCC"
-    make pthreads_debug
-    # SystemC's configure.in is buggy, and seems not to obey --prefix correctly ...
-    make prefix="$INSTALL_PATH_SYSTEMC_GCC" install
+    ../configure && make pthreads_debug
 }
 
 
@@ -81,6 +83,8 @@ install_systemc_gcc () {
 ########## LLVM-GCC ###########
 ###############################
 install_llvm_gcc () {
+    create_compile_dir_maybe
+
     case $(uname) in
 	Darwin)
 	    LLVM_GCC_BASE=llvm-gcc-4.2-2.6-i386-darwin9

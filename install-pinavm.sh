@@ -24,18 +24,6 @@ PATH="$INSTALL_PATH_LLVMGCC/bin:${PATH}"
 PATH="$INSTALL_PATH_LLVM/bin:${PATH}"
 export PATH
 
-# ##### INITIALIZATION #####
-test -d "$DOWNLOAD_AND_COMPILE_DIR" || \
-     (echo "$DOWNLOAD_AND_COMPILE_DIR does not exist, creating it" && \
-     mkdir -p "$DOWNLOAD_AND_COMPILE_DIR")
-
-test -d "$INSTALL_PATH_SYSTEMC_LLVM" || \
-    (echo "$INSTALL_PATH_SYSTEMC_LLVM does not exist, creating it" && \
-    mkdir -p "$INSTALL_PATH_SYSTEMC_LLVM")
-
-test -d "$INSTALL_PATH_SYSTEMC_GCC" || \
-    (echo "$INSTALL_PATH_SYSTEMC_GCC does not exist, creating it" && \
-    mkdir -p "$INSTALL_PATH_SYSTEMC_GCC")
 
 llvm_configure_flags="--prefix=$INSTALL_PATH_LLVM --enable-debug-runtime --disable-optimized --enable-checking --enable-bindings=none --enable-libffi=no"
 
@@ -67,7 +55,8 @@ if ! [ "$(llvm-config --version | sed 's/svn//')" = 2.7 ]; then
     do_you_want install_llvm
 fi
 
-install_systemc_gcc
+# Included in compile_pinavm.
+# install_systemc_gcc
 # No longer usefull.
 # ( install_systemc_llvm )
 compile_pinavm
