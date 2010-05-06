@@ -1,2 +1,3 @@
 *.in
 aclocal.m4
+objdir-gcc/
