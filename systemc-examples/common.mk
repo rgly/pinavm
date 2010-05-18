@@ -39,7 +39,7 @@ SYSTEMCLIB=$(INSTALL_PATH_SYSTEMC_GCC)/lib-linux/libsystemc.a
 endif
 
 ifndef CPPSCFLAGS
-CPPSCFLAGS=-I$(INSTALL_PATH_SYSTEMC_GCC)/ -I$(INSTALL_PATH_SYSTEMC_GCC)/include -I$(INSTALL_PATH_SYSTEMC_GCC)/include/sysc -I$(INSTALL_PATH_SYSTEMC_GCC)/include/sysc/communication
+CPPSCFLAGS=-I$(ROOT)/external/systemc-2.2.0/src/
 endif
 
 ifndef LLVMGCCFLAGS
