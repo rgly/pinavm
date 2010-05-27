@@ -24,21 +24,20 @@
 
 #include "config.h"
 
-Frontend *launch_frontend(std::string InputFilename, bool inlineFcts)
+Frontend *launch_frontend(std::string InputFilename, bool inlineFcts,Module *Mod)
 {
-	Module *M;
-
+	//Module *Mod;
 	LLVMContext & Context = getGlobalContext();
 
 	std::string ErrorMessage;
 
-	if (MemoryBuffer * Buffer
+	/*if (MemoryBuffer * Buffer
 	    = MemoryBuffer::getFileOrSTDIN(InputFilename, &ErrorMessage)) {
-		M = ParseBitcodeFile(Buffer, Context, &ErrorMessage);
+		Mod = ParseBitcodeFile(Buffer, Context, &ErrorMessage);
 		delete Buffer;
 	} else {
 		ERROR("Not able to initialize module from bitcode\n");
-	}
+	}*/
 
 	// Create a PassManager to hold and optimize the collection of passes we are
 	// about to build...
@@ -46,7 +45,7 @@ Frontend *launch_frontend(std::string InputFilename, bool inlineFcts)
 	PassManager Passes;
 
 	// Add an appropriate TargetData instance for this module...
-	TargetData *td = new TargetData(M);
+	TargetData *td = new TargetData(Mod);
 // 	Passes.add(createLoopSimplifyPass());
 // 	Passes.add(createLoopUnrollPass());
 	Passes.add(td);
@@ -60,16 +59,19 @@ Frontend *launch_frontend(std::string InputFilename, bool inlineFcts)
 	Passes.add(createLowerInvokePass());
 	Passes.add(createCFGSimplificationPass());	// clean up after lower invoke.
 
+	TRACE_3("foo\n");
 	// PinaVM pass
 	FrontendPass *fep = new FrontendPass();
 	fep->setInlineFunctions(inlineFcts);
 	Passes.add(fep);
-
+	TRACE_3("bar\n");
+	
 	// Write bitcode out to disk or outs() as the last step...
 	//Passes.add(createBitcodeWriterPass(*Out));
 
 	// Now that we have all of the passes ready, run them.
-	Passes.run(*M);
+	Passes.run(*Mod);
+	TRACE_3("gee\n");
 
 	return fep->getFrontend();
 }

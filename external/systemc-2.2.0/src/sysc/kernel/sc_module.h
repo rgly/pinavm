@@ -511,7 +511,7 @@ extern sc_module* sc_module_dynalloc(sc_module*);
     {                                                               \
         ::sc_core::sc_process_handle handle =                     \
 	     sc_core::sc_get_curr_simcontext()->create_cthread_process( \
-		     name, type, false,					\
+		     name, false,					\
                      SC_MAKE_FUNC_PTR( host_tag, func ), this, 0 ); \
         this->sensitive.operator() ( handle, edge );\
     }

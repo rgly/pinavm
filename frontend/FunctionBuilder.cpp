@@ -167,6 +167,9 @@ Function *FunctionBuilder::buildFct()
 {
 	BasicBlock *currentBlock = NULL;
 
+	TRACE_3("******** Function analysed is :");
+	this->origFct->dump();
+
 	/********************* Init stack ****************/
 	if (isa < Constant > (this->res)) {
 		BasicBlock *entryBlock = BasicBlock::Create(getGlobalContext(), "entry", fctToJit);
@@ -193,7 +196,7 @@ Function *FunctionBuilder::buildFct()
 	/*********** Determine which instructions are useful ***********/
 	TRACE_5("Marking useful basic blocks and instructions\n");
 	mark(res);
-	
+	res->dump();	
 	if (markUsefulInstructions())
 		return NULL;
 	
@@ -221,17 +224,25 @@ Function *FunctionBuilder::buildFct()
 	
 	/*** For each basic block in the original function... ***/
 	while (origbb != origbe) {
+			
 		BasicBlock::iterator origInstIt = origbb->begin(), origInstEnd = origbb->end();
+				
+
 		currentBlock = &*origbb++;
+			
 		TRACE_6("Current block : " << currentBlock->getNameStr() << "\n");
+		
 		
 		/*** ...get the corresponding block in the fctToJit if it exists ***/
 		if (find(used_bb.begin(), used_bb.end(), currentBlock) == used_bb.end()) {
 			TRACE_6("   not useful\n");
 			continue;
 		}
+				
 		
 		NewBB = cast < BasicBlock > (ValueMap[currentBlock]);
+			
+	
 		TRACE_6("New block is " << NewBB << "\n");
 		
 		/*** Add branch instruction from the previous block to the current one ***/
@@ -265,16 +276,33 @@ Function *FunctionBuilder::buildFct()
 		}
 		oldCurrentBlock = NewBB;
 	}
+					
+
+	TRACE_6("lastBlock : " << lastBlock << "\n");
+
 	IRBuilder <> retBuilder(lastBlock);
+				
+
 	bool resIsPointer = isa<PointerType>(this->res->getType());
+				
+
 	bool returnIsPointer = isa<PointerType>(this->fctToJit->getReturnType());
+				
 
 	if (resIsPointer && ! returnIsPointer) {
+					
+
 		LoadInst* li = retBuilder.CreateLoad(ValueMap[this->res]);
 		retBuilder.CreateRet(li);
 	} else {
+			;	
+
 		retBuilder.CreateRet(ValueMap[this->res]);
 	}
+
+	TRACE_3("******** [end] Function analysed is :");
+	this->origFct->dump();
+
 	
 	TRACE_6("Number of basic blocks : " << this->fctToJit->getBasicBlockList().size() << "\n");
 	TRACE_6("Entry block : " << &this->fctToJit->getEntryBlock() << "\n");

@@ -1,16 +1,28 @@
 SRC = main.cpp
+SRCS = $(SRC)
+BITCODES = main.opt.bc
+HEADERS = 
+INCLUDE + = $HEADERS
+
+VAR = 1
 
 all: main.bc
-promela: ok.3.pr
+promela: final.pr
 .PHONY: all promela diff
 
 include ../common.mk
 
-ok.%.pr: main.bc
-# Keep a backup of the target.
+frontend:$(PINAVM) main.opt.bc
+	../../toplevel/pinavm main.opt.bc --print-ir --print-elab
+
+final.pr: main.opt.bc
+#	Keep a backup of the target.
 	-$(RM) $@.bak
 	-mv $@ $@.bak
-	../../toplevel/pinavm -print-ir -print-elab -b promela -o ok.$*.pr main.bc -inline -args $*
+	../../toplevel/pinavm -print-ir -print-elab -b promela -o final.pr main.opt.bc -inline -args $(ARG)
 
 diff:
 	diff -u ok.pr ok.pr.bak
+
+
+

@@ -1,5 +1,7 @@
 TARGET_ARCH=linux
 
+OVERRIDING=default
+
 ifndef ROOT
 ROOT=../../
 endif
@@ -58,6 +60,20 @@ PINAVM=$(ROOT)/toplevel/pinavm
 $(PINAVM):
 	cd $$(dirname $(PINAVM)) && $(MAKE) $$(basename $(PINAVM))
 
+
+#final.pr: final.bc $(SRCS) $(HEADERS) $(BITCODES)
+#	-$(RM) $@.bak
+#	-mv $@ $@.bak
+#	../../toplevel/pinavm -print-ir -print-elab -b promela -o final.pr final.bc -inline -args $(ARG)
+
+#final.bc: $(BITCODES) $(HEADERS) $(SRCS)
+#	llvm-ld -b=$@ $(BITCODES)
+
+#diff:
+#	diff -u final.pr final.pr.bak
+
+#promela: final.pr 
+#	echo running with $(ARG) and $(OVERRIDING)
 
 ll: $(LL)
 llopt: $(LLOPT)
