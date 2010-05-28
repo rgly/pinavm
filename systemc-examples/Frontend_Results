@@ -1,0 +1,44 @@
+TESTING WITH Frontend ##################
+
+Pass elab_easy 
+
+Pass elab_easy_arrays 
+
+Pass elab_easy_int 
+
+Pass elab_easy_sc_stop 
+
+Pass elab_easy_uint 
+
+Pass elab_multiple_instances 
+
+Pass elab_only 
+
+Pass elab_ports 
+
+Pass elab_ports_array 
+
+Pass elab_ports_bool 
+
+Pass elab_ports_pointer 
+
+Pass empty-sc 
+
+Pass events 
+
+Fail fifo 
+
+Fail jerome-chain 
+
+Fail jerome-chain-deterministic 
+
+Fail pkt_switch 
+
+Pass plain-cpp 
+
+Pass RAM 
+
+Pass sc_clock 
+
+Fail signal 
+

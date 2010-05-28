@@ -1,0 +1,44 @@
+TESTING WITH Simple ##################
+
+Fail elab_easy 
+
+Fail elab_easy_arrays 
+
+Fail elab_easy_int 
+
+Fail elab_easy_sc_stop 
+
+Fail elab_easy_uint 
+
+Fail elab_multiple_instances 
+
+Fail elab_only 
+
+Fail elab_ports 
+
+Fail elab_ports_array 
+
+Fail elab_ports_bool 
+
+Fail elab_ports_pointer 
+
+Fail empty-sc 
+
+Fail events 
+
+Fail fifo 
+
+Fail jerome-chain 
+
+Fail jerome-chain-deterministic 
+
+Fail pkt_switch 
+
+Fail plain-cpp 
+
+Fail RAM 
+
+Fail sc_clock 
+
+Fail signal 
+
