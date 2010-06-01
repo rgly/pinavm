@@ -276,6 +276,10 @@ PromelaWriter::printType(formatted_raw_ostream & Out,
 			bool isSigned, const std::string & NameSoFar,
 			bool IgnoreName, const AttrListPtr & PAL)
 {	
+ 	while (isa<PointerType>(Ty)) {
+ 		Ty = cast<PointerType>(Ty)->getElementType();
+ 	}	
+
 	if (Ty->isPrimitiveType() || Ty->isIntegerTy() || isa < VectorType > (Ty)) {
 		printSimpleType(Out, Ty, isSigned, NameSoFar);
 		return Out;
@@ -397,6 +401,7 @@ PromelaWriter::printType(formatted_raw_ostream & Out,
 		return Out << TyName << ' ' << NameSoFar;
 	}
 	default:
+		Ty->dump();
 		llvm_unreachable("Unhandled case in getTypeProps!");
 	}
 
@@ -413,6 +418,10 @@ PromelaWriter::printType(std::ostream & Out,
 			bool isSigned, const std::string & NameSoFar,
 			bool IgnoreName, const AttrListPtr & PAL)
 {
+ 	while (isa<PointerType>(Ty)) {
+ 		Ty = cast<PointerType>(Ty)->getElementType();
+ 	}	
+
 	if (Ty->isPrimitiveType() || Ty->isIntegerTy()
 		|| isa < VectorType > (Ty)) {
 		printSimpleType(Out, Ty, isSigned, NameSoFar);
@@ -2072,16 +2081,27 @@ PromelaWriter::isSystemCStruct(const StructType* ty)
 bool
 PromelaWriter::isSystemCType(const Type* ty)
 {
-	if (ty->isPrimitiveType() || ty->isIntegerTy())
-		return false;
+// 	TRACE_6("isSystemCType() [start]\n");
+// 	TRACE_6("type : " << ty << "\n");
 
  	while (isa<PointerType>(ty)) {
  		ty = cast<PointerType>(ty)->getElementType();
  	}
 
+	if (ty->isPrimitiveType() || ty->isIntegerTy()) {
+		TRACE_6("isSystemCType() [early end]\n");
+		return false;
+	}
+
  	std::string typeName = this->TypeNames.find(ty)->second;
- 	return typeName.substr(0, 16).compare("struct_sc_core::") == 0 || typeName.substr(0, 12).compare("struct_std::") == 0;
+
+	bool res = typeName.substr(0, 16).compare("struct_sc_core::") == 0 || typeName.substr(0, 12).compare("struct_std::") == 0;
+
+// 	TRACE_6("isSystemCType() [end]\n");
+ 	return res;
+
 }
+
 
 static inline bool isFPIntBitCast(const Instruction & I)
 {
@@ -3244,7 +3264,7 @@ PromelaWriter::visitSCConstruct(SCConstruct * scc)
 	case READCONSTRUCT:
 		rc = (ReadConstruct*) scc;
 		port = rc->getPort();
-		
+		TRACE_3("Visit READ\n");
 		if (port->getChannelID() == SIMPLE_CHANNEL) {
 			if (port->getChannels()->size() != 1 ) {
 				ERROR("Reading in a port binded to more than one channel is not possible\n");
@@ -3262,7 +3282,7 @@ PromelaWriter::visitSCConstruct(SCConstruct * scc)
 		wc = (WriteConstruct*) scc;		
 		port = wc->getPort();
 		channels = port->getChannels();
-		
+		TRACE_3("Visit WRITE\n");
 		switch(port->getChannelID()) {
 		case SIMPLE_CHANNEL:
 			for (channelsIt = channels->begin() ; channelsIt != channels->end() ; ++channelsIt) {
