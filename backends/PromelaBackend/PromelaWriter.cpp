@@ -727,74 +727,6 @@ static bool isFPCSafeToPrint(const ConstantFP * CFP)
 #endif
 }
 
-/// Print out the casting for a cast operation. This does the double casting
-/// necessary for conversion to the destination type, if necessary. 
-/// @brief Print a cast
-void PromelaWriter::printCast(unsigned opc, const Type * SrcTy,
-			const Type * DstTy)
-{
-	// Print the destination type cast
-	switch (opc) {
-	case Instruction::UIToFP:
-	case Instruction::SIToFP:
-	case Instruction::IntToPtr:
-	case Instruction::Trunc:
-	case Instruction::BitCast:
-	case Instruction::FPExt:
-	case Instruction::FPTrunc:	// For these the DstTy sign doesn't matter
-		Out << '(';
-		printType(Out, DstTy);
-		Out << ')';
-		break;
-	case Instruction::ZExt:
-	case Instruction::PtrToInt:
-	case Instruction::FPToUI:	// For these, make sure we get an unsigned dest
-		Out << '(';
-		printSimpleType(Out, DstTy, false);
-		Out << ')';
-		break;
-	case Instruction::SExt:
-	case Instruction::FPToSI:	// For these, make sure we get a signed dest
-		Out << '(';
-		printSimpleType(Out, DstTy, true);
-		Out << ')';
-		break;
-	default:
-		llvm_unreachable("Invalid cast opcode");
-	}
-
-	// Print the source type cast
-	switch (opc) {
-	case Instruction::UIToFP:
-	case Instruction::ZExt:
-		Out << '(';
-		printSimpleType(Out, SrcTy, false);
-		Out << ')';
-		break;
-	case Instruction::SIToFP:
-	case Instruction::SExt:
-		Out << '(';
-		printSimpleType(Out, SrcTy, true);
-		Out << ')';
-		break;
-	case Instruction::IntToPtr:
-	case Instruction::PtrToInt:
-		// Avoid "cast to pointer from integer of different size" warnings
-		Out << "(unsigned long)";
-		break;
-	case Instruction::Trunc:
-	case Instruction::BitCast:
-	case Instruction::FPExt:
-	case Instruction::FPTrunc:
-	case Instruction::FPToSI:
-	case Instruction::FPToUI:
-		break;		// These don't need a source cast.
-	default:
-		llvm_unreachable("Invalid cast opcode");
-		break;
-	}
-}
-
 // printConstant - The LLVM Constant to Simple Constant converter.
 void PromelaWriter::printConstant(Constant * CPV, bool Static)
 {
@@ -815,9 +747,6 @@ void PromelaWriter::printConstant(Constant * CPV, bool Static)
 		case Instruction::IntToPtr:
 		case Instruction::BitCast:
 			Out << "(";
-			printCast(CE->getOpcode(),
-				CE->getOperand(0)->getType(),
-				CE->getType());
 			if (CE->getOpcode() == Instruction::SExt
 				&& CE->getOperand(0)->getType() ==
 				Type::getInt1Ty(CPV->getContext())) {
@@ -875,10 +804,7 @@ void PromelaWriter::printConstant(Constant * CPV, bool Static)
 		case Instruction::AShr:
 		{
 			Out << '(';
-			bool NeedsClosingParens =
-				printConstExprCast(CE, Static);
-			printConstantWithCast(CE->getOperand(0),
-					CE->getOpcode());
+			printConstant(CE->getOperand(0), CE->getOpcode());
 			switch (CE->getOpcode()) {
 			case Instruction::Add:
 			case Instruction::FAdd:
@@ -951,17 +877,13 @@ void PromelaWriter::printConstant(Constant * CPV, bool Static)
 				llvm_unreachable
 					("Illegal opcode here!");
 			}
-			printConstantWithCast(CE->getOperand(1),
+			printConstant(CE->getOperand(1),
 					CE->getOpcode());
-			if (NeedsClosingParens)
-				Out << "))";
 			Out << ')';
 			return;
 		}
 		case Instruction::FCmp:{
 			Out << '(';
-			bool NeedsClosingParens =
-				printConstExprCast(CE, Static);
 			if (CE->getPredicate() ==
 				FCmpInst::FCMP_FALSE)
 				Out << "0";
@@ -1018,21 +940,11 @@ void PromelaWriter::printConstant(Constant * CPV, bool Static)
 					break;
 				}
 				Out << "llvm_fcmp_" << op << "(";
-				printConstantWithCast(CE->
-						getOperand
-						(0),
-						CE->
-						getOpcode());
+				printConstant(CE->getOperand(0), CE->getOpcode());
 				Out << ", ";
-				printConstantWithCast(CE->
-						getOperand
-						(1),
-						CE->
-						getOpcode());
+				printConstant(CE->getOperand(1), CE->getOpcode());
 				Out << ")";
 			}
-			if (NeedsClosingParens)
-				Out << "))";
 			Out << ')';
 			return;
 		}
@@ -1138,12 +1050,9 @@ void PromelaWriter::printConstant(Constant * CPV, bool Static)
 				char Buffer[100];
 
 				uint64_t ll = DoubleToBits(V);
-				sprintf(Buffer, "0x%llx",
-					static_cast <
-					long long >(ll));
+				sprintf(Buffer, "0x%llx", static_cast <long long >(ll));
 
-				std::string Num(&Buffer[0],
-						&Buffer[6]);
+				std::string Num(&Buffer[0], &Buffer[6]);
 				unsigned long Val =
 					strtoul(Num.c_str(), 0, 16);
 
@@ -1205,10 +1114,8 @@ void PromelaWriter::printConstant(Constant * CPV, bool Static)
 		if (ConstantArray * CA = dyn_cast < ConstantArray > (CPV)) {
 			printConstantArray(CA, Static);
 		} else {
-			assert(isa < ConstantAggregateZero > (CPV)
-				|| isa < UndefValue > (CPV));
-			const ArrayType *AT =
-				cast < ArrayType > (CPV->getType());
+			assert(isa < ConstantAggregateZero > (CPV) || isa < UndefValue > (CPV));
+			const ArrayType *AT = cast < ArrayType > (CPV->getType());
 			Out << '{';
 			if (AT->getNumElements()) {
 				Out << ' ';
@@ -1324,115 +1231,7 @@ void PromelaWriter::printConstant(Constant * CPV, bool Static)
 	}
 }
 
-// Some constant expressions need to be casted back to the original types
-// because their operands were casted to the expected type. This function takes
-// care of detecting that case and printing the cast for the ConstantExpr.
-bool PromelaWriter::printConstExprCast(const ConstantExpr * CE, bool Static)
-{
-	bool NeedsExplicitCast = false;
-	const Type *Ty = CE->getOperand(0)->getType();
-	bool TypeIsSigned = false;
-	switch (CE->getOpcode()) {
-	case Instruction::Add:
-	case Instruction::Sub:
-	case Instruction::Mul:
-		// We need to cast integer arithmetic so that it is always performed
-		// as unsigned, to avoid undefined behavior on overflow.
-	case Instruction::LShr:
-	case Instruction::URem:
-	case Instruction::UDiv:
-		NeedsExplicitCast = true;
-		break;
-	case Instruction::AShr:
-	case Instruction::SRem:
-	case Instruction::SDiv:
-		NeedsExplicitCast = true;
-		TypeIsSigned = true;
-		break;
-	case Instruction::SExt:
-		Ty = CE->getType();
-		NeedsExplicitCast = true;
-		TypeIsSigned = true;
-		break;
-	case Instruction::ZExt:
-	case Instruction::Trunc:
-	case Instruction::FPTrunc:
-	case Instruction::FPExt:
-	case Instruction::UIToFP:
-	case Instruction::SIToFP:
-	case Instruction::FPToUI:
-	case Instruction::FPToSI:
-	case Instruction::PtrToInt:
-	case Instruction::IntToPtr:
-	case Instruction::BitCast:
-		Ty = CE->getType();
-		NeedsExplicitCast = true;
-		break;
-	default:
-		break;
-	}
-	if (NeedsExplicitCast) {
-		Out << "((";
-		if (Ty->isIntegerTy()
-			&& Ty != Type::getInt1Ty(Ty->getContext()))
-			printSimpleType(Out, Ty, TypeIsSigned);
-		else
-			printType(Out, Ty);	// not integer, sign doesn't matter
-		Out << ")(";
-	}
-	return NeedsExplicitCast;
-}
 
-//  Print a constant assuming that it is the operand for a given Opcode. The
-//  opcodes that care about sign need to cast their operands to the expected
-//  type before the operation proceeds. This function does the casting.
-void PromelaWriter::printConstantWithCast(Constant * CPV, unsigned Opcode)
-{
-
-	// Extract the operand's type, we'll need it.
-	const Type *OpTy = CPV->getType();
-
-	// Indicate whether to do the cast or not.
-	bool shouldCast = false;
-	bool typeIsSigned = false;
-
-	// Based on the Opcode for which this Constant is being written, determine
-	// the new type to which the operand should be casted by setting the value
-	// of OpTy. If we change OpTy, also set shouldCast to true so it gets
-	// casted below.
-	switch (Opcode) {
-	default:
-		// for most instructions, it doesn't matter
-		break;
-	case Instruction::Add:
-	case Instruction::Sub:
-	case Instruction::Mul:
-		// We need to cast integer arithmetic so that it is always performed
-		// as unsigned, to avoid undefined behavior on overflow.
-	case Instruction::LShr:
-	case Instruction::UDiv:
-	case Instruction::URem:
-		shouldCast = true;
-		break;
-	case Instruction::AShr:
-	case Instruction::SDiv:
-	case Instruction::SRem:
-		shouldCast = true;
-		typeIsSigned = true;
-		break;
-	}
-
-	// Write out the casted constant if we should, otherwise just write the
-	// operand.
-	if (shouldCast) {
-		Out << "((";
-		printSimpleType(Out, OpTy, typeIsSigned);
-		Out << ")";
-		printConstant(CPV, false);
-		Out << ")";
-	} else
-		printConstant(CPV, false);
-}
 
 std::string PromelaWriter::GetValueName(const Value * Operand)
 {
@@ -1569,126 +1368,6 @@ void PromelaWriter::writeOperand(Value * Operand, bool Static)
 
 //   if (isAddressImplicit)
 //     Out << ')';
-}
-
-// Some instructions need to have their result value casted back to the 
-// original types because their operands were casted to the expected type. 
-// This function takes care of detecting that case and printing the cast 
-// for the Instruction.
-bool PromelaWriter::writeInstructionCast(const Instruction & I)
-{
-	const Type *Ty = I.getOperand(0)->getType();
-	switch (I.getOpcode()) {
-	case Instruction::Add:
-	case Instruction::Sub:
-	case Instruction::Mul:
-		// We need to cast integer arithmetic so that it is always performed
-		// as unsigned, to avoid undefined behavior on overflow.
-	case Instruction::LShr:
-	case Instruction::URem:
-	case Instruction::UDiv:
-		Out << "((";
-		printSimpleType(Out, Ty, false);
-		Out << ")(";
-		return true;
-	case Instruction::AShr:
-	case Instruction::SRem:
-	case Instruction::SDiv:
-		Out << "((";
-		printSimpleType(Out, Ty, true);
-		Out << ")(";
-		return true;
-	default:
-		break;
-	}
-	return false;
-}
-
-// Write the operand with a cast to another type based on the Opcode being used.
-// This will be used in cases where an instruction has specific type
-// requirements (usually signedness) for its operands. 
-void PromelaWriter::writeOperandWithCast(Value * Operand, unsigned Opcode)
-{
-
-	// Extract the operand's type, we'll need it.
-	const Type *OpTy = Operand->getType();
-
-	// Indicate whether to do the cast or not.
-	bool shouldCast = false;
-
-	// Indicate whether the cast should be to a signed type or not.
-	bool castIsSigned = false;
-
-	// Based on the Opcode for which this Operand is being written, determine
-	// the new type to which the operand should be casted by setting the value
-	// of OpTy. If we change OpTy, also set shouldCast to true.
-	switch (Opcode) {
-	default:
-		// for most instructions, it doesn't matter
-		break;
-	case Instruction::Add:
-	case Instruction::Sub:
-	case Instruction::Mul:
-		// We need to cast integer arithmetic so that it is always performed
-		// as unsigned, to avoid undefined behavior on overflow.
-	case Instruction::LShr:
-	case Instruction::UDiv:
-	case Instruction::URem:	// Cast to unsigned first
-		shouldCast = true;
-		castIsSigned = false;
-		break;
-	case Instruction::GetElementPtr:
-	case Instruction::AShr:
-	case Instruction::SDiv:
-	case Instruction::SRem:	// Cast to signed first
-		shouldCast = true;
-		castIsSigned = true;
-		break;
-	}
-
-	// Write out the casted operand if we should, otherwise just write the
-	// operand.
-	if (shouldCast) {
-		Out << "((";
-		printSimpleType(Out, OpTy, castIsSigned);
-		Out << ")";
-		writeOperand(Operand);
-		Out << ")";
-	} else
-		writeOperand(Operand);
-}
-
-// Write the operand with a cast to another type based on the icmp predicate 
-// being used. 
-void PromelaWriter::writeOperandWithCast(Value * Operand,
-					const ICmpInst & Cmp)
-{
-	// This has to do a cast to ensure the operand has the right signedness. 
-	// Also, if the operand is a pointer, we make sure to cast to an integer when
-	// doing the comparison both for signedness and so that the C compiler doesn't
-	// optimize things like "p < NULL" to false (p may contain an integer value
-	// f.e.).
-	bool shouldCast = Cmp.isRelational();
-
-	// Write out the casted operand if we should, otherwise just write the
-	// operand.
-	if (!shouldCast) {
-		writeOperand(Operand);
-		return;
-	}
-	// Should this be a signed comparison?  If so, convert to signed.
-	bool castIsSigned = Cmp.isSigned();
-
-	// If the operand was a pointer, convert to a large integer type.
-	const Type *OpTy = Operand->getType();
-	if (isa < PointerType > (OpTy))
-		OpTy = TD->getIntPtrType(Operand->getContext());
-
-	Out << "((";
-	printSimpleType(Out, OpTy, castIsSigned);
-	Out << ")";
-	writeOperand(Operand);
-	Out << ")";
 }
 
 /// FindStaticTors - Given a static ctor/dtor list, unpack its contents into
@@ -2081,15 +1760,11 @@ PromelaWriter::isSystemCStruct(const StructType* ty)
 bool
 PromelaWriter::isSystemCType(const Type* ty)
 {
-// 	TRACE_6("isSystemCType() [start]\n");
-// 	TRACE_6("type : " << ty << "\n");
-
  	while (isa<PointerType>(ty)) {
  		ty = cast<PointerType>(ty)->getElementType();
  	}
 
 	if (ty->isPrimitiveType() || ty->isIntegerTy()) {
-		TRACE_6("isSystemCType() [early end]\n");
 		return false;
 	}
 
@@ -2097,7 +1772,6 @@ PromelaWriter::isSystemCType(const Type* ty)
 
 	bool res = typeName.substr(0, 16).compare("struct_sc_core::") == 0 || typeName.substr(0, 12).compare("struct_std::") == 0;
 
-// 	TRACE_6("isSystemCType() [end]\n");
  	return res;
 
 }
@@ -3299,8 +2973,8 @@ void PromelaWriter::visitCallInst(CallInst & I)
 	// If this is a call to a struct-return function, assign to the first
 	// parameter instead of passing it to the call.
 	const AttrListPtr & PAL = I.getAttributes();
-	bool hasByVal = I.hasByValArgument();
- 	bool isStructRet = I.hasStructRetAttr();
+// 	bool hasByVal = I.hasByValArgument();
+//  	bool isStructRet = I.hasStructRetAttr();
 // 	if (isStructRet) {
 // 		writeOperandDeref(I.getOperand(1));
 // 		Out << " = ";
@@ -3312,7 +2986,6 @@ void PromelaWriter::visitCallInst(CallInst & I)
 	if (!WroteCallee) {
 		// If this is an indirect call to a struct return function, we need to cast
 		// the pointer. Ditto for indirect calls with byval arguments.
-		bool NeedsCast = (hasByVal || isStructRet) && !isa < Function > (Callee);
 
 		// GCC is a real PITA.  It does not permit codegening casts of functions to
 		// function pointers if they are in a call (it generates a trap instruction
@@ -3329,23 +3002,8 @@ void PromelaWriter::visitCallInst(CallInst & I)
 		if (ConstantExpr * CE = dyn_cast < ConstantExpr > (Callee)) {
 			if (CE->isCast())
 				if (Function * RF = dyn_cast < Function > (CE->getOperand(0))) {
-					NeedsCast = true;
 					Callee = RF;
 				}
-		}
-		if (NeedsCast) {
-			// Ok, just cast the pointer type.
-			Out << "((";
-			if (isStructRet)
-				printStructReturnPointerFunctionType(Out, PAL, cast <PointerType>(I.getCalledValue()->getType()));
-			else if (hasByVal)
-				printType(Out,
-					I.getCalledValue()->getType(),
-					false, "", true, PAL);
-			else
-				printType(Out,
-					I.getCalledValue()->getType());
-			Out << ")(void*)";
 		}
 		writeOperand(Callee);
 		Out << "_pnumber_" << currentProcess->getPid();
@@ -3357,8 +3015,6 @@ void PromelaWriter::visitCallInst(CallInst & I)
 			TRACE_4("################# Module jitted : " << mod << "\n");
 			TRACE_4("################# IRModule associated : " << this->elab->getIRModule(mod) << "\n");
 		}
-		if (NeedsCast)
-			Out << ')';
 	}
 
 	Out << '(';
