@@ -155,7 +155,6 @@ public:
 
   void printFunction(Function &, bool inlineFct);
   void printBasicBlock(BasicBlock *BB);
-  void printLoop(Loop *L);
 
   void printCast(unsigned opcode, const Type *SrcTy, const Type *DstTy);
   void printConstant(Constant *CPV, bool Static);
@@ -223,7 +222,6 @@ public:
 
   void outputLValue(Instruction *I);
 
-  bool isGotoCodeNecessary(BasicBlock *From, BasicBlock *To);
   bool printPHICopiesForSuccessor(BasicBlock *CurBlock,
 				  BasicBlock *Successor, unsigned Indent);
   void printBranchToBlock(BasicBlock *CurBlock, BasicBlock *SuccBlock,

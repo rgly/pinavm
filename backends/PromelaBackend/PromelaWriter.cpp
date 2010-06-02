@@ -103,7 +103,7 @@ static const AllocaInst *isDirectAlloca(const Value * V)
  **************************************************************************/
 
 PromelaWriter::PromelaWriter(Frontend* fe, formatted_raw_ostream &o, bool encodeEventsAsBool, bool useRelativeClocks, bool bug)
-	: ModulePass(&ID), Out(o), IL(0), Mang(0), LI(0), 
+	: ModulePass(&ID), Out(o), IL(0), Mang(0), 
 	  TheModule(0), TAsm(0), TD(0), OpaqueCounter(0), NextAnonValueNumber(0) {
 	FPCounter = 0;
 	this->sccfactory = fe->getConstructs();
@@ -115,7 +115,7 @@ PromelaWriter::PromelaWriter(Frontend* fe, formatted_raw_ostream &o, bool encode
 }
 
 PromelaWriter::PromelaWriter(formatted_raw_ostream &o)
-	: ModulePass(&ID), Out(o), IL(0), Mang(0), LI(0), 
+	: ModulePass(&ID), Out(o), IL(0), Mang(0), 
 	  TheModule(0), TAsm(0), TD(0), OpaqueCounter(0), NextAnonValueNumber(0) {
 	FPCounter = 0;
 }
@@ -2177,12 +2177,7 @@ void PromelaWriter::printFunction(Function & F, bool inlineFct)
 
 	// print the basic blocks
 	for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
-		if (Loop * L = LI->getLoopFor(BB)) {
-			if (L->getHeader() == BB && L->getParentLoop() == 0)
-				printLoop(L);
-		} else {
 			printBasicBlock(BB);
-		}
 	}
 
 	if (currentProcess->getPid() == 0 &&  this->insertBug) {
@@ -2197,25 +2192,6 @@ void PromelaWriter::printFunction(Function & F, bool inlineFct)
 	Out << "}\n\n";
 }
 
-void PromelaWriter::printLoop(Loop * L)
-{
-//	Out << "/* Syntactic loop " << L->getHeader()->getName() << "*/\n";
-//   Out << "  while (true)     ;
-//   Out << "  do\n";
-
-	for (unsigned i = 0, e = L->getBlocks().size(); i != e; ++i) {
-		BasicBlock *BB = L->getBlocks()[i];
-		Loop *BBLoop = LI->getLoopFor(BB);
-		if (BBLoop == L)
-			printBasicBlock(BB);
-		else if (BB == BBLoop->getHeader()
-			&& BBLoop->getParentLoop() == L)
-			printLoop(BBLoop);
-	}
-//   Out << "  done; /* end of syntactic loop '"
-//       << L->getHeader()->getName() << "' */\n";
-}
-
 void PromelaWriter::printBasicBlock(BasicBlock * BB)
 {
 	TRACE_6("PromelaWriter > printing basic block : " << BB->getNameStr() << "\n");
@@ -2226,11 +2202,10 @@ void PromelaWriter::printBasicBlock(BasicBlock * BB)
 	// do not require a label to be generated.
 	//
 	bool NeedsLabel = false;
-	for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
-		if (isGotoCodeNecessary(*PI, BB)) {
-			NeedsLabel = true;
-			break;
-		}
+	for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
+		NeedsLabel = true;
+		break;
+	}
 	
 	if (NeedsLabel)
 		Out << "\n" << GetValueName(BB) << ":\n";
@@ -2357,21 +2332,6 @@ void PromelaWriter::outputLValue(Instruction * I)
 	Out << "    /*OutputLValue*/ " << GetValueName(I) << " = ";
 }
 
-bool PromelaWriter::isGotoCodeNecessary(BasicBlock * From, BasicBlock * To)
-{
-	/// FIXME: This should be reenabled, but loop reordering safe!!
-	return true;
-
-	if (next(Function::iterator(From)) != Function::iterator(To))
-		return true;	// Not the direct successor, we need a goto.
-
-	//isa<SwitchInst>(From->getTerminator())
-
-	if (LI->getLoopFor(From) != LI->getLoopFor(To))
-		return true;
-	return false;
-}
-
 bool PromelaWriter::printPHICopiesForSuccessor(BasicBlock * CurBlock,
 					BasicBlock * Successor,
 					unsigned Indent)
@@ -2395,11 +2355,9 @@ bool PromelaWriter::printPHICopiesForSuccessor(BasicBlock * CurBlock,
 void PromelaWriter::printBranchToBlock(BasicBlock * CurBB,
 				BasicBlock * Succ, unsigned Indent)
 {
-	if (isGotoCodeNecessary(CurBB, Succ)) {
-		Out << std::string(Indent, ' ') << "    goto ";
-		writeOperand(Succ);
-		Out << ";";
-	}
+	Out << std::string(Indent, ' ') << "    goto ";
+	writeOperand(Succ);
+	Out << ";";
 }
 
 /***************************************************************************
@@ -2413,36 +2371,21 @@ void PromelaWriter::printBranchToBlock(BasicBlock * CurBB,
 void PromelaWriter::visitBranchInst(BranchInst & I)
 {
 	if (I.isConditional()) {
-//		if (isGotoCodeNecessary(I.getParent(), I.getSuccessor(0))) {
-			Out << "    if\n";
-			Out << "        :: ";
-			writeOperand(I.getCondition());
-			Out << " -> "; 
-			
-			if (printPHICopiesForSuccessor(I.getParent(), I.getSuccessor(0), 2))
-				Out << ";        \n";
-			printBranchToBlock(I.getParent(), I.getSuccessor(0), 2);
-			
-			Out << "\n        :: true -> ";
-
-// 			if (isGotoCodeNecessary(I.getParent(), I.getSuccessor(1))) {
-			if (printPHICopiesForSuccessor(I.getParent(), I.getSuccessor(1), 2))
-				Out << ";        \n";
-			printBranchToBlock(I.getParent(), I.getSuccessor(1), 2);
-			
-//			}
-// 		} else {
-// 			// First goto not necessary, assume second one is...
-// 			Out << "  if\n";
-// 			Out << "    :: ";
-// 			writeOperand(I.getCondition());
-// 			Out << " -> ";
-// 			printPHICopiesForSuccessor(I.getParent(),
-// 						I.getSuccessor(1), 2);
-// 			printBranchToBlock(I.getParent(),
-// 					I.getSuccessor(1), 2);
-// 		}
-
+		Out << "    if\n";
+		Out << "        :: ";
+		writeOperand(I.getCondition());
+		Out << " -> "; 
+		
+		if (printPHICopiesForSuccessor(I.getParent(), I.getSuccessor(0), 2))
+			Out << ";        \n";
+		printBranchToBlock(I.getParent(), I.getSuccessor(0), 2);
+		
+		Out << "\n        :: true -> ";
+		
+		if (printPHICopiesForSuccessor(I.getParent(), I.getSuccessor(1), 2))
+			Out << ";        \n";
+		printBranchToBlock(I.getParent(), I.getSuccessor(1), 2);
+		
 		Out << "\n    fi;\n";
 	} else {
 		if (printPHICopiesForSuccessor(I.getParent(), I.getSuccessor(0), 0))
@@ -3105,8 +3048,6 @@ PromelaWriter::printProcesses()
 			// definitions outside the translation unit.
 			if (F->hasAvailableExternallyLinkage())
 				continue;
-
-			LI = &getAnalysis < LoopInfo > (*F);
 
 			// Get rid of intrinsics we can't handle.
 			lowerIntrinsics(*F);
@@ -4069,7 +4010,6 @@ bool PromelaWriter::runOnModule(Module & M)
 
 void PromelaWriter::getAnalysisUsage(AnalysisUsage & AU) const
 {
-	AU.addRequired < LoopInfo > ();
 	AU.setPreservesAll();
 }
 

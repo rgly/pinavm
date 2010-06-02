@@ -25,6 +25,7 @@
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetSelect.h"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Analysis/LoopDependenceAnalysis.h"
 
 #include "Frontend.hpp"
 #include "PromelaWriter.h"

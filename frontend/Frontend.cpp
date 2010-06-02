@@ -99,6 +99,8 @@ Frontend::fillGlobalVars(Instruction* inst)
 
 bool Frontend::run()
 {
+	bool isInlined;
+
 	TRACE_1("Getting ELAB\n");
 
 	this->elab = new SCElab(llvmMod);
@@ -116,6 +118,10 @@ bool Frontend::run()
 	vector < Process * >::iterator processIt = this->elab->getProcesses()->begin();
 	vector < Process * >::iterator endIt = this->elab->getProcesses()->end();
 	std::vector < Function * >*fctStack = new std::vector < Function * >();
+
+
+	TRACE_4("NB of functions BEFORE inlining : " << llvmMod->size() << "\n");
+	
 
 	if (processIt == endIt) {
 		TRACE_1("WARNING: No process found.\n");
@@ -148,12 +154,14 @@ bool Frontend::run()
 						currentInst->dump();
 						TRACE_4("Call not handled : " << calledFunction->getNameStr() << "\n");
 						TRACE_4("Inlining function : " << calledFunction->getNameStr() << "\n");
+						isInlined = false;
 						if (isInvoke)
-							llvm::InlineFunction(dyn_cast<InvokeInst>(currentInst));
+							isInlined = llvm::InlineFunction(dyn_cast<InvokeInst>(currentInst));
 						else
-							llvm::InlineFunction(dyn_cast<CallInst>(currentInst));
+							isInlined = llvm::InlineFunction(dyn_cast<CallInst>(currentInst));
 						// InlineFunction invalidates iterators => restart loop.
-						goto start_for;
+						if (isInlined)
+							goto start_for;
 					}
 					i++;
 				}
@@ -161,6 +169,8 @@ bool Frontend::run()
 		}
 	}
 	
+	TRACE_4("NB of functions after inlining : " << llvmMod->size() << "\n");
+
 	processIt = this->elab->getProcesses()->begin();	
 	fctStack = new std::vector < Function * >();
 
@@ -210,7 +220,8 @@ bool Frontend::run()
 			}
 		}
 	}
-	
+
+	TRACE_4("NB of functions after frontend: " << llvmMod->size() << "\n");
 
 	delete fctStack;
 	return false;
