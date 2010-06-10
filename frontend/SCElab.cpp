@@ -160,7 +160,7 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 			TRACE_4("type of variable accessed through port : " << itfType << "\n");
 			theNewPort = new Port(mod, portName);
 			if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
-				ch = new SimpleChannel((Type*) itfType, itfTypeName);
+				ch = new SimpleChannel((Type*) itfType, variableTypeName);
 				this->channels.push_back(ch);
 				this->channelsMap.insert(this->channelsMap.end(), pair < sc_core::sc_interface *, Channel * >(itf, ch));
 
@@ -169,7 +169,9 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 				ch = itM->second;
 			}
 
-			TRACE_2("Add (sc_port_base) " << port << " -> (SIMPLE_PORT) " << theNewPort << " with channel " << ch << "\n");
+			TRACE_2("Add (sc_port_base) " << port << " -> (SIMPLE_PORT) " << portName << " with channel " << ch << "\n");
+			TRACE_4("Channel contains type: " << this->llvmMod->getTypeName(ch->getType()) << "\n");
+
 			theNewPort->addChannel(ch);
 		}
 		match = "N7sc_core8sc_clockE";

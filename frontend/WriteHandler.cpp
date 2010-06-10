@@ -16,51 +16,76 @@ SCConstruct *WriteHandler::handle(Function * fct, BasicBlock * bb, Instruction* 
 	TRACE_3("Handling call to write()\n");
 	Value *arg = callInst->getOperand(1);
 	Value *value = callInst->getOperand(2);
+	Port *po = NULL;
 
 	void *portAddr = this->scjit->jitAddr(fct, callInst, arg);
 	TRACE_4("Address jitted : " << portAddr << "\n");
 	if (portAddr == NULL)
-		return new WriteConstruct(arg, value);
+		ret = new WriteConstruct(arg);
+	else {
+		po = this->scjit->getElab()->getPort(portAddr);
+		ret = new WriteConstruct(po);
+		TRACE_3("Port written : " << po->getName() << "\n");
+	}
 
-	Port *po = this->scjit->getElab()->getPort(portAddr);
-	TRACE_3("Port written : " << po << "\n");
-
- 	if (po->getChannelID() == SIMPLE_CHANNEL) {
-		Value *value = callInst->getOperand(2);
+	bool errb = false;
+	
+	if (po == NULL) {
+		ret->setMissingValue(value);
+		TRACE_4("Port couldn't be retrieved, setting value to NULL\n");
+ 	} else if (po->getChannelID() == SIMPLE_CHANNEL) {
 		Type* valueType = po->getType();
-		
-// 		if (this->scjit->getModule()->getTypeName(valueType) == "N5sc_dt7sc_uintILi8") {
-// 			TRACE_4("handling  uint\n");
-// 			sc_dt::sc_uint<8> intValue = this->scjit->jitType<sc_dt::sc_uint<8> >(fct, callInst, value);
-// 			TRACE_4("got result !! \n");
-// 			sprintf(buffer, "%d", intValue.to_int());
-// 			ret = new WriteConstruct(po, buffer);
-// 			TRACE_5("Value written is : " << buffer << "\n");
-// 		} else if (valueType->isIntegerTy()) {
-// 			if (((IntegerType*) valueType)->getBitWidth() == 1) {
-// 				int boolValue = this->scjit->jitBool(fct, callInst, value);
-// 				TRACE_5("Value written is : " << boolValue << "\n");
-// 				if (boolValue) {
-// 					ret = new WriteConstruct(po, "true");
-// 				} else {
-// 					ret = new WriteConstruct(po, "false");				
-// 				}
-// 			} else {
-// 				int intValue = this->scjit->jitType<int>(fct, callInst, value);
-// 				TRACE_5("Value written is : " << intValue << "\n");
-// 				sprintf(buffer, "%d", intValue);
-// 				ret = new WriteConstruct(po, buffer);
-// 			}
-// 		} else if(valueType->getTypeID() == Type::DoubleTyID) {
-// 			double doubleValue = this->scjit->jitDouble(fct, callInst, value);
-// 			TRACE_5("Value written is : " << doubleValue << "\n");
-// 			sprintf(buffer, "%f", doubleValue);
-// 			ret = new WriteConstruct(po, buffer);
-// 		} else if (valueType->getTypeID() == Type::PointerTyID) {
-			ret = new WriteConstruct(po, value);
+		std::string chTypeName = po->getChannel()->getTypeName();
+		TRACE_4("Attempting to retrieve value of write(), type is : " << chTypeName << "\n");
+		if (chTypeName == "N5sc_dt7sc_uintILi8") {
+			TRACE_4("handling  uint\n");
+			sc_dt::sc_uint<8> intValue = this->scjit->jitType<sc_dt::sc_uint<8> >(fct, callInst, value, &errb);
+			if (errb) {
+				ret->setMissingValue(value);
+				TRACE_3("~~~~~~~~~~~~> OK : setMissingValue on uint\n");
+			} else {
+				TRACE_4("got result !! \n");				
+				sprintf(buffer, "%d", intValue.to_int());
+				ret->setValue(buffer);
+				TRACE_5("Value written is : " << buffer << "\n");
+			}
+		} else if (valueType->isIntegerTy()) {
+			if (((IntegerType*) valueType)->getBitWidth() == 1) {
+				int boolValue = this->scjit->jitBool(fct, callInst, value, &errb);
+				if (errb)
+					ret->setMissingValue(value);
+				else {
+					TRACE_5("Value written is : " << boolValue << "\n");
+					if (boolValue) {
+						ret->setValue("true");
+					} else {
+						ret->setValue("false");				
+					}
+				}
+			} else {
+				int intValue = this->scjit->jitType<int>(fct, callInst, value, &errb);
+				if (errb)
+					ret->setMissingValue(value);
+				else {
+					TRACE_5("Value written is : " << intValue << "\n");
+					sprintf(buffer, "%d", intValue);
+					ret->setValue(buffer);
+				}
+			}
+		} else if(valueType->getTypeID() == Type::DoubleTyID) {
+			double doubleValue = this->scjit->jitDouble(fct, callInst, value, &errb);
+			if (errb)
+				ret->setMissingValue(value);
+			else {
+				TRACE_5("Value written is : " << doubleValue << "\n");
+				sprintf(buffer, "%f", doubleValue);
+				ret->setValue(buffer);
+			}
+		} else if (valueType->getTypeID() == Type::PointerTyID) {
+			ret->setMissingValue(value);
 			TRACE_5("Value written is : unknown\n");
-// 		}
- 	}
+		}
+	}
 	return ret;
 }
 

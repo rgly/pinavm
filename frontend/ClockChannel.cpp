@@ -3,7 +3,7 @@
 #include "Channel.hpp"
 #include "ClockChannel.hpp"
 
-ClockChannel::ClockChannel() : Channel(NULL)
+ClockChannel::ClockChannel() : Channel(NULL, NULL)
 {
 	this->id = CLOCK_CHANNEL;
 }

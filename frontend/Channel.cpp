@@ -6,8 +6,9 @@
 
 using namespace llvm;
 
-Channel::Channel(Type* t)
+Channel::Channel(Type* t, std::string typeName)
 {
+	this->chTypeName = typeName;
 	this->type = t;
 	this->id = UNDEFINED_CHANNEL;
 	this->ports = new std::vector<Port*>();
@@ -23,6 +24,12 @@ Type*
 Channel::getType()
 {
 	return this->type;
+}
+
+std::string
+Channel::getTypeName()
+{
+	return this->chTypeName;
 }
 
 std::vector<Port*>*
