@@ -51,9 +51,8 @@ Port::addChannel(Channel* ch)
 		this->channelID = ch->getID();
 		this->type = ch->getType();
 		this->channel = ch;
-		TRACE_4("Add channel\n");
 	} else if (this->channelID != ch->getID()) {
-		ERROR("Cannot add different types of Channel in the same port\n");
+		ERROR("Cannot add different types of Channel to the same port\n");
 	}
 	this->channels->push_back(ch);
 }

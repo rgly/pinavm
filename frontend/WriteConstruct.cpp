@@ -1,31 +1,23 @@
 #include "WriteConstruct.hpp"
 
 
-WriteConstruct::WriteConstruct(Port * p, string valueAsString)
+WriteConstruct::WriteConstruct(Port * p)
 {
 	this->id = WRITECONSTRUCT;
 	this->port = p;
-	this->value = valueAsString;
+	this->missingPort = NULL;
 }
 
-WriteConstruct::WriteConstruct(Port * p, Value* missingV)
+WriteConstruct::WriteConstruct(Value * p)
 {
 	this->id = WRITECONSTRUCT;
-	this->port = p;
-	this->missingValue = missingV;
-}
-
-WriteConstruct::WriteConstruct(Value* missingP, Value* missingV) : SCConstruct(false)
-{
-	this->id = WRITECONSTRUCT;
+	this->missingPort = p;
 	this->port = NULL;
-	this->missingPort = missingP;
-	this->missingValue = missingV;
 }
 
 
 void
- WriteConstruct::setPort(Port * p)
+WriteConstruct::setPort(Port * p)
 {
 	this->port = p;
 }
@@ -38,6 +30,20 @@ Port *WriteConstruct::getPort()
 Value *WriteConstruct::getMissingValue()
 {
 	return this->missingValue;
+}
+
+void
+WriteConstruct::setMissingValue(Value* mv)
+{
+	this->missingValue = mv;
+	this->value = "Undefined value, pb in frontend !";
+}
+
+void
+WriteConstruct::setValue(std::string sv)
+{
+	this->missingValue = NULL;
+	this->value = sv;
 }
 
 Value *WriteConstruct::getMissingPort()
@@ -62,4 +68,14 @@ std::string WriteConstruct::toString()
 std::string WriteConstruct::getValue()
 {
 	return this->value;
+}
+
+bool WriteConstruct::isValueDefined()
+{
+	return this->missingValue == NULL;
+}
+
+bool WriteConstruct::isPortDefined()
+{
+	return this->missingPort == NULL;
 }

@@ -75,11 +75,11 @@ struct SCJit {
 	Module *getModule();
 
 	template<class RetTy>
-	RetTy jitType(Function * f, Instruction* inst, Value * arg) {
+	RetTy jitType(Function * f, Instruction* inst, Value * arg, bool* errb) {
 		Function *fctToJit;
 		const std::vector < const Type *>argsType;
 		
-		TRACE_5("jitInt() \n");
+		TRACE_5("jitType() \n");
 		
 		fillArgsType(f, (std::vector < const Type * >*) &argsType);
 		FunctionType *FT;
@@ -90,7 +90,11 @@ struct SCJit {
 			FT = FunctionType::get(arg->getType(), argsType, false);
 		
 		fctToJit = buildFct(f, FT, inst, arg);
-		
+		if (fctToJit == NULL) {
+			*errb = true;
+			return (RetTy) 0;
+		}
+
 		RetTy (*fct) (sc_core::sc_module *) =
 			(RetTy (*)(sc_core::sc_module *)) ee->getPointerToFunction(fctToJit);
 		
@@ -98,13 +102,6 @@ struct SCJit {
 		TRACE_4("********************* SC MODULE : " << mod << "\n");
 		RetTy res = fct(this->elab->getSCModule(mod));
 		
-		RetTy* retp = &res;
-		sc_dt::sc_uint<8> retUint = *((sc_dt::sc_uint<8>*) retp);
-
-		TRACE_3("Result of jit in jitType : \n");
-		TRACE_3((int) retUint.to_int());
-		TRACE_3("\n");
-
 		fctToJit->dropAllReferences();
 		ee->freeMachineCodeForFunction(fctToJit);
 		fctToJit->eraseFromParent();

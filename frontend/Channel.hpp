@@ -22,12 +22,14 @@ protected:
 	channel_id id;
 	std::vector<Port*>* ports;
 	Type* type;
+	std::string chTypeName;
 
 public:
-	Channel(Type* t);
+	Channel(Type* t, std::string typeName);
 	std::vector<Port*>* getPorts();
 	channel_id getID();
 	Type* getType();
+	std::string getTypeName();
 	virtual std::string toString() = 0;
 };
 

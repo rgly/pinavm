@@ -15,15 +15,18 @@ protected:
 	string value;
 
 public:
-	WriteConstruct(Port * p, string valueAsString);
-	WriteConstruct(Port * p, Value* missingValue);
-	WriteConstruct(Value* missingP, Value* missingV);
+	WriteConstruct(Port * p);
+	WriteConstruct(Value * p);
 	std::string getValue();
+	void setMissingValue(Value* mv);
+	void setValue(std::string sv);
 	Value * getMissingValue();
 	Value * getMissingPort();
 	void setPort(Port * e);
 	Port *getPort();
 	std::string toString();
+	bool isValueDefined();
+	bool isPortDefined();
 };
 
 #endif

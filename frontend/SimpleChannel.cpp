@@ -9,7 +9,7 @@
 
 using namespace std;
 
-SimpleChannel::SimpleChannel(Type* globalVariableType, string globalVarTypeName) : Channel(globalVariableType)
+SimpleChannel::SimpleChannel(Type* globalVariableType, string globalVarTypeName) : Channel(globalVariableType, globalVarTypeName)
 {
 	this->globalVariableName = "SimpleChannel_" + globalVarTypeName;
 	this->id = SIMPLE_CHANNEL;
