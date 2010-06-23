@@ -1,5 +1,5 @@
-#define SpinVersion	"Spin Version 5.2.4 -- 2 December 2009"
-#define PanSource	"ok.11.bug.pr"
+#define SpinVersion	"Spin Version 5.2.5 -- 17 April 2010"
+#define PanSource	"final.pr"
 
 #ifdef WIN64
 #define ONE_L	((unsigned long) 1)
@@ -57,231 +57,15 @@ char *trailfilename;
 #endif
 #ifdef NP	/* includes np_ demon */
 #define HAS_NP	2
-#define VERI	12
+#define VERI	0
 #define endclaim	3 /* none */
 #endif
 typedef struct S_F_MAP {
 	char *fnm; int from; int upto;
 } S_F_MAP;
-
-#define nstates11	24	/* :init: */
-#define endstate11	23
-short src_ln11 [] = {
-	  0, 355, 355, 356, 357, 358, 358, 358, 
-	354, 362, 354, 363, 364, 365, 366, 367, 
-	368, 369, 370, 371, 372, 373, 362, 375, 
-	  0, };
-S_F_MAP src_file11 [] = {
-	{ "-", 0, 0 },
-	{ "ok.11.bug.pr", 1, 23 },
-	{ "-", 24, 25 }
-};
-uchar reached11 [] = {
-	  0,   1,   1,   1,   0,   0,   0,   0, 
-	  0,   1,   1,   1,   0,   0,   0,   0, 
-	  0,   0,   0,   0,   0,   0,   0,   0, 
-	  0, };
-uchar *loopstate11;
-
-#define nstates10	14	/* _ZN6Source7computeEv_pnumber_10 */
-#define endstate10	13
-short src_ln10 [] = {
-	  0, 344, 345, 127, 128, 129, 128, 128, 
-	126, 130, 130, 347, 341, 348,   0, };
-S_F_MAP src_file10 [] = {
-	{ "-", 0, 0 },
-	{ "ok.11.bug.pr", 1, 13 },
-	{ "-", 14, 15 }
-};
-uchar reached10 [] = {
-	  0,   1,   0,   1,   0,   0,   1,   0, 
-	  1,   1,   0,   0,   0,   0,   0, };
-uchar *loopstate10;
-
-#define nstates9	17	/* _ZN8MyModule7computeEv_pnumber_9 */
-#define endstate9	16
-short src_ln9 [] = {
-	  0, 330, 331, 190, 190, 191, 117, 118, 
-	119, 118, 118, 116, 120, 120, 335, 327, 
-	336,   0, };
-S_F_MAP src_file9 [] = {
-	{ "-", 0, 0 },
-	{ "ok.11.bug.pr", 1, 16 },
-	{ "-", 17, 18 }
-};
-uchar reached9 [] = {
-	  0,   1,   0,   1,   0,   0,   1,   0, 
-	  0,   1,   0,   1,   1,   0,   0,   0, 
-	  0,   0, };
-uchar *loopstate9;
-
-#define nstates8	17	/* _ZN8MyModule7computeEv_pnumber_8 */
-#define endstate8	16
-short src_ln8 [] = {
-	  0, 316, 317, 184, 184, 185, 107, 108, 
-	109, 108, 108, 106, 110, 110, 321, 313, 
-	322,   0, };
-S_F_MAP src_file8 [] = {
-	{ "-", 0, 0 },
-	{ "ok.11.bug.pr", 1, 16 },
-	{ "-", 17, 18 }
-};
-uchar reached8 [] = {
-	  0,   1,   0,   1,   0,   0,   1,   0, 
-	  0,   1,   0,   1,   1,   0,   0,   0, 
-	  0,   0, };
-uchar *loopstate8;
-
-#define nstates7	17	/* _ZN8MyModule7computeEv_pnumber_7 */
-#define endstate7	16
-short src_ln7 [] = {
-	  0, 302, 303, 178, 178, 179,  97,  98, 
-	 99,  98,  98,  96, 100, 100, 307, 299, 
-	308,   0, };
-S_F_MAP src_file7 [] = {
-	{ "-", 0, 0 },
-	{ "ok.11.bug.pr", 1, 16 },
-	{ "-", 17, 18 }
-};
-uchar reached7 [] = {
-	  0,   1,   0,   1,   0,   0,   1,   0, 
-	  0,   1,   0,   1,   1,   0,   0,   0, 
-	  0,   0, };
-uchar *loopstate7;
-
-#define nstates6	17	/* _ZN8MyModule7computeEv_pnumber_6 */
-#define endstate6	16
-short src_ln6 [] = {
-	  0, 288, 289, 172, 172, 173,  87,  88, 
-	 89,  88,  88,  86,  90,  90, 293, 285, 
-	294,   0, };
-S_F_MAP src_file6 [] = {
-	{ "-", 0, 0 },
-	{ "ok.11.bug.pr", 1, 16 },
-	{ "-", 17, 18 }
-};
-uchar reached6 [] = {
-	  0,   1,   0,   1,   0,   0,   1,   0, 
-	  0,   1,   0,   1,   1,   0,   0,   0, 
-	  0,   0, };
-uchar *loopstate6;
-
-#define nstates5	17	/* _ZN8MyModule7computeEv_pnumber_5 */
-#define endstate5	16
-short src_ln5 [] = {
-	  0, 274, 275, 166, 166, 167,  77,  78, 
-	 79,  78,  78,  76,  80,  80, 279, 271, 
-	280,   0, };
-S_F_MAP src_file5 [] = {
-	{ "-", 0, 0 },
-	{ "ok.11.bug.pr", 1, 16 },
-	{ "-", 17, 18 }
-};
-uchar reached5 [] = {
-	  0,   1,   0,   1,   0,   0,   1,   0, 
-	  0,   1,   0,   1,   1,   0,   0,   0, 
-	  0,   0, };
-uchar *loopstate5;
-
-#define nstates4	17	/* _ZN8MyModule7computeEv_pnumber_4 */
-#define endstate4	16
-short src_ln4 [] = {
-	  0, 260, 261, 160, 160, 161,  67,  68, 
-	 69,  68,  68,  66,  70,  70, 265, 257, 
-	266,   0, };
-S_F_MAP src_file4 [] = {
-	{ "-", 0, 0 },
-	{ "ok.11.bug.pr", 1, 16 },
-	{ "-", 17, 18 }
-};
-uchar reached4 [] = {
-	  0,   1,   0,   1,   0,   0,   1,   0, 
-	  0,   1,   0,   1,   1,   0,   0,   0, 
-	  0,   0, };
-uchar *loopstate4;
-
-#define nstates3	17	/* _ZN8MyModule7computeEv_pnumber_3 */
-#define endstate3	16
-short src_ln3 [] = {
-	  0, 246, 247, 154, 154, 155,  57,  58, 
-	 59,  58,  58,  56,  60,  60, 251, 243, 
-	252,   0, };
-S_F_MAP src_file3 [] = {
-	{ "-", 0, 0 },
-	{ "ok.11.bug.pr", 1, 16 },
-	{ "-", 17, 18 }
-};
-uchar reached3 [] = {
-	  0,   1,   0,   1,   0,   0,   1,   0, 
-	  0,   1,   0,   1,   1,   0,   0,   0, 
-	  0,   0, };
-uchar *loopstate3;
-
-#define nstates2	17	/* _ZN8MyModule7computeEv_pnumber_2 */
-#define endstate2	16
-short src_ln2 [] = {
-	  0, 232, 233, 148, 148, 149,  47,  48, 
-	 49,  48,  48,  46,  50,  50, 237, 229, 
-	238,   0, };
-S_F_MAP src_file2 [] = {
-	{ "-", 0, 0 },
-	{ "ok.11.bug.pr", 1, 16 },
-	{ "-", 17, 18 }
-};
-uchar reached2 [] = {
-	  0,   1,   0,   1,   0,   0,   1,   0, 
-	  0,   1,   0,   1,   1,   0,   0,   0, 
-	  0,   0, };
-uchar *loopstate2;
-
-#define nstates1	17	/* _ZN8MyModule7computeEv_pnumber_1 */
-#define endstate1	16
-short src_ln1 [] = {
-	  0, 218, 219, 142, 142, 143,  37,  38, 
-	 39,  38,  38,  36,  40,  40, 223, 215, 
-	224,   0, };
-S_F_MAP src_file1 [] = {
-	{ "-", 0, 0 },
-	{ "ok.11.bug.pr", 1, 16 },
-	{ "-", 17, 18 }
-};
-uchar reached1 [] = {
-	  0,   1,   0,   1,   0,   0,   1,   0, 
-	  0,   1,   0,   1,   1,   0,   0,   0, 
-	  0,   0, };
-uchar *loopstate1;
-
-#define nstates0	17	/* _ZN8MyModule7computeEv_pnumber_0 */
-#define endstate0	16
-short src_ln0 [] = {
-	  0, 203, 204, 136, 136, 137,  37,  38, 
-	 39,  38,  38,  36,  40,  40, 208, 200, 
-	210,   0, };
-S_F_MAP src_file0 [] = {
-	{ "-", 0, 0 },
-	{ "ok.11.bug.pr", 1, 16 },
-	{ "-", 17, 18 }
-};
-uchar reached0 [] = {
-	  0,   1,   0,   1,   0,   0,   1,   0, 
-	  0,   1,   0,   1,   1,   0,   0,   0, 
-	  0,   0, };
-uchar *loopstate0;
 struct {
 	int tp; short *src;
 } src_all[] = {
-	{ 11, &src_ln11[0] },
-	{ 10, &src_ln10[0] },
-	{ 9, &src_ln9[0] },
-	{ 8, &src_ln8[0] },
-	{ 7, &src_ln7[0] },
-	{ 6, &src_ln6[0] },
-	{ 5, &src_ln5[0] },
-	{ 4, &src_ln4[0] },
-	{ 3, &src_ln3[0] },
-	{ 2, &src_ln2[0] },
-	{ 1, &src_ln1[0] },
-	{ 0, &src_ln0[0] },
 	{ 0, (short *) 0 }
 };
 short *frm_st0;
@@ -290,8 +74,8 @@ struct {
 } code_lookup[] = {
 	{ (char *) 0, "" }
 };
-#define _T5	95
-#define _T2	96
+#define _T5	3
+#define _T2	4
 #define T_ID	unsigned char
 #define SYNC	0
 #define ASYNC	0
@@ -306,123 +90,15 @@ struct {
 	#endif
 #endif
 char *procname[] = {
-   "_ZN8MyModule7computeEv_pnumber_0",
-   "_ZN8MyModule7computeEv_pnumber_1",
-   "_ZN8MyModule7computeEv_pnumber_2",
-   "_ZN8MyModule7computeEv_pnumber_3",
-   "_ZN8MyModule7computeEv_pnumber_4",
-   "_ZN8MyModule7computeEv_pnumber_5",
-   "_ZN8MyModule7computeEv_pnumber_6",
-   "_ZN8MyModule7computeEv_pnumber_7",
-   "_ZN8MyModule7computeEv_pnumber_8",
-   "_ZN8MyModule7computeEv_pnumber_9",
-   "_ZN6Source7computeEv_pnumber_10",
-   ":init:",
    ":np_:",
 };
 
-#define Pinit	((P11 *)this)
-typedef struct P11 { /* :init: */
+typedef struct P0 { /* np_ */
 	unsigned _pid : 8;  /* 0..255 */
-	unsigned _t   : 5; /* proctype */
-	unsigned _p   : 6; /* state    */
-	int i;
-} P11;
-#define Air11	(sizeof(P11) - Offsetof(P11, i) - 1*sizeof(int))
-#define P_ZN6Source7computeEv_pnumber_10	((P10 *)this)
-typedef struct P10 { /* _ZN6Source7computeEv_pnumber_10 */
-	unsigned _pid : 8;  /* 0..255 */
-	unsigned _t   : 5; /* proctype */
-	unsigned _p   : 6; /* state    */
-	int llvm_cbe_alloca_20_point;
-} P10;
-#define Air10	(sizeof(P10) - Offsetof(P10, llvm_cbe_alloca_20_point) - 1*sizeof(int))
-#define P_ZN8MyModule7computeEv_pnumber_9	((P9 *)this)
-typedef struct P9 { /* _ZN8MyModule7computeEv_pnumber_9 */
-	unsigned _pid : 8;  /* 0..255 */
-	unsigned _t   : 5; /* proctype */
-	unsigned _p   : 6; /* state    */
-	int llvm_cbe_alloca_20_point;
-} P9;
-#define Air9	(sizeof(P9) - Offsetof(P9, llvm_cbe_alloca_20_point) - 1*sizeof(int))
-#define P_ZN8MyModule7computeEv_pnumber_8	((P8 *)this)
-typedef struct P8 { /* _ZN8MyModule7computeEv_pnumber_8 */
-	unsigned _pid : 8;  /* 0..255 */
-	unsigned _t   : 5; /* proctype */
-	unsigned _p   : 6; /* state    */
-	int llvm_cbe_alloca_20_point;
-} P8;
-#define Air8	(sizeof(P8) - Offsetof(P8, llvm_cbe_alloca_20_point) - 1*sizeof(int))
-#define P_ZN8MyModule7computeEv_pnumber_7	((P7 *)this)
-typedef struct P7 { /* _ZN8MyModule7computeEv_pnumber_7 */
-	unsigned _pid : 8;  /* 0..255 */
-	unsigned _t   : 5; /* proctype */
-	unsigned _p   : 6; /* state    */
-	int llvm_cbe_alloca_20_point;
-} P7;
-#define Air7	(sizeof(P7) - Offsetof(P7, llvm_cbe_alloca_20_point) - 1*sizeof(int))
-#define P_ZN8MyModule7computeEv_pnumber_6	((P6 *)this)
-typedef struct P6 { /* _ZN8MyModule7computeEv_pnumber_6 */
-	unsigned _pid : 8;  /* 0..255 */
-	unsigned _t   : 5; /* proctype */
-	unsigned _p   : 6; /* state    */
-	int llvm_cbe_alloca_20_point;
-} P6;
-#define Air6	(sizeof(P6) - Offsetof(P6, llvm_cbe_alloca_20_point) - 1*sizeof(int))
-#define P_ZN8MyModule7computeEv_pnumber_5	((P5 *)this)
-typedef struct P5 { /* _ZN8MyModule7computeEv_pnumber_5 */
-	unsigned _pid : 8;  /* 0..255 */
-	unsigned _t   : 5; /* proctype */
-	unsigned _p   : 6; /* state    */
-	int llvm_cbe_alloca_20_point;
-} P5;
-#define Air5	(sizeof(P5) - Offsetof(P5, llvm_cbe_alloca_20_point) - 1*sizeof(int))
-#define P_ZN8MyModule7computeEv_pnumber_4	((P4 *)this)
-typedef struct P4 { /* _ZN8MyModule7computeEv_pnumber_4 */
-	unsigned _pid : 8;  /* 0..255 */
-	unsigned _t   : 5; /* proctype */
-	unsigned _p   : 6; /* state    */
-	int llvm_cbe_alloca_20_point;
-} P4;
-#define Air4	(sizeof(P4) - Offsetof(P4, llvm_cbe_alloca_20_point) - 1*sizeof(int))
-#define P_ZN8MyModule7computeEv_pnumber_3	((P3 *)this)
-typedef struct P3 { /* _ZN8MyModule7computeEv_pnumber_3 */
-	unsigned _pid : 8;  /* 0..255 */
-	unsigned _t   : 5; /* proctype */
-	unsigned _p   : 6; /* state    */
-	int llvm_cbe_alloca_20_point;
-} P3;
-#define Air3	(sizeof(P3) - Offsetof(P3, llvm_cbe_alloca_20_point) - 1*sizeof(int))
-#define P_ZN8MyModule7computeEv_pnumber_2	((P2 *)this)
-typedef struct P2 { /* _ZN8MyModule7computeEv_pnumber_2 */
-	unsigned _pid : 8;  /* 0..255 */
-	unsigned _t   : 5; /* proctype */
-	unsigned _p   : 6; /* state    */
-	int llvm_cbe_alloca_20_point;
-} P2;
-#define Air2	(sizeof(P2) - Offsetof(P2, llvm_cbe_alloca_20_point) - 1*sizeof(int))
-#define P_ZN8MyModule7computeEv_pnumber_1	((P1 *)this)
-typedef struct P1 { /* _ZN8MyModule7computeEv_pnumber_1 */
-	unsigned _pid : 8;  /* 0..255 */
-	unsigned _t   : 5; /* proctype */
-	unsigned _p   : 6; /* state    */
-	int llvm_cbe_alloca_20_point;
-} P1;
-#define Air1	(sizeof(P1) - Offsetof(P1, llvm_cbe_alloca_20_point) - 1*sizeof(int))
-#define P_ZN8MyModule7computeEv_pnumber_0	((P0 *)this)
-typedef struct P0 { /* _ZN8MyModule7computeEv_pnumber_0 */
-	unsigned _pid : 8;  /* 0..255 */
-	unsigned _t   : 5; /* proctype */
-	unsigned _p   : 6; /* state    */
-	int llvm_cbe_alloca_20_point;
+	unsigned _t   : 2; /* proctype */
+	unsigned _p   : 2; /* state    */
 } P0;
-#define Air0	(sizeof(P0) - Offsetof(P0, llvm_cbe_alloca_20_point) - 1*sizeof(int))
-typedef struct P12 { /* np_ */
-	unsigned _pid : 8;  /* 0..255 */
-	unsigned _t   : 5; /* proctype */
-	unsigned _p   : 6; /* state    */
-} P12;
-#define Air12	(sizeof(P12) - 3)
+#define Air0	(sizeof(P0) - 2)
 #if defined(BFS) && defined(REACH)
 #undef REACH
 #endif
@@ -617,37 +293,22 @@ typedef struct State {
 	unsigned short _event;
 #endif
 #endif
-	int T[11];
-	int e[11];
 	uchar sv[VECTORSZ];
 } State;
 
 #define HAS_TRACK	0
-/* hidden variable: */	uchar finished[11];
 int _; /* a predefined write-only variable */
 
 #define FORWARD_MOVES	"pan.m"
 #define REVERSE_MOVES	"pan.b"
 #define TRANSITIONS	"pan.t"
-#define _NP_	12
-uchar reached12[3];  /* np_ */
-uchar *loopstate12;  /* np_ */
-#define nstates12	3 /* np_ */
-#define endstate12	2 /* np_ */
+#define _NP_	0
+uchar reached0[3];  /* np_ */
+uchar *loopstate0;  /* np_ */
+#define nstates0	3 /* np_ */
+#define endstate0	2 /* np_ */
 
-#define start12	0 /* np_ */
-#define start11	8
-#define start10	12
-#define start9	15
-#define start8	15
-#define start7	15
-#define start6	15
-#define start5	15
-#define start4	15
-#define start3	15
-#define start2	15
-#define start1	15
-#define start0	15
+#define start0	0 /* np_ */
 #ifdef NP
 	#define ACCEPT_LAB	1 /* at least 1 in np_ */
 #else
@@ -680,15 +341,15 @@ uchar *loopstate12;  /* np_ */
 	#define MEMLIM	(2048)	/* need a default, using 2 GB */
 #endif
 #define PROG_LAB	0 /* progress labels */
-uchar *accpstate[13];
-uchar *progstate[13];
-uchar *loopstate[13];
-uchar *reached[13];
-uchar *stopstate[13];
-uchar *visstate[13];
-short *mapstate[13];
+uchar *accpstate[1];
+uchar *progstate[1];
+uchar *loopstate[1];
+uchar *reached[1];
+uchar *stopstate[1];
+uchar *visstate[1];
+short *mapstate[1];
 #ifdef HAS_CODE
-int NrStates[13];
+int NrStates[1];
 #endif
 #define NQS	0
 short q_flds[1];
@@ -777,7 +438,3 @@ void qsend(int, int, int);
 #define GLOBAL	7
 #define BAD	8
 #define ALPHA_F	9
-#define NTRANS	97
-#ifdef PEG
-long peg[NTRANS];
-#endif

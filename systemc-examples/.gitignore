@@ -1,0 +1,12 @@
+# LLVM bitcode files
+*.bc
+*.ll
+
+# SPIN generated files
+pan.[b,c,h,m,t]
+pan
+
+# Promela files
+*.pr
+*.pr.bak
+Spin_Results

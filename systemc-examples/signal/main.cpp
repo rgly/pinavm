@@ -119,7 +119,7 @@ SC_MODULE(gen_clock)
 		bool val;
 		val = out.read();
 		out.write(!val);
-		next_trigger(10, SC_NS);
+		//next_trigger(10, SC_NS);
 	}
 
 	SC_CTOR(gen_clock) {

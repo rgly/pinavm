@@ -8,24 +8,25 @@ TIMEOUT = 3
 #Default Argument Value 3 (can be overriden by command line arguments)
 ARG=3
 
-SUB_DIRS = elab_easy \
+SUB_DIRS = arth_ctrl \
+events  \
+elab_easy  \
 elab_easy_arrays \
 elab_easy_int \
 elab_easy_sc_stop \
 elab_easy_uint \
 elab_multiple_instances \
-elab_only \
+#elab_only \
 elab_ports \
 elab_ports_array \
 elab_ports_bool \
 elab_ports_pointer \
 empty-sc \
-events \
 fifo \
 jerome-chain \
 jerome-chain-deterministic \
 pkt_switch \
-plain-cpp \
+#plain-cpp \
 RAM \
 sc_clock signal
 
@@ -40,7 +41,8 @@ ALLRESULTS = Results_all
 SMRESULTS= Simple_Results
 FERESULTS= Frontend_Results
 PRRESULTS= Promela_Results
-
+SPINRESULTS= Spin_Results
+SPINPATH=~
 
 .PHONY: test clean promela simple all frontend
 
@@ -48,7 +50,7 @@ PRRESULTS= Promela_Results
 
 # Do make all (optional)TIMEOUT=.. (optional)ARG=.. and see the generated results file Frontend_Results Simple_Results and Promela_Results
 
-all:	frontend promela simple
+all:	frontend promela simple spin
 #	$(MAKE) $(FRONTEND)
 #	$(MAKE)	$(PROMELA)
 #	$(MAKE) $(SIMPLE) 
@@ -73,6 +75,29 @@ frontend:
  	cd ..;	 								\
 	done									
 #	gedit $(FERESULTS)
+# Verify promela Results with spin should be run only after doing make promela
+spin:	
+	echo -e "TESTING WITH Spin ##################\n">$(SPINRESULTS)
+	for d in $(SUB_DIRS); 							\
+	do echo ......................................................; 	\
+	echo Testing $$d with Spin;	 					\
+	echo running with $(ARG) and $(OVERRIDING); 				\
+	cd $$d; 								\
+	ulimit -t $(TIMEOUT);							\
+	$(SPINPATH)/Spin -a final.pr;             				\
+	gcc -o pan pan.c;							\
+	./pan;									\
+#	test [$$? -eq $(ZERO)] && (echo PASS $$d); 				\
+#	EXITSTATUS=$$?; 							\
+	if [ "$$?" = "0" ]; then						\
+	      (echo -e "$(PASS) $$d \n">>../$(SPINRESULTS)) && echo "$(PASS) $$d";\
+	else									\
+	      (echo -e "$(FAIL) $$d \n">>../$(SPINRESULTS)) && echo "$(FAIL) $$d";\
+	fi;									\
+ 	cd ..;	 								\
+	done			
+
+
 
 # Do make promela (optional)TIMEOUT=.. (optional)ARG=.. and see the generated result file Promela_Results
 promela:

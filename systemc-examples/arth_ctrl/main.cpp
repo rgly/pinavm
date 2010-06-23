@@ -14,20 +14,21 @@ class superclass
 class Component : public sc_module//, public superclass
 {
 public:
-#ifdef KASCPAR
+/*#ifdef KASCPAR
  	sc_out<bool> out;
  	sc_in<bool> in;
-#else	
+#else*/	
 	sc_core::sc_out<bool> out;
 	sc_core::sc_in<bool> in;
-#endif
+//#endif
 	
 	bool notified;
 	bool isHead;
-    SC_HAS_PROCESS(Component)
+  SC_HAS_PROCESS(Component);
 
     Component(sc_module_name name) {
     //  SC_CTOR(Component)	{
+                        int i=1;
 			notified = false;
 			isHead = false;
 			SC_THREAD(process);
@@ -36,34 +37,50 @@ public:
  	void essaiwrite();
 
 	void process() {
- 		if (isHead == false) {
+	  /*      if (isHead == false) {
  			while (in.read() == false) {
  #ifdef KASCPAR
  				wait(5, SC_NS);
  #else
- 				//sc_core::wait(5, SC_NS);
+ 				sc_core::wait(5, SC_NS);
  #endif
  			}
  		}
- 		notified = true;
- 		out.write(true);
- 	}
+ 		notified = true;*/
+	  int i = 5;
+	  int j = 3;
+	  //   std::cout<<j;
+	  int res = i + j;
+	  res++;
+	  //	  std::cout<<res;
+	  int res1 = i * j;
+	  res++;
+ 	  int res2 = i / j;
+	  res++;
+ 	  int res3 = i - j;
+	  if (res>res1)
+	    res3=res2;
+	  else
+	    res3=res;
+	  res3++;
+	  //out.write(true);
+		}
 };
 
-void Component::essaiwrite()
+/*void Component::essaiwrite()
 {
 	;
-}
+	}*/
 
 int sc_main (int argc , char *argv[]) 
 {
-#ifdef KASCPAR
+/*#ifdef KASCPAR
  	sc_signal<bool> s1;
  	sc_signal<bool> s2;
  	sc_signal<bool> s3;
-#else
+#else*/
 	sc_core::sc_signal<bool> s1("s1"), s2("s2");//, s3("s3");
-#endif
+//#endif
 
  	Component C1("C1");
  	Component C2("C2");
