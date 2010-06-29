@@ -77,17 +77,16 @@ spin:
 	    echo ......................................................; 		\
 	    echo Testing $$d with Spin;	 						\
 	    echo running with $(ARG) and $(OVERRIDING); 				\
-	    cd $$d; 									\
-	    ulimit -t $(TIMEOUT);							\
-	    $(SPIN) -a final.pr;             				        	\
-	    gcc -o pan pan.c;								\
-	    if ./pan; then								\
-	          (echo -e "$(PASS) $$d \n">>../$(SPINRESULTS)) && echo "$(PASS) $$d";	\
-	    else									\
-	          (echo -e "$(FAIL) $$d \n">>../$(SPINRESULTS)) && echo "$(FAIL) $$d";	\
-	    fi;										\
-	    cd ..;	 								\
-	done			
+	    (										\
+		cd $$d; 								\
+		ulimit -t $(TIMEOUT);							\
+		if $(MAKE) spin-run; then						\
+		      (echo -e "$(PASS) $$d \n">>../$(SPINRESULTS)) && echo "$(PASS) $$d"; \
+		else									\
+		      (echo -e "$(FAIL) $$d \n">>../$(SPINRESULTS)) && echo "$(FAIL) $$d"; \
+		fi;									\
+	    )										\
+	done
 
 
 

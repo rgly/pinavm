@@ -1,3 +1,5 @@
+SPIN = spin
+CC = gcc
 TARGET_ARCH=linux
 
 OVERRIDING=default
@@ -32,7 +34,11 @@ ifndef PROMELA
 PROMELA=${patsubst %.$(SUF),%.pr,$(SRC)}
 endif
 
-.PHONY: promela diff
+ifndef PINAVM_ARGS
+PINAVM_ARGS=-print-ir -print-elab
+endif
+
+.PHONY: promela diff frontend
 promela: $(PROMELA)
 
 diff:
@@ -40,7 +46,16 @@ diff:
 
 frontend: main.opt.bc
 	@$(MAKE) $(PINAVM)
-	$(PINAVM) main.opt.bc -print-ir -print-elab -args $(ARG)
+	$(PINAVM) main.opt.bc $(PINAVM_ARGS) -args $(ARG)
+
+pan.c: $(PROMELA)
+	$(SPIN) -a $(PROMELA)
+
+pan: pan.c
+	$(CC) $(CFLAGS) $< -o $@
+
+spin-run: pan
+	./pan
 
 ifndef CPPFLAGS
 CPPFLAGS=-fno-inline-functions
