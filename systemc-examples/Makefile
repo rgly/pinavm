@@ -64,10 +64,7 @@ frontend:
 	echo running with $(ARG) and $(OVERRIDING); 				\
 	cd $$d; 								\
 	ulimit -t $(TIMEOUT);							\
-	$(MAKE) $(FRONTEND) ARG=$(ARG); 					\
-#	test [$$? -eq $(ZERO)] && (echo PASS $$d); 				\
-#	EXITSTATUS=$$?; 							\
-	if [ "$$?" = "0" ]; then						\
+	if $(MAKE) $(FRONTEND) ARG=$(ARG); then						\
 	      (echo -e "$(PASS) $$d \n">>../$(FERESULTS)) && echo "$(PASS) $$d";\
 	else									\
 	      (echo -e "$(FAIL) $$d \n">>../$(FERESULTS)) && echo "$(FAIL) $$d";\
@@ -76,7 +73,7 @@ frontend:
 	done									
 #	gedit $(FERESULTS)
 # Verify promela Results with spin should be run only after doing make promela
-spin:	
+spin:
 	echo -e "TESTING WITH Spin ##################\n">$(SPINRESULTS)
 	for d in $(SUB_DIRS); 							\
 	do echo ......................................................; 	\
@@ -86,10 +83,7 @@ spin:
 	ulimit -t $(TIMEOUT);							\
 	$(SPIN) -a final.pr;             				        \
 	gcc -o pan pan.c;							\
-	./pan;									\
-#	test [$$? -eq $(ZERO)] && (echo PASS $$d); 				\
-#	EXITSTATUS=$$?; 							\
-	if [ "$$?" = "0" ]; then						\
+	if ./pan; then						\
 	      (echo -e "$(PASS) $$d \n">>../$(SPINRESULTS)) && echo "$(PASS) $$d";\
 	else									\
 	      (echo -e "$(FAIL) $$d \n">>../$(SPINRESULTS)) && echo "$(FAIL) $$d";\
@@ -108,10 +102,7 @@ promela:
 	echo running with $(ARG) and $(OVERRIDING); 				\
 	cd $$d; 								\
 	ulimit -t $(TIMEOUT);							\
-	$(MAKE) $(PROMELA) ARG=$(ARG); 						\
-#	test [$$? -eq $(ZERO)] && (echo PASS $$d); 				\
-#	EXITSTATUS=$$?; 							\
-	if [ "$$?" = "0" ]; then						\
+	if $(MAKE) $(PROMELA) ARG=$(ARG); then						\
 	      (echo -e "$(PASS) $$d \n">>../$(PRRESULTS)) && echo "$(PASS) $$d";\
 	else									\
 	      (echo -e "$(FAIL) $$d \n">>../$(PRRESULTS)) && echo "$(FAIL) $$d";\
@@ -129,10 +120,7 @@ simple:
 	echo running with $(ARG) and $(OVERRIDING); 				\
 	cd $$d; 								\
 	ulimit -t $(TIMEOUT);							\
-	$(MAKE) $(SIMPLE) ARG=$(ARG); 						\
-#	test [$$? -eq $(ZERO)] && (echo PASS $$d); 				\
-#	EXITSTATUS=$$?; 							\
-	if [ "$$?" = "0" ]; then						\
+	if $(MAKE) $(SIMPLE) ARG=$(ARG); then					\
 	    (echo -e "$(PASS) $$d \n">>../$(SMRESULTS)) && echo "$(PASS) $$d";	\
 	else									\
 	    (echo -e "$(FAIL) $$d \n">>../$(SMRESULTS)) && echo "$(FAIL) $$d";	\
