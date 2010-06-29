@@ -95,7 +95,7 @@ gcc-ssa: $(GCC_SSA)
 %.ll: %.bc Makefile
 	llvm-dis -f $*.bc -o $*.ll
 
-%.bc: %.$(SUF) Makefile $(PINAVM)
+%.bc: %.$(SUF) Makefile
 	llvm-$(COMP) $(LLVMGCCFLAGS) -emit-llvm -c $< -o $@ $(INCLUDE)
 
 %.simu: %.$(SUF) Makefile
