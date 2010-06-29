@@ -288,16 +288,24 @@ PromelaWriter::printType(formatted_raw_ostream & Out,
 	}
 	// Check to see if the type is named.
 	if (!IgnoreName || isa < OpaqueType > (Ty)) {
+		std::map < const Type *, std::string >::iterator ITN = TypeNames.find(Ty), ETN = TypeNames.end();
 		if (isSystemCType(Ty))
 			return Out;
-
+		if (isSystemCStruct(dyn_cast<StructType>(Ty)))
+			if (ITN!=ETN){
+			std::string tName = ITN->second;
+			if (tName.find("struct_sc_dt::sc_uint")!=string::npos)
+			return Out<<"int "<<NameSoFar;
+			else
+			return Out<<"CHECK";}
+		
 		while (isa<PointerType>(Ty)) {
 			Ty = cast<PointerType>(Ty)->getElementType();
 		}
-		std::map < const Type *, std::string >::iterator ITN = TypeNames.find(Ty), ETN = TypeNames.end();
+		//std::map < const Type *, std::string >::iterator ITN = TypeNames.find(Ty), ETN = TypeNames.end();
 		if (ITN != ETN) {
 			std::string tName = ITN->second;
-			//if (tName.find("uint")!=string::npos)
+			//if (tName.find("struct_sc_dt::sc_uint<8>")!=string::npos)
 			return Out << tName << " " << NameSoFar;
 		}
 	}
@@ -433,8 +441,14 @@ PromelaWriter::printType(std::ostream & Out,
 	}
 	// Check to see if the type is named.
 	if (!IgnoreName || isa < OpaqueType > (Ty)) {
-		if (isSystemCType(Ty))
+		if (isSystemCType(Ty))/*{
+			std::map < const Type *, std::string >::iterator ITN = TypeNames.find(Ty), ETN = TypeNames.end();
+		        if (ITN != ETN) {
+			std::string tName = ITN->second;
+			if (tName.find("struct_sc_dt::sc_uint")!=string::npos)
+			 	return Out << "int" << " " << NameSoFar;}*/
 			return Out;
+		//}
 		while (isa<PointerType>(Ty)) {
 			Ty = cast<PointerType>(Ty)->getElementType();
 		}
@@ -979,7 +993,7 @@ void PromelaWriter::printConstant(Constant * CPV, bool Static)
 		else if (Ty == Type::getInt32Ty(CPV->getContext()))
 			Out << CI->getZExtValue();
 		else if (Ty->getPrimitiveSizeInBits() > 32)
-			Out << CI->getZExtValue() << "ull";
+			Out << CI->getZExtValue();// << "ull";
 		else {
 			//Out << "((";
 			//printSimpleType(Out, Ty, false) << ')';
@@ -1290,8 +1304,17 @@ void PromelaWriter::writeInstComputationInline(Instruction & I)
 		llvm_report_error("The Simple backend does not currently support integer types"
 				"of widths other than 1, 8, 16, 32, 64.\n"
 				"This is being tracked as PR 4158.");
-	}
-
+	}	
+		
+	TRACE_6("***************************************************************");
+	Ty->dump();
+	TRACE_6 ("**************************************************************");
+	if (isSystemCStruct(dyn_cast<StructType>(Ty)))
+	      {
+		//Out<<"INSIDE SYSTEMC VISITING----> \n";
+		visitSystemCStruct(I);
+		//return;
+	      }
 	// If this is a non-trivial bool computation, make sure to truncate down to
 	// a 1 bit value.  This is important because we want "add i1 x, y" to return
 	// "0" when x and y are true, not "2" for example.
@@ -1324,7 +1347,7 @@ bool PromelaWriter::isAddressExposed(const Value * V) const
 }
 
 
-/// writeOperandDeref - Print the result of dereferencing the specified
+/// Deref - Print the result of dereferencing the specified
 /// operand with '*'.  This is equivalent to printing '*' then using
 /// writeOperand, but avoids excess syntax in some cases.
 void PromelaWriter::writeOperandDeref(Value * Operand)
@@ -1753,10 +1776,19 @@ PromelaWriter::isTypeEmpty(const Type* ty)
 
 bool
 PromelaWriter::isSystemCStruct(const StructType* ty)
-{
- 	std::string typeName = this->TypeNames.find(ty)->second;
-	TRACE_7("------------------------> isSystemCStruct > " << typeName << "\n");
- 	return typeName.substr(0, 16).compare("struct_sc_core::") == 0 || typeName.substr(0, 12).compare("struct_std::") == 0;
+{	
+	/*TRACE_6("--------******************************************************************************----\n");
+	((Type*)ty)->dump();
+	TRACE_6("--------******************************************************************************----\n");*/
+	std::map < const Type *, std::string >::iterator ITN = TypeNames.find(ty), ETN = TypeNames.end();
+	if (ITN!=ETN){
+ 	//std::string typeName = this->TypeNames.find(ty)->second;
+	std::string typeName = ITN->second;
+	//Out<<"------------------------> isSystemCStruct > " << typeName << "\n";
+ 	return typeName.substr(0,10).compare("struct_sc_") == 0 || typeName.substr(0, 12).compare("struct_std::") == 0;
+	}
+
+	return false;
 }
 
 bool
@@ -1921,6 +1953,7 @@ void PromelaWriter::printBasicBlock(BasicBlock * BB)
 // Specific Instruction type classes... note that all of the casts are
 // necessary because we use the instruction classes as opaque types...
 //
+
 void PromelaWriter::visitReturnInst(ReturnInst & I)
 {
 	TRACE_4("/***** Visiting return inst ****/\n");
@@ -1961,7 +1994,17 @@ void PromelaWriter::visitReturnInst(ReturnInst & I)
 	}
 //   Out << ";\n";
 }
-
+void PromelaWriter::visitSystemCStruct(Instruction &I)
+{
+	Out<<"INSIDE SYSTEMC VISITING----> \n";
+        const Type* Ty=I.getType();
+	std::string typeName = this->TypeNames.find(Ty)->second;
+	if (typeName.find("struct_sc_uint")!=string::npos){
+		Out<<I.getOperand(0);
+		Out<<";\n";
+	}
+}
+	
 void PromelaWriter::visitSwitchInst(SwitchInst & SI)
 {
 	Out << "    switch (";
@@ -2717,6 +2760,7 @@ PromelaWriter::printGlobalVariables(Mangler* mang)
 	Out << "/*---- Channel variables ----*/\n";
 	for (; ChannelIt < ChannelEnd; ++ChannelIt) {
 		Channel* chan = *ChannelIt;
+		
 		if (notPrinted(chan->getTypeName())){
 		string name = "llvm_chan_" + chan->getTypeName();
 		printType(Out, chan->getType(), false, name);

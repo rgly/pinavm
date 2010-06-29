@@ -170,7 +170,8 @@ public:
         
   // Instruction visitation functions
   friend class InstVisitor<PromelaWriter>;
-
+  
+  void visitSystemCStruct(Instruction &I);
   void visitReturnInst(ReturnInst &I);
   void visitBranchInst(BranchInst &I);
   void visitSwitchInst(SwitchInst &I);

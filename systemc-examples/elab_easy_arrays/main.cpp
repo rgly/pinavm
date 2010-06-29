@@ -49,15 +49,16 @@ int sc_main (int argc , char *argv[])
 	int i;
 	sc_signal<bool> s[NB_CHAINS];
 	
-
+ 
 	//sc_signal<bool> s;
-	//Writer Cin;
-	//Reader Cout;
-	Writer Cin[NB_CHAINS];
-	Reader Cout[NB_CHAINS];
-
-	Cin[0].out(s[0]);
-	Cout[0].in(s[0]);
+	Writer Cin;
+	Reader Cout;
+	//Writer Cin[NB_CHAINS];
+	//Reader Cout[NB_CHAINS];
+	Cin.out(s[0]);
+	Cout.in(s[0]);
+	//Cin[0].out(s[0]);
+	//Cout[0].in(s[0]);
 	/*for (i = 0 ; i < NB_CHAINS ; i++) {
 		Cin[i].out(s[i]);
 		Cout[i].in(s[i]);

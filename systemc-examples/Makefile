@@ -16,7 +16,6 @@ elab_easy_int \
 elab_easy_sc_stop \
 elab_easy_uint \
 elab_multiple_instances \
-#elab_only \
 elab_ports \
 elab_ports_array \
 elab_ports_bool \
@@ -26,7 +25,6 @@ fifo \
 jerome-chain \
 jerome-chain-deterministic \
 pkt_switch \
-#plain-cpp \
 RAM \
 sc_clock signal
 

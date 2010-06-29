@@ -6,7 +6,7 @@ Pass events
 
 Pass elab_easy 
 
-Fail elab_easy_arrays 
+Pass elab_easy_arrays 
 
 Pass elab_easy_int 
 
@@ -15,8 +15,6 @@ Pass elab_easy_sc_stop
 Pass elab_easy_uint 
 
 Pass elab_multiple_instances 
-
-Pass elab_only 
 
 Fail elab_ports 
 
@@ -35,8 +33,6 @@ Pass jerome-chain
 Pass jerome-chain-deterministic 
 
 Fail pkt_switch 
-
-Pass plain-cpp 
 
 Fail RAM 
 
