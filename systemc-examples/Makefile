@@ -58,15 +58,16 @@ frontend:
 	    echo ......................................................; 		\
 	    echo Testing $$d with Frontend; 						\
 	    echo running with $(ARG) and $(OVERRIDING); 				\
-	    cd $$d; 									\
-	    ulimit -t $(TIMEOUT);							\
-	    if $(MAKE) frontend ARG=$(ARG); then					\
-	          (echo -e "$(PASS) $$d \n">>../$(FERESULTS)) && echo "$(PASS) $$d";    \
-	    else									\
-	          (echo -e "$(FAIL) $$d \n">>../$(FERESULTS)) && echo "$(FAIL) $$d";    \
-	    fi;									        \
-	    cd ..;	 								\
-	done									
+	    (										\
+		cd $$d; 								\
+		ulimit -t $(TIMEOUT);							\
+		if $(MAKE) frontend ARG=$(ARG); then					\
+		      (echo -e "$(PASS) $$d \n">>../$(FERESULTS)) && echo "$(PASS) $$d"; \
+		else									\
+		      (echo -e "$(FAIL) $$d \n">>../$(FERESULTS)) && echo "$(FAIL) $$d"; \
+		fi;									\
+	    )										\
+	done
 #	gedit $(FERESULTS)
 
 # Verify promela Results with spin should be run only after doing make promela
@@ -98,14 +99,15 @@ promela:
 	    echo ......................................................; 		\
 	    echo Testing $$d with PROMELA; 						\
 	    echo running with $(ARG) and $(OVERRIDING); 				\
-	    cd $$d; 									\
-	    ulimit -t $(TIMEOUT);							\
-	    if $(MAKE) promela ARG=$(ARG); then						\
-	          (echo -e "$(PASS) $$d \n">>../$(PRRESULTS)) && echo "$(PASS) $$d";	\
-	    else									\
-	          (echo -e "$(FAIL) $$d \n">>../$(PRRESULTS)) && echo "$(FAIL) $$d";	\
-	    fi;										\
-	    cd ..;	 								\
+	    (										\
+		cd $$d; 								\
+		ulimit -t $(TIMEOUT);							\
+		if $(MAKE) promela ARG=$(ARG); then					\
+		      (echo -e "$(PASS) $$d \n">>../$(PRRESULTS)) && echo "$(PASS) $$d"; \
+		else									\
+		      (echo -e "$(FAIL) $$d \n">>../$(PRRESULTS)) && echo "$(FAIL) $$d"; \
+		fi;									\
+	    )										\
 	done									
 #	gedit $(PRRESULTS)
 
@@ -117,14 +119,15 @@ simple:
 	    echo ......................................................; 		\
 	    echo Testing $$d with SIMPLE; 						\
 	    echo running with $(ARG) and $(OVERRIDING); 				\
-	    cd $$d; 									\
-	    ulimit -t $(TIMEOUT);							\
-	    if $(MAKE) simple ARG=$(ARG); then						\
-	        (echo -e "$(PASS) $$d \n">>../$(SMRESULTS)) && echo "$(PASS) $$d";	\
-	    else									\
-	        (echo -e "$(FAIL) $$d \n">>../$(SMRESULTS)) && echo "$(FAIL) $$d";	\
-	    fi;										\
-	    cd ..;	 								\
+	    (										\
+		cd $$d; 								\
+		ulimit -t $(TIMEOUT);							\
+		if $(MAKE) simple ARG=$(ARG); then					\
+		    (echo -e "$(PASS) $$d \n">>../$(SMRESULTS)) && echo "$(PASS) $$d";	\
+		else									\
+		    (echo -e "$(FAIL) $$d \n">>../$(SMRESULTS)) && echo "$(FAIL) $$d";	\
+		fi;									\
+	    )										\
 	done
 #	gedit $(SMRESULTS)
 
