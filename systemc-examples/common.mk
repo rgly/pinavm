@@ -28,6 +28,20 @@ ifndef EXE
 EXE=${patsubst %.$(SUF),%.exe,$(SRC)}
 endif
 
+ifndef PROMELA
+PROMELA=${patsubst %.$(SUF),%.pr,$(SRC)}
+endif
+
+.PHONY: promela diff
+promela: $(PROMELA)
+
+diff:
+	diff -u $(PROMELA) $(PROMELA).bak
+
+frontend: main.opt.bc
+	@$(MAKE) $(PINAVM)
+	$(PINAVM) main.opt.bc -print-ir -print-elab -args $(ARG)
+
 ifndef CPPFLAGS
 CPPFLAGS=-fno-inline-functions
 endif
@@ -100,6 +114,17 @@ gcc-ssa: $(GCC_SSA)
 
 %.simu: %.$(SUF) Makefile
 	$(COMP) $< -o $@ $(SYSTEMCLIB) $(CPPSCFLAGS)
+
+%.pr: %.opt.bc Makefile
+# Keep a backup of the target.
+	-$(RM) $@.bak
+	-mv $@ $@.bak
+# Make sure $(PINAVM) is up-to-date. Since $(PINAVM) is a .PHONY
+# target, adding it as a dependancy would trigger inconditional re-run
+# of PinaVM, so we add a recursive call instead.
+	@$(MAKE) $(PINAVM)
+	@echo running with $(ARG) and $(OVERRIDING);
+	$(PINAVM) -print-ir -print-elab -b promela -o $@ main.opt.bc -inline -args $(ARG)
 
 kascpar: $(SRC)
 	sc2xml -f $(SRC) -i $(HEADERS) -o main_kascpar.cpp
