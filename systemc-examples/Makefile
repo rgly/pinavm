@@ -42,7 +42,7 @@ SMRESULTS= Simple_Results
 FERESULTS= Frontend_Results
 PRRESULTS= Promela_Results
 SPINRESULTS= Spin_Results
-SPINPATH=~
+SPIN = spin
 
 .PHONY: test clean promela simple all frontend
 
@@ -84,7 +84,7 @@ spin:
 	echo running with $(ARG) and $(OVERRIDING); 				\
 	cd $$d; 								\
 	ulimit -t $(TIMEOUT);							\
-	$(SPINPATH)/Spin -a final.pr;             				\
+	$(SPIN) -a final.pr;             				        \
 	gcc -o pan pan.c;							\
 	./pan;									\
 #	test [$$? -eq $(ZERO)] && (echo PASS $$d); 				\
