@@ -62,9 +62,9 @@ frontend:
 		cd $$d; 								\
 		ulimit -t $(TIMEOUT);							\
 		if $(MAKE) frontend ARG=$(ARG); then					\
-		      (echo -e "$(PASS) $$d \n">>../$(FERESULTS)) && echo "$(PASS) $$d"; \
+		      echo -e "$(PASS) $$d \n" | tee -a ../$(FERESULTS);		\
 		else									\
-		      (echo -e "$(FAIL) $$d \n">>../$(FERESULTS)) && echo "$(FAIL) $$d"; \
+		      echo -e "$(FAIL) $$d \n" | tee -a ../$(FERESULTS);		\
 		fi;									\
 	    )										\
 	done
@@ -82,9 +82,9 @@ spin:
 		cd $$d; 								\
 		ulimit -t $(TIMEOUT);							\
 		if $(MAKE) spin-run; then						\
-		      (echo -e "$(PASS) $$d \n">>../$(SPINRESULTS)) && echo "$(PASS) $$d"; \
+		      echo -e "$(PASS) $$d \n" | tee -a ../$(SPINRESULTS);		\
 		else									\
-		      (echo -e "$(FAIL) $$d \n">>../$(SPINRESULTS)) && echo "$(FAIL) $$d"; \
+		      echo -e "$(FAIL) $$d \n" | tee -a ../$(SPINRESULTS);		\
 		fi;									\
 	    )										\
 	done
@@ -103,9 +103,9 @@ promela:
 		cd $$d; 								\
 		ulimit -t $(TIMEOUT);							\
 		if $(MAKE) promela ARG=$(ARG); then					\
-		      (echo -e "$(PASS) $$d \n">>../$(PRRESULTS)) && echo "$(PASS) $$d"; \
+		      echo -e "$(PASS) $$d \n" | tee -a ../$(PRRESULTS);		\
 		else									\
-		      (echo -e "$(FAIL) $$d \n">>../$(PRRESULTS)) && echo "$(FAIL) $$d"; \
+		      echo -e "$(FAIL) $$d \n" | tee -a ../$(PRRESULTS);		\
 		fi;									\
 	    )										\
 	done									
@@ -123,9 +123,9 @@ simple:
 		cd $$d; 								\
 		ulimit -t $(TIMEOUT);							\
 		if $(MAKE) simple ARG=$(ARG); then					\
-		    (echo -e "$(PASS) $$d \n">>../$(SMRESULTS)) && echo "$(PASS) $$d";	\
+		    echo -e "$(PASS) $$d \n" | tee -a ../$(SMRESULTS);			\
 		else									\
-		    (echo -e "$(FAIL) $$d \n">>../$(SMRESULTS)) && echo "$(FAIL) $$d";	\
+		    echo -e "$(FAIL) $$d \n" | tee -a ../$(SMRESULTS);			\
 		fi;									\
 	    )										\
 	done
