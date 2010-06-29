@@ -133,13 +133,16 @@ gcc-ssa: $(GCC_SSA)
 %.pr: %.opt.bc Makefile
 # Keep a backup of the target.
 	-$(RM) $@.bak
-	-mv $@ $@.bak
+	-if [ -f $@ ]; then mv $@ $@.bak; fi
 # Make sure $(PINAVM) is up-to-date. Since $(PINAVM) is a .PHONY
 # target, adding it as a dependancy would trigger inconditional re-run
 # of PinaVM, so we add a recursive call instead.
 	@$(MAKE) $(PINAVM)
 	@echo running with $(ARG) and $(OVERRIDING);
-	$(PINAVM) -print-ir -print-elab -b promela -o $@ main.opt.bc -inline -args $(ARG)
+# If pinavm fails, make sure we don't keep a half-build .pr file around, so that next
+# "make promela" runs also fail.
+	$(PINAVM) $(PINAVM_ARGS) -b promela -o $@.part main.opt.bc -inline -args $(ARG)
+	@mv $@.part $@
 
 kascpar: $(SRC)
 	sc2xml -f $(SRC) -i $(HEADERS) -o main_kascpar.cpp
