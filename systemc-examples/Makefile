@@ -131,19 +131,19 @@ simple:
 	done
 #	gedit $(SMRESULTS)
 
-# Do make test to see if all test examples are getting compiled into bitcode...
-test : 
-	for d in $(SUB_DIRS); \
-	do echo ......................................................; \
-	echo Doing make in $$d; \
-	$(MAKE) -C $$d; \
+# Run "make" in all subdirectories.
+test :
+	for d in $(SUB_DIRS); do \
+		echo ......................................................; \
+		echo Doing make in $$d; \
+		$(MAKE) -C $$d; \
 	done
 
 # Do make clean to clean all directories
 clean : 
-	for d in $(SUB_DIRS); \
-	do echo Cleaning $$d; \
-	$(MAKE) -C $$d $@; \
+	for d in $(SUB_DIRS); do \
+		echo Cleaning $$d; \
+		$(MAKE) -C $$d $@; \
 	done
 
 
