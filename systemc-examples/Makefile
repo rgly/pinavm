@@ -31,9 +31,6 @@ RAM \
 sc_clock signal
 
 
-FRONTEND = frontend
-PROMELA= promela
-SIMPLE = simple
 PASS = Pass
 FAIL = Fail
 OUTPUT = RESULT
@@ -51,9 +48,9 @@ SPIN = spin
 # Do make all (optional)TIMEOUT=.. (optional)ARG=.. and see the generated results file Frontend_Results Simple_Results and Promela_Results
 
 all:	frontend promela simple spin
-#	$(MAKE) $(FRONTEND)
-#	$(MAKE)	$(PROMELA)
-#	$(MAKE) $(SIMPLE) 
+#	$(MAKE) frontend
+#	$(MAKE)	promela
+#	$(MAKE) simple 
 
 # Do make frontend (optional)TIMEOUT=.. (optional)ARG=.. and see the generated result file Frontend_Results
 frontend:
@@ -64,7 +61,7 @@ frontend:
 	echo running with $(ARG) and $(OVERRIDING); 				\
 	cd $$d; 								\
 	ulimit -t $(TIMEOUT);							\
-	if $(MAKE) $(FRONTEND) ARG=$(ARG); then						\
+	if $(MAKE) frontend ARG=$(ARG); then						\
 	      (echo -e "$(PASS) $$d \n">>../$(FERESULTS)) && echo "$(PASS) $$d";\
 	else									\
 	      (echo -e "$(FAIL) $$d \n">>../$(FERESULTS)) && echo "$(FAIL) $$d";\
@@ -102,7 +99,7 @@ promela:
 	echo running with $(ARG) and $(OVERRIDING); 				\
 	cd $$d; 								\
 	ulimit -t $(TIMEOUT);							\
-	if $(MAKE) $(PROMELA) ARG=$(ARG); then						\
+	if $(MAKE) promela ARG=$(ARG); then						\
 	      (echo -e "$(PASS) $$d \n">>../$(PRRESULTS)) && echo "$(PASS) $$d";\
 	else									\
 	      (echo -e "$(FAIL) $$d \n">>../$(PRRESULTS)) && echo "$(FAIL) $$d";\
@@ -120,7 +117,7 @@ simple:
 	echo running with $(ARG) and $(OVERRIDING); 				\
 	cd $$d; 								\
 	ulimit -t $(TIMEOUT);							\
-	if $(MAKE) $(SIMPLE) ARG=$(ARG); then					\
+	if $(MAKE) simple ARG=$(ARG); then					\
 	    (echo -e "$(PASS) $$d \n">>../$(SMRESULTS)) && echo "$(PASS) $$d";	\
 	else									\
 	    (echo -e "$(FAIL) $$d \n">>../$(SMRESULTS)) && echo "$(FAIL) $$d";	\
