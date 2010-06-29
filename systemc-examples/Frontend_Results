@@ -1,12 +1,2 @@
 TESTING WITH Frontend ##################
 
-Pass arth_ctrl 
-
-Pass events 
-
-Pass elab_easy 
-
-Fail elab_easy_arrays 
-
-Pass elab_easy_int 
-
