@@ -10,8 +10,6 @@ Pass elab_easy_arrays
 
 Pass elab_easy_int 
 
-Pass elab_easy_sc_stop 
-
 Pass elab_easy_uint 
 
 Pass elab_multiple_instances 
@@ -28,10 +26,6 @@ Fail empty-sc
 
 Fail fifo 
 
-Pass jerome-chain 
-
-Pass jerome-chain-deterministic 
-
 Fail pkt_switch 
 
 Fail RAM 
@@ -39,4 +33,8 @@ Fail RAM
 Fail sc_clock 
 
 Fail signal 
+
+Pass jerome-chain 
+
+Pass jerome-chain-deterministic 
 

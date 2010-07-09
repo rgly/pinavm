@@ -106,7 +106,13 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 
 		sc_core::sc_interface* itf = port->get_interface();
 //	sc_core::sc_port_b<bool>* pb = (sc_core::sc_port_b<bool>*) port;
-
+		if (port==NULL) {
+			TRACE_6("TESTING IF PORT = NULL ************************************************************************");
+		}
+		if (itf==NULL) {
+			TRACE_6("TESTING IF Interface is NULL ****************************************************************** ");
+			//TRACE_6(port->getName());
+		}
 //	const char* typeName = typeid(*(pb->m_interface)).name();
 		const char* typeName = typeid(*itf).name();
 //		N7sc_core5sc_inIbEE

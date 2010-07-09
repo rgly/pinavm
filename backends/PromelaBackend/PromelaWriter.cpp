@@ -32,7 +32,7 @@
 
 static Instruction* pointerToInst;
 static Process* currentProcess;
-
+bool fieldPrintedCheck=false;
 /***************************************************************************
  *************** Static functions ******************************************
  **************************************************************************/
@@ -184,6 +184,7 @@ PromelaWriter::printSimpleType(formatted_raw_ostream & Out,
 		return Out << "void ";
 	case Type::IntegerTyID:{
 		unsigned NumBits = cast < IntegerType > (Ty)->getBitWidth();
+		fieldPrintedCheck=true;
 		if (NumBits == 1)
 			return Out << "bit " + NameSoFar;
 		else if (NumBits <= 8)
@@ -277,20 +278,25 @@ PromelaWriter::printType(formatted_raw_ostream & Out,
 			bool IgnoreName, const AttrListPtr & PAL)
 {	
  	while (isa<PointerType>(Ty)) {
+		//Out<<"Inside While Pointer \n";
  		Ty = cast<PointerType>(Ty)->getElementType();
  	}	
 
 	if (Ty->isPrimitiveType() || Ty->isIntegerTy() || isa < VectorType > (Ty)) {
 		if (Ty->isIntegerTy())
 			TRACE_5("WHY AM I NOT HERE AS YET ------------------------------->************"<<NameSoFar);
+		//Out<<"Inside simple type \n";
 		printSimpleType(Out, Ty, isSigned, NameSoFar);			
 		return Out;
 	}
 	// Check to see if the type is named.
 	if (!IgnoreName || isa < OpaqueType > (Ty)) {
+		//Out<<"Ignore Name Or Opaque Type \n";
 		std::map < const Type *, std::string >::iterator ITN = TypeNames.find(Ty), ETN = TypeNames.end();
-		if (isSystemCType(Ty))
+		if (isSystemCType(Ty)){
+			//Out<<"Inside system C type \n";
 			return Out;
+		}
 		if (isSystemCStruct(dyn_cast<StructType>(Ty)))
 			if (ITN!=ETN){
 			std::string tName = ITN->second;
@@ -300,22 +306,29 @@ PromelaWriter::printType(formatted_raw_ostream & Out,
 			return Out<<"CHECK";}
 		
 		while (isa<PointerType>(Ty)) {
+			//Out<<"Deep Inside Pointer Types  \n";
 			Ty = cast<PointerType>(Ty)->getElementType();
 		}
 		//std::map < const Type *, std::string >::iterator ITN = TypeNames.find(Ty), ETN = TypeNames.end();
 		if (ITN != ETN) {
+			//Out<<"Deep Inside ITN!=ETN \n";
 			std::string tName = ITN->second;
+			if (tName!="")
 			//if (tName.find("struct_sc_dt::sc_uint<8>")!=string::npos)
 			return Out << tName << " " << NameSoFar;
+			else {
+				fieldPrintedCheck=false;
+				return Out;
+			     }
 		}
 	}
 
 	switch (Ty->getTypeID()) {
 	case Type::FunctionTyID:{
-		ErrorMsg << "NYI : use of complex type : FunctionTy : " << NameSoFar;
-		triggerError(Out);
+		/*ErrorMsg << "NYI : use of complex type : FunctionTy : " << NameSoFar;
+		triggerError(Out);*/
 
-		const FunctionType *FTy =
+		/*const FunctionType *FTy =
 			cast < FunctionType > (Ty);
 		std::stringstream FunctionInnards;
 		FunctionInnards << " (" << NameSoFar << ") (";
@@ -342,6 +355,7 @@ PromelaWriter::printType(formatted_raw_ostream & Out,
 		FunctionInnards << ')';
 		std::string tstr = FunctionInnards.str();
 		printType(Out, FTy->getReturnType(), PAL.paramHasAttr(0, Attribute::SExt), tstr);
+		return Out;*/
 		return Out;
 	}
 	case Type::StructTyID:{
@@ -350,20 +364,24 @@ PromelaWriter::printType(formatted_raw_ostream & Out,
 		Out << NameSoFar + " {\n";
 		unsigned Idx = 0;
 		bool fieldPrinted = false;
-		
+		bool flag=false;
+		//Out<<"Inside struct type \n";
 		for (StructType::element_iterator I = STy->element_begin(), E = STy->element_end(); I != E; ++I) {
 			TRACE_4("\n/**** Dumping struct element in printType() ****/\n");
 			if (! isSystemCType(*I)) {
-				
-				if (fieldPrinted)
+				flag=false;
+				if (fieldPrinted||fieldPrintedCheck)
 					Out << ";\n";
 				else
 					Out << " ";
+				//Out<<(*I);
 				printType(Out, *I, false, "field" + utostr(Idx));
 				fieldPrinted = true;
 			}
 			Idx++;
 		}
+		Out<<";";
+		fieldPrintedCheck=false;
 		TRACE_4("\n/**** struct elements printed ****/\n");
 		Out << '\n';
 		Out << '}';
@@ -375,7 +393,7 @@ PromelaWriter::printType(formatted_raw_ostream & Out,
 		std::string ptrName = NameSoFar;
 
 		TRACE_4("/**** Handling PointerTy type in printType() ****/\n");
-
+		Out<<"Inside PointerTypeID type \n";
 		if (isa < ArrayType > (PTy->getElementType()) || isa < VectorType > (PTy->getElementType()))
 			ptrName = "(" + ptrName + ")";
 
@@ -390,17 +408,17 @@ PromelaWriter::printType(formatted_raw_ostream & Out,
 			"NYI : use of complex type : ArrayTy : " <<
 			NameSoFar;
 		triggerError(Out);
-
+		//Out<<"Inside ArrayTypeID type \n";
 		const ArrayType *ATy = cast < ArrayType > (Ty);
 		unsigned NumElements = ATy->getNumElements();
 		if (NumElements == 0)
 			NumElements = 1;
 		// Arrays are wrapped in structs to allow them to have normal
 		// value semantics (avoiding the array "decay").
-		Out << NameSoFar << " { ";
+		//Out << NameSoFar << " { ";
 		printType(Out, ATy->getElementType(), false,
-			"array[" + utostr(NumElements) + "]");
-		return Out << "; }";
+			NameSoFar+"[" + utostr(NumElements) + "]");
+		//return Out << "; }";
 	}
 
 	case Type::OpaqueTyID:{
@@ -583,7 +601,51 @@ PromelaWriter::printType(std::ostream & Out,
 
 	return Out;
 }
+/*raw_ostream &printInitialValue(formatted_raw_ostream &Out,
+			const Type * Ty,
+			bool isSigned, const std::string & NameSoFar)
+{
+assert((Ty->isPrimitiveType() || Ty->isIntegerTy()
+			|| isa < VectorType > (Ty))
+		&& "Invalid type for printInitialValue");
 
+	switch (Ty->getTypeID()) {
+	case Type::VoidTyID:
+		return Out << NameSoFar<<" = NULL";
+	case Type::IntegerTyID:{
+		unsigned NumBits = cast < IntegerType > (Ty)->getBitWidth();
+		if (NumBits == 1)
+			return Out <<NameSoFar<<" = true";
+		else if (NumBits <= 8)
+			return Out << NameSoFar<< " = 0";
+		else if (NumBits <= 16)
+			return Out << NameSoFar<< " = 0";
+		else
+			return Out << NameSoFar<< " = 0";
+	}
+	case Type::FloatTyID:
+		triggerError(Out, "NYI : float type");
+	case Type::DoubleTyID:
+		triggerError(Out, "NYI : double type");
+	case Type::X86_FP80TyID:
+	case Type::PPC_FP128TyID:
+	case Type::FP128TyID:
+		triggerError(Out, "NYI : long type");
+	case Type::VectorTyID:{
+		triggerError(Out, "NYI : Vector type");
+		const VectorType *VTy = cast < VectorType > (Ty);
+		printInitialValue(Out, VTy->getElementType(),
+				isSigned,
+				NameSoFar + "[" + utostr(TD->getTypeAllocSize(VTy))+ "]");	
+	}
+
+	default:
+#ifndef NDEBUG
+		errs() << "Unknown primitive type: " << *Ty << "\n";
+#endif
+		llvm_unreachable(0);
+	}
+}*/	
 
 void
 PromelaWriter::printConstantArray(ConstantArray * CPA, bool Static)
@@ -1306,7 +1368,7 @@ void PromelaWriter::writeInstComputationInline(Instruction & I)
 				"This is being tracked as PR 4158.");
 	}	
 		
-	TRACE_6("***************************************************************");
+	/*TRACE_6("***************************************************************");
 	Ty->dump();
 	TRACE_6 ("**************************************************************");
 	if (isSystemCStruct(dyn_cast<StructType>(Ty)))
@@ -1314,7 +1376,7 @@ void PromelaWriter::writeInstComputationInline(Instruction & I)
 		//Out<<"INSIDE SYSTEMC VISITING----> \n";
 		visitSystemCStruct(I);
 		//return;
-	      }
+	      }*/
 	// If this is a non-trivial bool computation, make sure to truncate down to
 	// a 1 bit value.  This is important because we want "add i1 x, y" to return
 	// "0" when x and y are true, not "2" for example.
@@ -1802,10 +1864,11 @@ PromelaWriter::isSystemCType(const Type* ty)
 		return false;
 	}
 
- 	std::string typeName = this->TypeNames.find(ty)->second;
-
+	if (this->TypeNames.find(ty) == this->TypeNames.end())
+		return false;
+ 	std::string typeName =this->TypeNames.find(ty)->second;
+	
 	bool res = typeName.substr(0, 16).compare("struct_sc_core::") == 0 || typeName.substr(0, 12).compare("struct_std::") == 0;
-
  	return res;
 
 }
@@ -2740,7 +2803,18 @@ bool notPrinted(string ObjName){
 	declaredObjs.push_back(ObjName);
 	return true;
 }
-
+bool notInitialized(string ObjName){
+    	static vector<string> declaredObjs;
+	static int size;
+	declaredObjs.resize(++size);
+	vector<string>::iterator st=declaredObjs.begin();
+	vector<string>::iterator end=declaredObjs.end();
+	for (;st!=end;st++)
+		if (!ObjName.compare(*st))
+			return false;
+	declaredObjs.push_back(ObjName);
+	return true;
+}
 void
 PromelaWriter::printGlobalVariables(Mangler* mang)
 {
@@ -2829,6 +2903,10 @@ PromelaWriter::printInitSection()
 {
 	vector < Process * >::iterator processIt = this->elab->getProcesses()->begin();
 	vector < Process * >::iterator endIt = this->elab->getProcesses()->end();
+	vector < GlobalValue * >::iterator globalIt = this->elab->getGlobalVariables()->begin();
+	vector < GlobalValue * >::iterator globalEnd = this->elab->getGlobalVariables()->end();
+	vector <Channel *>::iterator ChannelIt=this->elab->getChannels()->begin();
+	vector <Channel *>::iterator ChannelEnd=this->elab->getChannels()->end();
 	
 	TRACE_2("PromelaWriter > Emitting init section \n");
 	Out << "/* ----------------------------- Init --------------------------------- */\n"
@@ -2888,6 +2966,98 @@ PromelaWriter::printInitSection()
 			}
 		}
 	}
+	for (; globalIt < globalEnd; ++globalIt) {
+		GlobalValue* gv = *globalIt;
+		string NameSoFar = "llvm_cbe" + Mang->getNameWithPrefix(gv);
+		const Type *Ty=gv->getType();
+		switch (Ty->getTypeID()) {
+			case Type::VoidTyID:
+				Out << NameSoFar<<" = NULL";
+				break;
+			case Type::IntegerTyID:{
+				unsigned NumBits = cast < IntegerType > (Ty)->getBitWidth();
+				if (NumBits == 1)
+					Out <<NameSoFar<<" = true";
+				else if (NumBits <= 8)
+					Out << NameSoFar<< " = 0";
+				else if (NumBits <= 16)
+					Out << NameSoFar<< " = 0";
+				else
+					Out << NameSoFar<< " = 0";
+				}
+				break;
+			/*case Type::FloatTyID:
+			triggerError(Out, "NYI : float type");
+			case Type::DoubleTyID:
+			triggerError(Out, "NYI : double type");
+			case Type::X86_FP80TyID:
+			case Type::PPC_FP128TyID:
+			case Type::FP128TyID:
+			triggerError(Out, "NYI : long type");
+			case Type::VectorTyID:{
+			triggerError(Out, "NYI : Vector type");
+			const VectorType *VTy = cast < VectorType > (Ty);
+			printInitialValue(Out, VTy->getElementType(),
+				isSigned,
+				NameSoFar + "[" + utostr(TD->getTypeAllocSize(VTy))+ "]");	
+			}*/
+
+			default:
+			#ifndef NDEBUG
+			errs() << "Unknown primitive type: " << *Ty << "\n";
+			#endif
+			llvm_unreachable(0);
+		}
+	//printInitialValue(Out, gv->getType(), false, name);
+	Out << ";\n";
+	}
+	for (; ChannelIt < ChannelEnd; ++ChannelIt) {
+		Channel* chan = *ChannelIt;
+		string NameSoFar = "llvm_chan_" + chan->getTypeName();
+		if (notInitialized(NameSoFar)){		
+			const Type *Ty=chan->getType();
+			switch (Ty->getTypeID()) {
+				case Type::VoidTyID:
+					Out << NameSoFar<<" = NULL";
+					break;
+				case Type::IntegerTyID:{
+					unsigned NumBits = cast < IntegerType > (Ty)->getBitWidth();
+					if (NumBits == 1)
+						Out << NameSoFar<<" = true";
+					else if (NumBits <= 8)
+						Out << NameSoFar<< " = 0";
+					else if (NumBits <= 16)
+						Out << NameSoFar<< " = 0";
+					else
+						Out << NameSoFar<< " = 0";
+					}
+					break;
+				/*case Type::FloatTyID:
+				triggerError(Out, "NYI : float type");
+				case Type::DoubleTyID:
+				triggerError(Out, "NYI : double type");
+				case Type::X86_FP80TyID:
+				case Type::PPC_FP128TyID:
+				case Type::FP128TyID:
+				triggerError(Out, "NYI : long type");
+				case Type::VectorTyID:{
+				triggerError(Out, "NYI : Vector type");
+				const VectorType *VTy = cast < VectorType > (Ty);
+				printInitialValue(Out, VTy->getElementType(),
+				isSigned,
+				NameSoFar + "[" + utostr(TD->getTypeAllocSize(VTy))+ "]");	
+				}*/
+
+				default:
+				#ifndef NDEBUG
+				errs() << "Unknown primitive type: " << *Ty << "\n";
+				#endif
+				llvm_unreachable(0);
+			}
+		Out << ";\n";
+		}
+	}
+	
 
 	Out << "\n";
 	Out <<	"    atomic {\n";
@@ -3402,14 +3572,30 @@ PromelaWriter::printGEPExpression(Value * Ptr, gep_type_iterator I,	gep_type_ite
 		if (isAddressExposed(Ptr)) {
 			TRACE_4("   /**** address is exposed ****/\n");
 			writeOperandInternal(Ptr, Static);
-		} else if (I != E && isa < StructType > (*I)) {
+		} 
+		   else	if (I != E && isa < StructType > (*I)) {
 			TRACE_4("/**** struct type ****/\n");
+			if (isSystemCStruct(dyn_cast<StructType>(*I)))
+	      			{	
+					const StructType *ty=dyn_cast<StructType>(*I);	
+					std::string typeName="";			
+					std::map < const Type *, std::string >::iterator ITN = TypeNames.find(ty), ETN = TypeNames.end();
+					if (ITN!=ETN)
+					typeName = ITN->second;
+					//if (typeName.find("struct_sc")!=string::npos)
+						//Out<<"TEST";
+						writeOperand(Ptr); 			
+							
+					
+	     			}
 			// If we didn't already emit the first operand, see if we can print it as
 			// P->f instead of "P[0].f"
+			else{
+			//Out<<"TESTERS";
 			writeOperand(Ptr);
 			Out << ".field" << cast < ConstantInt >
 				(I.getOperand())->getZExtValue();
-
+			}
 //       Out << "->field" << cast<ConstantInt>(I.getOperand())->getZExtValue();
 			++I;	// eat the struct index as well.
 		} else {
@@ -3424,8 +3610,11 @@ PromelaWriter::printGEPExpression(Value * Ptr, gep_type_iterator I,	gep_type_ite
 
 	for (; I != E; ++I) {
 		if (isa < StructType > (*I)) {
+		if (!isSystemCStruct(dyn_cast<StructType>(*I)))
+			{
+			//Out<<"Test";
 			Out << ".field" << cast < ConstantInt >
-				(I.getOperand())->getZExtValue();
+				(I.getOperand())->getZExtValue();}
 		} else if (isa < ArrayType > (*I)) {
 			Out << ".array[";
 //       writeOperandWithCast(I.getOperand(), Instruction::GetElementPtr);

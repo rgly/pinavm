@@ -51,18 +51,18 @@ int sc_main (int argc , char *argv[])
 	
  
 	//sc_signal<bool> s;
-	Writer Cin;
-	Reader Cout;
-	//Writer Cin[NB_CHAINS];
-	//Reader Cout[NB_CHAINS];
-	Cin.out(s[0]);
-	Cout.in(s[0]);
+	//Writer Cin;
+	//Reader Cout;
+	Writer Cin[2];
+	Reader Cout[2];
 	//Cin[0].out(s[0]);
 	//Cout[0].in(s[0]);
-	/*for (i = 0 ; i < NB_CHAINS ; i++) {
+	//Cin[0].out(s[0]);
+	//Cout[0].in(s[0]);
+	for (i = 0 ; i < 2 ; i++) {
 		Cin[i].out(s[i]);
 		Cout[i].in(s[i]);
-	}*/
+	}
 
 	//Run the Simulation for "200 nanosecnds"
 	sc_start(200, SC_NS);

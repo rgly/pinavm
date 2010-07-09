@@ -13,7 +13,6 @@ events  \
 elab_easy  \
 elab_easy_arrays \
 elab_easy_int \
-elab_easy_sc_stop \
 elab_easy_uint \
 elab_multiple_instances \
 elab_ports \
@@ -22,11 +21,11 @@ elab_ports_bool \
 elab_ports_pointer \
 empty-sc \
 fifo \
-jerome-chain \
-jerome-chain-deterministic \
 pkt_switch \
 RAM \
-sc_clock signal
+sc_clock signal \
+jerome-chain \
+jerome-chain-deterministic \
 
 
 PASS = Pass

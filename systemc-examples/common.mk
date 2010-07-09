@@ -18,6 +18,8 @@ ifndef COMP
 COMP=g++
 endif
 
+CFLAGS=-DSAFETY
+
 ifndef SRC
 SRC=${wildcard *.$(SUF)}
 endif
@@ -49,7 +51,7 @@ frontend: main.opt.bc
 	$(PINAVM) main.opt.bc $(PINAVM_ARGS) -args $(ARG)
 
 pan.c: $(PROMELA)
-	$(SPIN) -a $(PROMELA)
+	$(SPIN) -a $(PROMELA) 
 
 pan: pan.c
 	$(CC) $(CFLAGS) $< -o $@
@@ -152,7 +154,7 @@ quiny: $(SRC)
 
 xml:
 	doxygen ../Doxyfile
-	systemcxml --dtd $(SYSTEMCXML_HOME)/systemc.dtd xml/main_8cpp.xml
+	systemcxml --dtd $(SYSTEMCXML_HOME)/systemc.dtd xspinml/main_8cpp.xml
 
 # -fdump-tree-ssa works only if -O is provided.
 %.$(SUF).ssa: %.$(SUF) Makefile ../include.mk
