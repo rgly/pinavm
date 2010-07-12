@@ -531,18 +531,21 @@ PromelaWriter::printType(std::ostream & Out,
 		unsigned Idx = 0;
 		bool fieldPrinted = false;
 		for (StructType::element_iterator I = STy->element_begin(), E = STy->element_end(); I != E; ++I) {
-			TRACE_4("\n/**** dump struct element ****/\n");
-			if (isSystemCType(*I)) {
-				if (fieldPrinted)
-					Out << " , ";
+			TRACE_4("\n/**** Dumping struct element in printType() ****/\n");
+			if (! isSystemCType(*I)) {
+
+				if (fieldPrintedCheck)
+					Out << ";\n";
 				else
 					Out << " ";
+				//Out<<(*I);
 				printType(Out, *I, false, "field" + utostr(Idx));
-//			Out << ";\n";
 				fieldPrinted = true;
 			}
 			Idx++;
 		}
+		Out<<";";
+		fieldPrintedCheck=false;
 		TRACE_4("\n/**** struct elements printed ****/\n");
 
 		Out << '}';
