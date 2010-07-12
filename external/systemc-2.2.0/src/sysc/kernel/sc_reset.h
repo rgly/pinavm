@@ -54,6 +54,7 @@ namespace sc_core {
 
 template<typename DATA> class sc_signal_in_if;
 template<typename IF> class sc_signal;
+template<typename IF> class veri_signal;
 template<typename DATA> class sc_in;
 class sc_process_b;
 
@@ -63,6 +64,7 @@ class sc_reset {
     friend class sc_module; 
 	friend class sc_process_b;
 	friend class sc_signal<bool>;
+	friend class veri_signal<bool>;
     friend class sc_simcontext;
     friend class sc_thread_process; 
 

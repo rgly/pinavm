@@ -37,6 +37,7 @@ SYSTEMC_OBJS = ../external/systemc-2.2.0/objdir-gcc/src/sysc/tracing/sc_wif_trac
 	       ../external/systemc-2.2.0/objdir-gcc/src/sysc/communication/sc_signal_resolved_ports.o \
 	       ../external/systemc-2.2.0/objdir-gcc/src/sysc/communication/sc_signal_resolved.o \
 	       ../external/systemc-2.2.0/objdir-gcc/src/sysc/communication/sc_signal.o \
+	       ../external/systemc-2.2.0/objdir-gcc/src/sysc/communication/veri_signal.o \
 	       ../external/systemc-2.2.0/objdir-gcc/src/sysc/communication/sc_signal_ports.o \
 	       ../external/systemc-2.2.0/objdir-gcc/src/sysc/communication/sc_port.o \
 	       ../external/systemc-2.2.0/objdir-gcc/src/sysc/communication/sc_interface.o \

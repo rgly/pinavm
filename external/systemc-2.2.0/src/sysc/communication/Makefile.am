@@ -53,6 +53,7 @@ H_FILES = \
 	sc_semaphore.h \
 	sc_semaphore_if.h \
 	sc_signal.h \
+	veri_signal.h \
 	sc_signal_ifs.h \
 	sc_signal_ports.h \
 	sc_signal_resolved.h \
@@ -76,6 +77,7 @@ CXX_FILES = \
 	sc_prim_channel.cpp \
 	sc_semaphore.cpp \
 	sc_signal.cpp \
+	veri_signal.cpp \
 	sc_signal_ports.cpp \
 	sc_signal_resolved.cpp \
 	sc_signal_resolved_ports.cpp 

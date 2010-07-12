@@ -1,4 +1,5 @@
 #include <systemc.h>
+#include <sysc/communication/veri_signal.h>
 
 //using namespace sc_core;
 
@@ -62,11 +63,11 @@ void Component::essaiwrite()
 int sc_main (int argc , char *argv[]) 
 {
 #ifdef KASCPAR
- 	sc_signal<bool> s1;
- 	sc_signal<bool> s2;
- 	sc_signal<bool> s3;
+ 	veri_signal<bool> s1;
+ 	veri_signal<bool> s2;
+ 	veri_signal<bool> s3;
 #else
-	sc_core::sc_signal<bool> s1("s1"), s2("s2"), s3("s3");
+	sc_core::veri_signal<bool> s1("s1"), s2("s2"), s3("s3");
 #endif
 
 	Component C1("C1");
