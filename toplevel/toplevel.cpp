@@ -88,7 +88,7 @@ bool disable_debug_msg;
 
 extern "C"
 void pinavm_callback();
-
+Module *Mod;
 void pinavm_callback()
 {
 	TRACE_1("Entering PinaVM (callback), building module\n");
@@ -99,7 +99,7 @@ void pinavm_callback()
 		disable_debug_msg = false;
 	}
 
-	Frontend *fe = launch_frontend(InputFilename, InlineFcts);
+	Frontend *fe = launch_frontend(InputFilename, InlineFcts,Mod);
 
 	if (PrintIR) {
 		fe->printIR();
@@ -139,9 +139,10 @@ int load_and_run_sc_main(std::string & InputFile)
 	//sys::DynamicLibrary::AddSymbol("pinavm_callback", (void *)pinavm_callback);
 
 	// Load the bitcode...
-	Module *Mod = NULL;
+	//Module *Mod = NULL;
 	if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFile,&ErrorMsg)){
-		Mod = getLazyBitcodeModule(Buffer, Context, &ErrorMsg);
+		Mod = ParseBitcodeFile(Buffer, Context, &ErrorMsg);
+		//Mod = getLazyBitcodeModule(Buffer, Context, &ErrorMsg);
 		if (!Mod) delete Buffer;
 	}
 
@@ -157,6 +158,7 @@ int load_and_run_sc_main(std::string & InputFile)
 	builder.setErrorStr(&ErrorMsg);
 	builder.setEngineKind(EngineKind::JIT);
 
+	builder.setOptLevel(CodeGenOpt::None);
 	EE = builder.create();
 	if (!EE) {
 		if (!ErrorMsg.empty())
@@ -166,7 +168,7 @@ int load_and_run_sc_main(std::string & InputFile)
 		exit(1);
 	}
 
-	EE->RegisterJITEventListener(createOProfileJITEventListener());
+	//EE->RegisterJITEventListener(createOProfileJITEventListener());
 
 	// TODO: manage multiple arguments correctly.
 
@@ -196,15 +198,17 @@ int load_and_run_sc_main(std::string & InputFile)
 	// Reset errno to zero on entry to main.
 	errno = 0;
 
+
 	// Run static constructors.
 	EE->runStaticConstructorsDestructors(false);
+
 
 	TRACE_2("Running elaboration\n");
 	// Run main.
 	int Result = EE->runFunctionAsMain(EntryFn, InputArgv, NULL);
 
 	// Run static destructors.
-	EE->runStaticConstructorsDestructors(true);
+	EE->runStaticConstructorsDestructors(true);	
 
 	// If the program didn't call exit explicitly, we should call it now.
 	// This ensures that any atexit handlers get called correctly.

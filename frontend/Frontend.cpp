@@ -132,6 +132,7 @@ bool Frontend::run()
 			Process *proc = *processIt;
 			Function *F = proc->getMainFct();
 			TRACE_3("Parsing Function : " << F->getNameStr() << "\n");
+
 		start_for:
 			for (Function::iterator bb = F->begin(), be = F->end(); bb != be; ++bb) {
 				BasicBlock::iterator i = bb->begin(), ie = bb->end();
@@ -179,11 +180,12 @@ bool Frontend::run()
 		fctStack->push_back(proc->getMainFct());
 		proc->addUsedFunction(proc->getMainFct());
 		this->scjit->setCurrentProcess(proc);
-		TRACE_2("Process:" << proc->getName());
+		TRACE_2("Process:" << proc->getName() << "\n");
 		while (!fctStack->empty()) {
 			Function* F = fctStack->back();
 			fctStack->pop_back();
 			TRACE_3("Parsing Function : " << F->getNameStr() << "\n");
+			F->dump();
 			for (Function::iterator bb = F->begin(), be = F->end(); bb != be; ++bb) {
 				BasicBlock::iterator i = bb->begin(), ie = bb->end();
 				bool callB; 

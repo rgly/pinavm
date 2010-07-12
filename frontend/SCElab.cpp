@@ -106,7 +106,13 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 
 		sc_core::sc_interface* itf = port->get_interface();
 //	sc_core::sc_port_b<bool>* pb = (sc_core::sc_port_b<bool>*) port;
-
+		if (port==NULL) {
+			TRACE_6("TESTING IF PORT = NULL ************************************************************************");
+		}
+		if (itf==NULL) {
+			TRACE_6("TESTING IF Interface is NULL ****************************************************************** ");
+			//TRACE_6(port->getName());
+		}
 //	const char* typeName = typeid(*(pb->m_interface)).name();
 		const char* typeName = typeid(*itf).name();
 //		N7sc_core5sc_inIbEE
@@ -202,11 +208,12 @@ Event *SCElab::addEvent(Process * process, sc_core::sc_event * event)
 {
 	std::map < sc_core::sc_event *, Event * >::iterator it;
 	Event *e;
+	static int counter=0;
 	IRModule *mod = process->getModule();
 	if ((it = this->eventsMap.find(event)) == this->eventsMap.end()) {
-		char buffer[10];
-		sprintf(buffer, "%lx", (unsigned long) event);
-		string eventName = mod->getUniqueName() + "_0x" + buffer;
+		char suffix[10];
+		sprintf(suffix, "%d", ++counter );
+		string eventName = mod->getUniqueName() + "_event_" + suffix;
 		e = new Event(eventName);
 		this->events.push_back(e);
 		this->eventsMap[event] = e;

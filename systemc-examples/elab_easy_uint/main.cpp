@@ -7,8 +7,8 @@
 SC_MODULE(Component)
 {
 public:
-	sc_core::sc_out<sc_uint<8> > out;
-	sc_core::sc_in<sc_uint<8> > in;
+	sc_out<sc_uint<8> > out;
+	sc_in<sc_uint<8> > in;
 	
 // 	sc_out<bool> out;
 // 	sc_in<bool> in;
@@ -33,7 +33,7 @@ public:
 		if (isHead == false) {
 			while (in.read() != 5) {
 //				sc_core::wait(5, SC_NS);
-				wait(5);
+				wait(5,SC_NS);
 			}
 		}
 		notified = true;
@@ -49,7 +49,7 @@ void Component::essaiwrite()
 
 int sc_main (int argc , char *argv[]) 
 {
-	sc_core::sc_signal<sc_uint<8> > s1("s1"), s2("s2"), s3("s3");
+	sc_signal<sc_uint<8> > s1("s1"), s2("s2"), s3("s3");
 // 	sc_signal<bool> s1;
 // 	sc_signal<bool> s2;
 // 	sc_signal<bool> s3;

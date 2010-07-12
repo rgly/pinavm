@@ -124,7 +124,9 @@ public:
   void printStructReturnPointerFunctionType(formatted_raw_ostream &Out,
 					    const AttrListPtr &PAL,
 					    const PointerType *Ty);
-
+ /* raw_ostream &printInitialValue(formatted_raw_ostream &Out,
+			const Type * Ty,
+			bool isSigned, const std::string & NameSoFar = "");*/
   /// writeOperandDeref - Print the result of dereferencing the specified
   /// operand with '*'.  This is equivalent to printing '*' then using
   /// writeOperand, but avoids excess syntax in some cases.
@@ -170,7 +172,8 @@ public:
         
   // Instruction visitation functions
   friend class InstVisitor<PromelaWriter>;
-
+  
+  void visitSystemCStruct(Instruction &I);
   void visitReturnInst(ReturnInst &I);
   void visitBranchInst(BranchInst &I);
   void visitSwitchInst(SwitchInst &I);

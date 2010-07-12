@@ -111,4 +111,3 @@ Simulation:
    - fifo buffer size
    - speed of the switch, relative to the activity rates on 
      the input ports
-  

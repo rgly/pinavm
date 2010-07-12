@@ -12,7 +12,7 @@ class superclass
 	virtual void print() {}
 };
 
-class Component : public sc_module, public superclass
+class Component : public sc_module//, public superclass
 {
 public:
 #ifdef KASCPAR
@@ -25,14 +25,10 @@ public:
 	
 	bool notified;
 	bool isHead;
-  SC_HAS_PROCESS(Component)
+    SC_HAS_PROCESS(Component)
 
-  Component(sc_module_name name) : sc_module(name),
-					   
-				   //	SC_CTOR(Component):
-		out("Out"),
-		in("in")
-		{
+    Component(sc_module_name name) {
+    //  SC_CTOR(Component)	{
 			notified = false;
 			isHead = false;
 			SC_THREAD(process);
@@ -41,18 +37,18 @@ public:
  	void essaiwrite();
 
 	void process() {
-		if (isHead == false) {
-			while (in.read() == false) {
-#ifdef KASCPAR
-				wait(5, SC_NS);
-#else
-				sc_core::wait(5, SC_NS);
-#endif
-			}
-		}
-		notified = true;
-		out.write(true);
-	}
+ 		if (isHead == false) {
+ 			while (in.read() == false) {
+ #ifdef KASCPAR
+ 				wait(5, SC_NS);
+ #else
+ 				//sc_core::wait(5, SC_NS);
+ #endif
+ 			}
+ 		}
+ 		notified = true;
+ 		out.write(true);
+ 	}
 };
 
 void Component::essaiwrite()
@@ -67,27 +63,28 @@ int sc_main (int argc , char *argv[])
  	veri_signal<bool> s2;
  	veri_signal<bool> s3;
 #else
-	sc_core::veri_signal<bool> s1("s1"), s2("s2"), s3("s3");
+	sc_core::sc_signal<bool> s1("s1"), s2("s2");//, s3("s3");
 #endif
 
-	Component C1("C1");
-	Component C2("C2");
-	Component C3("C3");
+ 	Component C1("C1");
+ 	Component C2("C2");
+// 	Component C3("C3");
        
-	superclass* C;
-	C = dynamic_cast<superclass*>(&C3);
-	superclass* S = C;
-	Component* res = dynamic_cast<Component*>(S);
+// 	//	superclass* C;
+// 	//	C = dynamic_cast<superclass*>(&C3);
+// 	//	superclass* S = C;
+// 	//	Component* res = dynamic_cast<Component*>(S);
 
-	C1.out(s1);
-	C2.out(s2);
-	(*res).out(s3);
+ 	C1.out(s1);
+ 	C2.out(s2);
+// 	//	(*res).out(s3);
+// 	C3.out(s3);
 
-	C1.in(s3);
-	C2.in(s1);
-	C3.in(s2);
+ 	C1.in(s2);
+ 	C2.in(s1);
+// 	C3.in(s2);
 
-	C1.isHead = true;
+// 	C1.isHead = true;
 
 	//Run the Simulation for "200 nanosecnds"
 	sc_start(200, SC_NS);
