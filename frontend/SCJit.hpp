@@ -73,6 +73,7 @@ struct SCJit {
 	bool jitBool(Function * f, Instruction* inst, Value * arg, bool* errb);
 	Function *buildFct(Function * f, FunctionType * FT, Instruction* inst, Value * arg);
 	Module *getModule();
+	ExecutionEngine* getEngine();
 
 	template<class RetTy>
 	RetTy jitType(Function * f, Instruction* inst, Value * arg, bool* errb) {

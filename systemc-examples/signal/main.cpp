@@ -3,8 +3,10 @@
 SC_MODULE(nand)
 {
 public:
-	sc_in<bool> A, B;       // input signal ports
 	sc_out<bool> F;         // output signal ports
+	sc_in<bool> B;
+	sc_in<bool> A;       // input signal ports
+
 //	SC_HAS_PROCESS(nand);
 
 	void do_nand() {         // a C++ function
@@ -20,30 +22,40 @@ public:
 
 SC_MODULE(exor)
 {
+	sc_signal<bool> ASig, BSig, FSig;
+
 	sc_in<bool> A, B;
 	sc_out<bool> F;
 
 	nand n1, n2, n3, n4;
 
-	sc_signal<bool> S1, S2, S3;
+	sc_signal<bool> S1;
+	sc_signal<bool> S2, S3;
 
 	SC_CTOR(exor) : n1("N1"), n2("N2"), n3("N3"), n4("N4")
 	{
-		n1.A(A);
-		n1.B(B);
+		printf("------------------------------- kikoo\n");
+		A(ASig);
+		B(BSig);
+		F(FSig);
+
+		n1.A(ASig);
+		n1.B(BSig);
 		n1.F(S1);
 
-		n2.A(A);
+		n2.A(ASig);
 		n2.B(S1);
 		n2.F(S2);
-
+		
 		n3.A(S1);
-		n3.B(B);
+		n3.B(BSig);
 		n3.F(S3);
 
 		n4.A(S2);
 		n4.B(S3);
-		n4.F(F);
+		n4.F(FSig);
+		printf("------------------------------- kikoo\n");
+
 	}
 };
 
@@ -85,6 +97,8 @@ public:
 	sc_in<bool> A, B;
 	sc_in<bool> F;
 	sc_in<bool> Clk;
+//	sc_in_clk Clk;
+
 //	SC_HAS_PROCESS(mon);
 
 	void StimGen()
@@ -129,7 +143,6 @@ SC_MODULE(gen_clock)
 
 int sc_main(int argc, char* argv[])
 {
-	sc_signal<bool> ASig, BSig, FSig;
 //	sc_clock TestClk("TestClock");
 	sc_signal<bool> TestClk;
 
@@ -137,20 +150,17 @@ int sc_main(int argc, char* argv[])
 	genclk.out.bind(TestClk);
 //	sc_clock TestClk("TestClock", 10, SC_NS,0.5);
 
+	exor DUT("exor");
+
 	stim Stim1("Stimulus");
-	Stim1.A(ASig);
-	Stim1.B(BSig);
+	Stim1.A(DUT.ASig);
+	Stim1.B(DUT.BSig);
 	Stim1.Clk(TestClk);
 
-	exor DUT("exor");
-	DUT.A(ASig);
-	DUT.B(BSig);
-	DUT.F(FSig);
-
 	mon Monitor1("Monitor");
-	Monitor1.A(ASig);
-	Monitor1.B(BSig);
-	Monitor1.F(FSig);
+	Monitor1.A(DUT.ASig);
+	Monitor1.B(DUT.BSig);
+	Monitor1.F(DUT.FSig);
 	Monitor1.Clk(TestClk);
 
 	sc_start();  // run forever

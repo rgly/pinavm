@@ -1,8 +1,40 @@
 TESTING WITH Frontend ##################
 
-Fail arth_ctrl 
+Pass arth_ctrl 
 
-Fail events 
+Pass events 
 
-Fail elab_easy 
+Pass elab_easy 
+
+Pass elab_easy_arrays 
+
+Pass elab_easy_int 
+
+Pass elab_easy_uint 
+
+Pass elab_multiple_instances 
+
+Pass elab_ports 
+
+Pass elab_ports_array 
+
+Pass elab_ports_bool 
+
+Pass elab_ports_pointer 
+
+Pass empty-sc 
+
+Fail fifo 
+
+Fail pkt_switch 
+
+Pass RAM 
+
+Fail sc_clock 
+
+Fail signal 
+
+Fail jerome-chain 
+
+Fail jerome-chain-deterministic 
 

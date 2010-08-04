@@ -60,7 +60,7 @@ spin-run: pan
 	./pan
 
 ifndef CPPFLAGS
-CPPFLAGS=-fno-inline-functions
+CPPFLAGS=-fno-inline-functions -g
 endif
 
 ifndef OPTFLAGS

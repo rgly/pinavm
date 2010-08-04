@@ -104,6 +104,10 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 		sprintf(buffer, "%lx", (unsigned long) port);
 		string portName = mod->getUniqueName() + "_0x" + buffer;
 
+		int nbItfs = ((sc_core::sc_port_b<int>*) port)->size();
+		TRACE_6("port concerned: " << portName << " Nb_itfs = " << nbItfs << "\n");
+
+
 		sc_core::sc_interface* itf = port->get_interface();
 //	sc_core::sc_port_b<bool>* pb = (sc_core::sc_port_b<bool>*) port;
 		if (port==NULL) {

@@ -38,7 +38,7 @@
 #include "receiver.h"
 
 
-void receiver:: entry()
+void receiver::entry()
 { pkt temp_val;
   // Ignore the first packet arriving on start-on
   if (first == 1) {first = 0;}

@@ -2,7 +2,7 @@ TESTING WITH Promela ##################
 
 Pass arth_ctrl 
 
-Pass events 
+Fail events 
 
 Pass elab_easy 
 

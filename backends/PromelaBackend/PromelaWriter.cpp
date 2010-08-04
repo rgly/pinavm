@@ -30,6 +30,7 @@
 #include "utils.h"
 #include "config.h"
 
+static Function* currentFunction;
 static Instruction* pointerToInst;
 static Process* currentProcess;
 bool fieldPrintedCheck=false;
@@ -2867,8 +2868,9 @@ PromelaWriter::printProcesses()
 		     itF < usedFcts->end(); ++itF) {
 
 			Function *F = *itF;
+			currentFunction = F;
 			TRACE_4("PromelaWriter > printing function : " << F->getNameStr() << "\n");
-
+			
 			// Do not codegen any 'available_externally' functions at all, they have
 			// definitions outside the translation unit.
 			if (F->hasAvailableExternallyLinkage())
@@ -3218,7 +3220,8 @@ void PromelaWriter::visitCallInst(CallInst & I)
 		std::map<Process*, SCConstruct * > CbyP = itC->second;
 		return visitSCConstruct(CbyP.find(currentProcess)->second);
 	}
-	TRACE_4("Visiting CallInst, function is : " << I.getCalledFunction()->getNameStr() << "\n");
+	TRACE_4("Visiting CallInst, function is : " << I.getCalledFunction() << "\n");
+//	TRACE_4("Visiting CallInst, function is : " << I.getCalledFunction()->getNameStr() << "\n");
 	if (isa < InlineAsm > (I.getOperand(0)))
 		return visitInlineAsm(I);
 
@@ -3230,10 +3233,27 @@ void PromelaWriter::visitCallInst(CallInst & I)
 			if (visitBuiltinCall(I, ID, WroteCallee))
 				return;
 
+
 	Value *Callee = I.getCalledValue();
 
 	const PointerType *PTy = cast < PointerType > (Callee->getType());
 	const FunctionType *FTy = cast < FunctionType > (PTy->getElementType());
+
+	TRACE_4("Visiting CallInst, function TYPE IS : " << PTy << " and " << FTy << "\n");
+
+	if (! I.getCalledFunction()) {
+		Value* arg = I.getOperand(1);
+		Function * cf = currentFunction;
+		void* fctAddr = this->scjit->jitAddr(cf, &I, arg);
+		const GlobalValue* gv = this->scjit->getEngine()->getGlobalValueAtAddress(fctAddr);
+		TRACE_4("################# Function jitted : " << fctAddr << "\n");
+		TRACE_4("################# GlobalValue corresponding : " << gv << "\n");
+		if (! gv)
+			return;
+		else
+			Callee = (Function*) gv;
+	}
+
 
 	// If this is a call to a struct-return function, assign to the first
 	// parameter instead of passing it to the call.

@@ -258,7 +258,8 @@ Function *FunctionBuilder::buildFct()
 			/*** ...clone the instruction if it is useful ***/
 			if (find(used_insts.begin(), used_insts.end(), origInst) != used_insts.end()) {
 				Instruction *NewInst = origInst->clone();
-				TRACE_6("Found useful and cloned : " <<	origInst << " -> " << NewInst << "\n");
+				TRACE_6("Found useful and cloned : " <<	origInst << " -> " << NewInst << "  ");
+				origInst->dump();
 				if (origInst->hasName())
 					NewInst->setName(origInst->getName());
 				//NewBB->getInstList().insert(NewBB->getInstList().end(), NewInst);

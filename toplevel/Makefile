@@ -140,7 +140,7 @@ CXXFLAGS += -I$(UTILSDIR)
 # llvm-config sometimes includes -fno-rtti -fno-exceptions, but we don't want this:
 # systemc.h is not compilable with -fno-rtti!
 CXXFLAGS += `llvm-config --cxxflags jit bitreader bitwriter native` \
-	-frtti -fexceptions
+	-frtti -fexceptions -g
 
 # These files define classes that inherit from LLVM classes, which are
 # compiled with -fno-rtti as of svn version 98434 (14 mach 2010) while

@@ -36,6 +36,13 @@ void
 	;
 }
 
+ExecutionEngine*
+SCJit::getEngine()
+{
+	return this->ee;
+}
+
+
 Module *SCJit::getModule()
 {
 	return this->mdl;
