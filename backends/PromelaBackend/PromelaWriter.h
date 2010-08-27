@@ -189,6 +189,7 @@ public:
   void visitCastInst (CastInst &I);
   void visitSelectInst(SelectInst &I);
 
+  void printRandFct();
   void printCodingGlobals();
   void printSelectClock();
   void printWaitTimePrimitive();

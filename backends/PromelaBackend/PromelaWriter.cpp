@@ -23,6 +23,8 @@
 #include "EventConstruct.hpp"
 #include "ReadConstruct.hpp"
 #include "WriteConstruct.hpp"
+#include "AssertConstruct.hpp"
+#include "RandConstruct.hpp"
 #include "Process.hpp"
 #include "IRModule.hpp"
 #include "SCJit.hpp"
@@ -1296,9 +1298,9 @@ void PromelaWriter::printConstant(Constant * CPV, bool Static)
 
 	case Type::PointerTyID:
 		if (isa < ConstantPointerNull > (CPV)) {
-			Out << "((";
+			Out << "(";
 			printType(Out, CPV->getType());	// sign doesn't matter
-			Out << ")/*NULL*/0)";
+			Out << "/*NULL*/0)";
 			break;
 		} else if (GlobalValue * GV =
 			dyn_cast < GlobalValue > (CPV)) {
@@ -1924,6 +1926,7 @@ void PromelaWriter::printFunction(Function & F, bool inlineFct)
 		TRACE_7("LETS SEE IF THIS WORKS                   : " << GetValueName(&*I) << "  ->  " );
 			I->dump();
 		if (const AllocaInst * AI = isDirectAlloca(&*I)) {
+			Out << "/* local variable */";
 			printType(Out, AI->getAllocatedType(), false, GetValueName(AI));
 			Out << ";\n    ";
 			TRACE_7("Inside First If:-> Adding new local variable : " << GetValueName(&*I) << "  ->  " );
@@ -1933,6 +1936,7 @@ void PromelaWriter::printFunction(Function & F, bool inlineFct)
  			TRACE_7("Adding new local variable : " << GetValueName(&*I) << "  ->  " );
 			I->dump();
 
+			Out << "/* local variable */";
 			printType(Out, I->getType(), false, GetValueName(&*I));
 			Out << ";\n    ";
 
@@ -1940,6 +1944,8 @@ void PromelaWriter::printFunction(Function & F, bool inlineFct)
 				printType(Out, I->getType(), false, GetValueName(&*I) +	"__PHI_TEMPORARY");
 				Out << ";\n    ";
 			}
+		} else {
+			Out << "/* Not printing " << GetValueName(&*I) << "*/\n";
 		}
 		// We need a temporary for the BitCast to use so it can pluck a value out
 		// of a union to do the BitCast. This is separate from the need for a
@@ -2819,6 +2825,24 @@ bool notInitialized(string ObjName){
 	declaredObjs.push_back(ObjName);
 	return true;
 }
+
+void
+PromelaWriter::printRandFct()
+{
+	Out << ""
+		"      inline randnr()"
+		"      {	/*"
+		"      	 * don't call this rand()..."
+		"      	 * to avoid a clash with the C library routine"
+		"      	 */"
+		"      	do"
+		"      	:: nr++		/* randomly increment */"
+		"      	:: nr--		/* or decrement       */"
+		"      	:: break	/* or stop            */"
+		"      	do;"
+		"      }";
+}
+
 void
 PromelaWriter::printGlobalVariables(Mangler* mang)
 {
@@ -2974,7 +2998,12 @@ PromelaWriter::printInitSection()
 	for (; globalIt < globalEnd; ++globalIt) {
 		GlobalValue* gv = *globalIt;
 		string NameSoFar = "llvm_cbe" + Mang->getNameWithPrefix(gv);
+		
 		const Type *Ty=gv->getType();
+		while (isa<PointerType>(Ty)) {
+			Ty = cast<PointerType>(Ty)->getElementType();
+		}	
+
 		switch (Ty->getTypeID()) {
 			case Type::VoidTyID:
 				Out << NameSoFar<<" = NULL";
@@ -3104,6 +3133,7 @@ PromelaWriter::visitSCConstruct(SCConstruct * scc)
 	EventConstruct* eventC;	
 	ReadConstruct* rc;
 	WriteConstruct* wc;
+	AssertConstruct *ac;
 	Event* event;
 	Port* port;
 	vector<Channel*>* channels;
@@ -3153,7 +3183,6 @@ PromelaWriter::visitSCConstruct(SCConstruct * scc)
 			} else {
 				SimpleChannel* sc = (SimpleChannel*) port->getChannel();
 				Out << "llvm_chan_"<<sc->getTypeName();
-				sc->getGlobalVariableName();
 			}
 		} else {
 			Out << "/* TODO : read() on a non simple channel */";
@@ -3205,6 +3234,15 @@ PromelaWriter::visitSCConstruct(SCConstruct * scc)
 			/* todo */
  		}
 		break;
+	case ASSERTCONSTRUCT:
+		ac = (AssertConstruct*) scc;
+		if (ac->isStaticallyFound()) {
+			Out << "assert(" << ac->getCond() <<");";
+		} else {
+			Out << "assert(" << GetValueName(ac->getMissingCond()) << ");";
+		}
+	case RANDCONSTRUCT:
+		Out << "randnr(nr);";
 	default:
 		ErrorMsg << "Construction not managed in Simple backend: " << scc->getID();
 		triggerError(Out);

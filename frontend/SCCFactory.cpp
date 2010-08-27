@@ -14,6 +14,11 @@ SCCFactory::SCCFactory(SCJit * scjit)
   /***** Ports stuff ******/
 	(new WriteHandler(scjit))->insertInMap(&this->scchandlers);
 	(new ReadHandler(scjit))->insertInMap(&this->scchandlers);
+
+  /***** Other stuff ******/
+	(new AssertHandler(scjit))->insertInMap(&this->scchandlers);
+//	(new RandHandler())->insertInMap(&this->scchandlers);
+	
 }
 
 SCCFactory::~SCCFactory()

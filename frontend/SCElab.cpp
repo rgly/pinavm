@@ -214,7 +214,9 @@ Event *SCElab::addEvent(Process * process, sc_core::sc_event * event)
 	Event *e;
 	static int counter=0;
 	IRModule *mod = process->getModule();
+	TRACE_3("Look for event : " << event << "\n");
 	if ((it = this->eventsMap.find(event)) == this->eventsMap.end()) {
+		TRACE_3("NOT Found !\n");
 		char suffix[10];
 		sprintf(suffix, "%d", ++counter );
 		string eventName = mod->getUniqueName() + "_event_" + suffix;
@@ -222,6 +224,7 @@ Event *SCElab::addEvent(Process * process, sc_core::sc_event * event)
 		this->events.push_back(e);
 		this->eventsMap[event] = e;
 	} else {
+		TRACE_3("Found !\n");
 		e = it->second;
 	}
 	process->addEvent(e);

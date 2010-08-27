@@ -3,6 +3,7 @@
 
 using namespace llvm;
 
+
 SCConstruct *NotifyHandler::handle(Function * fct, BasicBlock * bb, Instruction* callInst, Function* calledFunction)
 {
 	string eventName = "eventName";
@@ -13,7 +14,6 @@ SCConstruct *NotifyHandler::handle(Function * fct, BasicBlock * bb, Instruction*
 	TRACE_4("Address jitted : " << eventAddr << "\n");
 	if (eventAddr == NULL)
 		return new NotifyConstruct((Value*)NULL);
-
 	Event *e = this->scjit->getElab()->getEvent(eventAddr);
 	TRACE_3("Event notified : " << (void *) e << " (" << e->toString() << ") \n");
 	return new NotifyConstruct(e);

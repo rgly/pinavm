@@ -95,6 +95,7 @@ FunctionBuilder::isBeforeTargetInst(Value* v)
 	return find(this->predecessors->begin(), this->predecessors->end(), v) != this->predecessors->end();
 }
 
+
 int
 FunctionBuilder::markUsefulInstructions()
 {
@@ -133,11 +134,18 @@ FunctionBuilder::markUsefulInstructions()
 			TRACE_6("Arg : " << arg << "\n");
 			arg->dump();
 
+			if (isa<PHINode>(arg)) {
+				PHINode* pn = dyn_cast<PHINode>(arg);
+				int numIncoming = pn->getNumIncomingValues();
+				for (int i = 0; i < numIncoming; i++) {
+					BasicBlock* incomingBB = pn->getIncomingBlock(i);
+					if (! isBeforeTargetInst(&incomingBB->front()))
+						return 1;
+				}
+			}
 			/*** Mark the instruction and the associated basicblock as useful ***/
 			if (isBeforeTargetInst(arg))
 				mark(arg);
-			else if (isa<PHINode>(arg))
-				return 1;
 		}
 		TRACE_5("... marking done for inst : " << inst << "\n");
 	}
@@ -158,7 +166,7 @@ void FunctionBuilder::cloneBlocks()
 		if (BB->hasName())
 			NewBB->setName(BB->getName());
 
-		TRACE_6("Clone block : " << BB << "->" << BB << " (" <<	NewBB->getNameStr() << ")\n");
+		TRACE_6("Clone block : " << BB << "->" << NewBB << " (" <<	NewBB->getNameStr() << ")\n");
 		ValueMap[BB] = NewBB;
 	}
 }
@@ -248,6 +256,10 @@ Function *FunctionBuilder::buildFct()
 		/*** Add branch instruction from the previous block to the current one ***/
 		if (oldCurrentBlock != NULL) {
 			oldCurrentBlock->getInstList().push_back(BranchInst::Create(NewBB));
+			ValueMap[NewBB] = NewBB; // DIRTY HACK -> the previous instruction puts a
+						 // ref to a new block, which will
+						 // not be remapped if we don't add it to
+						 // the value map
 		}
 		lastBlock = NewBB;
 		
@@ -264,10 +276,6 @@ Function *FunctionBuilder::buildFct()
 					NewInst->setName(origInst->getName());
 				//NewBB->getInstList().insert(NewBB->getInstList().end(), NewInst);
 				NewBB->getInstList().push_back(NewInst);
-				RemapInstruction(NewInst, ValueMap);	// Important: link the instruction to others (use-def chain)
-				TRACE_6("Instruction remapped : ");
-				PRINT_6(NewInst->dump());
-				TRACE_6("\n");
 				/* Add instruction to ValueMap so that future calls to RemapInstruction() work. It works because: */
 				/* - all variables used have been added in the ValueMap when they have been defined           */
 				/* - the basic blocks are already in the ValueMap (necessary for branch instructions)             */
@@ -277,8 +285,32 @@ Function *FunctionBuilder::buildFct()
 		}
 		oldCurrentBlock = NewBB;
 	}
-					
 
+	// TODO : pour chaque nouveau basic block, pour chaque nouvelle instruction, remapper.
+	/*** For each basic block in the original function... ***/
+	origbb = origFct->begin(), origbe = origFct->end();
+	while (origbb != origbe) {
+		currentBlock = &*origbb++;
+		/*** ...get the corresponding block in the fctToJit if it exists ***/
+		if (find(used_bb.begin(), used_bb.end(), currentBlock) == used_bb.end()) {
+			TRACE_6("   not useful\n");
+			continue;
+		}			
+		NewBB = cast < BasicBlock > (ValueMap[currentBlock]);	
+		BasicBlock::iterator instIt = NewBB->begin(), instEnd = NewBB->end();
+
+		/*** For each instruction in the original basic block... ***/
+		while (instIt != instEnd) {
+			Instruction *inst = &*instIt;
+			/*** ...remap the instruction if it is useful ***/
+			TRACE_6("Attempting to remap : ");
+			PRINT_6(inst->dump());
+			TRACE_6("\n");
+			RemapInstruction(inst, ValueMap);	// Important: link the instruction to others (use-def chain)
+			instIt++;
+		}
+	}
+	
 	TRACE_6("lastBlock : " << lastBlock << "\n");
 
 	IRBuilder <> retBuilder(lastBlock);

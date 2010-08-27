@@ -14,6 +14,8 @@
 #include "ZeroTimeHandler.hpp"
 #include "WriteHandler.hpp"
 #include "ReadHandler.hpp"
+#include "RandHandler.h"
+#include "AssertHandler.h"
 
 struct Process;
 

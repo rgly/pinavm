@@ -46,7 +46,8 @@ H_FILES = \
 	sc_string.h \
 	sc_temporary.h \
 	sc_utils_ids.h \
-	sc_vector.h 
+	sc_vector.h \
+	verif.h 
 
 NO_H_FILES = \
 	sc_stop_here.h
@@ -62,7 +63,7 @@ CXX_FILES = \
 	sc_report_handler.cpp \
 	sc_stop_here.cpp \
 	sc_string.cpp \
-	sc_utils_ids.cpp 
+	sc_utils_ids.cpp
 
 NO_CXX_FILES =
 

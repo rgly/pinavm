@@ -21,7 +21,6 @@ public:
 	NotifyConstruct(Value * missingE);
 	void setNotifiedEvent(Event * e);
 	Event *getNotifiedEvent();
-	Value* getMissingEvent();
 	string toString();
 };
 

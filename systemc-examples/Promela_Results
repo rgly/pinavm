@@ -2,7 +2,7 @@ TESTING WITH Promela ##################
 
 Pass arth_ctrl 
 
-Fail events 
+Pass events 
 
 Pass elab_easy 
 
@@ -10,7 +10,7 @@ Pass elab_easy_arrays
 
 Pass elab_easy_int 
 
-Fail elab_easy_uint 
+Pass elab_easy_uint 
 
 Pass elab_multiple_instances 
 
@@ -20,7 +20,7 @@ Fail elab_ports_array
 
 Pass elab_ports_bool 
 
-Fail elab_ports_pointer 
+Pass elab_ports_pointer 
 
 Fail empty-sc 
 
@@ -28,7 +28,7 @@ Fail fifo
 
 Fail pkt_switch 
 
-Fail RAM 
+Pass RAM 
 
 Fail sc_clock 
 

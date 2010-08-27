@@ -1,4 +1,5 @@
 #include <systemc.h>
+#include <sysc/utils/verif.h>
 
 #define MEM_SIZE 512
 
@@ -135,6 +136,7 @@ private:
 		Memory::Function f = getrndfunc();
 		Port_MemFunc.write(f);
 		Port_MemAddr.write(addr);
+		sc_verif::azerty(true);
 		if(f == Memory::FUNC_WRITE)
 			Port_MemData.write(getRndData());
 		m_waitMem = true;

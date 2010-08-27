@@ -14,7 +14,7 @@ Pass elab_easy_uint
 
 Pass elab_multiple_instances 
 
-Pass elab_ports 
+Fail elab_ports 
 
 Pass elab_ports_array 
 

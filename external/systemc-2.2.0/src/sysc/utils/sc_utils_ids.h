@@ -82,6 +82,8 @@ SC_DEFINE_MESSAGE(SC_ID_BACK_ON_EMPTY_LIST_,
 		  803, "attempt to take back() on an empty list")
 SC_DEFINE_MESSAGE(SC_ID_IEEE_1666_DEPRECATION_,
 		  804, "/IEEE_Std_1666/deprecated" )
+SC_DEFINE_MESSAGE(SC_ID_ASSERT_NOT_VERIFIED_,
+		  805, "Assertion not verified")
 
 
 #endif

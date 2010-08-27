@@ -6,44 +6,36 @@
 
 using namespace std;
 
-// class my_if : public sc_interface
-// {
-// public:
-//    virtual void f()=0;
-// };
-
-SC_MODULE(MyModule)
+struct MyModule : public sc_module
 {
+	sc_core::sc_event ev;
 	MyModule* initiator;
-	sc_event e;
-	int dm;
 
 	SC_HAS_PROCESS(MyModule);
-	MyModule(sc_module_name name)
+	MyModule(sc_module_name name) : sc_module(name)
 	{
 		SC_THREAD(compute);
-		sensitive << e;
+		sensitive << ev;
 	}
 	
 	void fonct()
 	{
-		e.notify();
+		ev.notify();
 	}
 	
 	void compute()
 	{
-		wait(e);      
+		wait(ev);      
 		initiator->fonct();
 	}
 };
 
-SC_MODULE(Source)
+struct Source : public sc_module
 {
 	MyModule* initiator;
-	int ds;	
 	
 	SC_HAS_PROCESS(Source);
-	Source(sc_module_name name, int number_)
+	Source(sc_module_name name, int number_) : sc_module(name)
 	{
 		SC_THREAD(compute);
 	}
@@ -93,11 +85,16 @@ int sc_main(int argc, char **argv)
 	    stringstream ss;
 	    ss << "MyModule" << i+1;
 	    myModule[i] = new MyModule(ss.str().c_str());
+	    cout << "Address of new module : " << myModule[i] << "\n";
+	    cout << "Address of event : " << & myModule[i]->ev << "\n";
     }
     MyModule sink("Sink");
     sink.initiator = &sink;
     source.initiator = myModule[0];
+    cout << "Address of sink : " << &sink << "\n";
+    cout << "Address of sink event : " << & sink.ev << "\n";
     
+
     for (int i=0; i<nb_modules-2; i++)
     {
 	    if (i != (nb_modules-3))
