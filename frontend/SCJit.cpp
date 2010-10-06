@@ -259,16 +259,16 @@ bool SCJit::jitBool(Function * f, Instruction* inst, Value * arg, bool* errb)
 	    (int (*)(sc_core::sc_module *)) ee->getPointerToFunction(fctToJit);
 	IRModule* mod = this->getCurrentProcess()->getModule();
 	TRACE_4("********************* SC MODULE : " << mod << "\n");
-	int res = fct(this->elab->getSCModule(mod));
+	// fct returns a value on 8 bits only (i.e. high bits are
+	// irrelevant). We _must_ return the value in a 8-bit wide
+	// type (i.e. not int).
+	char res = fct(this->elab->getSCModule(mod));
 
 	fctToJit->dropAllReferences();
 	ee->freeMachineCodeForFunction(fctToJit);
 	fctToJit->eraseFromParent();
 
-	if (res)
-		return false;
-	else
-		return true;
+	return res;
 }
 
 int
