@@ -2177,7 +2177,7 @@ void PromelaWriter::visitBranchInst(BranchInst & I)
 			Out << ";        \n";
 		printBranchToBlock(I.getParent(), I.getSuccessor(0), 2);
 		
-		Out << "\n        :: true -> ";
+		Out << "\n        :: else -> ";
 		
 		if (printPHICopiesForSuccessor(I.getParent(), I.getSuccessor(1), 2))
 			Out << ";        \n";
