@@ -1461,7 +1461,7 @@ void _42Writer::writeInstComputationInline(Instruction & I)
 			  Ty != Type::getInt16Ty(I.getContext()) &&
 			  Ty != Type::getInt32Ty(I.getContext()) &&
 			  Ty != Type::getInt64Ty(I.getContext()))) {
-    llvm_report_error("The Simple backend does not currently support integer types"
+    llvm_report_error("The 42 backend does not currently support integer types"
 		      "of widths other than 1, 8, 16, 32, 64.\n"
 		      "This is being tracked as PR 4158.");
   }
@@ -3481,7 +3481,7 @@ _42Writer::visitSCConstruct(SCConstruct * scc)
     }
     break;
   default:
-    ErrorMsg << "Construction not managed in Simple backend: " << scc->getID();
+    ErrorMsg << "Construction not managed in 42 backend: " << scc->getID();
     triggerError(Out);
   }
 }

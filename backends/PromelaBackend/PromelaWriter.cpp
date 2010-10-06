@@ -3244,7 +3244,7 @@ PromelaWriter::visitSCConstruct(SCConstruct * scc)
 	case RANDCONSTRUCT:
 		Out << "randnr(nr);";
 	default:
-		ErrorMsg << "Construction not managed in Simple backend: " << scc->getID();
+		ErrorMsg << "Construction not managed in Promela backend: " << scc->getID();
 		triggerError(Out);
 	}
 }

@@ -10,8 +10,11 @@ SCConstruct *AssertHandler::handle(Function * fct, BasicBlock * bb, Instruction*
 	Value *arg = callInst->getOperand(1);
 	bool errb;
 	bool cond = this->scjit->jitBool(fct, callInst, arg, &errb);
-	if (errb)
+	if (errb) {
+		TRACE_4("Cannot statically find argument of assert(...)\n");
+		// MM: TODO: NULL should be the actual value.
 		return new AssertConstruct((Value*)NULL);
+	}
 	TRACE_4("Cond jitted : " << cond << "\n");
 	return new AssertConstruct(cond);
 }
