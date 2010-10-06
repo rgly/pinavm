@@ -71,6 +71,10 @@ ifndef SYSTEMCLIB
 SYSTEMCLIB=$(INSTALL_PATH_SYSTEMC_GCC)/lib-linux/libsystemc.a
 endif
 
+ifndef SYSTEMC_INCLUDE
+SYSTEMC_INCLUDE=-I$(INSTALL_PATH_SYSTEMC_GCC)/include
+endif
+
 ifndef CPPSCFLAGS
 CPPSCFLAGS=-I$(ROOT)/external/systemc-2.2.0/src/
 endif
@@ -133,7 +137,7 @@ gcc-ssa: $(GCC_SSA)
 	llvm-$(COMP) $(LLVMGCCFLAGS) -emit-llvm -c $< -o $@ $(INCLUDE)
 
 %.simu: %.$(SUF) Makefile
-	$(COMP) $< -o $@ $(SYSTEMCLIB) $(CPPSCFLAGS)
+	$(COMP) $< -o $@ $(SYSTEMCLIB) $(CPPFLAGS) $(SYSTEMC_INCLUDE)
 
 %.pr: %.opt.bc Makefile
 # Keep a backup of the target.
