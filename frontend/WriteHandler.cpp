@@ -47,7 +47,7 @@ SCConstruct *WriteHandler::handle(Function * fct, BasicBlock * bb, Instruction* 
 				TRACE_4("got result !! \n");				
 				sprintf(buffer, "%d", intValue.to_int());
 				ret->setValue(buffer);
-				TRACE_5("Value written is : " << buffer << "\n");
+				TRACE_5("Value written is (sc_uint): " << buffer << "\n");
 			}
 		} else if (valueType->isIntegerTy()) {
 			if (((IntegerType*) valueType)->getBitWidth() == 1) {
@@ -55,7 +55,7 @@ SCConstruct *WriteHandler::handle(Function * fct, BasicBlock * bb, Instruction* 
 				if (errb)
 					ret->setMissingValue(value);
 				else {
-					TRACE_5("Value written is : " << boolValue << "\n");
+					TRACE_5("Value written is (bool): " << boolValue << "\n");
 					if (boolValue) {
 						ret->setValue("true");
 					} else {
@@ -67,7 +67,7 @@ SCConstruct *WriteHandler::handle(Function * fct, BasicBlock * bb, Instruction* 
 				if (errb)
 					ret->setMissingValue(value);
 				else {
-					TRACE_5("Value written is : " << intValue << "\n");
+					TRACE_5("Value written is (int): " << intValue << "\n");
 					sprintf(buffer, "%d", intValue);
 					ret->setValue(buffer);
 				}
@@ -77,7 +77,7 @@ SCConstruct *WriteHandler::handle(Function * fct, BasicBlock * bb, Instruction* 
 			if (errb)
 				ret->setMissingValue(value);
 			else {
-				TRACE_5("Value written is : " << doubleValue << "\n");
+				TRACE_5("Value written is (double): " << doubleValue << "\n");
 				sprintf(buffer, "%f", doubleValue);
 				ret->setValue(buffer);
 			}

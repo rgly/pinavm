@@ -8,17 +8,19 @@ using namespace llvm;
 
 SCConstruct *DefaultTimeHandler::handle(Function * fct, BasicBlock * bb, Instruction* callInst, Function* calledFunction)
 {
-	TRACE_3("Handling call to wait(int)... ");
+	TRACE_3("Handling call to wait(...)");
 	Value *arg = callInst->getOperand(2);
 	bool errb = false;
 
 	if (arg->getType()->isIntegerTy()) {
 		int time_waited = this->scjit->jitInt(fct, callInst, arg, &errb);
+		// MM: TODO: check errb.
 		// MM: TODO: this is _not_ a wait on time semantically.
 		TRACE_3("Int time waited: " << time_waited << "\n");
 		return new DefaultTimeConstruct(time_waited);
 	} else if (arg->getType()->isFloatingPointTy()) {
 		double time_waited = this->scjit->jitDouble(fct, callInst, arg, &errb);
+		// MM: TODO: check errb.
 		TRACE_3("Double time waited: " << time_waited << "\n");
 		return new DefaultTimeConstruct(time_waited);
 	} else {
