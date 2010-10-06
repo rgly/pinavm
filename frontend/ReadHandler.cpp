@@ -28,7 +28,10 @@ SCConstruct *ReadHandler::handle(Function * fct, BasicBlock * bb, Instruction * 
 void ReadHandler::insertInMap(std::map < Function *,
 			      SCConstructHandler * >*scchandlers)
 {
+	// sc_core::sc_in<bool>::read() const
 	SCConstructHandler::insertInMap(scchandlers, "_ZNK7sc_core5sc_inIbE4readEv");
+	// sc_core::sc_in<int>::read() const
 	SCConstructHandler::insertInMap(scchandlers, "_ZNK7sc_core5sc_inIiE4readEv");
+	// sc_core::sc_in<sc_dt::sc_uint<8> >::read() const
 	SCConstructHandler::insertInMap(scchandlers, "_ZNK7sc_core5sc_inIN5sc_dt7sc_uintILi8EEEE4readEv");
 }
