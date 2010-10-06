@@ -5,8 +5,6 @@
 
 //#define KASCPAR
 
-#define NS * 1e-9
-
 class superclass
 {
 	virtual void print() {}
