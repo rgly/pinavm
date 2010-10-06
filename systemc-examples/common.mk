@@ -87,7 +87,10 @@ include ${SCOOT_HOME}/common.mk
 endif
 
 PINAVM=$(ROOT)/toplevel/pinavm
-.PHONY: $(PINAVM)
+# convenience target to be able to type "make pinavm"
+pinavm: $(PINAVM)
+
+.PHONY: $(PINAVM) pinavm
 $(PINAVM):
 	cd $$(dirname $(PINAVM)) && $(MAKE) $$(basename $(PINAVM))
 
