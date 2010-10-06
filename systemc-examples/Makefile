@@ -51,7 +51,7 @@ all:	frontend promela simple spin
 
 # Do make frontend (optional)TIMEOUT=.. (optional)ARG=.. and see the generated result file Frontend_Results
 frontend:
-	echo -e "TESTING WITH Frontend ##################\n">$(FERESULTS)
+	printf "%s\n\n" "TESTING WITH Frontend ##################">$(FERESULTS)
 	for d in $(SUB_DIRS); 								\
 	do                                                                      	\
 	    echo ......................................................; 		\
@@ -61,9 +61,9 @@ frontend:
 		cd $$d; 								\
 		ulimit -t $(TIMEOUT);							\
 		if $(MAKE) frontend ARG=$(ARG); then					\
-		      echo -e "$(PASS) $$d \n" | tee -a ../$(FERESULTS);		\
+		      printf "%s\n\n" "$(PASS) $$d" | tee -a ../$(FERESULTS);		\
 		else									\
-		      echo -e "$(FAIL) $$d \n" | tee -a ../$(FERESULTS);		\
+		      printf "%s\n\n" "$(FAIL) $$d" | tee -a ../$(FERESULTS);		\
 		fi;									\
 	    )										\
 	done
@@ -71,7 +71,7 @@ frontend:
 
 # Verify promela Results with spin should be run only after doing make promela
 spin:
-	echo -e "TESTING WITH Spin ##################\n">$(SPINRESULTS)
+	printf "%s\n\n" "TESTING WITH Spin ##################">$(SPINRESULTS)
 	for d in $(SUB_DIRS); 								\
 	do										\
 	    echo ......................................................; 		\
@@ -81,9 +81,9 @@ spin:
 		cd $$d; 								\
 		ulimit -t $(TIMEOUT);							\
 		if $(MAKE) spin-run; then						\
-		      echo -e "$(PASS) $$d \n" | tee -a ../$(SPINRESULTS);		\
+		      printf "%s\n\n" "$(PASS) $$d" | tee -a ../$(SPINRESULTS);		\
 		else									\
-		      echo -e "$(FAIL) $$d \n" | tee -a ../$(SPINRESULTS);		\
+		      printf "%s\n\n" "$(FAIL) $$d" | tee -a ../$(SPINRESULTS);		\
 		fi;									\
 	    )										\
 	done
@@ -92,7 +92,7 @@ spin:
 
 # Do make promela (optional)TIMEOUT=.. (optional)ARG=.. and see the generated result file Promela_Results
 promela:
-	echo -e "TESTING WITH Promela ##################\n">$(PRRESULTS)
+	printf "%s\n\n" "TESTING WITH Promela ##################">$(PRRESULTS)
 	for d in $(SUB_DIRS); 								\
 	do 										\
 	    echo ......................................................; 		\
@@ -102,9 +102,9 @@ promela:
 		cd $$d; 								\
 		ulimit -t $(TIMEOUT);							\
 		if $(MAKE) promela ARG=$(ARG); then					\
-		      echo -e "$(PASS) $$d \n" | tee -a ../$(PRRESULTS);		\
+		      printf "%s\n\n" "$(PASS) $$d" | tee -a ../$(PRRESULTS);		\
 		else									\
-		      echo -e "$(FAIL) $$d \n" | tee -a ../$(PRRESULTS);		\
+		      printf "%s\n\n" "$(FAIL) $$d" | tee -a ../$(PRRESULTS);		\
 		fi;									\
 	    )										\
 	done									
@@ -112,7 +112,7 @@ promela:
 
 # Do make simple (optional)TIMEOUT=.. (optional)ARG=.. and see the generated result file Simple_Results
 simple:
-	echo -e "TESTING WITH Simple ##################\n">$(SMRESULTS)
+	printf "%s\n\n" "TESTING WITH Simple ##################">$(SMRESULTS)
 	for d in $(SUB_DIRS); 								\
 	do										\
 	    echo ......................................................; 		\
@@ -122,9 +122,9 @@ simple:
 		cd $$d; 								\
 		ulimit -t $(TIMEOUT);							\
 		if $(MAKE) simple ARG=$(ARG); then					\
-		    echo -e "$(PASS) $$d \n" | tee -a ../$(SMRESULTS);			\
+		    printf "%s\n\n" "$(PASS) $$d" | tee -a ../$(SMRESULTS);		\
 		else									\
-		    echo -e "$(FAIL) $$d \n" | tee -a ../$(SMRESULTS);			\
+		    printf "%s\n\n" "$(FAIL) $$d" | tee -a ../$(SMRESULTS);		\
 		fi;									\
 	    )										\
 	done
