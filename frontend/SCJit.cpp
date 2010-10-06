@@ -212,6 +212,7 @@ void *SCJit::jitAddr(Function * f, Instruction* inst, Value * arg)
 
 double SCJit::jitDouble(Function * f, Instruction* inst, Value * arg, bool* errb)
 {
+	*errb = false;
 	Function *fctToJit;
 	const std::vector < const Type *>argsType;
 
@@ -240,6 +241,7 @@ double SCJit::jitDouble(Function * f, Instruction* inst, Value * arg, bool* errb
 
 bool SCJit::jitBool(Function * f, Instruction* inst, Value * arg, bool* errb)
 {
+	*errb = false;
 	Function *fctToJit;
 	const std::vector < const Type *>argsType;
 
@@ -271,6 +273,7 @@ bool SCJit::jitBool(Function * f, Instruction* inst, Value * arg, bool* errb)
 
 int
 SCJit::jitInt(Function * f, Instruction* inst, Value * arg, bool* errb) {
+	*errb = false;
 	Function *fctToJit;
 	const std::vector < const Type *>argsType;
 	
