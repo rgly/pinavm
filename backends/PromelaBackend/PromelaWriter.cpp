@@ -3241,8 +3241,10 @@ PromelaWriter::visitSCConstruct(SCConstruct * scc)
 		} else {
 			Out << "assert(" << GetValueName(ac->getMissingCond()) << ");";
 		}
+		break;
 	case RANDCONSTRUCT:
 		Out << "randnr(nr);";
+		break;
 	default:
 		ErrorMsg << "Construction not managed in Promela backend: " << scc->getID();
 		triggerError(Out);
