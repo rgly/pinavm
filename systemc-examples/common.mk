@@ -10,6 +10,11 @@ endif
 
 include $(ROOT)/config.mk
 
+QUIET_MODE=yes
+ifdef QUIET_MODE
+REDIRECT=>$@.log 2>$@.log
+endif
+
 ifndef SUF
 SUF=cpp
 endif
@@ -150,7 +155,7 @@ gcc-ssa: $(GCC_SSA)
 	@echo running with $(ARG) and $(OVERRIDING);
 # If pinavm fails, make sure we don't keep a half-build .pr file around, so that next
 # "make promela" runs also fail.
-	$(PINAVM) $(PINAVM_ARGS) -b promela -o $@.part main.opt.bc -inline -args $(ARG)
+	$(PINAVM) $(PINAVM_ARGS) -b promela -o $@.part main.opt.bc -inline -args $(ARG) $(REDIRECT)
 	@mv $@.part $@
 
 kascpar: $(SRC)
@@ -169,10 +174,10 @@ xml:
 	mv $<.*.ssa $@
 
 clean:
-	-$(RM) *.exe *.bc *.ssa *.o
+	-$(RM) *.exe *.bc *.ll *.o *.log
 
-realclean: clean
-	$(RM) *~ 
+realclean: clean promelaclean
+	$(RM) *~
 
 promelaclean:
-	-$(RM) pan $(PROMELA) pan.c pan.h
+	-$(RM) pan $(PROMELA) pan.c pan.h pan.b pan.m pan.t
