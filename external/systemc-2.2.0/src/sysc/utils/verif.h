@@ -1,6 +1,6 @@
 struct sc_verif
 {
-	static void azerty(bool cond) {
+	static void ASSERT(bool cond) {
 		;
 	}
 };

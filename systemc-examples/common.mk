@@ -173,3 +173,6 @@ clean:
 
 realclean: clean
 	$(RM) *~ 
+
+promelaclean:
+	-$(RM) pan $(PROMELA) pan.c pan.h

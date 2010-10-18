@@ -4,7 +4,7 @@ using namespace sc_core;
 
 struct sc_verif
 {
-	static void azerty(bool cond) {
+	static void ASSERT(bool cond) {
 		//abort();
 		;
 	}
@@ -13,7 +13,7 @@ struct sc_verif
 class Component : public sc_module {
 public:
 	void compute() {
-		sc_verif::azerty(false);
+		sc_verif::ASSERT(false);
 		;
 	}
 	SC_CTOR(Component) {

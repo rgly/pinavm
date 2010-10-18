@@ -22,10 +22,10 @@ SCConstruct *AssertHandler::handle(Function * fct, BasicBlock * bb, Instruction*
 void AssertHandler::insertInMap(std::map < Function *,
 				SCConstructHandler * >*scchandlers)
 {
-	// sc_verif::azerty()
+	// sc_verif::ASSERT()
 	SCConstructHandler::insertInMap(scchandlers,
-					"_ZN8sc_verif6azertyEv");
-	// sc_verif::azerty(bool)
+					"_ZN8sc_verif6ASSERTEv");
+	// sc_verif::ASSERT(bool)
 	SCConstructHandler::insertInMap(scchandlers,
-					"_ZN8sc_verif6azertyEb");
+					"_ZN8sc_verif6ASSERTEb");
 }

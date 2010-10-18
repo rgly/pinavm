@@ -1,7 +1,7 @@
 #include <systemc.h>
 struct sc_verif
 {
-	static void azerty(bool cond) {
+	static void ASSERT(bool cond) {
 		//abort();
 		;
 	}
@@ -30,7 +30,7 @@ public:
 			i++;
 		}
 		if (i != 10)
-			sc_verif::azerty(false);
+			sc_verif::ASSERT(false);
 	}
 	SC_CTOR(Target) {
 		SC_THREAD(compute);

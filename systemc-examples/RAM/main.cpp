@@ -136,7 +136,7 @@ private:
 		Memory::Function f = getrndfunc();
 		Port_MemFunc.write(f);
 		Port_MemAddr.write(addr);
-		sc_verif::azerty(true);
+		sc_verif::ASSERT(true);
 		if(f == Memory::FUNC_WRITE)
 			Port_MemData.write(getRndData());
 		m_waitMem = true;
