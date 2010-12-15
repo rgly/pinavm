@@ -42,7 +42,7 @@ PROMELA=${patsubst %.$(SUF),%.pr,$(SRC)}
 endif
 
 ifndef PINAVM_ARGS
-PINAVM_ARGS=-print-ir -print-elab
+PINAVM_ARGS=-print-ir -print-elab $(PINAVM_EXTRA_ARGS) $(PINAVM_LIBS:%=-load %)
 endif
 
 .PHONY: promela diff frontend
