@@ -28,9 +28,25 @@ endif
 
 CFLAGS=-DSAFETY
 
+# define SRC for single source, and SRCS for separate compilation.
 ifndef SRC
-SRC=${wildcard *.$(SUF)}
+ifndef SRCS
+SRCS=${wildcard *.$(SUF)}
 endif
+endif
+
+ifndef PINAVM_INPUT_BC
+ifdef SRC
+PINAVM_INPUT_BC=${patsubst %.$(SUF),%.opt.bc,$(SRC)}
+else
+PINAVM_INPUT_BC=main.linked.bc
+endif
+endif
+
+debug:
+	echo $(SRC)
+	echo $(SRCS)
+	echo $(PINAVM_INPUT_BC)
 
 ifndef LL
 LL=${patsubst %.$(SUF),%.ll,$(SRC)}
@@ -41,7 +57,11 @@ EXE=${patsubst %.$(SUF),%.exe,$(SRC)}
 endif
 
 ifndef PROMELA
+ifdef SRC
 PROMELA=${patsubst %.$(SUF),%.pr,$(SRC)}
+else
+PROMELA=main.pr
+endif
 endif
 
 ifndef PINAVM_ARGS
@@ -54,9 +74,9 @@ promela: $(PROMELA)
 diff:
 	diff -u $(PROMELA) $(PROMELA).bak
 
-frontend: main.opt.bc
+frontend: $(PINAVM_INPUT_BC)
 	@$(MAKE) $(PINAVM)
-	$(PINAVM) main.opt.bc $(PINAVM_ARGS) -args $(ARG)
+	$(PINAVM) $(PINAVM_INPUT_BC) $(PINAVM_ARGS) -args $(ARG)
 
 pan.c: $(PROMELA)
 	$(SPIN) -a $(PROMELA) 
@@ -126,14 +146,13 @@ llopt: $(LLOPT)
 
 gcc-ssa: $(GCC_SSA)
 
-%.opt.sc.bc: %.opt.bc Makefile
-	llvm-link -f -o $@ $(INSTALL_PATH_SYSTEMC_LLVM)/lib-$(TARGET_ARCH)/libsystemc.a $*.opt.bc
-
-%.opt.sc.ll: %.opt.sc.bc Makefile
-	llvm-dis -f $*.opt.sc.bc -o $@
-
 %.opt.bc: %.bc Makefile
 	opt -f $(OPTFLAGS) $*.bc -o $*.opt.bc
+
+ifdef SRCS
+$(PINAVM_INPUT_BC): $(SRCS:.cpp=.opt.bc)
+	llvm-link $^ -o $@
+endif
 
 %.opt.ll: %.opt.bc Makefile
 	llvm-dis -f $*.opt.bc -o $@
@@ -147,7 +166,7 @@ gcc-ssa: $(GCC_SSA)
 %.simu: %.$(SUF) Makefile
 	$(COMP) $< -o $@ $(SYSTEMCLIB) $(CPPFLAGS) $(SYSTEMC_INCLUDE)
 
-%.pr: %.opt.bc Makefile
+%.pr: $(PINAVM_INPUT_BC) Makefile
 # Keep a backup of the target.
 	-$(RM) $@.bak
 	-if [ -f $@ ]; then mv $@ $@.bak; fi
@@ -158,7 +177,7 @@ gcc-ssa: $(GCC_SSA)
 	@echo running with $(ARG) and $(OVERRIDING);
 # If pinavm fails, make sure we don't keep a half-build .pr file around, so that next
 # "make promela" runs also fail.
-	$(PINAVM) $(PINAVM_ARGS) -b promela -o $@.part main.opt.bc -inline -args $(ARG) $(REDIRECT)
+	$(PINAVM) $(PINAVM_ARGS) -b promela -o $@.part $(PINAVM_INPUT_BC) -inline -args $(ARG) $(REDIRECT)
 	@mv $@.part $@
 
 kascpar: $(SRC)
