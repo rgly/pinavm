@@ -183,4 +183,4 @@ realclean: clean promelaclean
 	$(RM) *~
 
 promelaclean:
-	-$(RM) pan $(PROMELA) pan.c pan.h pan.b pan.m pan.t
+	-$(RM) pan $(PROMELA) $(PROMELA).trail $(PROMELA).bak pan.c pan.h pan.b pan.m pan.t
