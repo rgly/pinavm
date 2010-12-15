@@ -14,7 +14,7 @@ ifndef QUIET_MODE
 QUIET_MODE=yes
 endif
 
-ifeq (QUIET_MODE,yes)
+ifeq ($(QUIET_MODE),yes)
 REDIRECT=>$@.log 2>$@.log
 endif
 
