@@ -10,8 +10,11 @@ endif
 
 include $(ROOT)/config.mk
 
+ifndef QUIET_MODE
 QUIET_MODE=yes
-ifdef QUIET_MODE
+endif
+
+ifeq (QUIET_MODE,yes)
 REDIRECT=>$@.log 2>$@.log
 endif
 
