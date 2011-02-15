@@ -9,13 +9,18 @@ SCConstruct *NotifyHandler::handle(Function * fct, BasicBlock * bb, Instruction*
 	string eventName = "eventName";
 	TRACE_3("Handling call to notify(event)\n");
 
-	Value *arg = callInst->getOperand(1);
+	Value *arg = callInst->getOperand(0);
+	TRACE_4("We want to JIT this : ");
+	arg->dump();
+	TRACE_4("\n");
+	TRACE_4("\n");
+
 	void *eventAddr = this->scjit->jitAddr(fct, callInst, arg);
 	TRACE_4("Address jitted : " << eventAddr << "\n");
 	if (eventAddr == NULL)
 		return new NotifyConstruct((Value*)NULL);
 	Event *e = this->scjit->getElab()->getEvent(eventAddr);
-	TRACE_3("Event notified : " << (void *) e << " (" << e->toString() << ") \n");
+	TRACE_3("Event notified : " << (void *) e << " (" << e->getEventName() << ") \n");
 	return new NotifyConstruct(e);
 
 }

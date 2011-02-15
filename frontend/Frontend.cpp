@@ -156,10 +156,11 @@ bool Frontend::run()
 						TRACE_4("Call not handled : " << calledFunction->getNameStr() << "\n");
 						TRACE_4("Inlining function : " << calledFunction->getNameStr() << "\n");
 						isInlined = false;
+						llvm::InlineFunctionInfo ifi;
 						if (isInvoke)
-							isInlined = llvm::InlineFunction(dyn_cast<InvokeInst>(currentInst));
+						  isInlined = llvm::InlineFunction(dyn_cast<InvokeInst>(currentInst), ifi);
 						else
-							isInlined = llvm::InlineFunction(dyn_cast<CallInst>(currentInst));
+						  isInlined = llvm::InlineFunction(dyn_cast<CallInst>(currentInst), ifi);
 						// InlineFunction invalidates iterators => restart loop.
 						if (isInlined)
 							goto start_for;

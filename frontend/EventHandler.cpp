@@ -11,14 +11,19 @@ SCConstruct *EventHandler::handle(Function * fct, BasicBlock * bb, Instruction* 
 {
 	TRACE_3("Handling call to wait(event)\n");
 
-	Value *arg = callInst->getOperand(2);
+	Value *arg = callInst->getOperand(1);
+	TRACE_4("We want to JIT this : ");
+	arg->dump();
+	TRACE_4("\n");
+	TRACE_4("\n");
+
 	void *eventAddr = this->scjit->jitAddr(fct, callInst, arg);
 	TRACE_4("Address jitted : " << eventAddr << "\n");
 	if (eventAddr == NULL) {
 		return new EventConstruct(arg);
 	} else {
 		Event *e = this->scjit->getElab()->getEvent(eventAddr);
-		TRACE_3("Event associated : " << (void *) e << " (" << e->toString() << ") \n");
+		TRACE_3("Event associated : " << (void *) e << " (" << e->getEventName() << ") \n");
 		return new EventConstruct(e);
 	}
 }

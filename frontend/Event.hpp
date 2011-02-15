@@ -17,8 +17,8 @@ struct Event:public ElabMember {
 	int numEvent;
 
       public:
-	Event(string eventName);
-	string toString();
+	Event(string name);
+	string getEventName();
 	std::vector<Process*>* getProcesses();
 	void printElab(int sep, string prefix);
 	int getNumEvent();

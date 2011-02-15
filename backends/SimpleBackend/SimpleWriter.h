@@ -97,7 +97,7 @@ class SimpleWriter : public ModulePass, public InstVisitor<SimpleWriter> {
 public:
   static char ID;
   explicit SimpleWriter(Frontend* fe, formatted_raw_ostream &o, bool useRelativeClocks, bool encodeEventsAsBool)
-    : ModulePass(&ID), Out(o), IL(0), Mang(0), LI(0), 
+    : ModulePass(ID), Out(o), IL(0), Mang(0), LI(0), 
       TheModule(0), TAsm(0), TD(0), OpaqueCounter(0), NextAnonValueNumber(0) {
     FPCounter = 0;
     this->sccfactory = fe->getConstructs();
@@ -106,7 +106,7 @@ public:
     this->eventsAsBool = encodeEventsAsBool;
   }
   explicit SimpleWriter(formatted_raw_ostream &o)
-    : ModulePass(&ID), Out(o), IL(0), Mang(0), LI(0), 
+    : ModulePass(ID), Out(o), IL(0), Mang(0), LI(0), 
       TheModule(0), TAsm(0), TD(0), OpaqueCounter(0), NextAnonValueNumber(0) {
     FPCounter = 0;
   }

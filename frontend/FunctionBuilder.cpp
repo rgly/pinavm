@@ -306,7 +306,8 @@ Function *FunctionBuilder::buildFct()
 			TRACE_6("Attempting to remap : ");
 			PRINT_6(inst->dump());
 			TRACE_6("\n");
-			RemapInstruction(inst, ValueMap);	// Important: link the instruction to others (use-def chain)
+			
+			RemapInstruction(inst, ValueMap, true);	// Important: link the instruction to others (use-def chain)
 			instIt++;
 		}
 	}

@@ -47,7 +47,9 @@ class FunctionBuilder {
   vector<Instruction*> temp_queue;
   vector<Instruction*> used_insts;
   vector<BasicBlock*> used_bb;
-  DenseMap<const Value*, Value*> ValueMap;
+  //  DenseMap<const Value*, Value*> ValueMap;
+  ValueToValueMapTy ValueMap;
+
 
   Process* proc;
   Function* origFct;

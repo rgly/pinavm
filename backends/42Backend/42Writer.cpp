@@ -8,6 +8,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
 
 #include "Port.hpp"
 #include "Channel.hpp"
@@ -99,7 +100,7 @@ static const AllocaInst *isDirectAlloca(const Value * V)
  **************************************************************************/
 
 _42Writer::_42Writer(Frontend* fe, formatted_raw_ostream &o, bool encodeEventsAsBool, bool useRelativeClocks, bool bug)
-  : ModulePass(&ID), Out(o), IL(0), Mang(0), LI(0), 
+  : ModulePass(ID), Out(o), IL(0), Mang(0), LI(0), 
     TheModule(0), TAsm(0), TD(0), OpaqueCounter(0), NextAnonValueNumber(0) {
   FPCounter = 0;
   this->sccfactory = fe->getConstructs();
@@ -111,7 +112,7 @@ _42Writer::_42Writer(Frontend* fe, formatted_raw_ostream &o, bool encodeEventsAs
 }
 
 _42Writer::_42Writer(formatted_raw_ostream &o)
-  : ModulePass(&ID), Out(o), IL(0), Mang(0), LI(0), 
+  : ModulePass(ID), Out(o), IL(0), Mang(0), LI(0), 
     TheModule(0), TAsm(0), TD(0), OpaqueCounter(0), NextAnonValueNumber(0) {
   FPCounter = 0;
 }
@@ -1461,7 +1462,7 @@ void _42Writer::writeInstComputationInline(Instruction & I)
 			  Ty != Type::getInt16Ty(I.getContext()) &&
 			  Ty != Type::getInt32Ty(I.getContext()) &&
 			  Ty != Type::getInt64Ty(I.getContext()))) {
-    llvm_report_error("The 42 backend does not currently support integer types"
+    report_fatal_error("The 42 backend does not currently support integer types"
 		      "of widths other than 1, 8, 16, 32, 64.\n"
 		      "This is being tracked as PR 4158.");
   }
@@ -3327,9 +3328,9 @@ _42Writer::getEventName(Process* proc, Event* event)
 {
   std::stringstream ss;
   if (proc == NULL)
-    ss << event->toString();
+    ss << event->getEventName();
   else
-    ss << event->toString() << "_" << proc->getPid();
+    ss << event->getEventName() << "_" << proc->getPid();
   return ss.str();
 }
 
@@ -3652,7 +3653,7 @@ bool _42Writer::visitBuiltinCall(CallInst & I, Intrinsic::ID ID,
 	"The C backend does not currently supoprt zero "
 	  << "argument varargs functions, such as '" <<
 	I.getParent()->getParent()->getName() << "'!";
-      llvm_report_error(Msg.str());
+      report_fatal_error(Msg.str());
     }
     writeOperand(--I.getParent()->getParent()->arg_end());
     Out << ')';
@@ -4140,7 +4141,11 @@ bool _42Writer::runOnModule(Module & M)
 
   // Ensure that all structure types have names...
   TAsm = new MCAsmInfo();
-  Mang = new Mangler(*TAsm);
+  MCContext* MCC = new MCContext(*TAsm);
+
+  //  Mang = new Mangler(*TAsm);
+  Mang = new Mangler(*MCC, *TD);
+
 // MM: doesn't exist anymore. Not sure what to put instead.
 //  Mang->markCharUnacceptable('.');
 

@@ -35,7 +35,8 @@ EventConstruct::getMissingEvent()
 std::string EventConstruct::toString()
 {
 	if (this->staticallyFound)
-		return "WAIT(" + this->event->toString() + ")";
+	  //		return "WAIT(" + this->event->toString() + ")";
+	  ;
 	else
 		return "WAIT(dynamic content)";
 }

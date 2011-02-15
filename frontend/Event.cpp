@@ -12,15 +12,15 @@ using namespace std;
 
 static int numberOfEvents = 1;
 
-Event::Event(string event)
+Event::Event(string name)
 {
-	this->eventName = event;
-	this->numEvent = numberOfEvents++;
+  this->eventName = name;
+  this->numEvent = numberOfEvents++;
 }
 
-string Event::toString()
+string Event::getEventName()
 {
-	return this->eventName;
+  return this->eventName;
 }
 
 int
@@ -44,5 +44,5 @@ Event::addProcess(Process* p)
 void Event::printElab(int sep, string prefix)
 {
 	this->printPrefix(sep, prefix);
-	TRACE("Event : " << this << " (\"" << this->toString() << "\")\n");
+	TRACE("Event : " << this << " (\"" << this->getEventName() << "\")\n");
 }

@@ -1197,7 +1197,7 @@ SimpleWriter::writeInstComputationInline (Instruction & I)
 			     Ty != Type::getInt16Ty (I.getContext ()) &&
 			     Ty != Type::getInt32Ty (I.getContext ()) && Ty != Type::getInt64Ty (I.getContext ())))
     {
-      llvm_report_error
+      report_fatal_error
 	("The Simple backend does not currently support integer types"
 	 "of widths other than 1, 8, 16, 32, 64.\n" "This is being tracked as PR 4158.");
     }
@@ -3122,7 +3122,7 @@ bool SimpleWriter::visitBuiltinCall (CallInst & I, Intrinsic::ID ID, bool & Wrot
 	  Msg <<
 	    "The C backend does not currently supoprt zero "
 	    << "argument varargs functions, such as '" << I.getParent ()->getParent ()->getName () << "'!";
-	  llvm_report_error (Msg.str ());
+	  report_fatal_error (Msg.str ());
 	}
       writeOperand (--I.getParent ()->getParent ()->arg_end ());
       Out << ')';
@@ -3582,10 +3582,9 @@ bool SimpleWriter::runOnModule (Module & M)
 
   // Ensure that all structure types have names...
   TAsm = new MCAsmInfo ();
-  Mang = new Mangler (*TAsm);
-// LLVM > 2.7 will require this:
-//      MCContext* mcc = new MCContext(*TAsm);
-//      Mang = new Mangler(*mcc, *TD);
+
+  MCContext* mcc = new MCContext(*TAsm);
+  Mang = new Mangler(*mcc, *TD);
 
   // Keep track of which functions are static ctors/dtors so they can have
   // an attribute added to their prototypes.

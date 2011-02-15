@@ -29,7 +29,7 @@ Event *NotifyConstruct::getNotifiedEvent()
 string NotifyConstruct::toString()
 {
 	if (this->staticallyFound)
-		return "NOTIFY(" + this->event->toString() + ")";
+		return "NOTIFY(" + this->event->getEventName() + ")";
 	else
 		return "NOTIFY(dynamic content)";
 }

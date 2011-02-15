@@ -12,7 +12,7 @@ using namespace llvm;
 class _42BackendNameAllUsedStructsAndMergeFunctions :  public ModulePass  {
  public:
   static char ID;
- _42BackendNameAllUsedStructsAndMergeFunctions() : ModulePass(&ID) {;}
+ _42BackendNameAllUsedStructsAndMergeFunctions() : ModulePass(ID) {;}
   void getAnalysisUsage(AnalysisUsage &AU) const;
   virtual const char* getPassName() const;
   virtual bool runOnModule(Module &M);

@@ -106,7 +106,7 @@ static const AllocaInst *isDirectAlloca(const Value * V)
  **************************************************************************/
 
 PromelaWriter::PromelaWriter(Frontend* fe, formatted_raw_ostream &o, bool encodeEventsAsBool, bool useRelativeClocks, bool bug)
-	: ModulePass(&ID), Out(o), IL(0), Mang(0), 
+	: ModulePass(ID), Out(o), IL(0), Mang(0), 
 	  TheModule(0), TAsm(0), TD(0), OpaqueCounter(0), NextAnonValueNumber(0) {
 	FPCounter = 0;
 	this->sccfactory = fe->getConstructs();
@@ -118,7 +118,7 @@ PromelaWriter::PromelaWriter(Frontend* fe, formatted_raw_ostream &o, bool encode
 }
 
 PromelaWriter::PromelaWriter(formatted_raw_ostream &o)
-	: ModulePass(&ID), Out(o), IL(0), Mang(0), 
+	: ModulePass(ID), Out(o), IL(0), Mang(0), 
 	  TheModule(0), TAsm(0), TD(0), OpaqueCounter(0), NextAnonValueNumber(0) {
 	FPCounter = 0;
 }
@@ -1369,7 +1369,7 @@ void PromelaWriter::writeInstComputationInline(Instruction & I)
 					Ty != Type::getInt16Ty(I.getContext()) &&
 					Ty != Type::getInt32Ty(I.getContext()) &&
 					Ty != Type::getInt64Ty(I.getContext()))) {
-		llvm_report_error("The Simple backend does not currently support integer types"
+		report_fatal_error("The Simple backend does not currently support integer types"
 				"of widths other than 1, 8, 16, 32, 64.\n"
 				"This is being tracked as PR 4158.");
 	}	
@@ -3116,9 +3116,9 @@ PromelaWriter::getEventName(Process* proc, Event* event)
 {
 	std::stringstream ss;
 	if (proc == NULL)
-		ss << event->toString();
+		ss << event->getEventName();
 	else
-		ss << event->toString() << "_" << proc->getPid();
+		ss << event->getEventName() << "_" << proc->getPid();
 	return ss.str();
 }
 
@@ -3415,7 +3415,7 @@ bool PromelaWriter::visitBuiltinCall(CallInst & I, Intrinsic::ID ID,
 				"The C backend does not currently supoprt zero "
 			    << "argument varargs functions, such as '" <<
 				I.getParent()->getParent()->getName() << "'!";
-			llvm_report_error(Msg.str());
+			report_fatal_error(Msg.str());
 		}
 		writeOperand(--I.getParent()->getParent()->arg_end());
 		Out << ')';
@@ -3908,10 +3908,8 @@ bool PromelaWriter::runOnModule(Module & M)
 
 	// Ensure that all structure types have names...
 	TAsm = new MCAsmInfo();
-	Mang = new Mangler(*TAsm);
-// LLVM > 2.7 will require this:
-//	MCContext* mcc = new MCContext(*TAsm);
-//	Mang = new Mangler(*mcc, *TD);
+	MCContext* mcc = new MCContext(*TAsm);
+	Mang = new Mangler(*mcc, *TD);
 
 // MM: doesn't exist anymore. Not sure what to put instead.
 //	Mang->markCharUnacceptable('.');

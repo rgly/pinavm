@@ -229,7 +229,7 @@ Event *SCElab::addEvent(Process * process, sc_core::sc_event * event)
 	}
 	process->addEvent(e);
 	e->addProcess(process);
-	TRACE_2("Add (sc_event)     " << event << " -> (Event) " << e << " (" << e->toString() << ") to (Process) " << process << "\n");
+	TRACE_2("Add (sc_event)     " << event << " -> (Event) " << e << " (" << e->getEventName() << ") to (Process) " << process << "\n");
 	return e;
 
 }

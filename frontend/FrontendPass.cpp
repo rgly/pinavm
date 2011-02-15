@@ -6,7 +6,7 @@
 
 using namespace llvm;
 
-FrontendPass::FrontendPass():ModulePass(&ID)
+FrontendPass::FrontendPass():ModulePass(ID)
 {
 	this->inlineFunctions = false;
 }

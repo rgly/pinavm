@@ -103,7 +103,7 @@ void Process::printIR(SCCFactory * sccfactory)
 					if ((itC = constructs->find(currentInst)) != constructs->end()) {
 						map<Process*, SCConstruct*> CbyP = itC->second;
 						SCConstruct *scc = CbyP.find(this)->second;
-						TRACE("    ---> SCC Construct : " << scc->toString() << "\n");
+						//						TRACE("    ---> SCC Construct : " << scc->toString() << "\n");
 					} else if (! calledFunction) {
 						TRACE("    Call function pointer\n");
 					}
