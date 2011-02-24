@@ -89,7 +89,7 @@ void launch_twetobackend(Frontend * fe,std::string OutputFilename,
 	Passes.add(createInstructionCombiningPass()); 
 	// Reassociates commutative expressions in an order that is
 	// designed to promote better constant propagation, GCSE, LICM, PRE...
-	PM->add(createInstructionCombiningPass());
+	Passes.add(createInstructionCombiningPass());
 	/*PM->add(createReassociatePass());
 	PM->add(createGVNPass());*/
 	
