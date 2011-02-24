@@ -122,11 +122,11 @@ FunctionBuilder::markUsefulInstructions()
 			{
 				mark(v);
 			}
-	}
-	TRACE_6("> Uses visited\n");
+		}
+		TRACE_6("> Uses visited\n");
 
 	
-	/*********** Visit each argument of the instruction ***********/
+		/*********** Visit each argument of the instruction ***********/
 		TRACE_6("> Visiting args...\n");
 		User::op_iterator opit = inst->op_begin(), opend = inst->op_end();
 		for (; opit != opend; ++opit) {
@@ -180,8 +180,9 @@ Function *FunctionBuilder::buildFct()
 
 	/********************* Init stack ****************/
 	if (isa < Constant > (this->res)) {
+		TRACE_5("Res : "); this->res->dump();
 		BasicBlock *entryBlock = BasicBlock::Create(getGlobalContext(), "entry", fctToJit);
-		Value *instr = IRBuilder <> (entryBlock).CreateRet(res);
+		Value *instr = IRBuilder<>(entryBlock).CreateRet(res);
 		TRACE_5("Function is just a return :\n");
 		PRINT_5(instr->dump());
 		TRACE_5("\n");

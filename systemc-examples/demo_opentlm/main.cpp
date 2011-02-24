@@ -13,7 +13,7 @@ class Source : public sc_module {
 public:
 	sc_out<bool> out;
 	void compute() {
-		out.write(true); // <----
+		out.write(true); // <---- change to false to break assertion
 	}
 	SC_CTOR(Source) {
 		SC_THREAD(compute);
