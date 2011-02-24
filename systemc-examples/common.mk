@@ -35,18 +35,25 @@ SRCS=${wildcard *.$(SUF)}
 endif
 endif
 
+# Bitcode file after running mem2reg
+
 ifndef PINAVM_INPUT_BC
 ifdef SRC
-PINAVM_INPUT_BC=${patsubst %.$(SUF),%.opt.bc,$(SRC)}
+PINAVM_INPUT_BC=${patsubst %.$(SUF),%.bc,$(SRC)}
 else
 PINAVM_INPUT_BC=main.linked.bc
 endif
+endif
+
+ifndef PINAVM_INPUT_BC_M2R
+PINAVM_INPUT_BC_M2R = ${patsubst %.bc, %.opt.bc, $(PINAVM_INPUT_BC)}
 endif
 
 debug:
 	echo $(SRC)
 	echo $(SRCS)
 	echo $(PINAVM_INPUT_BC)
+	echo $(PINAVM_INPUT_BC_M2R)
 
 ifndef LL
 LL=${patsubst %.$(SUF),%.ll,$(SRC)}
@@ -80,9 +87,9 @@ promela: $(PROMELA)
 diff:
 	diff -u $(PROMELA) $(PROMELA).bak
 
-frontend: $(PINAVM_INPUT_BC)
+frontend: $(PINAVM_INPUT_BC_M2R)
 	@$(MAKE) $(PINAVM)
-	$(PINAVM) $(PINAVM_INPUT_BC) $(PINAVM_ARGS) $(ARG_MAYBE)
+	$(PINAVM) $(PINAVM_INPUT_BC_M2R) $(PINAVM_ARGS) $(ARG_MAYBE)
 
 pan.c: $(PROMELA)
 	$(SPIN) -a $(PROMELA) 
@@ -156,7 +163,7 @@ gcc-ssa: $(GCC_SSA)
 	opt -f $(OPTFLAGS) $*.bc -o $*.opt.bc
 
 ifdef SRCS
-$(PINAVM_INPUT_BC): $(SRCS:.cpp=.opt.bc)
+$(PINAVM_INPUT_BC): $(SRCS:.cpp=.bc)
 	llvm-link $^ -o $@
 endif
 
@@ -172,7 +179,7 @@ endif
 %.simu: %.$(SUF) Makefile
 	$(COMP) $< -o $@ $(SYSTEMCLIB) $(CPPFLAGS) $(SYSTEMC_INCLUDE)
 
-%.pr: $(PINAVM_INPUT_BC) Makefile
+%.pr: $(PINAVM_INPUT_BC_M2R) Makefile
 # Keep a backup of the target.
 	-$(RM) $@.bak
 	-if [ -f $@ ]; then mv $@ $@.bak; fi
@@ -183,7 +190,7 @@ endif
 	@echo running with $(ARG) and $(OVERRIDING);
 # If pinavm fails, make sure we don't keep a half-build .pr file around, so that next
 # "make promela" runs also fail.
-	$(PINAVM) $(PINAVM_ARGS) -b promela -o $@.part $(PINAVM_INPUT_BC) -inline -args $(ARG) $(REDIRECT)
+	$(PINAVM) $(PINAVM_ARGS) -b promela -o $@.part $(PINAVM_INPUT_BC_M2R) -inline -args $(ARG) $(REDIRECT)
 	@mv $@.part $@
 
 kascpar: $(SRC)
