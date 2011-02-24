@@ -41,7 +41,10 @@ void DefaultTimeHandler::insertInMap(std::map < Function *, SCConstructHandler *
 	SCConstructHandler::insertInMap(scchandlers,
 					"_ZN7sc_core9sc_module4waitEdNS_12sc_time_unitE");
 	// sc_core::wait(double, sc_core::sc_time_unit, sc_core::sc_simcontext*)
-	// wait(double, sc_time_unit) seems to be replaced by this sometimes.
+	// wait(double, sc_time_unit) seems to be replaced by this
+	// sometimes.
+	// MM: TODO: this is sc_core::wait, hence not a member
+	// function. Relevant argument is probably arg 0 instead of arg 1 here.
 	SCConstructHandler::insertInMap(scchandlers,
 					"_ZN7sc_core4waitEdNS_12sc_time_unitEPNS_13sc_simcontextE");
 }
