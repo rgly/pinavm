@@ -91,6 +91,9 @@ frontend: $(PINAVM_INPUT_BC_M2R)
 	@$(MAKE) $(PINAVM)
 	$(PINAVM) $(PINAVM_INPUT_BC_M2R) $(PINAVM_ARGS) $(ARG_MAYBE)
 
+tweto: $(PINAVM_INPUT_BC)
+	$(PINAVM) -b tweto $(PINAVM_INPUT_BC) $(PINAVM_ARGS) $(ARG_MAYBE)
+
 pan.c: $(PROMELA)
 	$(SPIN) -a $(PROMELA) 
 

@@ -1,8 +1,6 @@
-INCLUDE=../../external/systemc-2.2.0/src/ 
+all: tweto promela
 
-hello.bc: hello.cpp
-	llvm-g++ -I $(INCLUDE) $< -c --emit-llvm -o $@
+SRC=hello.cpp
 
-.PHONY: run
-run:
-	../../toplevel/pinavm -b tweto hello.bc
+include ../common.mk
+
