@@ -9,3 +9,5 @@ configure
 autom4te.cache
 *.d
 *.so
+
+.DS_Store

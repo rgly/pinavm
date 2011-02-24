@@ -33,6 +33,7 @@ using namespace llvm;
 #include "SimpleBackend.h"
 #include "PromelaBackend.h"
 #include "42Backend.h"
+#include "TwetoBackend.h"
 
 // get a -load option.
 //#include "llvm/Support/PluginLoader.h"
@@ -88,6 +89,7 @@ bool disable_debug_msg;
 
 extern "C"
 void pinavm_callback();
+extern "C" bool pinavm_simulation_callback();
 Module *Mod;
 void pinavm_callback()
 {
@@ -115,10 +117,24 @@ void pinavm_callback()
 			launch_promelabackend(fe, OutputFilename, EventsAsBool, RelativeClocks, Bug);
 		} else if (Backend == "42") {
 		        launch_42backend(fe, OutputFilename, EventsAsBool, RelativeClocks, Bug);
+		} 
+		// Tweto backend
+		else if(Backend == "tweto" || Backend == "Tweto") {
+			launch_twetobackend(fe);
 		} else {
 			ERROR("Backend " << Backend << " unknown\n");
 		}
 	}
+}
+
+bool pinavm_simulation_callback() {
+	if(Backend == "tweto" || Backend == "Tweto") {
+		TRACE_1("Launching simulation...\n");
+		return true; // Run the simulation
+	} else {
+		return false; // Do not run the simulation
+	}
+	
 }
 
 static ExecutionEngine *EE = 0;
