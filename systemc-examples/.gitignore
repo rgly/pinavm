@@ -10,3 +10,10 @@ pan
 *.pr
 *.pr.bak
 Spin_Results
+
+# native compilation
+*.o
+a.out
+
+# execution trace
+*.vcd

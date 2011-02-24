@@ -163,6 +163,8 @@
 
 extern "C" void pinavm_callback();
 extern void pinavm_callback();
+extern "C" bool pinavm_simulation_callback();
+extern bool pinavm_simulation_callback();
 namespace sc_core {
 
 sc_stop_mode stop_mode = SC_STOP_FINISH_DELTA;
@@ -1268,6 +1270,12 @@ sc_start( const sc_time& duration )
         return;
     }
     pinavm_callback();
+	
+	bool doSimu = pinavm_simulation_callback();
+	if(doSimu) 
+	{
+		context->simulate(duration);
+	}
 }
 
 void

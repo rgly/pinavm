@@ -134,7 +134,7 @@ ALL_OBJS = $(OBJS) $(UTILS_OBJS) $(FRONTEND_OBJS) $(BACKENDS_OBJS) $(SYSTEMC_OBJ
 
 CXXFLAGS += -I../external/systemc-2.2.0/src/
 CXXFLAGS += -I$(FRONTENDDIR)
-CXXFLAGS += -I$(BACKENDSDIR)/SimpleBackend -I$(BACKENDSDIR)/PromelaBackend -I$(BACKENDSDIR)/42Backend
+CXXFLAGS += -I$(BACKENDSDIR)/SimpleBackend -I$(BACKENDSDIR)/PromelaBackend -I$(BACKENDSDIR)/42Backend -I$(BACKENDSDIR)/TwetoBackend
 CXXFLAGS += -I$(UTILSDIR)
 
 # llvm-config sometimes includes -fno-rtti -fno-exceptions, but we don't want this:
