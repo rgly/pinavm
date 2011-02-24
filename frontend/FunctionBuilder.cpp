@@ -1,6 +1,7 @@
 #include "FunctionBuilder.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/ADT/ilist.h"
+#include <llvm/Support/CallSite.h>
 
 FunctionBuilder::FunctionBuilder(Function * origFunction,
 				Function * functionToJit,
@@ -117,6 +118,9 @@ FunctionBuilder::markUsefulInstructions()
 			TRACE_6("Use : " << v << "\n");
 			v->dump();
 			/*** Mark the instruction and the associated basicblock as useful ***/
+			// MM: TODO: this should use
+			// MM: TODO: CallSite::getArgument instead. It's
+			// MM: TODO: probably broken.
 			if (isBeforeTargetInst(v) && ((isa<StoreInst>(v) && vAsInst->getOperand(1) == inst) ||
 							isa<CallInst>(v)))
 			{

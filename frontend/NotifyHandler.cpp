@@ -1,5 +1,6 @@
 #include "SCJit.hpp"
 #include "NotifyHandler.hpp"
+#include <llvm/Support/CallSite.h>
 
 using namespace llvm;
 
@@ -9,7 +10,7 @@ SCConstruct *NotifyHandler::handle(Function * fct, BasicBlock * bb, Instruction*
 	string eventName = "eventName";
 	TRACE_3("Handling call to notify(event)\n");
 
-	Value *arg = callInst->getOperand(0);
+	Value *arg = CallSite(callInst).getArgument(0);
 	TRACE_4("We want to JIT this : ");
 	arg->dump();
 	TRACE_4("\n");

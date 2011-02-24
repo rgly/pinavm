@@ -1,5 +1,6 @@
 #include "SCJit.hpp"
 #include "AssertHandler.h"
+#include <llvm/Support/CallSite.h>
 
 using namespace llvm;
 
@@ -7,7 +8,9 @@ using namespace llvm;
 SCConstruct *AssertHandler::handle(Function * fct, BasicBlock * bb, Instruction* callInst, Function* calledFunction)
 {
 	TRACE_3("Handling call to assert(...)\n");
-	Value *arg = callInst->getOperand(1);
+	Value *arg = CallSite(callInst).getArgument(0);
+	TRACE_5("callInst = "); callInst->dump();
+	TRACE_5("arg = "); arg->dump();
 	bool errb;
 	bool cond = this->scjit->jitBool(fct, callInst, arg, &errb);
 	if (errb) {

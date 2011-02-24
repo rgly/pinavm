@@ -4,6 +4,8 @@
 #include "EventHandler.hpp"
 #include "EventConstruct.hpp"
 #include "SCJit.hpp"
+#include <llvm/Support/CallSite.h>
+
 
 using namespace llvm;
 
@@ -11,7 +13,8 @@ SCConstruct *EventHandler::handle(Function * fct, BasicBlock * bb, Instruction* 
 {
 	TRACE_3("Handling call to wait(event)\n");
 
-	Value *arg = callInst->getOperand(1);
+	// TODO: untested.
+	Value *arg = CallSite(callInst).getArgument(1);
 	TRACE_4("We want to JIT this : ");
 	arg->dump();
 	TRACE_4("\n");

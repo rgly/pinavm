@@ -1,6 +1,7 @@
 #include "SCJit.hpp"
 #include "DefaultTimeHandler.hpp"
 #include "DefaultTimeConstruct.hpp"
+#include <llvm/Support/CallSite.h>
 
 #include <ostream>
 
@@ -9,7 +10,8 @@ using namespace llvm;
 SCConstruct *DefaultTimeHandler::handle(Function * fct, BasicBlock * bb, Instruction* callInst, Function* calledFunction)
 {
 	TRACE_3("Handling call to wait(...)");
-	Value *arg = callInst->getOperand(2);
+	// arg0 is the module, argument 1 is the time to wait.
+	Value *arg = CallSite(callInst).getArgument(1);
 	bool errb = false;
 
 	if (arg->getType()->isIntegerTy()) {

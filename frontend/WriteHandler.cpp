@@ -5,6 +5,7 @@
 #include "WriteConstruct.hpp"
 
 #include "sysc/datatypes/int/sc_uint.h"
+#include <llvm/Support/CallSite.h>
 
 using namespace llvm;
 
@@ -14,8 +15,9 @@ SCConstruct *WriteHandler::handle(Function * fct, BasicBlock * bb, Instruction* 
 	char buffer[15];
 
 	TRACE_3("Handling call to write()\n");
-	Value *arg = callInst->getOperand(1);
-	Value *value = callInst->getOperand(2);
+	// Analyzing "arg.write(value)"
+	Value *arg = CallSite(callInst).getArgument(0);
+	Value *value = CallSite(callInst).getArgument(1);
 	Port *po = NULL;
 
 	void *portAddr = this->scjit->jitAddr(fct, callInst, arg);

@@ -3,6 +3,7 @@
 #include "Port.hpp"
 #include "ReadConstruct.hpp"
 #include <llvm/Type.h>
+#include <llvm/Support/CallSite.h>
 
 using namespace llvm;
 
@@ -11,7 +12,8 @@ SCConstruct *ReadHandler::handle(Function * fct, BasicBlock * bb, Instruction * 
 	ReadConstruct* ret;
 
 	TRACE_3("Handling call to read()\n");
-	Value *arg = callInst->getOperand(1);
+	// Analyzing "arg.read()"
+	Value *arg = CallSite(callInst).getArgument(0);
 	void *portAddr = this->scjit->jitAddr(fct, callInst, arg);
 	if (portAddr == NULL)
 		return new ReadConstruct(NULL, callInst);
