@@ -42,8 +42,7 @@
 
 using namespace llvm;
 
-void launch_twetobackend(Frontend * fe,std::string OutputFilename,
-						 bool useBoolInsteadOfInts,bool relativeClocks,bool bug)
+void launch_twetobackend(Frontend * fe)
 {
 	
 	Module *llvmMod = fe->getLLVMModule();

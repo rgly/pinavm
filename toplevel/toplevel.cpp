@@ -120,7 +120,7 @@ void pinavm_callback()
 		} 
 		// Tweto backend
 		else if(Backend == "tweto" || Backend == "Tweto") {
-			launch_twetobackend(fe, OutputFilename, EventsAsBool, RelativeClocks, Bug);
+			launch_twetobackend(fe);
 		} else {
 			ERROR("Backend " << Backend << " unknown\n");
 		}
