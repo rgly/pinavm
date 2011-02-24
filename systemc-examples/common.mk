@@ -68,6 +68,12 @@ ifndef PINAVM_ARGS
 PINAVM_ARGS=-print-ir -print-elab $(PINAVM_EXTRA_ARGS) $(PINAVM_LIBS:%=-load %)
 endif
 
+ifdef ARG
+ARG_MAYBE=-args $(ARG)
+else
+ARG_MAYBE=
+endif
+
 .PHONY: promela diff frontend
 promela: $(PROMELA)
 
@@ -76,7 +82,7 @@ diff:
 
 frontend: $(PINAVM_INPUT_BC)
 	@$(MAKE) $(PINAVM)
-	$(PINAVM) $(PINAVM_INPUT_BC) $(PINAVM_ARGS) -args $(ARG)
+	$(PINAVM) $(PINAVM_INPUT_BC) $(PINAVM_ARGS) $(ARG_MAYBE)
 
 pan.c: $(PROMELA)
 	$(SPIN) -a $(PROMELA) 
