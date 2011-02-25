@@ -59,6 +59,17 @@ extern bool disable_debug_msg;
 
 
 
+#if VERBOSE >= 3 
+#define PRINT_3(Inst) if (! disable_debug_msg) {Inst;}
+#else
+#define PRINT_3(Inst)
+#endif
+
+#if VERBOSE >= 4 
+#define PRINT_4(Inst) if (! disable_debug_msg) {Inst;}
+#else
+#define PRINT_4(Inst)
+#endif
 
 #if VERBOSE >= 5 
 #define PRINT_5(Inst) if (! disable_debug_msg) {Inst;}

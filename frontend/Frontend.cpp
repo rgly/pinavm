@@ -152,7 +152,7 @@ bool Frontend::run()
 					} else if (! this->sccfactory->handlerExists(F, &*bb, currentInst, calledFunction)) {
 						TRACE_6("CallInst : " << currentInst << "\n");
 						TRACE_6("CalledFct : " << calledFunction << "\n");
-						currentInst->dump();
+						PRINT_6(currentInst->dump());
 						TRACE_4("Call not handled : " << calledFunction->getNameStr() << "\n");
 						TRACE_4("Inlining function : " << calledFunction->getNameStr() << "\n");
 						isInlined = false;
@@ -186,7 +186,7 @@ bool Frontend::run()
 			Function* F = fctStack->back();
 			fctStack->pop_back();
 			TRACE_3("Parsing Function : " << F->getNameStr() << "\n");
-			F->dump();
+			PRINT_3(F->dump());
 			for (Function::iterator bb = F->begin(), be = F->end(); bb != be; ++bb) {
 				BasicBlock::iterator i = bb->begin(), ie = bb->end();
 				bool callB; 
@@ -207,7 +207,7 @@ bool Frontend::run()
 					} else if (! this->sccfactory->handle(proc, F, &*bb, currentInst, calledFunction)) {
 						TRACE_6("CallInst : " << currentInst << "\n");
 						TRACE_6("CalledFct : " << calledFunction << "\n");
-						currentInst->dump();
+						PRINT_6(currentInst->dump());
 						TRACE_4("Call not handled : " << calledFunction->getNameStr() << "\n");
 						fctStack->push_back(calledFunction);
 						proc->addUsedFunction(calledFunction);

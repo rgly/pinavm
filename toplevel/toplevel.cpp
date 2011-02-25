@@ -95,12 +95,6 @@ void pinavm_callback()
 {
 	TRACE_1("Entering PinaVM (callback), building module\n");
 
-	if (DisableDbgMsg) {
-		disable_debug_msg = true;
-	} else {
-		disable_debug_msg = false;
-	}
-
 	Frontend *fe = launch_frontend(InputFilename, InlineFcts,Mod);
 
 	if (PrintIR) {
@@ -253,6 +247,12 @@ int toplevel_main(int argc, char **argv)
 		InitializeNativeTarget();
 
 		cl::ParseCommandLineOptions(argc, argv, "llvm .bc -> .bc modular optimizer and analysis printer\n");
+
+		if (DisableDbgMsg.getValue()) {
+			disable_debug_msg = true;
+		} else {
+			disable_debug_msg = false;
+		}
 
 		sys::PrintStackTraceOnErrorSignal();
 

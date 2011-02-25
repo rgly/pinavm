@@ -1,6 +1,9 @@
 CONFFILES=config.sh config.mk
 
-all: configure-all
+all: toplevel
+
+toplevel: configure-all
+	cd toplevel/ && $(MAKE)
 
 .SUFFIXES:
 

@@ -107,7 +107,7 @@ FunctionBuilder::markUsefulInstructions()
 		temp_queue.pop_back();
 
 		TRACE_5("Marking inst " << inst << "\n");
-		inst->dump();
+		PRINT_5(inst->dump());
 		
 		/********************* Visit each use  ***************/
 		Value::use_iterator I = inst->use_begin(), E = inst->use_end();
@@ -116,7 +116,7 @@ FunctionBuilder::markUsefulInstructions()
 			Value *v = *I;
 			Instruction* vAsInst = dyn_cast<Instruction>(v);
 			TRACE_6("Use : " << v << "\n");
-			v->dump();
+			PRINT_5(v->dump());
 			/*** Mark the instruction and the associated basicblock as useful ***/
 			// MM: TODO: this should use
 			// MM: TODO: CallSite::getArgument instead. It's
@@ -136,7 +136,7 @@ FunctionBuilder::markUsefulInstructions()
 		for (; opit != opend; ++opit) {
 			arg = *opit;
 			TRACE_6("Arg : " << arg << "\n");
-			arg->dump();
+			PRINT_6(arg->dump());
 
 			if (isa<PHINode>(arg)) {
 				PHINode* pn = dyn_cast<PHINode>(arg);
@@ -180,11 +180,11 @@ Function *FunctionBuilder::buildFct()
 	BasicBlock *currentBlock = NULL;
 
 	TRACE_3("******** Function analysed is :");
-	this->origFct->dump();
+	PRINT_3(this->origFct->dump());
 
 	/********************* Init stack ****************/
 	if (isa < Constant > (this->res)) {
-		TRACE_5("Res : "); this->res->dump();
+		TRACE_5("Res : "); PRINT_5(this->res->dump());
 		BasicBlock *entryBlock = BasicBlock::Create(getGlobalContext(), "entry", fctToJit);
 		Value *instr = IRBuilder<>(entryBlock).CreateRet(res);
 		TRACE_5("Function is just a return :\n");
@@ -209,7 +209,7 @@ Function *FunctionBuilder::buildFct()
 	/*********** Determine which instructions are useful ***********/
 	TRACE_5("Marking useful basic blocks and instructions\n");
 	mark(res);
-	res->dump();	
+	PRINT_5(res->dump());
 	if (markUsefulInstructions())
 		return NULL;
 	
@@ -276,7 +276,7 @@ Function *FunctionBuilder::buildFct()
 			if (find(used_insts.begin(), used_insts.end(), origInst) != used_insts.end()) {
 				Instruction *NewInst = origInst->clone();
 				TRACE_6("Found useful and cloned : " <<	origInst << " -> " << NewInst << "  ");
-				origInst->dump();
+				PRINT_6(origInst->dump());
 				if (origInst->hasName())
 					NewInst->setName(origInst->getName());
 				//NewBB->getInstList().insert(NewBB->getInstList().end(), NewInst);
@@ -340,7 +340,7 @@ Function *FunctionBuilder::buildFct()
 	}
 
 	TRACE_3("******** [end] Function analysed is :");
-	this->origFct->dump();
+	PRINT_3(this->origFct->dump());
 
 	
 	TRACE_6("Number of basic blocks : " << this->fctToJit->getBasicBlockList().size() << "\n");
