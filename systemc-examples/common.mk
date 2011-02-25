@@ -10,6 +10,26 @@ endif
 
 include $(ROOT)/config.mk
 
+ifndef PRINT_IR
+PRINT_IR=yes
+endif
+ifndef PRINT_ELAB
+PRINT_ELAB=yes
+endif
+
+ifeq ($(PRINT_IR),yes)
+PRINT_IR_MAYBE=-print-ir
+else
+PRINT_IR_MAYBE=
+endif
+
+ifeq ($(PRINT_ELAB),yes)
+PRINT_ELAB_MAYBE=-print-elab
+else
+PRINT_ELAB_MAYBE=
+endif
+
+
 ifndef QUIET_MODE
 QUIET_MODE=disable
 endif
@@ -80,7 +100,8 @@ endif
 endif
 
 ifndef PINAVM_ARGS
-PINAVM_ARGS=-print-ir -print-elab $(PINAVM_EXTRA_ARGS) $(PINAVM_LIBS:%=-load %) $(DISABLE_DEBUG_MAYBE)
+PINAVM_ARGS=$(PRINT_IR_MAYBE) $(PRINT_ELAB_MAYBE) \
+	 $(PINAVM_EXTRA_ARGS) $(PINAVM_LIBS:%=-load %) $(DISABLE_DEBUG_MAYBE)
 endif
 
 ifdef ARG
