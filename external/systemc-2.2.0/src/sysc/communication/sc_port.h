@@ -86,6 +86,11 @@ Andy Goodrich - Forte Design Systems, Inc.
 #include "sysc/kernel/sc_process.h"
 #include <typeinfo>
 
+// Tweto patch
+#ifdef TWETO
+extern void tweto_mark_const(const void *ptr_to_cst, size_t size);
+#endif
+
 namespace sc_core {
 
 class sc_event_finder;
@@ -600,6 +605,10 @@ sc_port_b<IF>::add_interface( sc_interface* interface_ )
 
     m_interface_vec.push_back( iface );
     m_interface = m_interface_vec[0]; 
+    // Tweto patch
+    #ifdef TWETO
+     tweto_mark_const(&m_interface,sizeof(void*));
+    #endif
 }
 
 template <class IF>

@@ -11,3 +11,9 @@ autom4te.cache
 *.so
 
 .DS_Store
+
+pinavm-xcode*
+*.pbxbtree
+*.pbxsymbols
+control
+strings

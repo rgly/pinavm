@@ -54,7 +54,8 @@ const char copyright[] =
 
 static
 const char systemc_version[] =
-    "             SystemC " SC_RELEASE_STRING " --- " __DATE__ " " __TIME__;
+"           SystemC " SC_RELEASE_STRING " --- " __DATE__ " " __TIME__ "\n"
+"                 --- PATCHED FOR TWETO ---";
 
 const char*
 sc_copyright()
