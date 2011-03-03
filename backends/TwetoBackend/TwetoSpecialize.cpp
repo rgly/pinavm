@@ -230,7 +230,8 @@ void tweto_specialize__optimize(Function *newfunc, CallInst *ci,
   formatted_raw_ostream *Out = &fouts();
   LLVMContext &Context = getGlobalContext();
   { // Inline the call
-    bool success = InlineFunction(ci, NULL, TD);
+    InlineFunctionInfo i(NULL, TD);
+    bool success = InlineFunction(ci, i);
     assert(success);
     verifyFunction(*newfunc);
   }
