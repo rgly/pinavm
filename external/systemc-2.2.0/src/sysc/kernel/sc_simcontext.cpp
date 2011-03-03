@@ -161,10 +161,12 @@
 #include "sysc/utils/sc_mempool.h"
 #include "sysc/utils/sc_utils_ids.h"
 
+// PinaVM patch
 extern "C" void pinavm_callback();
 extern void pinavm_callback();
-extern "C" bool pinavm_simulation_callback();
-extern bool pinavm_simulation_callback();
+extern "C" bool pinavm_doWeRunSimulation();
+extern bool pinavm_doWeRunSimulation();
+
 namespace sc_core {
 
 sc_stop_mode stop_mode = SC_STOP_FINISH_DELTA;
@@ -661,6 +663,15 @@ sc_simcontext::prepare_to_simulate()
 
     // PREPARE ALL (C)THREAD PROCESSES FOR SIMULATION:
 
+    // Tweto patch
+    #ifdef TWETO
+    for ( method_p = m_process_table->method_q_head();
+         method_p; method_p = method_p->next_exist() )
+    {
+        method_p->prepare_for_simulation();
+    }
+    #endif
+    
     for ( thread_p = m_process_table->thread_q_head(); 
 	  thread_p; thread_p = thread_p->next_exist() )
     {
@@ -1269,11 +1280,11 @@ sc_start( const sc_time& duration )
 	}
         return;
     }
+    
+    // PinaVM patch
     pinavm_callback();
-	
-	bool doSimu = pinavm_simulation_callback();
-	if(doSimu) 
-	{
+	bool doSimulation = pinavm_doWeRunSimulation();
+	if(doSimulation) {
 		context->simulate(duration);
 	}
 }

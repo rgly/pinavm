@@ -50,6 +50,11 @@
 #include "sysc/communication/sc_interface.h"
 #include "sysc/kernel/sc_object.h"
 
+// Tweto patch
+#ifdef TWETO
+extern void tweto_mark_const(const void *ptr_to_cst, size_t size);
+#endif
+
 namespace sc_core {
 
 //=============================================================================
@@ -181,6 +186,10 @@ public: // binding:
 	else
 	{
 	    m_interface_p = &interface_;
+		// Patch Tweto
+        #ifdef TWETO
+		tweto_mark_const(&m_interface_p,sizeof(void*));
+        #endif
 	}
     }
 
@@ -193,6 +202,10 @@ public: // binding:
 	else
 	{
 	    m_interface_p = &interface_;
+		// Patch Tweto
+        #ifdef TWETO
+		tweto_mark_const(&m_interface_p,sizeof(void*));
+        #endif
 	}
     }
 

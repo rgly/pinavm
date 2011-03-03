@@ -87,9 +87,8 @@ InlineFcts("inline", cl::desc("Inline all functions"));
 
 bool disable_debug_msg;
 
-extern "C"
-void pinavm_callback();
-extern "C" bool pinavm_simulation_callback();
+extern "C" void pinavm_callback();
+extern "C" bool pinavm_doWeRunSimulation();
 Module *Mod;
 void pinavm_callback()
 {
@@ -121,9 +120,9 @@ void pinavm_callback()
 	}
 }
 
-bool pinavm_simulation_callback() {
+bool pinavm_doWeRunSimulation() {
 	if(Backend == "tweto" || Backend == "Tweto") {
-		TRACE_1("Launching simulation...\n");
+		TRACE("########### Launching simulation ############\n");
 		return true; // Run the simulation
 	} else {
 		return false; // Do not run the simulation

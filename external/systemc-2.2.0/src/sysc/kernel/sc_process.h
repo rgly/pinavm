@@ -125,6 +125,10 @@ class sc_process_host
     sc_process_host() {}
     virtual ~sc_process_host() { } // Needed for cast check for sc_module.
     void defunct() {}
+    // Tweto patch
+    #ifdef TWETO
+    typedef void (*SC_ENTRY_FUNC)();
+    #endif
 };
 
 
@@ -169,6 +173,12 @@ class sc_process_monitor {
 #   define SC_USE_MEMBER_FUNC_PTR
 #endif
 
+// Tweto patch
+#ifdef TWETO
+#if defined(SC_USE_MEMBER_FUNC_PTR)
+//#include "../../../../../backends/TwetoBackend/TwetoBackend.h" 
+#endif
+#endif    
 
 // COMPILER DOES SUPPORT CAST TO void (sc_process_host::*)() from (T::*)():
 
@@ -364,6 +374,15 @@ class sc_process_b : public sc_object {
     sc_reset*                    m_reset_p;        // Reset object.
     sc_process_b*                m_runnable_p;     // sc_runnable link
     SC_ENTRY_FUNC                m_semantics_method_p; // Method for semantics.
+
+// Tweto patch
+#ifdef TWETO
+#ifdef SC_USE_MEMBER_FUNC_PTR
+    typedef void (*SC_ENTRY_FUNC_OPT)();
+    SC_ENTRY_FUNC_OPT m_semantics_p; // Method merged with host for semantics.
+#endif
+#endif
+    
     sc_event*                    m_term_event_p;    // Terminated event.
     process_throw_type           m_throw_type;      // Throw type.
     bool                         m_timed_out;       // True if we timed out.
@@ -511,11 +530,20 @@ inline void sc_process_b::semantics()
     assert( m_process_kind != SC_NO_PROC_ );
     m_throw_type = ( m_reset_p && m_reset_p->read() == m_reset_level ) ?
         THROW_RESET : THROW_NONE;
-#   ifndef SC_USE_MEMBER_FUNC_PTR
-        m_semantics_method_p->invoke( m_semantics_host_p );
-#   else
-        (m_semantics_host_p->*m_semantics_method_p)();
-#   endif
+#ifdef TWETO
+    #ifndef SC_USE_MEMBER_FUNC_PTR
+    m_semantics_method_p->invoke( m_semantics_host_p );
+    #else
+    assert(m_semantics_p);
+    m_semantics_p();
+    #endif
+#else // !TWETO    
+    #ifndef SC_USE_MEMBER_FUNC_PTR
+    m_semantics_method_p->invoke( m_semantics_host_p );
+    #else
+    (m_semantics_host_p->*m_semantics_method_p)();
+    #endif
+#endif
 }
 
 

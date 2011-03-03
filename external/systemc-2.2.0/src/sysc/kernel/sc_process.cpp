@@ -274,6 +274,11 @@ sc_process_b::sc_process_b( const char* name_p, bool free_host,
     m_reset_p(0),
     m_runnable_p(0),
     m_semantics_method_p ( method_p ),
+#ifdef TWETO    
+#ifdef SC_USE_MEMBER_FUNC_PTR
+    m_semantics_p ( NULL ),
+#endif
+#endif
     m_term_event_p(0),
     m_throw_type( THROW_NONE ),
     m_timed_out(false),

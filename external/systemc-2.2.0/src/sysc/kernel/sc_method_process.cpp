@@ -135,6 +135,21 @@ void sc_method_process::kill_process()
 
 }
 
+// Tweto patch
+#ifdef TWETO
+    extern "C" SC_ENTRY_FUNC_OPT tweto_optimize_process(SC_ENTRY_FUNC fct, sc_process_host *arg);
+#endif
+    
+// Tweto patch
+#ifdef TWETO
+void sc_method_process::prepare_for_simulation()
+{
+    // Tweto patch
+    assert(m_semantics_p==NULL);
+    m_semantics_p = tweto_optimize_process(m_semantics_method_p, m_semantics_host_p);
+    assert(m_semantics_p);
+}
+#endif
 
 //------------------------------------------------------------------------------
 //"sc_method_process::sc_method_process"

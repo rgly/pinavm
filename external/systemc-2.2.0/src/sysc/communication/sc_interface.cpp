@@ -46,6 +46,10 @@
 #include "sysc/communication/sc_communication_ids.h"
 #include "sysc/kernel/sc_event.h"
 
+// Tweto patch
+#ifdef TWETO
+extern void tweto_mark_const(const void *ptr_to_cst, size_t size);
+#endif
 
 namespace sc_core {
 
@@ -82,7 +86,12 @@ sc_interface::~sc_interface()
 // constructor (does nothing)
 
 sc_interface::sc_interface()
-{}
+{
+    // Patch Tweto
+    #ifdef TWETO
+    tweto_mark_const(this, 1);
+    #endif
+}
 
 
 sc_event sc_interface::m_never_notified;

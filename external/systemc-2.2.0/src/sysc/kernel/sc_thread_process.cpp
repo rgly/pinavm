@@ -157,8 +157,20 @@ void sc_thread_process::kill_process()
 // This method prepares this object instance for simulation. It calls the
 // coroutine package to create the actual thread.
 //------------------------------------------------------------------------------
+// Tweto patch
+#ifdef TWETO
+    extern "C" SC_ENTRY_FUNC_OPT tweto_optimize_process(SC_ENTRY_FUNC fct, sc_process_host *arg);
+#endif
+    
 void sc_thread_process::prepare_for_simulation()
 {
+    // tweto patch
+    #ifdef TWETO
+    assert(m_semantics_p==NULL);
+    m_semantics_p = tweto_optimize_process(m_semantics_method_p, m_semantics_host_p);
+    assert(m_semantics_p);
+    #endif
+    
     m_cor_p = simcontext()->cor_pkg()->create( m_stack_size,
                          sc_thread_cor_fn, this );
     m_cor_p->stack_protect( true );

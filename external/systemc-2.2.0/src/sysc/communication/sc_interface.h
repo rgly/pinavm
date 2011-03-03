@@ -49,6 +49,7 @@
 #ifndef SC_INTERFACE_H
 #define SC_INTERFACE_H
 
+
 namespace sc_core {
 
 class sc_event;
