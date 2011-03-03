@@ -34,6 +34,9 @@
 #include <llvm/Transforms/Scalar.h>
 #include <cerrno>
 
+#include "llvm/ValueSymbolTable.h"
+#include "llvm/Module.h"
+
 #include "Frontend.hpp"
 #include "TwetoBackend.h"
 #include "TwetoSpecialize.h"
@@ -130,6 +133,23 @@ void launch_twetobackend(Frontend * fe)
     std::sort(addr2function.begin(),addr2function.end());
     // Print specialized functions
     tweto_print_all_specialized_if_asked();
+    
+    
+    // ========== TEST ====================
+    /*const ValueSymbolTable &table = llvmMod->getValueSymbolTable();
+    std::cerr << "======= Symbol Table Dump =========" << std::endl;
+    for(ValueSymbolTable::const_iterator itb = table.begin(), ite = table.end();
+         itb != ite; ++itb) {        
+        const ValueName &name = *itb;
+        std::cerr << name.getKeyData() << std::endl;
+    }*/
+    // ========== TEST ====================
+    /*std::cerr << "======= Function Table Dump =========" << std::endl;
+    for(Module::const_iterator itb = llvmMod->begin(), ite = llvmMod->end();
+        itb != ite; ++itb) {        
+        const Function &fun = *itb;
+        std::cerr << fun.getNameStr() << std::endl;
+    }*/
 
 }
 
