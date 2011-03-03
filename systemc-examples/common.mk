@@ -10,11 +10,39 @@ endif
 
 include $(ROOT)/config.mk
 
-ifndef QUIET_MODE
-QUIET_MODE=yes
+ifndef PRINT_IR
+PRINT_IR=yes
+endif
+ifndef PRINT_ELAB
+PRINT_ELAB=yes
 endif
 
-ifeq ($(QUIET_MODE),yes)
+ifeq ($(PRINT_IR),yes)
+PRINT_IR_MAYBE=-print-ir
+else
+PRINT_IR_MAYBE=
+endif
+
+ifeq ($(PRINT_ELAB),yes)
+PRINT_ELAB_MAYBE=-print-elab
+else
+PRINT_ELAB_MAYBE=
+endif
+
+
+ifndef QUIET_MODE
+QUIET_MODE=disable
+endif
+
+# disable error messages by default
+ifeq ($(QUIET_MODE),disable)
+DISABLE_DEBUG_MAYBE=-dis-dbg-msg
+else
+DISABLE_DEBUG_MAYBE=
+endif
+
+# make QUIET_MODE=redirect bla-bla to redirect output to file.
+ifeq ($(QUIET_MODE),redirect)
 REDIRECT=>$@.log 2>$@.log
 endif
 
@@ -72,7 +100,8 @@ endif
 endif
 
 ifndef PINAVM_ARGS
-PINAVM_ARGS=-print-ir -print-elab $(PINAVM_EXTRA_ARGS) $(PINAVM_LIBS:%=-load %)
+PINAVM_ARGS=$(PRINT_IR_MAYBE) $(PRINT_ELAB_MAYBE) \
+	 $(PINAVM_EXTRA_ARGS) $(PINAVM_LIBS:%=-load %) $(DISABLE_DEBUG_MAYBE)
 endif
 
 ifdef ARG
@@ -91,8 +120,8 @@ frontend: $(PINAVM_INPUT_BC_M2R)
 	@$(MAKE) $(PINAVM)
 	$(PINAVM) $(PINAVM_INPUT_BC_M2R) $(PINAVM_ARGS) $(ARG_MAYBE)
 
-tweto: $(PINAVM_INPUT_BC)
-	$(PINAVM) -b tweto $(PINAVM_INPUT_BC) $(PINAVM_ARGS) $(ARG_MAYBE)
+tweto: $(PINAVM_INPUT_BC) pinavm
+	$(PINAVM) -b tweto $(PINAVM_INPUT_BC) $(PINAVM_ARGS) $(ARG_MAYBE) $(REDIRECT)
 
 pan.c: $(PROMELA)
 	$(SPIN) -a $(PROMELA) 
@@ -193,7 +222,7 @@ endif
 	@echo running with $(ARG) and $(OVERRIDING);
 # If pinavm fails, make sure we don't keep a half-build .pr file around, so that next
 # "make promela" runs also fail.
-	$(PINAVM) $(PINAVM_ARGS) -b promela -o $@.part $(PINAVM_INPUT_BC_M2R) -inline -args $(ARG) $(REDIRECT)
+	$(PINAVM) $(PINAVM_ARGS) -b promela -o $@.part $(PINAVM_INPUT_BC_M2R) -inline $(ARG_MAYBE) $(REDIRECT)
 	@mv $@.part $@
 
 kascpar: $(SRC)
