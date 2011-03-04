@@ -103,9 +103,5 @@
 #include "sysc/utils/sc_iostream.h"
 #include "sysc/utils/sc_utils_ids.h"
 
-// Tweto patch
-//#ifdef TWETO
-//#include "../../../backends/TwetoBackend/TwetoBackend.h"
-//#endif
 
 #endif // !defined(SYSTEMC_INCLUDED)
