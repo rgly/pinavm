@@ -81,6 +81,9 @@
 #include "sysc/kernel/sc_reset.h"
 #include "sysc/communication/sc_export.h"
 
+// Tweto patch
+#define TWETO
+
 namespace sc_core {
 
 // Forward declarations:

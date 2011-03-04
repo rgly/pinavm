@@ -51,6 +51,9 @@
 #include "sysc/kernel/sc_object.h"
 
 // Tweto patch
+#define TWETO
+
+// Tweto patch
 #ifdef TWETO
 extern void tweto_mark_const(const void *ptr_to_cst, size_t size);
 #endif

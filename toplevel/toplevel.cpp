@@ -86,11 +86,13 @@ static cl::opt < bool >
 InlineFcts("inline", cl::desc("Inline all functions"));
 
 bool disable_debug_msg;
+static ExecutionEngine *EE = 0;
 
-extern "C" void pinavm_callback();
-extern "C" bool pinavm_doWeRunSimulation();
+extern "C" void 
+pinavm_callback(sc_core::sc_simcontext* context, const sc_core::sc_time& duration);
 Module *Mod;
-void pinavm_callback()
+void pinavm_callback(sc_core::sc_simcontext* context, 
+                     const sc_core::sc_time& duration)
 {
 	TRACE_1("Entering PinaVM (callback), building module\n");
 
@@ -113,24 +115,13 @@ void pinavm_callback()
 		} 
 		// Tweto backend
 		else if(Backend == "tweto" || Backend == "Tweto") {
-			launch_twetobackend(fe);
+			launch_twetobackend(fe, EE, context, duration);
 		} else {
 			ERROR("Backend " << Backend << " unknown\n");
 		}
 	}
 }
 
-bool pinavm_doWeRunSimulation() {
-	if(Backend == "tweto" || Backend == "Tweto") {
-		TRACE("########### Launching simulation ############\n");
-		return true; // Run the simulation
-	} else {
-		return false; // Do not run the simulation
-	}
-	
-}
-
-static ExecutionEngine *EE = 0;
 
 int load_and_run_sc_main(std::string & InputFile)
 {

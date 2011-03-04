@@ -349,6 +349,10 @@ int resolve_indirect_calls(Function *F, Module *Mod, ExecutionEngine *EE) {
               assert(false && "cannot find function");
             }
             Function *fun = Mod->getFunction(gv->getName());
+             
+              // TEST
+              std::cerr <<"FUN: " <<  gv->getNameStr() << std::endl;
+              
             assert(fun);
             cs.setCalledFunction(fun);
             ++count;

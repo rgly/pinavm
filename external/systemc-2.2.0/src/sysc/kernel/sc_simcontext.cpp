@@ -162,10 +162,15 @@
 #include "sysc/utils/sc_utils_ids.h"
 
 // PinaVM patch
-extern "C" void pinavm_callback();
-extern void pinavm_callback();
-extern "C" bool pinavm_doWeRunSimulation();
-extern bool pinavm_doWeRunSimulation();
+extern "C" void 
+pinavm_callback(sc_core::sc_simcontext* context, 
+                const sc_core::sc_time& duration);
+extern void 
+pinavm_callback(sc_core::sc_simcontext* context, 
+                const sc_core::sc_time& duration);
+
+// Tweto patch
+#define TWETO
 
 namespace sc_core {
 
@@ -1282,11 +1287,7 @@ sc_start( const sc_time& duration )
     }
     
     // PinaVM patch
-    pinavm_callback();
-	bool doSimulation = pinavm_doWeRunSimulation();
-	if(doSimulation) {
-		context->simulate(duration);
-	}
+    pinavm_callback(context, duration);
 }
 
 void

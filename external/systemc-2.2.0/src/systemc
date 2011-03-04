@@ -48,8 +48,6 @@
 #ifndef SYSTEMC_INCLUDED
 #define SYSTEMC_INCLUDED
 
-// Tweto patch
-#define TWETO
 
 // include this file first
 #include "sysc/kernel/sc_cmnhdr.h"

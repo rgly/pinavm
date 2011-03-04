@@ -87,6 +87,9 @@ Andy Goodrich - Forte Design Systems, Inc.
 #include <typeinfo>
 
 // Tweto patch
+#define TWETO
+
+// Tweto patch
 #ifdef TWETO
 extern void tweto_mark_const(const void *ptr_to_cst, size_t size);
 #endif

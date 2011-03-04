@@ -66,6 +66,9 @@
 #include "sysc/kernel/sc_sensitive.h"
 #include "sysc/kernel/sc_process_handle.h"
 
+// Tweto patch
+#define TWETO
+
 namespace sc_core {
 
 // sc_process_handle entities that are returned for null pointer instances:

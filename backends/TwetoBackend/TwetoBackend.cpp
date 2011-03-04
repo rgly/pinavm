@@ -71,7 +71,9 @@ static std::vector<IntFctPair> addr2function;
  * launch_twetobackend
  *
  */
-void launch_twetobackend(Frontend * fe, ExecutionEngine *ee)
+void launch_twetobackend(Frontend * fe, ExecutionEngine *ee, 
+                         sc_core::sc_simcontext* simcontext, 
+                         const sc_core::sc_time& simduration)
 {
 	
 	llvmMod = fe->getLLVMModule();
@@ -141,6 +143,14 @@ void launch_twetobackend(Frontend * fe, ExecutionEngine *ee)
         std::cerr << fun.getNameStr() << std::endl;
     }*/
 
+    
+	/**
+	 * Launching simulation
+	 */    
+    std::cout << "########### Launching simulation ############\n"; 
+    std::cout.flush();
+    assert(simcontext);
+    simcontext->simulate(simduration);
 }
 
 
