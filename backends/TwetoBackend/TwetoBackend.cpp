@@ -57,16 +57,11 @@ using namespace llvm;
                    cl::init(false));
 }*/
 
-static ExecutionEngine *EE = 0; // TODO
+static ExecutionEngine *EE = 0;
 static IRBuilder<> *IRB = 0; 
 static TargetData *TD = NULL;
 static Module *llvmMod = 0;
 static PassManager *PM = NULL;
-
-static void do_shutdown() {
-    delete EE;
-    llvm_shutdown();
-}
 
 typedef std::pair<intptr_t, const Function *> IntFctPair;
 static std::vector<IntFctPair> addr2function;
@@ -76,22 +71,17 @@ static std::vector<IntFctPair> addr2function;
  * launch_twetobackend
  *
  */
-void launch_twetobackend(Frontend * fe)
+void launch_twetobackend(Frontend * fe, ExecutionEngine *ee)
 {
 	
 	llvmMod = fe->getLLVMModule();
-    
     LLVMContext &Context = getGlobalContext();
-    atexit(do_shutdown);  // Call llvm_shutdown() on exit.
     
+    // Set the execution engine
+    EE = ee;
     // Initialize the builder
-    IRB = new IRBuilder<>(Context);
+    IRB = new IRBuilder<>(Context);    
     
-
-    //EngineBuilder builder(llvmMod);
-    //builder.setErrorStr(&ErrorMsg);
-    //builder.setEngineKind(EngineKind::JIT);
-
     
 	/** 
 	 * Build up all of the passes that we want to do to the module.
@@ -171,6 +161,8 @@ void tweto_mark_const(const void *ptr_to_cst, size_t size) {
  */
 sc_core::SC_ENTRY_FUNC_OPT
 tweto_optimize_process(sc_core::SC_ENTRY_FUNC vfct, sc_core::sc_process_host *host) {
+    
+    std::cout <<"tweto: Entering in tweto_optimize_process" << std::endl;
     
     // using errs() in this function causes a crash when we use the option -stats
     formatted_raw_ostream *Out = &fouts();

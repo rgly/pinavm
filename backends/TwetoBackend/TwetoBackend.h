@@ -3,7 +3,7 @@
 
 
 struct Frontend;
-extern void launch_twetobackend(Frontend * fe);
+extern void launch_twetobackend(Frontend *fe, ExecutionEngine *ee);
 
 
 
