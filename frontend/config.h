@@ -91,5 +91,12 @@ extern bool disable_debug_msg;
 
 #define ERROR(Msg)    TRACE_DEBUG(Msg << "\n\n"); exit(1);
 
+#define ASSERT(expr)				\
+	do {					\
+		if (!(expr)) {			\
+			TRACE(__FILE__ << ":" << __LINE__ << ": assertion failed: \"" #expr "\"\n");	\
+			abort();		\
+		};				\
+	} while (0)
 
 #endif

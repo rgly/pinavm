@@ -96,7 +96,7 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 	char buffer[10];
 	char temp[10];
 
-	Port* theNewPort;
+	Port* theNewPort = NULL;
 	std::map < sc_core::sc_port_base *, Port * >::iterator it;
 
 	if ((it = this->portsMap.find(port)) == this->portsMap.end()) {
@@ -197,6 +197,7 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 			theNewPort->addChannel(ch);
 			TRACE_2("Add (sc_port_base) " << port << " -> (CLOCK_PORT) " << theNewPort << " with channel " << ch <<"\n");
 		}
+		ASSERT(theNewPort != NULL);
 		mod->addPort(theNewPort);
 		this->ports.push_back(theNewPort);
 		this->portsMap.insert(this->portsMap.end(), pair < sc_core::sc_port_base *, Port * >(port, theNewPort));
