@@ -7,7 +7,8 @@
 struct Frontend;
 extern void launch_twetobackend(Frontend * fe, ExecutionEngine *ee, 
                                 sc_core::sc_simcontext* simcontext, 
-                                const sc_core::sc_time& simduration);
+                                const sc_core::sc_time& simduration, 
+				bool optimize);
 
 namespace sc_core {
     

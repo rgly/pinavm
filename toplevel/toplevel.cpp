@@ -115,7 +115,9 @@ void pinavm_callback(sc_core::sc_simcontext* context,
 		} 
 		// Tweto backend
 		else if(Backend == "tweto" || Backend == "Tweto") {
-			launch_twetobackend(fe, EE, context, duration);
+			launch_twetobackend(fe, EE, context, duration, true);
+		} else if (Backend == "run") {
+			launch_twetobackend(fe, EE, context, duration, false);
 		} else {
 			ERROR("Backend " << Backend << " unknown\n");
 		}

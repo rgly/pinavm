@@ -123,6 +123,9 @@ frontend: $(PINAVM_INPUT_BC_M2R)
 tweto: $(PINAVM_INPUT_BC) pinavm
 	$(PINAVM) -b tweto $(PINAVM_INPUT_BC) $(PINAVM_ARGS) $(ARG_MAYBE) $(REDIRECT)
 
+run: $(PINAVM_INPUT_BC) pinavm
+	$(PINAVM) -b run $(PINAVM_INPUT_BC) $(PINAVM_ARGS) $(ARG_MAYBE) $(REDIRECT)
+
 pan.c: $(PROMELA)
 	$(SPIN) -a $(PROMELA) 
 

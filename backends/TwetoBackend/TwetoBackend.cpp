@@ -67,10 +67,10 @@ static std::vector<IntFctPair> addr2function;
 
 
 /**
- * launch_twetobackend
+ * tweto_optimize
  *
  */
-void launch_twetobackend(Frontend * fe, ExecutionEngine *ee, 
+static void tweto_optimize(Frontend * fe, ExecutionEngine *ee, 
                          sc_core::sc_simcontext* simcontext, 
                          const sc_core::sc_time& simduration)
 {
@@ -142,7 +142,20 @@ void launch_twetobackend(Frontend * fe, ExecutionEngine *ee,
         std::cerr << fun.getNameStr() << std::endl;
     }*/
 
+}
     
+/**
+ * launch_twetobackend
+ *
+ */
+void launch_twetobackend(Frontend * fe, ExecutionEngine *ee, 
+                         sc_core::sc_simcontext* simcontext, 
+                         const sc_core::sc_time& simduration,
+			 bool optimize)
+{
+    if (optimize) {
+        tweto_optimize(fe, ee, simcontext, simduration);
+    }
 	/**
 	 * Launching simulation
 	 */    
