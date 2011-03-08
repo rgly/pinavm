@@ -1,13 +1,13 @@
 #ifndef _TWETOBACKEND_H
 #define _TWETOBACKEND_H
 
+#include <systemc>
+#include <cstdlib>
 
 struct Frontend;
-extern void launch_twetobackend(Frontend * fe);
-
-
-
-#include <cstdlib>
+extern void launch_twetobackend(Frontend * fe, ExecutionEngine *ee, 
+                                sc_core::sc_simcontext* simcontext, 
+                                const sc_core::sc_time& simduration);
 
 namespace sc_core {
     
@@ -16,8 +16,7 @@ namespace sc_core {
     typedef void (sc_process_host::*SC_ENTRY_FUNC)();
     typedef void (*SC_ENTRY_FUNC_OPT)();
     
-} // namespace sc_core
-
+} 
  
 extern "C" sc_core::SC_ENTRY_FUNC_OPT
 tweto_optimize_process(sc_core::SC_ENTRY_FUNC fct, sc_core::sc_process_host *arg);

@@ -59,6 +59,9 @@
 #include "sysc/kernel/sc_cor.h"
 #include "sysc/kernel/sc_event.h"
 
+// Tweto patch
+#define TWETO
+
 namespace sc_core {
 
 // friend function declarations
