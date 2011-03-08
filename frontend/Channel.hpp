@@ -14,7 +14,8 @@ typedef enum {
 	SIMPLE_CHANNEL,
 	FORWARDING_CHANNEL,
 	FIFO_CHANNEL,
-	CLOCK_CHANNEL
+	CLOCK_CHANNEL,
+	BASIC_CHANNEL
 } channel_id;
 
 class Channel {

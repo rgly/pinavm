@@ -90,6 +90,12 @@ private:
   Port * trySc_Clock(IRModule * mod,
 		     sc_core::sc_interface* itf, std::string &itfTypeName,
 		     sc_core::sc_port_base * port, std::string portName);
+  Port * tryBasicTarget(IRModule * mod, 
+			sc_core::sc_interface* itf, string &itfTypeName,
+			sc_core::sc_port_base * port, string portName);
+  Port * tryBasicInitiator(IRModule * mod, 
+			   sc_core::sc_interface* itf, string &itfTypeName,
+			   sc_core::sc_port_base * port, string portName);
 };
 
 #endif

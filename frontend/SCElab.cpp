@@ -9,6 +9,7 @@
 #include "Channel.hpp"
 #include "SimpleChannel.hpp"
 #include "ClockChannel.hpp"
+#include "BasicChannel.hpp"
 
 #include "llvm/LLVMContext.h"
 #include "llvm/ADT/StringExtras.h"
@@ -163,10 +164,10 @@ Port * SCElab::trySc_Clock(IRModule * mod,
 			 sc_core::sc_interface* itf, string &itfTypeName,
 			 sc_core::sc_port_base * port, string portName) {
 	Port * theNewPort = NULL;
-	Channel* ch;
 	string match = "N7sc_core8sc_clockE";
 	if (itfTypeName.find(match) == 0) {
 		theNewPort = new Port(mod, portName);
+		Channel* ch;
 		std::map < sc_core::sc_interface*, Channel * >::iterator itM;
 		if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
 			ch = new ClockChannel();
@@ -179,6 +180,62 @@ Port * SCElab::trySc_Clock(IRModule * mod,
 	}
 	return theNewPort;
 }
+
+Port * SCElab::tryBasicTarget(IRModule * mod, 
+			      sc_core::sc_interface* itf, string &itfTypeName,
+			      sc_core::sc_port_base * port, string portName) {
+	Port * theNewPort = NULL;
+	// basic::target_socket<Bus, true>
+	string match1 = "N5basic13target_socketI3BusLb1EEE";
+	// basic::target_socket<target, false>
+	string match2 = "N5basic13target_socketI6targetLb0EEE";
+	if ((itfTypeName.find(match1) == 0) ||
+	    (itfTypeName.find(match2) == 0)) {
+		// TODO: the channel is NOT the interface here, there
+		// are intermetes.
+		theNewPort = new Port(mod, portName);
+		std::map < sc_core::sc_interface*, Channel * >::iterator itM;
+		Channel* ch;
+		if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
+			ch = new BasicChannel();
+			this->channelsMap.insert(this->channelsMap.end(), pair < sc_core::sc_interface *, Channel * >(itf, ch));
+		} else {
+			ch = itM->second;
+		}
+		theNewPort->addChannel(ch);
+		TRACE_2("Add (sc_port_base) " << port << " -> (BASIC_PORT) " << theNewPort << " with channel " << ch <<"\n");
+	}
+	return theNewPort;
+}
+
+Port * SCElab::tryBasicInitiator(IRModule * mod, 
+				 sc_core::sc_interface* itf, string &itfTypeName,
+				 sc_core::sc_port_base * port, string portName) {
+	Port * theNewPort = NULL;
+	// basic::initiator_socket<Bus, true>
+	string match1 = "N5basic16initiator_socketI3BusLb1EEE";
+	// basic::initiator_socket<initiator, false>
+	string match2 = "N5basic16initiator_socketI9initiatorLb0EEE";
+	if ((itfTypeName.find(match1) == 0) ||
+	    (itfTypeName.find(match2) == 0)) {
+		// TODO: the channel is NOT the interface here, there
+		// are intermetes.
+		theNewPort = new Port(mod, portName);
+		std::map < sc_core::sc_interface*, Channel * >::iterator itM;
+		Channel* ch;
+		if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
+			ch = new BasicChannel();
+			this->channelsMap.insert(this->channelsMap.end(), pair < sc_core::sc_interface *, Channel * >(itf, ch));
+		} else {
+			ch = itM->second;
+		}
+		theNewPort->addChannel(ch);
+		TRACE_2("Add (sc_port_base) " << port << " -> (BASIC_PORT) " << theNewPort << " with channel " << ch <<"\n");
+	}
+	return theNewPort;
+}
+
+
 
 Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 {
@@ -223,8 +280,16 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 
 		if (theNewPort == NULL)
 			theNewPort = trySc_Clock(mod, itf, itfTypeName, port, portName);
-		
-		ASSERT(theNewPort != NULL);
+
+		if (theNewPort == NULL)
+			theNewPort = tryBasicTarget(mod, itf, itfTypeName, port, portName);
+
+		if (theNewPort == NULL)
+			theNewPort = tryBasicInitiator(mod, itf, itfTypeName, port, portName);
+
+		if (theNewPort == NULL) {
+			ABORT("Could not analyze port " << portName << " with interface type " << itfTypeName);
+		}
 		mod->addPort(theNewPort);
 		this->ports.push_back(theNewPort);
 		this->portsMap.insert(this->portsMap.end(), pair < sc_core::sc_port_base *, Port * >(port, theNewPort));
