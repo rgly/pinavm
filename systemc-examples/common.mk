@@ -5,7 +5,7 @@ TARGET_ARCH=linux
 OVERRIDING=default
 
 ifndef ROOT
-ROOT=../../
+ROOT=../..
 endif
 
 include $(ROOT)/config.mk
@@ -149,7 +149,7 @@ SYSTEMC_INCLUDE=-I$(INSTALL_PATH_SYSTEMC_GCC)/include
 endif
 
 ifndef CPPSCFLAGS
-CPPSCFLAGS=-I$(ROOT)/external/systemc-2.2.0/src/
+CPPSCFLAGS=-I$(ROOT)/external/systemc-2.2.0/src/ -I$(ROOT)/external/TLM-2009-07-15/include/tlm
 endif
 
 ifndef LLVMGCCFLAGS
