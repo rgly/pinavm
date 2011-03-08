@@ -90,6 +90,96 @@ Process *SCElab::addProcess(IRModule * mod,
 	return p;
 }
 
+Port * SCElab::trySc_Signal(IRModule * mod, 
+			    sc_core::sc_interface * itf, string &itfTypeName,
+			    sc_core::sc_port_base * port, string portName) {
+	Port * theNewPort = NULL;
+	Channel* ch;
+	std::string match = "N7sc_core9sc_signalI";
+	char temp[10];
+	std::string variableTypeName("");
+
+
+	if (itfTypeName.find(match) == 0) {
+
+		size_t found = itfTypeName.find_first_of("E");
+		sprintf(temp, "%d", (int) found);
+		TRACE_4("Found : " << temp << "\n");
+		sprintf(temp, "%d", (int) match.size());
+		TRACE_4("match size : " << temp << "\n");
+		size_t typeLength = found - match.size();
+		sprintf(temp, "%d", (int) typeLength);
+		TRACE_4("typeLength : " << temp << "\n");
+		variableTypeName = itfTypeName.substr(match.size(), typeLength);
+
+		const Type* itfType = NULL;
+		if (variableTypeName == "b") {
+			itfType = Type::getInt1Ty(getGlobalContext());
+			if (itfType)
+				TRACE_4("Boolean type found !\n");
+		} else if(variableTypeName == "i") {
+			itfType = Type::getInt32Ty(getGlobalContext());
+			if (itfType)
+				TRACE_4("Integer type found !\n");
+		} else if(variableTypeName == "N5sc_dt7sc_uintILi8") {
+			itfType = Type::getInt32Ty(getGlobalContext());
+			if (itfType)
+				TRACE_4("Unsigned integer type found !\n");
+		} else {
+			itfType = this->llvmMod->getTypeSymbolTable().lookup(itfTypeName);
+
+			if (itfType) {
+				TRACE_4("Type found !\n");
+			} else {
+				itfType = Type::getInt32Ty(getGlobalContext());
+				TRACE_4("SCElab.addPort() -> interface type not found -> consider enum (32 bits integer) " << variableTypeName << "\n");
+			}
+		}
+		TRACE_4("typeName of variable accessed through port : " << variableTypeName << "\n");
+		TRACE_4("type of variable accessed through port : " << itfType << "\n");
+		theNewPort = new Port(mod, portName);
+		std::map < sc_core::sc_interface*, Channel * >::iterator itM;
+		if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
+			ch = new SimpleChannel((Type*) itfType, variableTypeName);
+			this->channels.push_back(ch);
+			this->channelsMap.insert(this->channelsMap.end(), pair < sc_core::sc_interface *, Channel * >(itf, ch));
+
+			TRACE_4("New channel !\n");
+		} else {
+			ch = itM->second;
+		}
+
+		TRACE_2("Add (sc_port_base) " << port << " -> (SIMPLE_PORT) " << portName << " with channel " << ch << "\n");
+		TRACE_4("Channel contains type: " << this->llvmMod->getTypeName(ch->getType()) << "\n");
+
+		theNewPort->addChannel(ch);
+	}
+	return theNewPort;
+}
+
+
+
+Port * SCElab::trySc_Clock(IRModule * mod, 
+			 sc_core::sc_interface* itf, string &itfTypeName,
+			 sc_core::sc_port_base * port, string portName) {
+	Port * theNewPort = NULL;
+	Channel* ch;
+	string match = "N7sc_core8sc_clockE";
+	if (itfTypeName.find(match) == 0) {
+		theNewPort = new Port(mod, portName);
+		std::map < sc_core::sc_interface*, Channel * >::iterator itM;
+		if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
+			ch = new ClockChannel();
+			this->channelsMap.insert(this->channelsMap.end(), pair < sc_core::sc_interface *, Channel * >(itf, ch));
+		} else {
+			ch = itM->second;
+		}
+		theNewPort->addChannel(ch);
+		TRACE_2("Add (sc_port_base) " << port << " -> (CLOCK_PORT) " << theNewPort << " with channel " << ch <<"\n");
+	}
+	return theNewPort;
+}
+
 Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 {
 	std::string match;
@@ -122,86 +212,22 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 //		N7sc_core5sc_inIbEE
 
 		std::string itfTypeName(typeName);
-		std::string variableTypeName("");
-		Channel* ch;
-		std::map < sc_core::sc_interface*, Channel * >::iterator itM;
 
 		TRACE_4("m_interface of port is: " << itfTypeName << "\n");
 		sprintf(temp, "%d", (int) itfTypeName.size());
 		TRACE_4("Found : " << temp << "\n");
 
-		match = "N7sc_core9sc_signalI";
-		if (itfTypeName.find(match) == 0) {
+		/* take the first match */
+		if (theNewPort == NULL)
+			theNewPort = trySc_Signal(mod, itf, itfTypeName, port, portName);
 
-			size_t found = itfTypeName.find_first_of("E");
-			sprintf(temp, "%d", (int) found);
-			TRACE_4("Found : " << temp << "\n");
-			sprintf(temp, "%d", (int) match.size());
-			TRACE_4("match size : " << temp << "\n");
-			size_t typeLength = found - match.size();
-			sprintf(temp, "%d", (int) typeLength);
-			TRACE_4("typeLength : " << temp << "\n");
-			variableTypeName = itfTypeName.substr(match.size(), typeLength);
-
-			const Type* itfType = NULL;
-			if (variableTypeName == "b") {
-				itfType = Type::getInt1Ty(getGlobalContext());
-				if (itfType)
-					TRACE_4("Boolean type found !\n");
-			} else if(variableTypeName == "i") {
-				itfType = Type::getInt32Ty(getGlobalContext());
-				if (itfType)
-					TRACE_4("Integer type found !\n");
-			} else if(variableTypeName == "N5sc_dt7sc_uintILi8") {
-				itfType = Type::getInt32Ty(getGlobalContext());
-				if (itfType)
-					TRACE_4("Unsigned integer type found !\n");
-			} else {
-				itfType = this->llvmMod->getTypeSymbolTable().lookup(itfTypeName);
-
-				if (itfType) {
-					TRACE_4("Type found !\n");
-				} else {
-					itfType = Type::getInt32Ty(getGlobalContext());
-					TRACE_4("SCElab.addPort() -> interface type not found -> consider enum (32 bits integer) " << variableTypeName << "\n");
-				}
-			}
-			TRACE_4("typeName of variable accessed through port : " << variableTypeName << "\n");
-			TRACE_4("type of variable accessed through port : " << itfType << "\n");
-			theNewPort = new Port(mod, portName);
-			if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
-				ch = new SimpleChannel((Type*) itfType, variableTypeName);
-				this->channels.push_back(ch);
-				this->channelsMap.insert(this->channelsMap.end(), pair < sc_core::sc_interface *, Channel * >(itf, ch));
-
-				TRACE_4("New channel !\n");
-			} else {
-				ch = itM->second;
-			}
-
-			TRACE_2("Add (sc_port_base) " << port << " -> (SIMPLE_PORT) " << portName << " with channel " << ch << "\n");
-			TRACE_4("Channel contains type: " << this->llvmMod->getTypeName(ch->getType()) << "\n");
-
-			theNewPort->addChannel(ch);
-		}
-		match = "N7sc_core8sc_clockE";
-		if (itfTypeName.find(match) == 0) {
-			theNewPort = new Port(mod, portName);
-			if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
-				ch = new ClockChannel();
-				this->channelsMap.insert(this->channelsMap.end(), pair < sc_core::sc_interface *, Channel * >(itf, ch));
-
-			} else {
-				ch = itM->second;
-			}
-			theNewPort->addChannel(ch);
-			TRACE_2("Add (sc_port_base) " << port << " -> (CLOCK_PORT) " << theNewPort << " with channel " << ch <<"\n");
-		}
+		if (theNewPort == NULL)
+			theNewPort = trySc_Clock(mod, itf, itfTypeName, port, portName);
+		
 		ASSERT(theNewPort != NULL);
 		mod->addPort(theNewPort);
 		this->ports.push_back(theNewPort);
 		this->portsMap.insert(this->portsMap.end(), pair < sc_core::sc_port_base *, Port * >(port, theNewPort));
-
 	}  else {
 		theNewPort = it->second;
 	}

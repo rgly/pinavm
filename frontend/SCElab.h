@@ -83,6 +83,13 @@ class SCElab : public ElabMember
   void addProcessAndEvents(sc_core::sc_process_b *theProcess, sc_core::sc_module * mod);
   void complete();
 
+private:
+  Port * trySc_Signal(IRModule * mod,
+		      sc_core::sc_interface* itf, std::string &itfTypeName,
+		      sc_core::sc_port_base * port, std::string portName);
+  Port * trySc_Clock(IRModule * mod,
+		     sc_core::sc_interface* itf, std::string &itfTypeName,
+		     sc_core::sc_port_base * port, std::string portName);
 };
 
 #endif
