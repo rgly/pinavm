@@ -91,12 +91,25 @@ extern bool disable_debug_msg;
 
 #define ERROR(Msg)    TRACE_DEBUG(Msg << "\n\n"); exit(1);
 
+/*!
+ * Essentially like abort(), but not sensitive to NDEBUG being defined
+ */
 #define ASSERT(expr)				\
 	do {					\
 		if (!(expr)) {			\
 			TRACE(__FILE__ << ":" << __LINE__ << ": assertion failed: \"" #expr "\"\n");	\
 			abort();		\
 		};				\
+	} while (0)
+
+/*!
+ * Use with either ABORT("blablabla") or ABORT("blabla" << variable <<
+ * "blabla")
+ */
+#define ABORT(reason)				\
+	do {					\
+		TRACE(__FILE__ << ":" << __LINE__ << ": execution aborted:\n" << reason << "\n"); \
+		abort();			\
 	} while (0)
 
 #endif
