@@ -31,6 +31,9 @@
 #include "sysc/communication/sc_bind_info.h"
 #include "sysc/kernel/sc_process_handle.h"
 
+#include "basic.h"
+#include "bus.h"
+
 #include "SCElab.h"
 #include "config.h"
 
@@ -194,21 +197,62 @@ Port * SCElab::tryBasicTarget(IRModule * mod,
 	if ((itfTypeName.find(match1) == 0) ||
 	    (itfTypeName.find(match2) == 0)) {
 		// TODO: the channel is NOT the interface here, there
-		// are intermetes.
+		// are intermediates.
 		theNewPort = new Port(mod, portName);
 		std::map < sc_core::sc_interface*, Channel * >::iterator itM;
 		Channel* ch;
 		if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
 			ch = new BasicChannel();
 			this->channelsMap.insert(this->channelsMap.end(), pair < sc_core::sc_interface *, Channel * >(itf, ch));
+			TRACE_2("BasicChannel name " << getBasicChannelName(itf) << "\n");
 		} else {
 			ch = itM->second;
 		}
 		theNewPort->addChannel(ch);
-		TRACE_2("Add (sc_port_base) " << port << " -> (BASIC_PORT) " << theNewPort << " with channel " << ch <<"\n");
+		TRACE_2("Add (sc_port_base) " << port << " -> (BASIC_TARGET_SOCKET) " << theNewPort << " with channel " << ch <<"\n");
 	}
 	return theNewPort;
 }
+
+template<typename T>
+static const char * try_type (sc_core::sc_interface* itf, 
+			      const char *&res,
+			      const char *type) {
+	T *tmp = dynamic_cast<T *>(itf);
+	if (tmp) {
+		TRACE_5("Got channel of type " << type << "\n");
+		res = tmp->name();
+	}
+}
+
+string SCElab::getBasicChannelName(sc_core::sc_interface* itf) {
+
+	const char *res = NULL;
+
+	try_type<basic::target_socket<Bus, true>     >(itf, res, "basic::target_socket<Bus, true>");
+	try_type<basic::target_socket<Bus, false>    >(itf, res, "basic::target_socket<Bus, false>");
+	try_type<basic::initiator_socket_base<true>  >(itf, res, "basic::initiator_socket_base<true>");
+	try_type<basic::initiator_socket_base<false> >(itf, res, "basic::initiator_socket_base<false>");
+
+	if (res)
+		return res;
+	/*May help for debug
+	typedef tlm::tlm_initiator_socket<CHAR_BIT * sizeof(basic::data_t),
+		tlm::tlm_base_protocol_types,
+		1> tis_t;
+	tis_t *tis = dynamic_cast<tis_t *>(itf);
+	if (tis)
+		TRACE_2("itf is of type tlm::tlm_initiator_socket\n");
+
+	typedef tlm::tlm_bw_transport_if<tlm::tlm_base_protocol_types> bti_t;
+	bti_t *bti = dynamic_cast<bti_t *>(itf);
+	if (bti)
+		TRACE_2("itf is of type tlm::tlm_bw_transport_if<tlm::tlm_base_protocol_types>\n");
+	*/
+	TRACE_1("WARNING: Unknown kind of channel (typeid is " << typeid(*itf).name() << ")\n");
+	return "Unknown";
+}
+				   
 
 Port * SCElab::tryBasicInitiator(IRModule * mod, 
 				 sc_core::sc_interface* itf, string &itfTypeName,
@@ -221,18 +265,21 @@ Port * SCElab::tryBasicInitiator(IRModule * mod,
 	if ((itfTypeName.find(match1) == 0) ||
 	    (itfTypeName.find(match2) == 0)) {
 		// TODO: the channel is NOT the interface here, there
-		// are intermetes.
+		// are intermediates.
 		theNewPort = new Port(mod, portName);
 		std::map < sc_core::sc_interface*, Channel * >::iterator itM;
 		Channel* ch;
 		if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
 			ch = new BasicChannel();
 			this->channelsMap.insert(this->channelsMap.end(), pair < sc_core::sc_interface *, Channel * >(itf, ch));
+			TRACE_2("BasicChannel name " << getBasicChannelName(itf) << "\n");
 		} else {
 			ch = itM->second;
 		}
 		theNewPort->addChannel(ch);
-		TRACE_2("Add (sc_port_base) " << port << " -> (BASIC_PORT) " << theNewPort << " with channel " << ch <<"\n");
+		TRACE_2("Add (sc_port_base) " << port 
+			<< " -> (BASIC_INITIATOR_SOCKET) " << theNewPort 
+			<< " with channel " << ch << "\n");
 	}
 	return theNewPort;
 }
