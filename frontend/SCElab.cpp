@@ -1,3 +1,5 @@
+#include <cxxabi.h>
+
 #include <llvm/TypeSymbolTable.h>
 #include <llvm/Type.h>
 
@@ -253,6 +255,7 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 
 		int nbItfs = ((sc_core::sc_port_b<int>*) port)->size();
 		TRACE_6("port concerned: " << portName << " Nb_itfs = " << nbItfs << "\n");
+		TRACE_6("SystemC port name: " << port->name() << "\n");
 
 
 		sc_core::sc_interface* itf = port->get_interface();
@@ -270,7 +273,8 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 
 		std::string itfTypeName(typeName);
 
-		TRACE_4("m_interface of port is: " << itfTypeName << "\n");
+		TRACE_4("m_interface of port is: " << itfTypeName 
+			<< " (" << abi::__cxa_demangle(itfTypeName.c_str(), NULL, NULL, NULL) << ")\n");
 		sprintf(temp, "%d", (int) itfTypeName.size());
 		TRACE_4("Found : " << temp << "\n");
 
