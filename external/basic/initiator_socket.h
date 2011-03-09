@@ -132,6 +132,8 @@ namespace basic {
          this->bind(*(static_cast<bw_if_type*>(this)));
       }
 
+      virtual void dummy();
+
    };
 
    /*!

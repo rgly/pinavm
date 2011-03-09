@@ -119,10 +119,11 @@ $(SYSTEMC_STAMP): $(SYSTEMC_SRC)
 	cd ../external/systemc-2.2.0/objdir-gcc/ && $(MAKE) pthreads_debug
 	date > $@
 
-BASIC_SRC = ${shell find ../external/basic -type f -name \*.cpp -o -name \*.h}
-BASIC_OBJS = ../external/basic/bus.o
+BASIC_SRC = ${shell find ../external/basic -type f -name \*.cpp}
+BASIC_H = ${shell find ../external/basic -type f -name \*.h}
+BASIC_OBJS = $(BASIC_SRC:.cpp=.o)
 BASIC_STAMP = ../external/basic/basic-timestamp.txt
-$(BASIC_STAMP): $(BASIC_SRC)
+$(BASIC_STAMP): $(BASIC_SRC) $(BASIC_H)
 	@echo "Building Basic ..."
 	cd ../external/basic/ && $(MAKE)
 	date > $@
