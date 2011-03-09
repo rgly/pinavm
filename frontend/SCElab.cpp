@@ -229,28 +229,17 @@ string SCElab::getBasicChannelName(sc_core::sc_interface* itf) {
 
 	const char *res = NULL;
 
-	try_type<basic::target_socket<Bus, true>     >(itf, res, "basic::target_socket<Bus, true>");
-	try_type<basic::target_socket<Bus, false>    >(itf, res, "basic::target_socket<Bus, false>");
+	try_type<basic::target_socket_base<true>     >(itf, res, "basic::target_socket_base<true>");
+	try_type<basic::target_socket_base<false>    >(itf, res, "basic::target_socket_base<false>");
 	try_type<basic::initiator_socket_base<true>  >(itf, res, "basic::initiator_socket_base<true>");
 	try_type<basic::initiator_socket_base<false> >(itf, res, "basic::initiator_socket_base<false>");
 
-	if (res)
+	if (res) {
 		return res;
-	/*May help for debug
-	typedef tlm::tlm_initiator_socket<CHAR_BIT * sizeof(basic::data_t),
-		tlm::tlm_base_protocol_types,
-		1> tis_t;
-	tis_t *tis = dynamic_cast<tis_t *>(itf);
-	if (tis)
-		TRACE_2("itf is of type tlm::tlm_initiator_socket\n");
-
-	typedef tlm::tlm_bw_transport_if<tlm::tlm_base_protocol_types> bti_t;
-	bti_t *bti = dynamic_cast<bti_t *>(itf);
-	if (bti)
-		TRACE_2("itf is of type tlm::tlm_bw_transport_if<tlm::tlm_base_protocol_types>\n");
-	*/
-	TRACE_1("WARNING: Unknown kind of channel (typeid is " << typeid(*itf).name() << ")\n");
-	return "Unknown";
+	} else {
+		TRACE_1("WARNING: Unknown kind of channel (typeid is " << typeid(*itf).name() << ")\n");
+		return "Unknown";
+	}
 }
 				   
 

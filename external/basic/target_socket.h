@@ -1,8 +1,9 @@
+// -*- c-basic-offset: 3 -*-
 #ifndef BASIC_TARGET_SOCKET_H
 #define BASIC_TARGET_SOCKET_H
 
 #ifndef BASIC_H
-#error include "basic.h"
+#error please include "basic.h"
 #endif
 
 namespace basic {
@@ -10,8 +11,8 @@ namespace basic {
    typedef tlm::tlm_target_socket<CHAR_BIT * sizeof(data_t),
          tlm::tlm_base_protocol_types> compatible_socket;
 
-   template <typename MODULE, bool MULTIPORT = false>
-   class target_socket :
+   template <bool MULTIPORT = false>
+   class target_socket_base :
          public tlm::tlm_target_socket<CHAR_BIT * sizeof(data_t),
 	        tlm::tlm_base_protocol_types, MULTIPORT?0:1>,
          public tlm::tlm_fw_transport_if<tlm::tlm_base_protocol_types>
@@ -22,13 +23,13 @@ namespace basic {
 
       public:
 
-      target_socket() :
+      target_socket_base() :
             base_type(sc_core::sc_gen_unique_name(kind()))
       {
          init();
       }
 
-      explicit target_socket(const char* name) :
+      explicit target_socket_base(const char* name) :
             base_type(name)
       {
          init();
@@ -56,6 +57,35 @@ namespace basic {
 
       private:
 
+      void init() {
+         // we'll receive transactions ourselves ...
+         this->bind(*(static_cast<fw_if_type*>(this)));
+	 // ... but we'll need to call read/write in the parent module.
+	 // => done in derived class target_socket
+      }
+
+   };
+
+   template <typename MODULE, bool MULTIPORT = false>
+   class target_socket : public target_socket_base<MULTIPORT>,
+			 /* to be able to call protected constructor : */
+			 public virtual sc_core::sc_interface {
+   public:
+      target_socket()
+	 : target_socket_base<MULTIPORT>() { init_parent(); }
+
+      explicit target_socket(const char* name)
+	 : target_socket_base<MULTIPORT>(name) { init_parent(); }
+
+   private:
+      virtual void init_parent() {
+         m_mod = dynamic_cast<MODULE*>(this->get_parent_object());
+         if(!m_mod) {
+            std::cerr << this->name() << ": no parent" << std::endl;
+            abort();
+         }
+      }
+
       void b_transport(tlm::tlm_generic_payload& trans, sc_core::sc_time& t) {
          (void) t;
          addr_t addr = static_cast<addr_t>(trans.get_address());
@@ -75,20 +105,8 @@ namespace basic {
          }
       }
 
-      void init() {
-         // we'll receive transactions ourselves ...
-         this->bind(*(static_cast<fw_if_type*>(this)));
-	 // ... but we'll need to call read/write in the parent module.
-         m_mod = dynamic_cast<MODULE*>(this->get_parent_object());
-         if(!m_mod) {
-            std::cerr << this->name() << ": no parent" << std::endl;
-            abort();
-         }
-      }
-
       MODULE* m_mod;
    };
-
 }
 
 #endif
