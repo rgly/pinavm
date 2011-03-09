@@ -290,7 +290,6 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 {
 	std::string match;
 	char buffer[10];
-	char temp[10];
 
 	Port* theNewPort = NULL;
 	std::map < sc_core::sc_port_base *, Port * >::iterator it;
@@ -322,8 +321,6 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 
 		TRACE_4("m_interface of port is: " << itfTypeName 
 			<< " (" << abi::__cxa_demangle(itfTypeName.c_str(), NULL, NULL, NULL) << ")\n");
-		sprintf(temp, "%d", (int) itfTypeName.size());
-		TRACE_4("Found : " << temp << "\n");
 
 		/* take the first match */
 		if (theNewPort == NULL)
