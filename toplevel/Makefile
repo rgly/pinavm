@@ -117,7 +117,15 @@ $(SYSTEMC_STAMP): $(SYSTEMC_SRC)
 		../configure ;\
 	fi
 	cd ../external/systemc-2.2.0/objdir-gcc/ && $(MAKE) pthreads_debug
-	date > ../external/systemc-2.2.0/objdir-gcc/systemc-timestamp.txt
+	date > $@
+
+BASIC_SRC = ${shell find ../external/basic -type f -name \*.cpp -o -name \*.h}
+BASIC_OBJS = ../external/basic/bus.o
+BASIC_STAMP = ../external/basic/basic-timestamp.txt
+$(BASIC_STAMP): $(BASIC_SRC)
+	@echo "Building Basic ..."
+	cd ../external/basic/ && $(MAKE)
+	date > $@
 
 FRONTEND_CXX = ${wildcard $(ROOT)/frontend/*.cpp}
 FRONTEND_SRC = $(FRONTEND_CXX) ${wildcard $(ROOT)/frontend/*.hpp}
@@ -130,9 +138,9 @@ FRONTEND_OBJS = $(FRONTEND_CXX:.cpp=.o)
 BACKENDS_OBJS = $(BACKENDS_CXX:.cpp=.o)
 UTILS_OBJS = $(UTILS_CXX:.cpp=.o)
 
-ALL_OBJS = $(OBJS) $(UTILS_OBJS) $(FRONTEND_OBJS) $(BACKENDS_OBJS) $(SYSTEMC_OBJS)
+ALL_OBJS = $(OBJS) $(UTILS_OBJS) $(FRONTEND_OBJS) $(BACKENDS_OBJS) $(SYSTEMC_OBJS) $(BASIC_OBJS)
 
-CXXFLAGS += -I../external/systemc-2.2.0/src/
+CXXFLAGS += -I../external/systemc-2.2.0/src -I../external/basic -I../external/TLM-2009-07-15/include/tlm
 CXXFLAGS += -I$(FRONTENDDIR)
 CXXFLAGS += -I$(BACKENDSDIR)/SimpleBackend -I$(BACKENDSDIR)/PromelaBackend -I$(BACKENDSDIR)/42Backend -I$(BACKENDSDIR)/TwetoBackend
 CXXFLAGS += -I$(UTILSDIR)
@@ -155,7 +163,7 @@ LDLIBS += `llvm-config --ldflags --libs jit interpreter nativecodegen bitreader 
 # libpinavm.so: $(FRONTEND_OBJS) $(BACKENDS_OBJS) $(UTILS_OBJS) $(OBJS)
 # 	g++ -shared -o $@ $(ALL_OBJS) $(LDFLAGS) $(LDLIBS)
 
-pinavm: pinavm.cpp $(SYSTEMC_STAMP) $(FRONTEND_OBJS) $(BACKENDS_OBJS) $(UTILS_OBJS) $(OBJS)
+pinavm: pinavm.cpp $(SYSTEMC_STAMP) $(BASIC_STAMP) $(FRONTEND_OBJS) $(BACKENDS_OBJS) $(UTILS_OBJS) $(OBJS)
 	g++ -rdynamic -o $@ pinavm.cpp $(ALL_OBJS) $(LDFLAGS) $(LDLIBS)
 
 llvm-version:
