@@ -1,19 +1,21 @@
+// -*- c-basic-offset: 3 -*-
 #ifndef BASIC_INITIATOR_SOCKET_H
 #define BASIC_INITIATOR_SOCKET_H
 
 #ifndef BASIC_H
-#error include "basic.h"
+#error please, include "basic.h"
 #endif
 
 #include <vector>
 
 namespace basic {
 
-   template <typename MODULE, bool MULTIPORT = false>
-   class initiator_socket :
-         public tlm::tlm_initiator_socket<CHAR_BIT * sizeof(data_t),
-               tlm::tlm_base_protocol_types, MULTIPORT?0:1>,
-         private tlm::tlm_bw_transport_if<tlm::tlm_base_protocol_types>
+   template <bool MULTIPORT = false>
+   class initiator_socket_base :
+      public tlm::tlm_initiator_socket<CHAR_BIT * sizeof(data_t),
+				       tlm::tlm_base_protocol_types,
+				       MULTIPORT?0:1>,
+      private tlm::tlm_bw_transport_if<tlm::tlm_base_protocol_types>
    {
       typedef tlm::tlm_initiator_socket<CHAR_BIT * sizeof(data_t),
 	     tlm::tlm_base_protocol_types, MULTIPORT?0:1> base_type;
@@ -21,21 +23,21 @@ namespace basic {
 
       public:
 
-      initiator_socket() :
+      initiator_socket_base() :
             base_type(sc_core::sc_gen_unique_name(kind())),
             time(sc_core::SC_ZERO_TIME)
       {
          init();
       }
 
-      explicit initiator_socket(const char* name) :
+      explicit initiator_socket_base(const char* name) :
             base_type(name),
             time(sc_core::SC_ZERO_TIME)
       {
          init();
       }
 
-      ~initiator_socket() {
+      virtual ~initiator_socket_base() {
          tlm::tlm_generic_payload* trans;
          while(!container.empty()) {
             trans = container.back();
@@ -130,6 +132,23 @@ namespace basic {
          this->bind(*(static_cast<bw_if_type*>(this)));
       }
 
+   };
+
+   /*!
+    * Just a wrapper around initiator_socket_base, to give a
+    * consistant interface where everybody has a MODULE template
+    * argument.
+    */
+   template <typename MODULE, bool MULTIPORT = false>
+   class initiator_socket : public initiator_socket_base<MULTIPORT>,
+		      /* to be able to call protected constructor : */
+			    public virtual sc_core::sc_interface {
+   public:
+      initiator_socket()
+	 : initiator_socket_base<MULTIPORT>(), sc_core::sc_interface() { /* */ }
+
+      explicit initiator_socket(const char* name)
+	 : initiator_socket_base<MULTIPORT>(name) { /* */ }
    };
 
 }
