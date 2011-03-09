@@ -153,6 +153,12 @@ namespace basic {
 	 : initiator_socket_base<MULTIPORT>(name) { /* */ }
    };
 
+   class initiator_socket_base_true : public initiator_socket_base<true>,
+		      /* to be able to call protected constructor : */
+				      public virtual sc_core::sc_interface {
+      virtual void dummy();
+   };
+
 }
 
 #endif

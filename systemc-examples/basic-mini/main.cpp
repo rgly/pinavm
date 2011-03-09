@@ -17,7 +17,7 @@ using namespace std;
 using namespace sc_core;
 
 struct initiator : sc_module {
-        basic::initiator_socket<initiator> socket;
+        basic::initiator_socket_base_true socket;
         void thread(void) {
 		basic::data_t val = 1;
 		basic::addr_t addr = 4;

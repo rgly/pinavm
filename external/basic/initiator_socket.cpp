@@ -19,5 +19,7 @@ namespace basic {
 	void initiator_socket_base<true>::dummy() {};
 	
 	template<>
-	void initiator_socket_base<false>::dummy() {}
+	void initiator_socket_base<false>::dummy() {};
+
+	void initiator_socket_base_true::dummy() {};
 }

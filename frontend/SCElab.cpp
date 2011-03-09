@@ -233,6 +233,7 @@ string SCElab::getBasicChannelName(sc_core::sc_interface* itf) {
 	try_type<basic::target_socket_base<false>    >(itf, res, "basic::target_socket_base<false>");
 	try_type<basic::initiator_socket_base<true>  >(itf, res, "basic::initiator_socket_base<true>");
 	try_type<basic::initiator_socket_base<false> >(itf, res, "basic::initiator_socket_base<false>");
+	try_type<basic::initiator_socket_base_true   >(itf, res, "basic::initiator_socket_base_true");
 
 	if (res) {
 		return res;
@@ -248,9 +249,18 @@ Port * SCElab::tryBasicInitiator(IRModule * mod,
 				 sc_core::sc_port_base * port, string portName) {
 	Port * theNewPort = NULL;
 	// basic::initiator_socket<Bus, true>
-	string match1 = "N5basic16initiator_socketI3BusLb1EEE";
+	//string match1 = "N5basic16initiator_socketI3BusLb1EEE";
+	// TODO: match is too fuzzy 
+	string match1 = "N5basic16initiator_socketI";
+
 	// basic::initiator_socket<initiator, false>
-	string match2 = "N5basic16initiator_socketI9initiatorLb0EEE";
+	//string match2 = "N5basic16initiator_socketI9initiatorLb0EEE";
+	// TODO: match is too fuzzy 
+	string match2 = "N5basic16initiator_socketI";
+
+	// TODO: debug
+	match1 = "N5basic26initiator_socket_base_trueE";
+
 	if ((itfTypeName.find(match1) == 0) ||
 	    (itfTypeName.find(match2) == 0)) {
 		// TODO: the channel is NOT the interface here, there
@@ -261,7 +271,7 @@ Port * SCElab::tryBasicInitiator(IRModule * mod,
 		if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
 			ch = new BasicChannel();
 			this->channelsMap.insert(this->channelsMap.end(), pair < sc_core::sc_interface *, Channel * >(itf, ch));
-			TRACE_2("BasicChannel name " << getBasicChannelName(itf) << "\n");
+			TRACE_2("BasicChannel initiator name " << getBasicChannelName(itf) << "\n");
 		} else {
 			ch = itM->second;
 		}
