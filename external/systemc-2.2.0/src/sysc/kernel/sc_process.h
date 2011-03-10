@@ -537,8 +537,11 @@ inline void sc_process_b::semantics()
     #ifndef SC_USE_MEMBER_FUNC_PTR
     m_semantics_method_p->invoke( m_semantics_host_p );
     #else
-    assert(m_semantics_p);
-    m_semantics_p();
+    if(m_semantics_p==NULL) {
+        (m_semantics_host_p->*m_semantics_method_p)();
+    } else {
+         m_semantics_p();
+    }
     #endif
 #else // !TWETO    
     #ifndef SC_USE_MEMBER_FUNC_PTR

@@ -179,7 +179,6 @@ void sc_thread_process::prepare_for_simulation()
     #ifdef TWETO
     assert(m_semantics_p==NULL);
     m_semantics_p = tweto_optimize_process(m_semantics_method_p, m_semantics_host_p);
-    assert(m_semantics_p);
     #endif
     
     m_cor_p = simcontext()->cor_pkg()->create( m_stack_size,
