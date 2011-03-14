@@ -21,5 +21,25 @@ namespace basic {
 	template<>
 	void initiator_socket_base<false>::dummy() {};
 
+#define CONSTRUCTORS(MULTIPORT)                 \
+	template<>                              \
+	initiator_socket_base<MULTIPORT>::initiator_socket_base() :	\
+		base_type(sc_core::sc_gen_unique_name(kind())),	\
+		time(sc_core::SC_ZERO_TIME)     \
+	{                                       \
+		init();                         \
+	}                                       \
+	                                        \
+	template<>                              \
+	initiator_socket_base<MULTIPORT>::initiator_socket_base(const char* name) : \
+		base_type(name),                \
+		time(sc_core::SC_ZERO_TIME)     \
+	{                                       \
+		init();                         \
+	}
+
+	CONSTRUCTORS(true);
+	CONSTRUCTORS(false);
+
 	void initiator_socket_base_true::dummy() {};
 }

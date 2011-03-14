@@ -7,18 +7,18 @@
 
 #include <map>
 
-SC_MODULE(Bus) {
+SC_MODULE(Bus), basic::target_module_base {
 
-	basic::initiator_socket<Bus, true> initiator;
-	basic::target_socket<Bus, true> target;
+	basic::initiator_socket_no_tmplt<true> initiator;
+	basic::target_socket_no_tmplt<true> target;
 
 	Bus(sc_core::sc_module_name name);
 
 	tlm::tlm_response_status
-		read(basic::addr_t a, basic::data_t& d);
+		read(const basic::addr_t &a, /* */ basic::data_t& d);
 
 	tlm::tlm_response_status
-		write(basic::addr_t a, basic::data_t d);
+		write(const basic::addr_t &a, const basic::data_t &d);
 
 	void map(basic::compatible_socket& port, basic::addr_t start_addr, basic::addr_t size);
 

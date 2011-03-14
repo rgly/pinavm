@@ -10,6 +10,8 @@
 
 namespace basic {
 
+#define initiator_socket_no_tmplt initiator_socket_base
+
    template <bool MULTIPORT = false>
    class initiator_socket_base :
       public tlm::tlm_initiator_socket<CHAR_BIT * sizeof(data_t),
@@ -23,19 +25,8 @@ namespace basic {
 
       public:
 
-      initiator_socket_base() :
-            base_type(sc_core::sc_gen_unique_name(kind())),
-            time(sc_core::SC_ZERO_TIME)
-      {
-         init();
-      }
-
-      explicit initiator_socket_base(const char* name) :
-            base_type(name),
-            time(sc_core::SC_ZERO_TIME)
-      {
-         init();
-      }
+      initiator_socket_base();
+      explicit initiator_socket_base(const char *name);
 
       virtual ~initiator_socket_base() {
          tlm::tlm_generic_payload* trans;

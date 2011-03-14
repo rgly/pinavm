@@ -17,7 +17,7 @@ using namespace std;
 using namespace sc_core;
 
 struct initiator : sc_module {
-        basic::initiator_socket_base_true socket;
+        basic::initiator_socket_no_tmplt<> socket;
         void thread(void) {
 		basic::data_t val = 1;
 		basic::addr_t addr = 4;
@@ -33,8 +33,8 @@ struct initiator : sc_module {
         }
 };
 
-struct target : sc_module {
-        basic::target_socket<target> socket;
+struct target : sc_module, basic::target_module_base {
+        basic::target_socket_no_tmplt<> socket;
         tlm::tlm_response_status write(const basic::addr_t &a,
                                        const basic::data_t &d) {
                 cout << "j'ai reçu : " << d << endl;

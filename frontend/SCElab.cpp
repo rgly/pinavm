@@ -194,6 +194,11 @@ Port * SCElab::tryBasicTarget(IRModule * mod,
 	string match1 = "N5basic13target_socketI3BusLb1EEE";
 	// basic::target_socket<target, false>
 	string match2 = "N5basic13target_socketI6targetLb0EEE";
+
+	// TODO: debug
+	match1 = "N5basic13target_socketILb1EEE";
+	match2 = "N5basic13target_socketILb0EEE";
+
 	if ((itfTypeName.find(match1) == 0) ||
 	    (itfTypeName.find(match2) == 0)) {
 		// TODO: the channel is NOT the interface here, there
@@ -259,7 +264,8 @@ Port * SCElab::tryBasicInitiator(IRModule * mod,
 	string match2 = "N5basic16initiator_socketI";
 
 	// TODO: debug
-	match1 = "N5basic26initiator_socket_base_trueE";
+	match1 = "N5basic21initiator_socket_baseILb1EEE";
+	match2 = "N5basic21initiator_socket_baseILb0EEE";
 
 	if ((itfTypeName.find(match1) == 0) ||
 	    (itfTypeName.find(match2) == 0)) {
