@@ -41,5 +41,6 @@ namespace basic {
 	CONSTRUCTORS(true);
 	CONSTRUCTORS(false);
 
-	void initiator_socket_base_true::dummy() {};
+	void initiator_socket_true::dummy() {};
+	void initiator_socket_false::dummy() {};
 }

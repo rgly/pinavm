@@ -44,4 +44,7 @@ namespace basic {
 	CONSTRUCTORS(true);
 	CONSTRUCTORS(false);
 	
+	void target_socket_true::dummy() {};
+	void target_socket_false::dummy() {};
+	
 };

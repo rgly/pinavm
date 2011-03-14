@@ -97,7 +97,7 @@ private:
   Port * tryBasicInitiator(IRModule * mod, 
 			   sc_core::sc_interface* itf, std::string &itfTypeName,
 			   sc_core::sc_port_base * port, std::string portName);
-  string getBasicChannelName(sc_core::sc_interface* itf);
+  std::string getBasicChannelName(sc_core::sc_interface* itf);
 };
 
 #endif

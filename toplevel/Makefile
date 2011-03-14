@@ -128,6 +128,10 @@ $(BASIC_STAMP): $(BASIC_SRC) $(BASIC_H)
 	cd ../external/basic/ && $(MAKE)
 	date > $@
 
+.PHONY: basic-clean
+basic-clean:
+	cd ../external/basic && $(MAKE) clean
+
 FRONTEND_CXX = ${wildcard $(ROOT)/frontend/*.cpp}
 FRONTEND_SRC = $(FRONTEND_CXX) ${wildcard $(ROOT)/frontend/*.hpp}
 BACKENDS_CXX = ${wildcard $(ROOT)/backends/**/*.cpp}
@@ -174,5 +178,5 @@ debug-config:
 	@echo CXXFLAGS=$(CXXFLAGS)
 	@echo LDLIBS=$(LDLIBS)
 
-clean:
+clean: basic-clean
 	$(RM) $(OBJS) $(UTILS_OBJS) $(FRONTEND_OBJS) $(BACKENDS_OBJS)

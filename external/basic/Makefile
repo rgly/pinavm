@@ -5,4 +5,4 @@ all: bus.o initiator_socket.o target_socket.o
 
 .PHONY: clean
 clean:
-	-$(RM) *.o
+	-$(RM) *.o basic-timestamp.txt

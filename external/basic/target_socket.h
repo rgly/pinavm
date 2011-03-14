@@ -111,6 +111,17 @@ namespace basic {
 
       MODULE* m_mod;
    };
+
+   class target_socket_true : public target_socket<true>,
+                              /* to be able to call protected constructor: */
+			      public virtual sc_core::sc_interface {
+      virtual void dummy();      
+   };
+   class target_socket_false : public target_socket<false>,
+                              /* to be able to call protected constructor: */
+			      public virtual sc_core::sc_interface {
+      virtual void dummy();      
+   };
 }
 
 #endif

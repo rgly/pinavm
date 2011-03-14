@@ -196,8 +196,8 @@ Port * SCElab::tryBasicTarget(IRModule * mod,
 	string match2 = "N5basic13target_socketI6targetLb0EEE";
 
 	// TODO: debug
-	match1 = "N5basic13target_socketILb1EEE";
-	match2 = "N5basic13target_socketILb0EEE";
+	match1 = "N5basic18target_socket_trueE";
+	match2 = "N5basic19target_socket_falseE";
 
 	if ((itfTypeName.find(match1) == 0) ||
 	    (itfTypeName.find(match2) == 0)) {
@@ -234,11 +234,13 @@ string SCElab::getBasicChannelName(sc_core::sc_interface* itf) {
 
 	const char *res = NULL;
 
-	try_type<basic::target_socket_base<true>     >(itf, res, "basic::target_socket_base<true>");
-	try_type<basic::target_socket_base<false>    >(itf, res, "basic::target_socket_base<false>");
-	try_type<basic::initiator_socket_base<true>  >(itf, res, "basic::initiator_socket_base<true>");
-	try_type<basic::initiator_socket_base<false> >(itf, res, "basic::initiator_socket_base<false>");
-	try_type<basic::initiator_socket_base_true   >(itf, res, "basic::initiator_socket_base_true");
+	try_type<basic::target_socket_no_tmplt<true>     >(itf, res, "basic::target_socket_no_tmplt<true>");
+	try_type<basic::target_socket_no_tmplt<false>    >(itf, res, "basic::target_socket_no_tmplt<false>");
+	try_type<basic::initiator_socket_no_tmplt<true>  >(itf, res, "basic::initiator_socket_no_tmplt<true>");
+	try_type<basic::initiator_socket_no_tmplt<false> >(itf, res, "basic::initiator_socket_no_tmplt<false>");
+	try_type<basic::initiator_socket_base<true>      >(itf, res, "basic::initiator_socket_base<true>");
+	try_type<basic::initiator_socket_base<false>     >(itf, res, "basic::initiator_socket_base<false>");
+
 
 	if (res) {
 		return res;
@@ -264,8 +266,8 @@ Port * SCElab::tryBasicInitiator(IRModule * mod,
 	string match2 = "N5basic16initiator_socketI";
 
 	// TODO: debug
-	match1 = "N5basic21initiator_socket_baseILb1EEE";
-	match2 = "N5basic21initiator_socket_baseILb0EEE";
+	match1 = "N5basic21initiator_socket_trueE";
+	match2 = "N5basic22initiator_socket_falseE";
 
 	if ((itfTypeName.find(match1) == 0) ||
 	    (itfTypeName.find(match2) == 0)) {

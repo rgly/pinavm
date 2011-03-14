@@ -9,8 +9,8 @@
 
 SC_MODULE(Bus), basic::target_module_base {
 
-	basic::initiator_socket_no_tmplt<true> initiator;
-	basic::target_socket_no_tmplt<true> target;
+	basic::initiator_socket_true initiator;
+	basic::target_socket_true target;
 
 	Bus(sc_core::sc_module_name name);
 
