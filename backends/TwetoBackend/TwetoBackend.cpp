@@ -61,7 +61,7 @@ static IRBuilder<> *IRB = 0;
 static TargetData *TD = NULL;
 static Module *llvmMod = 0;
 static PassManager *PM = NULL;
-
+static bool optimizeProcess = true;
 typedef std::pair<intptr_t, const Function *> IntFctPair;
 static std::vector<IntFctPair> addr2function;
 
@@ -154,8 +154,12 @@ void launch_twetobackend(Frontend * fe, ExecutionEngine *ee,
 			 bool optimize)
 {
     if (optimize) {
+        optimizeProcess = true;
         tweto_optimize(fe, ee, simcontext, simduration);
+    } else {
+        optimizeProcess = false;
     }
+
 	/**
 	 * Launching simulation
 	 */    
@@ -184,14 +188,17 @@ void tweto_mark_const(const void *ptr_to_cst, size_t size) {
 sc_core::SC_ENTRY_FUNC_OPT
 tweto_optimize_process(sc_core::SC_ENTRY_FUNC vfct, sc_core::sc_process_host *host) {
     
-    std::cout <<"tweto: Entering in tweto_optimize_process" << std::endl;
+    // Do not optimize 
+    if(!optimizeProcess) {
+        return NULL;
+    }
     
     // using errs() in this function causes a crash when we use the option -stats
     formatted_raw_ostream *Out = &fouts();
     
     fill_const_addressses(llvmMod, EE);
     
-    // std::cerr <<"tweto: begin process optimization\n";
+    std::cout <<"tweto: begin process optimization\n";
     LLVMContext &Context = getGlobalContext();
     sc_core::sc_module *m = dynamic_cast<sc_core::sc_module*>(host);
     if (sc_core::sc_module *m = dynamic_cast<sc_core::sc_module*>(host)) {
@@ -205,7 +212,11 @@ tweto_optimize_process(sc_core::SC_ENTRY_FUNC vfct, sc_core::sc_process_host *ho
     assert(host);
     
     Function *call_proc = llvmMod->getFunction("tweto_call_process_method");
-    assert(call_proc);
+    if(call_proc==NULL) {
+        std::cerr <<"tweto: error: tweto_call_process_method not found :\n";
+        std::cerr <<"              use the 'run' option to disable optimizations.\n";
+        exit(1);
+    }
     const FunctionType *call_proc_FT = call_proc->getFunctionType();
     const IntegerType *i64 = Type::getInt64Ty(Context);
     const IntegerType *i32 = Type::getInt32Ty(Context);
