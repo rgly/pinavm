@@ -89,6 +89,11 @@ namespace basic {
             abort();
          }
       }
+   public:
+      MODULE *get_parent() {
+	 return m_mod;
+      }
+   private:
 
       void b_transport(tlm::tlm_generic_payload& trans, sc_core::sc_time& t) {
          (void) t;

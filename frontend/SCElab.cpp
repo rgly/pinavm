@@ -198,20 +198,30 @@ Port * SCElab::tryBasicTarget(IRModule * mod,
 	// TODO: debug
 	match1 = "N5basic18target_socket_trueE";
 	match2 = "N5basic19target_socket_falseE";
-
+	
 	if ((itfTypeName.find(match1) == 0) ||
 	    (itfTypeName.find(match2) == 0)) {
-		// TODO: the channel is NOT the interface here, there
-		// are intermediates.
 		theNewPort = new Port(mod, portName);
 		std::map < sc_core::sc_interface*, Channel * >::iterator itM;
 		Channel* ch;
-		if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
-			ch = new BasicChannel();
-			this->channelsMap.insert(this->channelsMap.end(), pair < sc_core::sc_interface *, Channel * >(itf, ch));
-			TRACE_2("BasicChannel name " << getBasicChannelName(itf) << "\n");
+		// initiator socket bound to target socket on
+		// the bus.
+		basic::target_socket_true *tp =
+			dynamic_cast<basic::target_socket_true *>(itf);
+		if (tp) {
+			Bus *bb =
+				dynamic_cast<Bus *>(tp->get_parent());
+			ASSERT(bb);
+			if ((itM = this->channelsMap.find(bb)) == this->channelsMap.end()) {
+				ch = new BasicChannel(bb->name());
+				this->channelsMap.insert(this->channelsMap.end(),
+							 pair < sc_core::sc_interface *, Channel * >(bb, ch));
+				TRACE_2("BasicChannel bus name " << bb->name() << "\n");
+			} else {
+				ch = itM->second;
+			}
 		} else {
-			ch = itM->second;
+			TRACE_2("Examined the initiator socket on the basic Bus. Did nothing.\n");
 		}
 		theNewPort->addChannel(ch);
 		TRACE_2("Add (sc_port_base) " << port << " -> (BASIC_TARGET_SOCKET) " << theNewPort << " with channel " << ch <<"\n");
@@ -220,7 +230,7 @@ Port * SCElab::tryBasicTarget(IRModule * mod,
 }
 
 template<typename T>
-static const char * try_type (sc_core::sc_interface* itf, 
+static void try_type (sc_core::sc_interface* itf, 
 			      const char *&res,
 			      const char *type) {
 	T *tmp = dynamic_cast<T *>(itf);
@@ -271,17 +281,25 @@ Port * SCElab::tryBasicInitiator(IRModule * mod,
 
 	if ((itfTypeName.find(match1) == 0) ||
 	    (itfTypeName.find(match2) == 0)) {
-		// TODO: the channel is NOT the interface here, there
-		// are intermediates.
 		theNewPort = new Port(mod, portName);
 		std::map < sc_core::sc_interface*, Channel * >::iterator itM;
 		Channel* ch;
-		if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
-			ch = new BasicChannel();
-			this->channelsMap.insert(this->channelsMap.end(), pair < sc_core::sc_interface *, Channel * >(itf, ch));
-			TRACE_2("BasicChannel initiator name " << getBasicChannelName(itf) << "\n");
+		basic::initiator_socket_true *tp =
+			dynamic_cast<basic::initiator_socket_true *>(itf);
+		if (tp) {
+			Bus *bb =
+				dynamic_cast<Bus *>(tp->get_parent_object());
+			ASSERT(bb);
+			if ((itM = this->channelsMap.find(bb)) == this->channelsMap.end()) {
+				ch = new BasicChannel(bb->name());
+				this->channelsMap.insert(this->channelsMap.end(),
+							 pair < sc_core::sc_interface *, Channel * >(bb, ch));
+				TRACE_2("BasicChannel bus name " << bb->name() << "\n");
+			} else {
+				ch = itM->second;
+			}
 		} else {
-			ch = itM->second;
+			TRACE_2("Examined the target socket on the basic Bus. Did nothing.\n");
 		}
 		theNewPort->addChannel(ch);
 		TRACE_2("Add (sc_port_base) " << port 

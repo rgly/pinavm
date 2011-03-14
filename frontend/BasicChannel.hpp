@@ -7,7 +7,7 @@
 class BasicChannel : public Channel
 {
 public:
-	BasicChannel();
+	BasicChannel(const char *name);
 	std::string toString();
 };
 

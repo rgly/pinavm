@@ -3,7 +3,8 @@
 #include "Channel.hpp"
 #include "BasicChannel.hpp"
 
-BasicChannel::BasicChannel() : Channel(NULL, "")
+BasicChannel::BasicChannel(const char *name) 
+	: Channel(NULL, name)
 {
 	this->id = BASIC_CHANNEL;
 }
