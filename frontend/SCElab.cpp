@@ -220,11 +220,13 @@ Port * SCElab::tryBasicTarget(IRModule * mod,
 			} else {
 				ch = itM->second;
 			}
+			theNewPort->addChannel(ch);
+			TRACE_2("Add (sc_port_base) " << port
+				<< " -> (BASIC_TARGET_SOCKET) " << theNewPort 
+				<< " with channel " << ch <<"\n");
 		} else {
 			TRACE_2("Examined the initiator socket on the basic Bus. Did nothing.\n");
 		}
-		theNewPort->addChannel(ch);
-		TRACE_2("Add (sc_port_base) " << port << " -> (BASIC_TARGET_SOCKET) " << theNewPort << " with channel " << ch <<"\n");
 	}
 	return theNewPort;
 }
@@ -298,13 +300,13 @@ Port * SCElab::tryBasicInitiator(IRModule * mod,
 				ASSERT(ch);
 				TRACE_2("Reusing BasicChannel " << ch->getChannelName() << "\n");
 			}
+			theNewPort->addChannel(ch);
+			TRACE_2("Add (sc_port_base) " << port 
+				<< " -> (BASIC_INITIATOR_SOCKET) " << theNewPort 
+				<< " with channel " << ch << "\n");
 		} else {
 			TRACE_2("Examined the target socket on the basic Bus. Did nothing.\n");
 		}
-		theNewPort->addChannel(ch);
-		TRACE_2("Add (sc_port_base) " << port 
-			<< " -> (BASIC_INITIATOR_SOCKET) " << theNewPort 
-			<< " with channel " << ch << "\n");
 	}
 	return theNewPort;
 }

@@ -16,6 +16,7 @@ Port::Port(IRModule * module, string portName)
 {
 	this->irModule = module;
 	this->name = portName;
+	this->channel = NULL;
 	this->channels = new vector<Channel*>();
 	this->channelID = UNDEFINED_CHANNEL;
 }
@@ -73,6 +74,7 @@ Port::getType()
 void Port::printElab(int sep, string prefix)
 {
 	this->printPrefix(sep, prefix);
-	std::string chstr = this->channel->toString();
+	Channel* channel = this->channel;
+	std::string chstr = channel ? this->channel->toString() : "(unbound)";
 	TRACE("Port : " << this->getName() << " (\"" << (void*) this << "\"), bounded to channel " << chstr << "\n");
 }
