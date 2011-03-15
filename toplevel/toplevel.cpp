@@ -1,6 +1,7 @@
 #include <systemc>
 
 #include <string>
+#include <algorithm>
 
 // For JIT
 #include "llvm/LLVMContext.h"
@@ -8,6 +9,7 @@
 #include "llvm/Type.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/CodeGen/LinkAllCodegenComponents.h"
+#include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/ExecutionEngine/Interpreter.h"
 #include "llvm/ExecutionEngine/JIT.h"
@@ -124,6 +126,22 @@ void pinavm_callback(sc_core::sc_simcontext* context,
 	}
 }
 
+void resolve_weak_symbol(GlobalVariable &GV) {
+	if (GV.isWeakForLinker()) {
+		void *Ptr = EE->getPointerToGlobalIfAvailable(&GV);
+		// already linked, nothing to do.
+		if (Ptr) return;
+		Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(GV.getName());
+		// Symbol isn't define in a library, let the JIT
+		// engine create the symbol later
+		if (!Ptr) return;
+		// Interesting case: the symbol has weak linkage, is
+		// defined in a library. LLVM badly manages this in
+		// JIT::getOrEmitGlobalVariable => do it properly
+		// ourselves now.
+		EE->addGlobalMapping(&GV, Ptr);
+	}
+}
 
 int load_and_run_sc_main(std::string & InputFile)
 {
@@ -169,6 +187,11 @@ int load_and_run_sc_main(std::string & InputFile)
 			errs() << "unknown error creating EE!\n";
 		exit(1);
 	}
+
+	TRACE_5("Resolving weak and linkonce symbols in ExecutionEngine");
+	std::for_each (Mod->global_begin(), Mod->global_end(),
+		       resolve_weak_symbol);
+	TRACE_5("Resolving weak and linkonce symbols: done");
 
 	//EE->RegisterJITEventListener(createOProfileJITEventListener());
 
