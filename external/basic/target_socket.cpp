@@ -32,19 +32,8 @@ namespace basic {
 	{					\
 		init();				\
 	}					\
-						\
-	template<>				\
-	target_socket<MULTIPORT>::target_socket()	\
-		: target_socket_base<MULTIPORT>() { init_parent(); }	\
-						\
-	template<>				\
-	target_socket<MULTIPORT>::target_socket(const char* name)	\
-		: target_socket_base<MULTIPORT>(name) { init_parent(); }
 
 	CONSTRUCTORS(true);
 	CONSTRUCTORS(false);
-	
-	void target_socket_true::dummy() {};
-	void target_socket_false::dummy() {};
 	
 };

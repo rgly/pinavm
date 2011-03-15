@@ -10,8 +10,6 @@
 
 namespace basic {
 
-#define initiator_socket_no_tmplt initiator_socket_base
-
    template <bool MULTIPORT = false>
    class initiator_socket_base :
       public tlm::tlm_initiator_socket<CHAR_BIT * sizeof(data_t),
@@ -143,19 +141,6 @@ namespace basic {
       explicit initiator_socket(const char* name)
 	 : initiator_socket_base<MULTIPORT>(name) { /* */ }
    };
-
-   class initiator_socket_true : public initiator_socket_base<true>,
-		      /* to be able to call protected constructor : */
-				      public virtual sc_core::sc_interface {
-      virtual void dummy();
-   };
-
-   class initiator_socket_false : public initiator_socket_base<false>,
-		      /* to be able to call protected constructor : */
-				      public virtual sc_core::sc_interface {
-      virtual void dummy();
-   };
-
 }
 
 #endif

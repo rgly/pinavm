@@ -195,8 +195,8 @@ Port * SCElab::tryBasicTarget(IRModule * mod,
 	// basic::target_socket<target, false>
 	string match2 = "N5basic13target_socketI6targetLb0EEE";
 
-	// TODO: debug
-	match1 = "N5basic18target_socket_trueE";
+	// TODO: too fuzzy
+	match1 = "N5basic13target_socket";
 	match2 = "N5basic19target_socket_falseE";
 	
 	if ((itfTypeName.find(match1) == 0) ||
@@ -206,8 +206,8 @@ Port * SCElab::tryBasicTarget(IRModule * mod,
 		Channel* ch;
 		// initiator socket bound to target socket on
 		// the bus.
-		basic::target_socket_true *tp =
-			dynamic_cast<basic::target_socket_true *>(itf);
+		basic::target_socket_base<true> *tp =
+			dynamic_cast<basic::target_socket_base<true> *>(itf);
 		if (tp) {
 			Bus *bb =
 				dynamic_cast<Bus *>(tp->get_parent());
@@ -244,13 +244,10 @@ string SCElab::getBasicChannelName(sc_core::sc_interface* itf) {
 
 	const char *res = NULL;
 
-	try_type<basic::target_socket_no_tmplt<true>     >(itf, res, "basic::target_socket_no_tmplt<true>");
-	try_type<basic::target_socket_no_tmplt<false>    >(itf, res, "basic::target_socket_no_tmplt<false>");
-	try_type<basic::initiator_socket_no_tmplt<true>  >(itf, res, "basic::initiator_socket_no_tmplt<true>");
-	try_type<basic::initiator_socket_no_tmplt<false> >(itf, res, "basic::initiator_socket_no_tmplt<false>");
-	try_type<basic::initiator_socket_base<true>      >(itf, res, "basic::initiator_socket_base<true>");
-	try_type<basic::initiator_socket_base<false>     >(itf, res, "basic::initiator_socket_base<false>");
-
+	try_type<basic::target_socket_base<true>     >(itf, res, "basic::target_socket_base<true>");
+	try_type<basic::target_socket_base<false>    >(itf, res, "basic::target_socket_base<false>");
+	try_type<basic::initiator_socket_base<true>  >(itf, res, "basic::initiator_socket_base<true>");
+	try_type<basic::initiator_socket_base<false> >(itf, res, "basic::initiator_socket_base<false>");
 
 	if (res) {
 		return res;
@@ -277,15 +274,16 @@ Port * SCElab::tryBasicInitiator(IRModule * mod,
 
 	// TODO: debug
 	match1 = "N5basic21initiator_socket_trueE";
-	match2 = "N5basic22initiator_socket_falseE";
+	// TODO: match is a bit too fuzzy.
+	match2 = "N5basic16initiator_socket";
 
 	if ((itfTypeName.find(match1) == 0) ||
 	    (itfTypeName.find(match2) == 0)) {
 		theNewPort = new Port(mod, portName);
 		std::map < sc_core::sc_interface*, Channel * >::iterator itM;
-		Channel* ch;
-		basic::initiator_socket_true *tp =
-			dynamic_cast<basic::initiator_socket_true *>(itf);
+		BasicChannel* ch;
+		basic::initiator_socket_base<true> *tp =
+			dynamic_cast<basic::initiator_socket_base<true> *>(itf);
 		if (tp) {
 			Bus *bb =
 				dynamic_cast<Bus *>(tp->get_parent_object());
@@ -296,7 +294,9 @@ Port * SCElab::tryBasicInitiator(IRModule * mod,
 							 pair < sc_core::sc_interface *, Channel * >(bb, ch));
 				TRACE_2("BasicChannel bus name " << bb->name() << "\n");
 			} else {
-				ch = itM->second;
+				ch = dynamic_cast<BasicChannel *>(itM->second);
+				ASSERT(ch);
+				TRACE_2("Reusing BasicChannel " << ch->getChannelName() << "\n");
 			}
 		} else {
 			TRACE_2("Examined the target socket on the basic Bus. Did nothing.\n");

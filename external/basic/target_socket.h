@@ -18,8 +18,6 @@ namespace basic {
 					     /* */ basic::data_t &d) = 0;
    };
 
-#define target_socket_no_tmplt target_socket
-
    typedef tlm::tlm_target_socket<CHAR_BIT * sizeof(data_t),
          tlm::tlm_base_protocol_types> compatible_socket;
 
@@ -69,15 +67,18 @@ namespace basic {
 
    };
 
-#define MODULE basic::target_module_base
-   template </* typename MODULE, */ bool MULTIPORT = false>
+//#define MODULE basic::target_module_base
+   template <typename MODULE, bool MULTIPORT = false>
    class target_socket : public target_socket_base<MULTIPORT>,
 			 /* to be able to call protected constructor : */
 			 public virtual sc_core::sc_interface {
    public:
 
-   target_socket();
-   explicit target_socket(const char* name);
+      target_socket() 
+	 : target_socket_base<MULTIPORT>() { init_parent(); }
+      
+      target_socket(const char* name)
+	 : target_socket_base<MULTIPORT>(name) { init_parent(); }
 
    private:
       void init_parent() {
@@ -115,17 +116,6 @@ namespace basic {
       }
 
       MODULE* m_mod;
-   };
-
-   class target_socket_true : public target_socket<true>,
-                              /* to be able to call protected constructor: */
-			      public virtual sc_core::sc_interface {
-      virtual void dummy();      
-   };
-   class target_socket_false : public target_socket<false>,
-                              /* to be able to call protected constructor: */
-			      public virtual sc_core::sc_interface {
-      virtual void dummy();      
    };
 }
 

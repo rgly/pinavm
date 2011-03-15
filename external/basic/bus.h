@@ -11,8 +11,8 @@ SC_MODULE(Bus), basic::target_module_base,
 	/* Allow PinaVM to store buses in channelsMap */ 
 	virtual public sc_core::sc_interface {
 
-	basic::initiator_socket_true initiator;
-	basic::target_socket_true target;
+	basic::initiator_socket<Bus, true> initiator;
+	basic::target_socket<Bus, true> target;
 
 	Bus(sc_core::sc_module_name name);
 
