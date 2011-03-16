@@ -62,8 +62,14 @@ bool FunctionBuilder::mark(Value * arg)
 	}
 
 
-	if (isa < Constant > (arg) || isa < GlobalValue > (arg) || isa < BitCastInst > (arg)) {
-		TRACE_6("** Arg is a constant or global value or bitcast\n");
+	if (isa < Constant > (arg) || isa < GlobalValue > (arg)) {
+		TRACE_6("** Arg is a constant or global value\n");
+		return false;
+	}
+
+	if (isa < BitCastInst > (arg) &&
+	    (!arg->getType()->isPointerTy())) {
+		TRACE_6("** Arg is a bitcast other than a pointer\n");
 		return false;
 	}
 
@@ -317,6 +323,7 @@ Function *FunctionBuilder::buildFct()
 		}
 	}
 	
+	ASSERT(lastBlock != NULL);
 	TRACE_6("lastBlock : " << lastBlock << "\n");
 
 	IRBuilder <> retBuilder(lastBlock);

@@ -3,22 +3,24 @@
 
 SCCFactory::SCCFactory(SCJit * scjit)
 {
-  /****** Time stuffff *******/
+	/****** Time stuffff *******/
 	(new ZeroTimeHandler(scjit))->insertInMap(&this->scchandlers);
 	(new DefaultTimeHandler(scjit))->insertInMap(&this->scchandlers);
 
-  /****** Events stuff ******/
+	/****** Events stuff ******/
 	(new EventHandler(scjit))->insertInMap(&this->scchandlers);
 	(new NotifyHandler(scjit))->insertInMap(&this->scchandlers);
 
-  /***** Ports stuff ******/
+	/***** Ports stuff ******/
 	(new WriteHandler(scjit))->insertInMap(&this->scchandlers);
 	(new ReadHandler(scjit))->insertInMap(&this->scchandlers);
 
-  /***** Other stuff ******/
+	/***** Other stuff ******/
 	(new AssertHandler(scjit))->insertInMap(&this->scchandlers);
 //	(new RandHandler())->insertInMap(&this->scchandlers);
-	
+
+	/****** Basic protocol ******/
+	(new BasicHandler(scjit))->insertInMap(&this->scchandlers);
 }
 
 SCCFactory::~SCCFactory()

@@ -16,6 +16,7 @@
 #include "ReadHandler.hpp"
 #include "RandHandler.h"
 #include "AssertHandler.h"
+#include "BasicHandler.h"
 
 struct Process;
 

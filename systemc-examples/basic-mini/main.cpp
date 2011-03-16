@@ -25,12 +25,9 @@ using namespace sc_core;
 struct initiator : sc_module {
         basic::initiator_socket<initiator> socket;
         void thread(void) {
-		basic::data_t val = 1;
 		basic::addr_t addr = 4;
-                while (true) {
-                        cout << "Entrer un nombre" << endl;
-                        cin >> val;;
-                        cout << "je vais envoyer : " << std::dec << val << endl;
+		for (basic::data_t val = 1; val <= 10; val++) {
+			val++;
                         socket.write(addr, val);
                 }
         }

@@ -200,8 +200,9 @@ void *SCJit::jitAddr(Function * f, Instruction* inst, Value * arg)
 
 	void *(*fct) (sc_core::sc_module *) = (void *(*)(sc_core::sc_module *)) ee->getPointerToFunction(fctToJit);
 	IRModule* mod = this->getCurrentProcess()->getModule();
-	TRACE_4("********************* SC MODULE : " << mod << "\n");
+	TRACE_4("Function built. Now executing with SC MODULE : " << mod << "\n");
 	void *res = fct(this->elab->getSCModule(mod));
+	TRACE_4("JIT-ed function executed\n");
 
 	fctToJit->dropAllReferences();
 	ee->freeMachineCodeForFunction(fctToJit);
