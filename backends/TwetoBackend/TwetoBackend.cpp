@@ -42,7 +42,11 @@
 #include "TwetoConstMemory.h"
 #include <systemc>
 
+//TEST
+#include "TLMBasicPass.h"
+
 using namespace llvm;
+
 
 /*namespace {
     cl::opt<bool>
@@ -110,7 +114,10 @@ static void tweto_optimize(Frontend * fe, ExecutionEngine *ee,
 	PM->add(createInstructionCombiningPass());
 	/*PM->add(createReassociatePass());
 	PM->add(createGVNPass());*/
-	
+    
+    
+    PM->add(new TLMBasicPass(fe)); 
+    
 	/**
 	 * Execute all of the passes scheduled for execution
 	 */
@@ -125,24 +132,8 @@ static void tweto_optimize(Frontend * fe, ExecutionEngine *ee,
     // Print specialized functions
     tweto_print_all_specialized_if_asked();
     
-    
-    // ========== TEST ====================
-    /*const ValueSymbolTable &table = llvmMod->getValueSymbolTable();
-    std::cerr << "======= Symbol Table Dump =========" << std::endl;
-    for(ValueSymbolTable::const_iterator itb = table.begin(), ite = table.end();
-         itb != ite; ++itb) {        
-        const ValueName &name = *itb;
-        std::cerr << name.getKeyData() << std::endl;
-    }*/
-    // ========== TEST ====================
-    /*std::cerr << "======= Function Table Dump =========" << std::endl;
-    for(Module::const_iterator itb = llvmMod->begin(), ite = llvmMod->end();
-        itb != ite; ++itb) {        
-        const Function &fun = *itb;
-        std::cerr << fun.getNameStr() << std::endl;
-    }*/
-
 }
+
     
 /**
  * launch_twetobackend
