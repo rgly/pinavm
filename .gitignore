@@ -11,6 +11,7 @@ autom4te.cache
 *.so
 
 .DS_Store
+*.dSYM
 
 pinavm-xcode*
 *.pbxbtree
