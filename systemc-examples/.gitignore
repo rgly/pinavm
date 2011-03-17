@@ -5,15 +5,20 @@
 # SPIN generated files
 pan.[b,c,h,m,t]
 pan
+*.trail
 
 # Promela files
 *.pr
 *.pr.bak
+*.pr.log
+*.pr.part
 Spin_Results
 
 # native compilation
 *.o
 a.out
+*.simu
 
 # execution trace
 *.vcd
+tweto.log

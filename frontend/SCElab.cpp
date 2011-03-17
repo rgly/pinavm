@@ -1,3 +1,5 @@
+#include <cxxabi.h>
+
 #include <llvm/TypeSymbolTable.h>
 #include <llvm/Type.h>
 
@@ -28,6 +30,9 @@
 #include "sysc/communication/sc_bind_ef.h"
 #include "sysc/communication/sc_bind_info.h"
 #include "sysc/kernel/sc_process_handle.h"
+
+#include "basic.h"
+#include "bus.h"
 
 #include "SCElab.h"
 #include "config.h"
@@ -189,48 +194,119 @@ Port * SCElab::tryBasicTarget(IRModule * mod,
 	string match1 = "N5basic13target_socketI3BusLb1EEE";
 	// basic::target_socket<target, false>
 	string match2 = "N5basic13target_socketI6targetLb0EEE";
+
+	// TODO: too fuzzy
+	match1 = "N5basic13target_socket";
+	match2 = "N5basic19target_socket_falseE";
+	
 	if ((itfTypeName.find(match1) == 0) ||
 	    (itfTypeName.find(match2) == 0)) {
-		// TODO: the channel is NOT the interface here, there
-		// are intermetes.
 		theNewPort = new Port(mod, portName);
 		std::map < sc_core::sc_interface*, Channel * >::iterator itM;
 		Channel* ch;
-		if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
-			ch = new BasicChannel();
-			this->channelsMap.insert(this->channelsMap.end(), pair < sc_core::sc_interface *, Channel * >(itf, ch));
+		// initiator socket bound to target socket on
+		// the bus.
+		basic::target_socket_base<true> *tp =
+			dynamic_cast<basic::target_socket_base<true> *>(itf);
+		if (tp) {
+			Bus *bb =
+				dynamic_cast<Bus *>(tp->get_parent());
+			ASSERT(bb);
+			if ((itM = this->channelsMap.find(bb)) == this->channelsMap.end()) {
+				ch = new BasicChannel(bb->name());
+				this->channelsMap.insert(this->channelsMap.end(),
+							 pair < sc_core::sc_interface *, Channel * >(bb, ch));
+				TRACE_2("BasicChannel bus name " << bb->name() << "\n");
+			} else {
+				ch = itM->second;
+			}
+			theNewPort->addChannel(ch);
+			TRACE_2("Add (sc_port_base) " << port
+				<< " -> (BASIC_TARGET_SOCKET) " << theNewPort 
+				<< " with channel " << ch <<"\n");
 		} else {
-			ch = itM->second;
+			TRACE_2("Examined the initiator socket on the basic Bus. Did nothing.\n");
 		}
-		theNewPort->addChannel(ch);
-		TRACE_2("Add (sc_port_base) " << port << " -> (BASIC_PORT) " << theNewPort << " with channel " << ch <<"\n");
 	}
 	return theNewPort;
 }
+
+template<typename T>
+static void try_type (sc_core::sc_interface* itf, 
+			      const char *&res,
+			      const char *type) {
+	T *tmp = dynamic_cast<T *>(itf);
+	if (tmp) {
+		TRACE_5("Got channel of type " << type << "\n");
+		res = tmp->name();
+	}
+}
+
+string SCElab::getBasicChannelName(sc_core::sc_interface* itf) {
+
+	const char *res = NULL;
+
+	try_type<basic::target_socket_base<true>     >(itf, res, "basic::target_socket_base<true>");
+	try_type<basic::target_socket_base<false>    >(itf, res, "basic::target_socket_base<false>");
+	try_type<basic::initiator_socket_base<true>  >(itf, res, "basic::initiator_socket_base<true>");
+	try_type<basic::initiator_socket_base<false> >(itf, res, "basic::initiator_socket_base<false>");
+
+	if (res) {
+		return res;
+	} else {
+		TRACE_1("WARNING: Unknown kind of channel (typeid is " << typeid(*itf).name() << ")\n");
+		return "Unknown";
+	}
+}
+				   
 
 Port * SCElab::tryBasicInitiator(IRModule * mod, 
 				 sc_core::sc_interface* itf, string &itfTypeName,
 				 sc_core::sc_port_base * port, string portName) {
 	Port * theNewPort = NULL;
 	// basic::initiator_socket<Bus, true>
-	string match1 = "N5basic16initiator_socketI3BusLb1EEE";
+	//string match1 = "N5basic16initiator_socketI3BusLb1EEE";
+	// TODO: match is too fuzzy 
+	string match1 = "N5basic16initiator_socketI";
+
 	// basic::initiator_socket<initiator, false>
-	string match2 = "N5basic16initiator_socketI9initiatorLb0EEE";
+	//string match2 = "N5basic16initiator_socketI9initiatorLb0EEE";
+	// TODO: match is too fuzzy 
+	string match2 = "N5basic16initiator_socketI";
+
+	// TODO: debug
+	match1 = "N5basic21initiator_socket_trueE";
+	// TODO: match is a bit too fuzzy.
+	match2 = "N5basic16initiator_socket";
+
 	if ((itfTypeName.find(match1) == 0) ||
 	    (itfTypeName.find(match2) == 0)) {
-		// TODO: the channel is NOT the interface here, there
-		// are intermetes.
 		theNewPort = new Port(mod, portName);
 		std::map < sc_core::sc_interface*, Channel * >::iterator itM;
-		Channel* ch;
-		if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
-			ch = new BasicChannel();
-			this->channelsMap.insert(this->channelsMap.end(), pair < sc_core::sc_interface *, Channel * >(itf, ch));
+		BasicChannel* ch;
+		basic::initiator_socket_base<true> *tp =
+			dynamic_cast<basic::initiator_socket_base<true> *>(itf);
+		if (tp) {
+			Bus *bb =
+				dynamic_cast<Bus *>(tp->get_parent_object());
+			ASSERT(bb);
+			if ((itM = this->channelsMap.find(bb)) == this->channelsMap.end()) {
+				ch = new BasicChannel(bb->name());
+				this->channelsMap.insert(this->channelsMap.end(),
+							 pair < sc_core::sc_interface *, Channel * >(bb, ch));
+				TRACE_2("BasicChannel bus name " << bb->name() << "\n");
+			} else {
+				ch = dynamic_cast<BasicChannel *>(itM->second);
+				ASSERT(ch);
+				TRACE_2("Reusing BasicChannel " << ch->getChannelName() << "\n");
+			}
+			theNewPort->addChannel(ch);
+			TRACE_2("Add (sc_port_base) " << port 
+				<< " -> (BASIC_INITIATOR_SOCKET) " << theNewPort 
+				<< " with channel " << ch << "\n");
 		} else {
-			ch = itM->second;
+			TRACE_2("Examined the target socket on the basic Bus. Did nothing.\n");
 		}
-		theNewPort->addChannel(ch);
-		TRACE_2("Add (sc_port_base) " << port << " -> (BASIC_PORT) " << theNewPort << " with channel " << ch <<"\n");
 	}
 	return theNewPort;
 }
@@ -241,7 +317,6 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 {
 	std::string match;
 	char buffer[10];
-	char temp[10];
 
 	Port* theNewPort = NULL;
 	std::map < sc_core::sc_port_base *, Port * >::iterator it;
@@ -253,6 +328,7 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 
 		int nbItfs = ((sc_core::sc_port_b<int>*) port)->size();
 		TRACE_6("port concerned: " << portName << " Nb_itfs = " << nbItfs << "\n");
+		TRACE_6("SystemC port name: " << port->name() << "\n");
 
 
 		sc_core::sc_interface* itf = port->get_interface();
@@ -270,9 +346,8 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 
 		std::string itfTypeName(typeName);
 
-		TRACE_4("m_interface of port is: " << itfTypeName << "\n");
-		sprintf(temp, "%d", (int) itfTypeName.size());
-		TRACE_4("Found : " << temp << "\n");
+		TRACE_4("m_interface of port is: " << itfTypeName 
+			<< " (" << abi::__cxa_demangle(itfTypeName.c_str(), NULL, NULL, NULL) << ")\n");
 
 		/* take the first match */
 		if (theNewPort == NULL)

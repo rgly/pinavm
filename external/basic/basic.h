@@ -1,3 +1,4 @@
+// -*- c-basic-offset: 3 -*-
 #ifndef BASIC_H
 #define BASIC_H
 

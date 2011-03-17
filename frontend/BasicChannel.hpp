@@ -7,8 +7,12 @@
 class BasicChannel : public Channel
 {
 public:
-	BasicChannel();
+	BasicChannel(std::string const &channelName);
 	std::string toString();
+	
+	const std::string getChannelName() const {return m_channelName;}
+private:
+	const std::string m_channelName;
 };
 
 #endif

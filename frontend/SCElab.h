@@ -1,3 +1,4 @@
+// -*- c-basic-offset: 2 -*-
 #ifndef _SCELAB_H
 #define _SCELAB_H
 
@@ -96,6 +97,7 @@ private:
   Port * tryBasicInitiator(IRModule * mod, 
 			   sc_core::sc_interface* itf, std::string &itfTypeName,
 			   sc_core::sc_port_base * port, std::string portName);
+  std::string getBasicChannelName(sc_core::sc_interface* itf);
 };
 
 #endif

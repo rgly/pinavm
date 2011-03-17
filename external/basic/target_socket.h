@@ -1,17 +1,28 @@
+// -*- c-basic-offset: 3 -*-
 #ifndef BASIC_TARGET_SOCKET_H
 #define BASIC_TARGET_SOCKET_H
 
 #ifndef BASIC_H
-#error include "basic.h"
+#error please include "basic.h"
 #endif
 
 namespace basic {
+   class target_module_base {
+   public:
+      target_module_base();
+      virtual void dummy();
+      virtual tlm::tlm_response_status write(const basic::addr_t &a,
+					     const basic::data_t &d) = 0;
+      
+      virtual tlm::tlm_response_status read (const basic::addr_t &a,
+					     /* */ basic::data_t &d) = 0;
+   };
 
    typedef tlm::tlm_target_socket<CHAR_BIT * sizeof(data_t),
          tlm::tlm_base_protocol_types> compatible_socket;
 
-   template <typename MODULE, bool MULTIPORT = false>
-   class target_socket :
+   template <bool MULTIPORT = false>
+   class target_socket_base :
          public tlm::tlm_target_socket<CHAR_BIT * sizeof(data_t),
 	        tlm::tlm_base_protocol_types, MULTIPORT?0:1>,
          public tlm::tlm_fw_transport_if<tlm::tlm_base_protocol_types>
@@ -22,17 +33,8 @@ namespace basic {
 
       public:
 
-      target_socket() :
-            base_type(sc_core::sc_gen_unique_name(kind()))
-      {
-         init();
-      }
-
-      explicit target_socket(const char* name) :
-            base_type(name)
-      {
-         init();
-      }
+      target_socket_base();
+      explicit target_socket_base(const char* name);
 
       virtual const char* kind() const {
          return "basic::target_socket";
@@ -56,6 +58,44 @@ namespace basic {
 
       private:
 
+      void init() {
+         // we'll receive transactions ourselves ...
+         this->bind(*(static_cast<fw_if_type*>(this)));
+	 // ... but we'll need to call read/write in the parent module.
+	 // => done in derived class target_socket
+      }
+
+   };
+
+//#define MODULE basic::target_module_base
+   template <typename MODULE, bool MULTIPORT = false>
+   class target_socket : public target_socket_base<MULTIPORT>,
+			 /* to be able to call protected constructor : */
+			 public virtual sc_core::sc_interface {
+   public:
+
+      target_socket() 
+	 : target_socket_base<MULTIPORT>() { init_parent(); }
+      
+      target_socket(const char* name)
+	 : target_socket_base<MULTIPORT>(name) { init_parent(); }
+
+   private:
+      void init_parent() {
+         m_mod = dynamic_cast<MODULE*>(this->get_parent_object());
+         if(!m_mod) {
+            std::cerr << this->name() << ": cannot cast parent" << std::endl;
+            std::cerr << "parent name: " << this->get_parent_object()->name() << std::endl;
+   
+            abort();
+         }
+      }
+   public:
+      MODULE *get_parent() {
+	 return m_mod;
+      }
+   private:
+
       void b_transport(tlm::tlm_generic_payload& trans, sc_core::sc_time& t) {
          (void) t;
          addr_t addr = static_cast<addr_t>(trans.get_address());
@@ -75,20 +115,8 @@ namespace basic {
          }
       }
 
-      void init() {
-         // we'll receive transactions ourselves ...
-         this->bind(*(static_cast<fw_if_type*>(this)));
-	 // ... but we'll need to call read/write in the parent module.
-         m_mod = dynamic_cast<MODULE*>(this->get_parent_object());
-         if(!m_mod) {
-            std::cerr << this->name() << ": no parent" << std::endl;
-            abort();
-         }
-      }
-
       MODULE* m_mod;
    };
-
 }
 
 #endif

@@ -152,7 +152,7 @@ SYSTEMC_INCLUDE=-I$(INSTALL_PATH_SYSTEMC_GCC)/include
 endif
 
 ifndef CPPSCFLAGS
-CPPSCFLAGS=-I$(ROOT)/external/systemc-2.2.0/src/ -I$(ROOT)/external/TLM-2009-07-15/include/tlm
+CPPSCFLAGS=-I$(ROOT)/external/systemc-2.2.0/src/ -I$(ROOT)/external/TLM-2009-07-15/include/tlm -I$(ROOT)/external/basic
 endif
 
 ifndef LLVMGCCFLAGS

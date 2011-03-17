@@ -64,7 +64,7 @@ void Bus::print_addr_map() {
 }
 
 tlm::tlm_response_status
-Bus::read(basic::addr_t a, basic::data_t& d)
+Bus::read(const basic::addr_t &a, /* */ basic::data_t& d)
 {
 	if(a % sizeof(basic::data_t)) {
 		SC_REPORT_ERROR(name(),
@@ -92,7 +92,7 @@ Bus::read(basic::addr_t a, basic::data_t& d)
 }
 
 tlm::tlm_response_status
-Bus::write(basic::addr_t a, basic::data_t d)
+Bus::write(const basic::addr_t &a, const basic::data_t &d)
 {
 	if(a % sizeof(basic::data_t)) {
 		SC_REPORT_ERROR(name(),
