@@ -34,7 +34,7 @@ struct initiator : sc_module {
             socket.write(addr1, val);
         }
         // Send to Leo
-        basic::addr_t addr1 = 60;
+        basic::addr_t addr2 = 60;
         cout << "Writing at adress " << addr2 << endl;
         for (basic::data_t val = 1; val <= 10; val++) {
             val++;
@@ -68,12 +68,12 @@ int sc_main (int argc, char ** argv) {
      | Alice  | +--+ |  Router   | +----+ |  Bob  |
      |        +++  +-+           | +--  +++       |
      +---------+    +            +++ |   +--------+
-     +-------------+  |
-     |   +--------+
-     |  +++       |
-     ---+ |  Leo  |
-     +++       |
-     +--------+
+                    +-------------+  |
+                                     |   +--------+
+                                     |  +++       |
+                                     ---+ |  Leo  |
+                                        +++       |
+                                         +--------+
      */     
     
     
