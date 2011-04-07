@@ -77,6 +77,10 @@ class TLMBasicPass : public ModulePass {
         static char ID;
         TLMBasicPass(Frontend *fe);
         bool runOnModule(Module &M);
+    
+    private:
+        Function* lookForWriteFunction(IRModule *module);
+        Function* lookForReadFunction(IRModule *module);
 
 };
 //============================================================================

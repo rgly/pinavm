@@ -45,12 +45,24 @@
 char TLMBasicPass::ID = 0;
 
 
+// =============================================================================
+// TLMBasicPass 
+// 
+// Constructor
+// 
+// =============================================================================
 TLMBasicPass::TLMBasicPass(Frontend *fe) : ModulePass(ID) {
     this->fe = fe; 
     this->elab = fe->getElab();
 }
 
 
+// =============================================================================
+// runOnModule
+// 
+//  
+// 
+// =============================================================================
 bool TLMBasicPass::runOnModule(Module &M) {
     
     std::cout << "\n============== TLM Basic Pass =============\n";
@@ -83,10 +95,6 @@ bool TLMBasicPass::runOnModule(Module &M) {
                                 Process *proc = *pIt;
                                 std::cout << " proc : " << proc->getName()
                                 << endl;
-                                // Look for 
-                                // _ZN5basic21initiator_socket_baseILb0EE5writeERKjji
-                                
-                                
                             } 
                         }
                     }
@@ -95,26 +103,50 @@ bool TLMBasicPass::runOnModule(Module &M) {
         
 	}
     std::cout << "\n===========================================\n\n";
-    
-
-    /*SCConstruct * scc = ...
-     if(scc->getID()==WRITECONSTRUCT) {
-     wc = (WriteConstruct*) scc;		
-     port = wc->getPort();
-     channels = port->getChannels();
-     TRACE_3("Visit WRITE\n");
-     if(port->getChannelID()==SIMPLE_CHANNEL) {
-     
-     }
-     */
-    
-    // Replace all calls to write function
-    /* std::vector <Function *> *funs = p->getUsedFunctions();
-     std::vector <Function *>::iterator funIt;
-     for (funIt = funs->begin(); funIt<funs->end(); funIt++) {
-     Function *f = *funIt;
-     std::cout << "== function : " << f->getNameStr() << std::endl;
-     }*/
-    
-    
 }
+
+
+// =============================================================================
+// lookForWriteFunction
+// 
+// Look for an write function definition 
+// in the given SystemC module
+// =============================================================================
+Function* TLMBasicPass::lookForWriteFunction(IRModule *module) {
+    Module *mod = this->fe->getLLVMModule();
+    // Reverse mangling
+    std::string moduleName = module->getModuleType();
+    std::cout << "Looking for 'write' function in the module "
+    << moduleName << std::endl;
+    std::string name("_ZN"+moduleName.size()+moduleName+"5writeERKjS1_");
+    Function *f = mod->getFunction(name);
+    if(f!=NULL) {
+        std::cout << "Found 'write' function in the module " 
+        << moduleName << std::endl;
+    }
+    return f;
+}
+
+
+// =============================================================================
+// lookForWriteFunction
+// 
+// Look for an read function definition 
+// in the given SystemC module
+// =============================================================================
+Function* TLMBasicPass::lookForReadFunction(IRModule *module) {
+    Module *mod = this->fe->getLLVMModule();
+    // Reverse mangling
+    std::string moduleName = module->getModuleType();
+    std::cout << "Looking for 'read' function in the module "
+    << moduleName << std::endl;
+
+    std::string name("_ZN"+moduleName.size()+moduleName+"4readERKjRj");    
+    Function *f = mod->getFunction(name);
+    if(f!=NULL) {
+        std::cout << "Found 'read' function in the module " 
+        << moduleName << std::endl;
+    }
+    return f;
+}
+
