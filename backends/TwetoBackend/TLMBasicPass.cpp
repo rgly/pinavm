@@ -86,8 +86,10 @@ bool TLMBasicPass::runOnModule(Module &M) {
                         std::cout << "Bounded : " 
                         << pr->getName() << " -> " << target->getName()
                         << endl;
-                        // Replace calls in all process
+
                         IRModule *mod = pr->getModule();
+                        Function *writef = lookForWriteFunction(mod);
+                        Function *readf = lookForReadFunction(mod);
                         vector <Process *> *procs = mod->getProcesses();
                         if(procs->size()>0) {
                             std::vector <Process *>::iterator pIt;
@@ -95,6 +97,10 @@ bool TLMBasicPass::runOnModule(Module &M) {
                                 Process *proc = *pIt;
                                 std::cout << " proc : " << proc->getName()
                                 << endl;
+                                
+                                
+                                replaceCallsInProcess(proc, writef, readf);
+                                
                             } 
                         }
                     }
@@ -103,6 +109,59 @@ bool TLMBasicPass::runOnModule(Module &M) {
         
 	}
     std::cout << "\n===========================================\n\n";
+}
+
+
+// =============================================================================
+// replaceCallsInProcess
+// 
+// Replace indirect calls to write() or read() by direct calls 
+// in the given process.
+// =============================================================================
+int TLMBasicPass::replaceCallsInProcess(Process *proc, 
+                                        Function *writef, Function *readf) {
+   
+    Function *procf = proc->getMainFct();
+    inst_iterator ii;
+    for (ii = inst_begin(procf); ii!=inst_end(procf); ii++) {
+        Instruction &i = *ii;
+        CallSite cs = CallSite::get(&i);
+        if (cs.getInstruction()) {
+            Function *oldfun = cs.getCalledFunction();
+            if (oldfun!=NULL && !oldfun->isDeclaration()) {
+                std::string name = oldfun->getName();
+                std::string basename = name.substr(name.size()-13,name.size()-1);
+                std::cout << "  Called function : " << name
+                << " - " << basename << std::endl;
+                //
+                // Write
+                //
+                //if (!strcmp(basename.c_str(),std::string("5writeERKjS1_").c_str())) {
+                std::string calledf("_ZN5basic21initiator_socket_baseILb0EE5writeERKjji");
+                if (!strcmp(name.c_str(), calledf.c_str())) {
+                
+                    // Candidate for a replacement
+                    
+                    if(ConstantInt *ci = dyn_cast<ConstantInt>(cs.getArgument(2))) {
+                        ci->getZExtValue();
+                        //std::cout << "Addr = " << addr << endl;
+                        std::cout << "  Addr OKI" << endl;
+                    }
+                    
+                } else 
+                //
+                // Read
+                //
+                if (!strcmp(basename.c_str(),std::string("4readERKjRj").c_str())) {
+                        
+                    // Not yet supported
+                                        
+                }
+            }  
+        }
+    }
+    
+    return 0;
 }
 
 

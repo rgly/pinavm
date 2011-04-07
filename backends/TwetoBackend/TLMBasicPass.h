@@ -81,6 +81,8 @@ class TLMBasicPass : public ModulePass {
     private:
         Function* lookForWriteFunction(IRModule *module);
         Function* lookForReadFunction(IRModule *module);
+        int replaceCallsInProcess(Process *proc, 
+                    Function *writef, Function *readf);
 
 };
 //============================================================================
