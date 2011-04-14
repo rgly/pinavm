@@ -54,6 +54,7 @@
 #include <utility>
 
 #include "Frontend.hpp"
+#include "IRModule.hpp"
 
 struct SCConstruct;
 struct SCCFactory;
