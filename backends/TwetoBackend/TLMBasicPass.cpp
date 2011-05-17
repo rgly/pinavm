@@ -23,6 +23,7 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/Analysis/Verifier.h"
 
 #include "Port.hpp"
 #include "Channel.hpp"
@@ -39,11 +40,13 @@
 #include "IRModule.hpp"
 #include "SCJit.hpp"
 
+#include "basic.h"
+#include "bus.h"
+
 #include "TLMBasicPass.h"
 
 
 char TLMBasicPass::ID = 0;
-
 
 // =============================================================================
 // TLMBasicPass 
@@ -54,6 +57,18 @@ char TLMBasicPass::ID = 0;
 TLMBasicPass::TLMBasicPass(Frontend *fe) : ModulePass(ID) {
     this->fe = fe; 
     this->elab = fe->getElab();
+    // Initialize function passes
+    Module *mod = this->fe->getLLVMModule();
+    TargetData *target = new TargetData(mod);
+    funPassManager = new FunctionPassManager(mod);
+    funPassManager->add(target);
+    funPassManager->add(createIndVarSimplifyPass());
+    funPassManager->add(createLoopUnrollPass());
+    funPassManager->add(createInstructionCombiningPass());
+    funPassManager->add(createReassociatePass());
+    funPassManager->add(createGVNPass());
+    funPassManager->add(createCFGSimplificationPass());
+    funPassManager->add(createConstantPropagationPass());
 }
 
 
@@ -81,34 +96,32 @@ bool TLMBasicPass::runOnModule(Module &M) {
             std::vector <Port *>::iterator tarIt;
             for (tarIt = targets->begin(); tarIt<targets->end(); tarIt++) {
                 Port *target = *tarIt;
-                if(pr!=target)
-                    if(pr->getChannelID()==target->getChannelID()) {
-                        std::cout << "Bounded : " 
-                        << pr->getName() << " -> " << target->getName()
-                        << endl;
+                if(pr!=target && pr->getChannelID()==target->getChannelID()) {
+                    std::cout << "Bounded : " 
+                    << pr->getName() << " -> " << target->getName()
+                    << std::endl;
 
-                        IRModule *mod = pr->getModule();
-                        Function *writef = lookForWriteFunction(mod);
-                        Function *readf = lookForReadFunction(mod);
-                        vector <Process *> *procs = mod->getProcesses();
-                        if(procs->size()>0) {
-                            std::vector <Process *>::iterator pIt;
-                            for (pIt = procs->begin(); pIt<procs->end(); pIt++) {
-                                Process *proc = *pIt;
-                                std::cout << " proc : " << proc->getName()
-                                << endl;
+                    IRModule *mod = pr->getModule();
+                    Function *writef = lookForWriteFunction(mod);
+                    Function *readf = lookForReadFunction(mod);
+                    vector <Process *> *procs = mod->getProcesses();
+                    if(procs->size()>0) {
+                        std::vector <Process *>::iterator pIt;
+                        for (pIt = procs->begin(); pIt<procs->end(); pIt++) {
+                            Process *proc = *pIt;
+                            std::cout << " proc : " << proc->getName()
+                            << std::endl;
                                 
+                            replaceCallsInProcess(proc, chan, writef, readf);
                                 
-                                replaceCallsInProcess(proc, writef, readf);
-                                
-                            } 
-                        }
+                        } 
                     }
+                }
             }
         }
         
 	}
-    std::cout << "\n===========================================\n\n";
+    std::cout << "===========================================\n\n";
 }
 
 
@@ -118,10 +131,15 @@ bool TLMBasicPass::runOnModule(Module &M) {
 // Replace indirect calls to write() or read() by direct calls 
 // in the given process.
 // =============================================================================
-int TLMBasicPass::replaceCallsInProcess(Process *proc, 
+int TLMBasicPass::replaceCallsInProcess(Process *proc, Channel *chan,
                                         Function *writef, Function *readf) {
    
+    // Get associate function
     Function *procf = proc->getMainFct();
+    // Run preloaded passes on the function to propagate constants
+    funPassManager->run(*procf);
+    verifyFunction(*procf);
+    
     inst_iterator ii;
     for (ii = inst_begin(procf); ii!=inst_end(procf); ii++) {
         Instruction &i = *ii;
@@ -138,15 +156,32 @@ int TLMBasicPass::replaceCallsInProcess(Process *proc,
                 //
                 //if (!strcmp(basename.c_str(),std::string("5writeERKjS1_").c_str())) {
                 std::string calledf("_ZN5basic21initiator_socket_baseILb0EE5writeERKjji");
+                // Candidate for a replacement
                 if (!strcmp(name.c_str(), calledf.c_str())) {
-                
-                    // Candidate for a replacement
+
+                     
+                    std::cout << "    Checking adresses : " << std::endl;
+                   
+                    // Retreive the integer argument by executing 
+                    // the appropriated piece of code
+                    SCJit *scjit = new SCJit(this->fe->getLLVMModule(), this->elab);
+                    scjit->setCurrentProcess(proc);
+                    bool errb = false;
+                    Value *arg = cs.getArgument(1);
+                    Instruction *inst = cs.getInstruction();
+                    int value = scjit->jitInt(procf, inst, arg, &errb);
+                    std::cout << "    Addr = 0x0" << std::hex << value << std::endl;
                     
-                    if(ConstantInt *ci = dyn_cast<ConstantInt>(cs.getArgument(2))) {
-                        ci->getZExtValue();
-                        //std::cout << "Addr = " << addr << endl;
-                        std::cout << "  Addr OKI" << endl;
+                    // Checking address range
+                    Bus *bus = this->elab->getBus(chan);
+                    basic::addr_t a = static_cast<basic::addr_t>(value);
+                    bool addrErr = bus->checkAdressRange(a);
+                    if(!addrErr) {
+                        std::cerr << "no target at address " <<
+                        std::hex << value << std::endl;
+                        return -1;
                     }
+                    
                     
                 } else 
                 //

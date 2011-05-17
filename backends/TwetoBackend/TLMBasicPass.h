@@ -54,7 +54,6 @@
 #include <utility>
 
 #include "Frontend.hpp"
-#include "IRModule.hpp"
 
 struct SCConstruct;
 struct SCCFactory;
@@ -62,6 +61,9 @@ struct SCElab;
 struct Process;
 struct Event;
 struct SCJit;
+struct IRModule;
+struct Channel;
+
 
 using namespace llvm;
 
@@ -73,6 +75,7 @@ class TLMBasicPass : public ModulePass {
     private:
         Frontend *fe;
         SCElab* elab;
+        FunctionPassManager *funPassManager;
 
     public:
         static char ID;
@@ -82,7 +85,7 @@ class TLMBasicPass : public ModulePass {
     private:
         Function* lookForWriteFunction(IRModule *module);
         Function* lookForReadFunction(IRModule *module);
-        int replaceCallsInProcess(Process *proc, 
+        int replaceCallsInProcess(Process *proc, Channel *chan,
                     Function *writef, Function *readf);
 
 };
