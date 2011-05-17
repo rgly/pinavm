@@ -114,8 +114,6 @@ static void tweto_optimize(Frontend * fe, ExecutionEngine *ee,
 	PM->add(createInstructionCombiningPass());
 	/*PM->add(createReassociatePass());
 	PM->add(createGVNPass());*/
-    
-    
     PM->add(new TLMBasicPass(fe)); 
     
 	/**
@@ -253,7 +251,8 @@ tweto_optimize_process(sc_core::SC_ENTRY_FUNC vfct, sc_core::sc_process_host *ho
     } else {
         // Other cases are not supported yet
         std::cerr <<"tweto: error: unsupported function type.\n";
-        abort();
+        return NULL;
+        //abort(); 
     }
     // End of machine-dependent code
     

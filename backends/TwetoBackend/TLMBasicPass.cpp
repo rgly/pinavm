@@ -55,6 +55,7 @@ char TLMBasicPass::ID = 0;
 // 
 // =============================================================================
 TLMBasicPass::TLMBasicPass(Frontend *fe) : ModulePass(ID) {
+    this->optProcCounter = 0;
     this->fe = fe; 
     this->elab = fe->getElab();
     // Initialize function passes
@@ -85,43 +86,50 @@ bool TLMBasicPass::runOnModule(Module &M) {
     vector <Port *> *ports = this->elab->getPorts();
     std::vector <Port *>::iterator portIt;
     for (portIt = ports->begin(); portIt<ports->end(); portIt++) {
-        Port *pr = *portIt;
-        std::cout << "== Port : " << pr->getName() << std::endl;
+        Port *port = *portIt;
+        std::cout << "== Port : " << port->getName() << std::endl;
         // Looking for channel
-        Channel *chan = pr->getChannel();
+        Channel *chan = port->getChannel();
         if(chan!=NULL) {
-            std::cout << "==    " << chan->toString() << std::endl;
+            std::cout << "==  " << chan->toString() << std::endl;
             // Looking for the target port
             vector <Port *> *targets = this->elab->getPorts();
             std::vector <Port *>::iterator tarIt;
             for (tarIt = targets->begin(); tarIt<targets->end(); tarIt++) {
                 Port *target = *tarIt;
-                if(pr!=target && pr->getChannelID()==target->getChannelID()) {
-                    std::cout << "Bounded : " 
-                    << pr->getName() << " -> " << target->getName()
-                    << std::endl;
-
-                    IRModule *mod = pr->getModule();
-                    Function *writef = lookForWriteFunction(mod);
-                    Function *readf = lookForReadFunction(mod);
-                    vector <Process *> *procs = mod->getProcesses();
-                    if(procs->size()>0) {
-                        std::vector <Process *>::iterator pIt;
-                        for (pIt = procs->begin(); pIt<procs->end(); pIt++) {
-                            Process *proc = *pIt;
-                            std::cout << " proc : " << proc->getName()
-                            << std::endl;
-                                
-                            replaceCallsInProcess(proc, chan, writef, readf);
-                                
-                        } 
-                    }
-                }
+                optimize(chan, port, target);
             }
         }
-        
 	}
     std::cout << "===========================================\n\n";
+}
+
+
+// =============================================================================
+// optimize
+// 
+// Optimize all process that use write or read functions
+// =============================================================================
+void TLMBasicPass::optimize(Channel *chan, Port *port, Port *target) {
+    if(port!=target && port->getChannelID()==target->getChannelID()) {
+        std::cout << "      " 
+        << port->getName() << " -> " << target->getName()
+        << std::endl;
+        IRModule *mod = port->getModule();
+        Function *writef = lookForWriteFunction(mod);
+        Function *readf = lookForReadFunction(mod);
+        vector <Process *> *procs = mod->getProcesses();
+        if(procs->size()>0) {
+            // Looking for calls in process
+            std::vector <Process *>::iterator pIt;
+            for (pIt = procs->begin(); pIt<procs->end(); pIt++) {
+                Process *proc = *pIt;
+                std::cout << "      proc : " << proc->getName()
+                << std::endl;
+                replaceCallsInProcess(proc, chan, writef, readf);
+            } 
+        }
+    }
 }
 
 
@@ -149,7 +157,7 @@ int TLMBasicPass::replaceCallsInProcess(Process *proc, Channel *chan,
             if (oldfun!=NULL && !oldfun->isDeclaration()) {
                 std::string name = oldfun->getName();
                 std::string basename = name.substr(name.size()-13,name.size()-1);
-                std::cout << "  Called function : " << name
+                std::cout << "       Called function : " << name
                 << " - " << basename << std::endl;
                 //
                 // Write
@@ -160,9 +168,9 @@ int TLMBasicPass::replaceCallsInProcess(Process *proc, Channel *chan,
                 if (!strcmp(name.c_str(), calledf.c_str())) {
 
                      
-                    std::cout << "    Checking adresses : " << std::endl;
+                    std::cout << "       Checking adresses : ";
                    
-                    // Retreive the integer argument by executing 
+                    // Retreive the argument by executing 
                     // the appropriated piece of code
                     SCJit *scjit = new SCJit(this->fe->getLLVMModule(), this->elab);
                     scjit->setCurrentProcess(proc);
@@ -177,7 +185,7 @@ int TLMBasicPass::replaceCallsInProcess(Process *proc, Channel *chan,
                     basic::addr_t a = static_cast<basic::addr_t>(value);
                     bool addrErr = bus->checkAdressRange(a);
                     if(!addrErr) {
-                        std::cerr << "no target at address " <<
+                        std::cerr << "  no target at address " <<
                         std::hex << value << std::endl;
                         return -1;
                     }
@@ -210,12 +218,12 @@ Function* TLMBasicPass::lookForWriteFunction(IRModule *module) {
     Module *mod = this->fe->getLLVMModule();
     // Reverse mangling
     std::string moduleName = module->getModuleType();
-    std::cout << "Looking for 'write' function in the module "
+    std::cout << "      Looking for 'write' function in the module "
     << moduleName << std::endl;
     std::string name("_ZN"+moduleName.size()+moduleName+"5writeERKjS1_");
     Function *f = mod->getFunction(name);
     if(f!=NULL) {
-        std::cout << "Found 'write' function in the module " 
+        std::cout << "      Found 'write' function in the module " 
         << moduleName << std::endl;
     }
     return f;
@@ -232,13 +240,13 @@ Function* TLMBasicPass::lookForReadFunction(IRModule *module) {
     Module *mod = this->fe->getLLVMModule();
     // Reverse mangling
     std::string moduleName = module->getModuleType();
-    std::cout << "Looking for 'read' function in the module "
+    std::cout << "      Looking for 'read' function in the module "
     << moduleName << std::endl;
 
     std::string name("_ZN"+moduleName.size()+moduleName+"4readERKjRj");    
     Function *f = mod->getFunction(name);
     if(f!=NULL) {
-        std::cout << "Found 'read' function in the module " 
+        std::cout << "      Found 'read' function in the module " 
         << moduleName << std::endl;
     }
     return f;
