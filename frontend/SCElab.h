@@ -27,6 +27,7 @@ struct Process;
 struct Port;
 struct Event;
 struct Channel;
+struct Bus;
 
 using namespace llvm;
 
@@ -38,6 +39,7 @@ class SCElab : public ElabMember
   std::map<sc_core::sc_port_base*, Port*> portsMap;
   std::map<sc_core::sc_event*, Event*> eventsMap;
   std::map<sc_core::sc_interface*, Channel*> channelsMap;
+  std::map<Channel* , Bus*> busMap;
 
   std::map<IRModule*, sc_core::sc_module*> ir2scModules;
   
@@ -64,12 +66,13 @@ class SCElab : public ElabMember
   Process* getProcess(void* processAddr);
   Port* getPort(void* portAddr);
   Event* getEvent(void* eventAddr);
-
+  Bus* getBus(Channel *chan);
+    
+    
   void printElab(int sep, std::string prefix);
   void printIR(SCCFactory* sccfactory);
 
   sc_core::sc_module* getSCModule(IRModule* irmod);
-
 
   int getNumEvents();
   int getNumProcesses();

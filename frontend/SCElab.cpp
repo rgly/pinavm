@@ -37,6 +37,7 @@
 #include "SCElab.h"
 #include "config.h"
 
+
 SCElab::SCElab(Module * llvmModule)
 {
 	this->llvmMod = llvmModule;
@@ -48,6 +49,7 @@ SCElab::~SCElab()
 	this->processMap.clear();
 	this->eventsMap.clear();
 	this->portsMap.clear();
+    this->busMap.clear();
 	this->ir2scModules.clear();
 
 	FUtils::deleteVector < IRModule * >(&this->modules);
@@ -149,8 +151,7 @@ Port * SCElab::trySc_Signal(IRModule * mod,
 			ch = new SimpleChannel((Type*) itfType, variableTypeName);
 			this->channels.push_back(ch);
 			this->channelsMap.insert(this->channelsMap.end(), pair < sc_core::sc_interface *, Channel * >(itf, ch));
-
-			TRACE_4("New channel !\n");
+            TRACE_4("New channel !\n");
 		} else {
 			ch = itM->second;
 		}
@@ -177,7 +178,7 @@ Port * SCElab::trySc_Clock(IRModule * mod,
 		if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
 			ch = new ClockChannel();
 			this->channelsMap.insert(this->channelsMap.end(), pair < sc_core::sc_interface *, Channel * >(itf, ch));
-		} else {
+        } else {
 			ch = itM->second;
 		}
 		theNewPort->addChannel(ch);
@@ -216,6 +217,8 @@ Port * SCElab::tryBasicTarget(IRModule * mod,
 				ch = new BasicChannel(bb->name());
 				this->channelsMap.insert(this->channelsMap.end(),
 							 pair < sc_core::sc_interface *, Channel * >(bb, ch));
+                this->busMap.insert(this->busMap.end(),
+                            pair <Channel * , Bus *>(ch, bb));
 				TRACE_2("BasicChannel bus name " << bb->name() << "\n");
 			} else {
 				ch = itM->second;
@@ -294,6 +297,8 @@ Port * SCElab::tryBasicInitiator(IRModule * mod,
 				ch = new BasicChannel(bb->name());
 				this->channelsMap.insert(this->channelsMap.end(),
 							 pair < sc_core::sc_interface *, Channel * >(bb, ch));
+                this->busMap.insert(this->busMap.end(),
+                            pair <Channel * , Bus *>(ch, bb));
 				TRACE_2("BasicChannel bus name " << bb->name() << "\n");
 			} else {
 				ch = dynamic_cast<BasicChannel *>(itM->second);
@@ -472,6 +477,11 @@ SCElab::getChannels()
 sc_core::sc_module * SCElab::getSCModule(IRModule * irmod)
 {
 	return this->ir2scModules.find(irmod)->second;
+}
+
+Bus *SCElab::getBus(Channel *chan) 
+{
+    return this->busMap.find(chan)->second;
 }
 
 void SCElab::addGlobalVariable(GlobalValue * globalVar)
