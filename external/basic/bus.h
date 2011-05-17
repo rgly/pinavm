@@ -23,7 +23,8 @@ SC_MODULE(Bus), basic::target_module_base,
 		write(const basic::addr_t &a, const basic::data_t &d);
 
 	void map(basic::compatible_socket& port, basic::addr_t start_addr, basic::addr_t size);
-
+    bool checkAdressRange(const basic::addr_t &a);
+        
 private:
 
 	void print_addr_map();

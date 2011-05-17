@@ -91,6 +91,7 @@ Bus::read(const basic::addr_t &a, /* */ basic::data_t& d)
 	return s;
 }
 
+
 tlm::tlm_response_status
 Bus::write(const basic::addr_t &a, const basic::data_t &d)
 {
@@ -117,4 +118,15 @@ Bus::write(const basic::addr_t &a, const basic::data_t &d)
 		initiator.write(a - (*it).first.begin, d, (*it).second);
 
 	return s;
+}
+
+bool 
+Bus::checkAdressRange(const basic::addr_t &a) {
+    addr_map_t::iterator it = addr_map.find(addr_range(a, a));
+    if(it==addr_map.end()) {
+        return true; // not in range
+    } else {
+        return false; // target available
+    }
+
 }
