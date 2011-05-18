@@ -51,6 +51,9 @@
 
 
 char TLMBasicPass::ID = 0;
+const std::string wFunName = "_ZN5basic21initiator_socket_baseILb0EE5writeERKjji";
+const std::string rFunName = "_ZN5basic21initiator_socket_baseXXXXXXXXXXXXXXXXXX";
+
 
 // =============================================================================
 // TLMBasicPass 
@@ -60,6 +63,7 @@ char TLMBasicPass::ID = 0;
 // =============================================================================
 TLMBasicPass::TLMBasicPass(Frontend *fe) : ModulePass(ID) {
     this->callOptCounter = 0;
+    this->rwCallsCounter = 0;
     this->fe = fe; 
     this->elab = fe->getElab();
     // Initialize function passes
@@ -106,6 +110,8 @@ bool TLMBasicPass::runOnModule(Module &M) {
             }
         }
 	}
+    std::cout << "\n Pass report - " << callOptCounter 
+    << "/" << rwCallsCounter << " - opt/total" << std::endl;
     std::cout << "===========================================\n\n";
 }
 
@@ -154,7 +160,6 @@ void TLMBasicPass::replaceCallsInProcess(Process *proc, Channel *chan,
     // Run preloaded passes on the function to propagate constants
     funPassManager->run(*procf);
     verifyFunction(*procf);
-    
     std::map<CallSite,Instruction*> callsToReplace;
     
     inst_iterator ii;
@@ -162,20 +167,14 @@ void TLMBasicPass::replaceCallsInProcess(Process *proc, Channel *chan,
         Instruction &i = *ii;
         CallSite cs = CallSite::get(&i);
         if (cs.getInstruction()) {
+            // Candidate for a replacement
             Function *oldfun = cs.getCalledFunction();
-            if (writef!=NULL && oldfun!=NULL && !oldfun->isDeclaration()) {
+            if (oldfun!=NULL && !oldfun->isDeclaration()) {
                 std::string name = oldfun->getName();
-                std::string basename = name.substr(name.size()-13,name.size()-1);
-                std::cout << "       Called function : " << name
-                << " - " << basename << std::endl;
-                //
-                // Write
-                //
-                //if (!strcmp(basename.c_str(),std::string("5writeERKjS1_").c_str())) {
-                std::string calledf("_ZN5basic21initiator_socket_baseILb0EE5writeERKjji");
-                // Candidate for a replacement
-                if (!strcmp(name.c_str(), calledf.c_str())) {
-                    
+                
+                // === Write ===
+                if (writef!=NULL && !strcmp(name.c_str(), wFunName.c_str())) {
+                    rwCallsCounter++;
                     std::cout << "       Checking adress : ";
                     // Retreive the argument by executing 
                     // the appropriated piece of code
@@ -186,7 +185,6 @@ void TLMBasicPass::replaceCallsInProcess(Process *proc, Channel *chan,
                     Instruction *inst = cs.getInstruction();
                     int value = scjit->jitInt(procf, inst, arg, &errb);
                     std::cout << "    Addr = 0x0" << std::hex << value << std::endl;
-                    
                     
                     // Checking adress alignment
                     if(value % sizeof(basic::data_t)) {
@@ -219,23 +217,22 @@ void TLMBasicPass::replaceCallsInProcess(Process *proc, Channel *chan,
                         BasicBlock *bb1 = inst->getNormalDest();
                         BasicBlock *bb2 = inst->getUnwindDest();
                         InvokeInst *newinvoke =
-                        InvokeInst::Create(writef,bb1,bb2,argsKeep,argsKeepEnd,"",inst);
+                        InvokeInst::Create(writef,bb1,bb2,
+                                           argsKeep,argsKeepEnd,"",inst);
                         callsToReplace[cs] = newinvoke;
                     } else {
                         CallInst *newcall =
                         CallInst::Create(writef, argsKeep,
                                          argsKeepEnd,"",cs.getInstruction());
                         callsToReplace[cs] = newcall;
-                        
                     }
-                    callOptCounter++;
                     
                 } else 
-                //
-                // Read
-                //
-                if (readf!=NULL && !strcmp(basename.c_str(),std::string("4readERKjRj").c_str())) {
-                        
+                    
+                // === Read ===
+                if (readf!=NULL && !strcmp(name.c_str(), rFunName.c_str())) {
+                    rwCallsCounter++;
+                    
                     // Not yet supported
                                         
                 }
@@ -265,14 +262,13 @@ void TLMBasicPass::replaceCallsInProcess(Process *proc, Channel *chan,
         }
         callOptCounter++;
     }
-    
 }
 
 
 // =============================================================================
 // lookForWriteFunction
 // 
-// Look for an write function definition 
+// Look for a write function definition 
 // in the given SystemC module
 // =============================================================================
 Function* TLMBasicPass::lookForWriteFunction(IRModule *module) {
@@ -292,7 +288,7 @@ Function* TLMBasicPass::lookForWriteFunction(IRModule *module) {
 // =============================================================================
 // lookForWriteFunction
 // 
-// Look for an read function definition 
+// Look for a read function definition 
 // in the given SystemC module
 // =============================================================================
 Function* TLMBasicPass::lookForReadFunction(IRModule *module) {

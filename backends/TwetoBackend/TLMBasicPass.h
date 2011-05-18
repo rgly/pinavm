@@ -74,6 +74,7 @@ class TLMBasicPass : public ModulePass {
     
     private:
         int callOptCounter;
+        int rwCallsCounter;
         Frontend *fe;
         SCElab* elab;
         FunctionPassManager *funPassManager;

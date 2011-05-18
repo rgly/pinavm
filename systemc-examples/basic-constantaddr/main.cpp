@@ -25,10 +25,6 @@ using namespace sc_core;
 struct initiator : sc_module {
     basic::initiator_socket<initiator> socket;
     void thread(void) {
-        // BUG with serveral functions :
-        /*socket.write(2, 1);
-        socket.write(4, 2);
-        socket.write(8, 3);*/
         socket.write(16, 4);
     }
     SC_CTOR(initiator) {
