@@ -73,7 +73,7 @@ class TLMBasicPass : public ModulePass {
 
     
     private:
-        int optProcCounter;
+        int callOptCounter;
         Frontend *fe;
         SCElab* elab;
         FunctionPassManager *funPassManager;
@@ -87,7 +87,7 @@ class TLMBasicPass : public ModulePass {
     void optimize(Channel *chan, Port *port, Port *target);
         Function* lookForWriteFunction(IRModule *module);
         Function* lookForReadFunction(IRModule *module);
-        int replaceCallsInProcess(Process *proc, Channel *chan,
+        void replaceCallsInProcess(Process *proc, Channel *chan,
                     Function *writef, Function *readf);
 
 };

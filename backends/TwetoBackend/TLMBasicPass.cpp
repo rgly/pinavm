@@ -59,7 +59,7 @@ char TLMBasicPass::ID = 0;
 // 
 // =============================================================================
 TLMBasicPass::TLMBasicPass(Frontend *fe) : ModulePass(ID) {
-    this->optProcCounter = 0;
+    this->callOptCounter = 0;
     this->fe = fe; 
     this->elab = fe->getElab();
     // Initialize function passes
@@ -86,7 +86,7 @@ TLMBasicPass::TLMBasicPass(Frontend *fe) : ModulePass(ID) {
 bool TLMBasicPass::runOnModule(Module &M) {
     
     std::cout << "\n============== TLM Basic Pass =============\n";
-    // Looking for ports
+    // Getting ports
     vector <Port *> *ports = this->elab->getPorts();
     std::vector <Port *>::iterator portIt;
     for (portIt = ports->begin(); portIt<ports->end(); portIt++) {
@@ -101,7 +101,8 @@ bool TLMBasicPass::runOnModule(Module &M) {
             std::vector <Port *>::iterator tarIt;
             for (tarIt = targets->begin(); tarIt<targets->end(); tarIt++) {
                 Port *target = *tarIt;
-                optimize(chan, port, target);
+                if(port!=target && port->getChannelID()==target->getChannelID())
+                    optimize(chan, port, target);
             }
         }
 	}
@@ -115,25 +116,26 @@ bool TLMBasicPass::runOnModule(Module &M) {
 // Optimize all process that use write or read functions
 // =============================================================================
 void TLMBasicPass::optimize(Channel *chan, Port *port, Port *target) {
-    if(port!=target && port->getChannelID()==target->getChannelID()) {
-        std::cout << "      " 
-        << port->getName() << " -> " << target->getName()
-        << std::endl;
+    std::cout << "      " 
+    << port->getName() << " -> " << target->getName()
+    << std::endl;
         
-        IRModule *mod = port->getModule();
-        Function *writef = lookForWriteFunction(mod);
-        Function *readf = lookForReadFunction(mod);
-        vector <Process *> *procs = mod->getProcesses();
-        if(procs->size()>0) {
-            // Looking for calls in process
-            std::vector <Process *>::iterator pIt;
-            for (pIt = procs->begin(); pIt<procs->end(); pIt++) {
-                Process *proc = *pIt;
-                std::cout << "      proc : " << proc->getName()
-                << std::endl;
-                replaceCallsInProcess(proc, chan, writef, readf);
-            } 
-        }
+    // Looking for declarations of functions
+    IRModule *targetMod = target->getModule();
+    Function *writef = lookForWriteFunction(targetMod);
+    Function *readf = lookForReadFunction(targetMod);
+    
+    IRModule *initiatorMod = port->getModule();
+    vector <Process *> *procs = initiatorMod->getProcesses();
+    if(procs->size()>0) {
+        // Looking for calls in process
+        std::vector <Process *>::iterator pIt;
+        for (pIt = procs->begin(); pIt<procs->end(); pIt++) {
+            Process *proc = *pIt;
+            std::cout << "      Process : " << proc->getName()
+            << std::endl;
+            replaceCallsInProcess(proc, chan, writef, readf);
+        } 
     }
 }
 
@@ -144,7 +146,7 @@ void TLMBasicPass::optimize(Channel *chan, Port *port, Port *target) {
 // Replace indirect calls to write() or read() by direct calls 
 // in the given process.
 // =============================================================================
-int TLMBasicPass::replaceCallsInProcess(Process *proc, Channel *chan,
+void TLMBasicPass::replaceCallsInProcess(Process *proc, Channel *chan,
                                         Function *writef, Function *readf) {
    
     // Get associate function
@@ -152,6 +154,8 @@ int TLMBasicPass::replaceCallsInProcess(Process *proc, Channel *chan,
     // Run preloaded passes on the function to propagate constants
     funPassManager->run(*procf);
     verifyFunction(*procf);
+    
+    std::map<CallSite,Instruction*> callsToReplace;
     
     inst_iterator ii;
     for (ii = inst_begin(procf); ii!=inst_end(procf); ii++) {
@@ -172,7 +176,7 @@ int TLMBasicPass::replaceCallsInProcess(Process *proc, Channel *chan,
                 // Candidate for a replacement
                 if (!strcmp(name.c_str(), calledf.c_str())) {
                     
-                    std::cout << "       Checking adresses : ";
+                    std::cout << "       Checking adress : ";
                     // Retreive the argument by executing 
                     // the appropriated piece of code
                     SCJit *scjit = new SCJit(this->fe->getLLVMModule(), this->elab);
@@ -188,7 +192,7 @@ int TLMBasicPass::replaceCallsInProcess(Process *proc, Channel *chan,
                     if(value % sizeof(basic::data_t)) {
                         std::cerr << "  unaligned write : " <<
                         std::hex << value << std::endl;
-                        return -1;
+                        abort();
                     }
                     
                     // Checking address range
@@ -198,37 +202,33 @@ int TLMBasicPass::replaceCallsInProcess(Process *proc, Channel *chan,
                     if(!addrErr) {
                         std::cerr << "  no target at address " <<
                         std::hex << value << std::endl;
-                        return -1;
+                        abort();
                     }
                     
-                    // Replace the call
+                    // Save calls to be replaced
                     const unsigned n = oldfun->getFunctionType()->getNumParams();
-                    Value **args_keep = new Value*[n];
-                    Value **args_keep_end = args_keep;
+                    Value **argsKeep = new Value*[n];
+                    Value **argsKeepEnd = argsKeep;
                     for (unsigned i = 0; i!=n; ++i) {
-                        *args_keep_end = cs.getArgument(i);
-                        ++args_keep_end;
+                        *argsKeepEnd = cs.getArgument(i);
+                        ++argsKeepEnd;
                     }
                     if (cs.isInvoke()) {
-                        InvokeInst *i = dyn_cast<InvokeInst>(cs.getInstruction());
-                        assert(i);
-                        BasicBlock *bb1 = i->getNormalDest();
-                        BasicBlock *bb2 = i->getUnwindDest();
+                        InvokeInst *inst = dyn_cast<InvokeInst>(cs.getInstruction());
+                        assert(inst);
+                        BasicBlock *bb1 = inst->getNormalDest();
+                        BasicBlock *bb2 = inst->getUnwindDest();
                         InvokeInst *newinvoke =
-                        InvokeInst::Create(writef,bb1,bb2,args_keep,args_keep_end,"",i);
-                        BasicBlock::iterator ii_r(i);
-                        ReplaceInstWithValue(i->getParent()->getInstList(),
-                                             ii_r, newinvoke);
+                        InvokeInst::Create(writef,bb1,bb2,argsKeep,argsKeepEnd,"",inst);
+                        callsToReplace[cs] = newinvoke;
                     } else {
                         CallInst *newcall =
-                        CallInst::Create(writef,args_keep,
-                                         args_keep_end,"",cs.getInstruction());
-                        BasicBlock::iterator ii_r(cs.getInstruction());
-                        ReplaceInstWithValue(cs.getInstruction()->getParent()->getInstList(), 
-                                             ii_r, newcall);
+                        CallInst::Create(writef, argsKeep,
+                                         argsKeepEnd,"",cs.getInstruction());
+                        callsToReplace[cs] = newcall;
+                        
                     }
-                    optProcCounter++;
-                    std::cout << "       Call optimized (^_^)" << std::endl;
+                    callOptCounter++;
                     
                 } else 
                 //
@@ -243,7 +243,29 @@ int TLMBasicPass::replaceCallsInProcess(Process *proc, Channel *chan,
         }
     }
     
-    return 0;
+    // Replace calls
+    map<CallSite,Instruction*>::const_iterator
+    mit (callsToReplace.begin()),
+    mend(callsToReplace.end());
+    for(;mit!=mend;++mit) {
+        CallSite cs = mit->first;
+        Instruction *inst = mit->second;
+        if (cs.isInvoke()) {
+            InvokeInst *old = dyn_cast<InvokeInst>(cs.getInstruction());
+            InvokeInst *newi = dyn_cast<InvokeInst>(inst);
+            assert(old);
+            BasicBlock::iterator it(old);
+            ReplaceInstWithValue(old->getParent()->getInstList(),it, newi);
+            std::cout << "       Invoke optimized (^_^)" << std::endl;
+        } else {
+            BasicBlock::iterator it(cs.getInstruction());
+            ReplaceInstWithInst(cs.getInstruction()->getParent()->getInstList(), 
+                                it, inst);
+            std::cout << "       Call optimized (^_^)" << std::endl;
+        }
+        callOptCounter++;
+    }
+    
 }
 
 
@@ -256,10 +278,7 @@ int TLMBasicPass::replaceCallsInProcess(Process *proc, Channel *chan,
 Function* TLMBasicPass::lookForWriteFunction(IRModule *module) {
     Module *mod = this->fe->getLLVMModule();
     // Reverse mangling
-    std::string moduleName = module->getModuleType();
-    std::cout << "      Looking for 'write' function in the module "
-    << moduleName << std::endl;
-    
+    std::string moduleName = module->getModuleType();    
     std::string name("_ZN"+moduleName+"5writeERKjS1_");
     Function *f = mod->getFunction(name);
     if(f!=NULL) {
@@ -280,9 +299,6 @@ Function* TLMBasicPass::lookForReadFunction(IRModule *module) {
     Module *mod = this->fe->getLLVMModule();
     // Reverse mangling
     std::string moduleName = module->getModuleType();
-    std::cout << "      Looking for 'read' function in the module "
-    << moduleName << std::endl;
-
     std::string name("_ZN"+moduleName+"4readERKjRj");    
     Function *f = mod->getFunction(name);
     if(f!=NULL) {
