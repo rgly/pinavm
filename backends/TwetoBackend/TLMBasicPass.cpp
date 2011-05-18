@@ -183,6 +183,14 @@ int TLMBasicPass::replaceCallsInProcess(Process *proc, Channel *chan,
                     int value = scjit->jitInt(procf, inst, arg, &errb);
                     std::cout << "    Addr = 0x0" << std::hex << value << std::endl;
                     
+                    
+                    // Checking adress alignment
+                    if(value % sizeof(basic::data_t)) {
+                        std::cerr << "  unaligned write : " <<
+                        std::hex << value << std::endl;
+                        return -1;
+                    }
+                    
                     // Checking address range
                     Bus *bus = this->elab->getBus(chan);
                     basic::addr_t a = static_cast<basic::addr_t>(value);
