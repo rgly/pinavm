@@ -24,6 +24,10 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Analysis/Verifier.h"
+#include <llvm/Transforms/Utils/BasicBlockUtils.h>
+#include <llvm/Support/IRBuilder.h>
+#include <llvm/Support/InstIterator.h>
+#include <llvm/Transforms/Utils/Cloning.h>
 
 #include "Port.hpp"
 #include "Channel.hpp"
@@ -115,6 +119,7 @@ void TLMBasicPass::optimize(Channel *chan, Port *port, Port *target) {
         std::cout << "      " 
         << port->getName() << " -> " << target->getName()
         << std::endl;
+        
         IRModule *mod = port->getModule();
         Function *writef = lookForWriteFunction(mod);
         Function *readf = lookForReadFunction(mod);
@@ -154,7 +159,7 @@ int TLMBasicPass::replaceCallsInProcess(Process *proc, Channel *chan,
         CallSite cs = CallSite::get(&i);
         if (cs.getInstruction()) {
             Function *oldfun = cs.getCalledFunction();
-            if (oldfun!=NULL && !oldfun->isDeclaration()) {
+            if (writef!=NULL && oldfun!=NULL && !oldfun->isDeclaration()) {
                 std::string name = oldfun->getName();
                 std::string basename = name.substr(name.size()-13,name.size()-1);
                 std::cout << "       Called function : " << name
@@ -166,10 +171,8 @@ int TLMBasicPass::replaceCallsInProcess(Process *proc, Channel *chan,
                 std::string calledf("_ZN5basic21initiator_socket_baseILb0EE5writeERKjji");
                 // Candidate for a replacement
                 if (!strcmp(name.c_str(), calledf.c_str())) {
-
-                     
+                    
                     std::cout << "       Checking adresses : ";
-                   
                     // Retreive the argument by executing 
                     // the appropriated piece of code
                     SCJit *scjit = new SCJit(this->fe->getLLVMModule(), this->elab);
@@ -190,12 +193,40 @@ int TLMBasicPass::replaceCallsInProcess(Process *proc, Channel *chan,
                         return -1;
                     }
                     
+                    // Replace the call
+                    const unsigned n = oldfun->getFunctionType()->getNumParams();
+                    Value **args_keep = new Value*[n];
+                    Value **args_keep_end = args_keep;
+                    for (unsigned i = 0; i!=n; ++i) {
+                        *args_keep_end = cs.getArgument(i);
+                        ++args_keep_end;
+                    }
+                    if (cs.isInvoke()) {
+                        InvokeInst *i = dyn_cast<InvokeInst>(cs.getInstruction());
+                        assert(i);
+                        BasicBlock *bb1 = i->getNormalDest();
+                        BasicBlock *bb2 = i->getUnwindDest();
+                        InvokeInst *newinvoke =
+                        InvokeInst::Create(writef,bb1,bb2,args_keep,args_keep_end,"",i);
+                        BasicBlock::iterator ii_r(i);
+                        ReplaceInstWithValue(i->getParent()->getInstList(),
+                                             ii_r, newinvoke);
+                    } else {
+                        CallInst *newcall =
+                        CallInst::Create(writef,args_keep,
+                                         args_keep_end,"",cs.getInstruction());
+                        BasicBlock::iterator ii_r(cs.getInstruction());
+                        ReplaceInstWithValue(cs.getInstruction()->getParent()->getInstList(), 
+                                             ii_r, newcall);
+                    }
+                    optProcCounter++;
+                    std::cout << "       Call optimized (^_^)" << std::endl;
                     
                 } else 
                 //
                 // Read
                 //
-                if (!strcmp(basename.c_str(),std::string("4readERKjRj").c_str())) {
+                if (readf!=NULL && !strcmp(basename.c_str(),std::string("4readERKjRj").c_str())) {
                         
                     // Not yet supported
                                         
@@ -220,7 +251,8 @@ Function* TLMBasicPass::lookForWriteFunction(IRModule *module) {
     std::string moduleName = module->getModuleType();
     std::cout << "      Looking for 'write' function in the module "
     << moduleName << std::endl;
-    std::string name("_ZN"+moduleName.size()+moduleName+"5writeERKjS1_");
+    
+    std::string name("_ZN"+moduleName+"5writeERKjS1_");
     Function *f = mod->getFunction(name);
     if(f!=NULL) {
         std::cout << "      Found 'write' function in the module " 
@@ -243,7 +275,7 @@ Function* TLMBasicPass::lookForReadFunction(IRModule *module) {
     std::cout << "      Looking for 'read' function in the module "
     << moduleName << std::endl;
 
-    std::string name("_ZN"+moduleName.size()+moduleName+"4readERKjRj");    
+    std::string name("_ZN"+moduleName+"4readERKjRj");    
     Function *f = mod->getFunction(name);
     if(f!=NULL) {
         std::cout << "      Found 'read' function in the module " 
