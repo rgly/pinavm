@@ -63,6 +63,7 @@ struct Event;
 struct SCJit;
 struct IRModule;
 struct Channel;
+struct Port;
 
 
 using namespace llvm;
