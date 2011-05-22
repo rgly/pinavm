@@ -61,7 +61,6 @@ struct SCElab;
 struct Process;
 struct Event;
 struct SCJit;
-struct IRModule;
 struct Channel;
 struct Port;
 
@@ -86,11 +85,17 @@ class TLMBasicPass : public ModulePass {
         bool runOnModule(Module &M);
     
     private:
-    void optimize(Channel *chan, Port *port, Port *target);
-        Function* lookForWriteFunction(IRModule *module);
-        Function* lookForReadFunction(IRModule *module);
-        void replaceCallsInProcess(Process *proc, Channel *chan,
-                    Function *writef, Function *readf);
+        void optimize(basic::compatible_socket* target, 
+                      sc_core::sc_module *initiatorMod, 
+                      sc_core::sc_module *targetMod, 
+                      Bus *bus);
+        Function* lookForWriteFunction(sc_core::sc_module *module);
+        Function* lookForReadFunction(sc_core::sc_module *module);
+        void replaceCallsInProcess(basic::compatible_socket* target, 
+                                   sc_core::sc_module *mod, 
+                                   sc_core::sc_process_b *proc,
+                                   Function *writef, Function *readf, 
+                                   Bus *bus);
 
 };
 //============================================================================
