@@ -24,6 +24,8 @@ SC_MODULE(Bus), basic::target_module_base,
 
 	void map(basic::compatible_socket& port, basic::addr_t start_addr, basic::addr_t size);
     bool checkAdressRange(const basic::addr_t &a);
+    bool checkAdressConcordance(basic::compatible_socket *target, 
+                                const basic::addr_t &a);
         
 private:
 

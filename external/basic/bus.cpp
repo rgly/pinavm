@@ -130,3 +130,23 @@ Bus::checkAdressRange(const basic::addr_t &a) {
     }
 
 }
+
+bool
+Bus::checkAdressConcordance(basic::compatible_socket *target, 
+                            const basic::addr_t &a) {
+    
+    addr_range range = addr_range(a, a);    
+    
+    for(port_map_t::iterator it = port_map.begin(); it != port_map.end(); ++it) {
+        addr_range current = (*it).second;
+        basic::compatible_socket *socket = (*it).first; 
+        if(!(current<range) && !(range<current) && socket==target) {
+            std::cout << "         range : "
+            << "[" << current.begin << "-" << current.end << "["
+            << std::endl;
+            return true;
+        }
+    }
+    return false;
+}
+
