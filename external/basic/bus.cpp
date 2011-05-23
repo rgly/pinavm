@@ -55,8 +55,8 @@ void Bus::end_of_elaboration() {
 void Bus::print_addr_map() {
 	// iterate through port maps
 	for(addr_map_t::iterator i = addr_map.begin(); i != addr_map.end(); ++i) {
-		std::cout << name() << ": range [" << std::hex 
-			  << (*i).first.begin << "-" << (*i).first.end + 1 
+		std::cout << name() << ": range [0x" << std::hex 
+			  << (*i).first.begin << "-0x" << (*i).first.end + 1 
 			  << "[ is mapped to target '" 
 			  << dynamic_cast<basic::compatible_socket*>
 			(initiator[((*i).second)])->name() << "'\n";
@@ -141,8 +141,8 @@ Bus::checkAdressConcordance(basic::compatible_socket *target,
         addr_range current = (*it).second;
         basic::compatible_socket *socket = (*it).first; 
         if(!(current<range) && !(range<current) && socket==target) {
-            std::cout << "         range : "
-            << "[" << current.begin << "-" << current.end << "["
+            std::cout << "         range : " << std::hex
+            << "[0x" << current.begin << "-0x" << current.end << "["
             << std::endl;
             return true;
         }
