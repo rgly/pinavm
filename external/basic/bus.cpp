@@ -66,6 +66,10 @@ void Bus::print_addr_map() {
 tlm::tlm_response_status
 Bus::read(const basic::addr_t &a, /* */ basic::data_t& d)
 {
+    
+    // Testing the bypass
+    std::cout << "[!] CALL THE BUS'S READ FUNCTION [!]" << std::endl;
+    
 	if(a % sizeof(basic::data_t)) {
 		SC_REPORT_ERROR(name(),
 				"unaligned read");
@@ -95,6 +99,10 @@ Bus::read(const basic::addr_t &a, /* */ basic::data_t& d)
 tlm::tlm_response_status
 Bus::write(const basic::addr_t &a, const basic::data_t &d)
 {
+    
+    // Testing the bypass
+    std::cout << "[!] CALL THE BUS'S WRITE FUNCTION [!]" << std::endl;
+    
 	if(a % sizeof(basic::data_t)) {
 		SC_REPORT_ERROR(name(),
 				"unaligned write");
