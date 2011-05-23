@@ -28,14 +28,14 @@ struct initiator : sc_module {
         
         // Send to Bob
         basic::addr_t addr1 = 4;
-        cout << "Writing at adress " << addr1 << endl;
+        cout << "Writing to Bob at address " << addr1 << endl;
         for (basic::data_t val = 1; val <= 10; val++) {
             val++;
             socket.write(addr1, val);
         }
         // Send to Leo
         basic::addr_t addr2 = 60;
-        cout << "Writing at adress " << addr2 << endl;
+        cout << "Writing to Leo at address " << addr2 << endl;
         for (basic::data_t val = 1; val <= 10; val++) {
             val++;
             socket.write(addr2, val);
@@ -50,7 +50,7 @@ struct target : sc_module, basic::target_module_base {
     basic::target_socket<target> socket;
     tlm::tlm_response_status write(const basic::addr_t &a,
                                    const basic::data_t &d) {
-        cout << "j'ai reçu : " << d << endl;
+        cout << name() << " à reçu : " << d << endl;
         return tlm::TLM_OK_RESPONSE;
     }
     tlm::tlm_response_status read (const basic::addr_t &a,
