@@ -71,7 +71,7 @@ namespace basic {
       tlm::tlm_response_status write(const addr_t& addr, data_t data, int port = 0) {
          
           // Testing the bypass
-          std::cout << "[!] CALL THE BUS'S WRITE FUNCTION [!]" << std::endl;
+          std::cout << "[!] CALL THE INITIATOR'S WRITE FUNCTION [!]" << std::endl;
           
           tlm::tlm_generic_payload* trans;
 
