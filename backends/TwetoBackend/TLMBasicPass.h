@@ -53,6 +53,9 @@
 #include <iostream>
 #include <utility>
 
+#include "basic.h"
+#include "bus.h"
+
 #include "Frontend.hpp"
 
 struct SCConstruct;
@@ -78,6 +81,7 @@ class TLMBasicPass : public ModulePass {
         Frontend *fe;
         SCElab* elab;
         FunctionPassManager *funPassManager;
+        Module *llvmMod;
 
     public:
         static char ID;
@@ -92,10 +96,11 @@ class TLMBasicPass : public ModulePass {
         Function* lookForWriteFunction(sc_core::sc_module *module);
         Function* lookForReadFunction(sc_core::sc_module *module);
         void replaceCallsInProcess(basic::compatible_socket* target, 
-                                   sc_core::sc_module *mod, 
-                                   sc_core::sc_process_b *proc,
-                                   Function *writef, Function *readf, 
-                                   Bus *bus);
+                          sc_core::sc_module *initiatorMod, 
+                          sc_core::sc_module *targetMod,
+                          sc_core::sc_process_b *proc,
+                          Function *writef, Function *readf, 
+                          Bus *bus);
 
 };
 //============================================================================

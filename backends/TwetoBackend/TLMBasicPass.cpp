@@ -74,18 +74,6 @@ TLMBasicPass::TLMBasicPass(Frontend *fe) : ModulePass(ID) {
     this->rwCallsCounter = 0;
     this->fe = fe; 
     this->elab = fe->getElab();
-    // Initialize function passes
-    Module *mod = this->fe->getLLVMModule();
-    TargetData *target = new TargetData(mod);
-    funPassManager = new FunctionPassManager(mod);
-    funPassManager->add(target);
-    funPassManager->add(createIndVarSimplifyPass());
-    funPassManager->add(createLoopUnrollPass());
-    funPassManager->add(createInstructionCombiningPass());
-    funPassManager->add(createReassociatePass());
-    funPassManager->add(createGVNPass());
-    funPassManager->add(createCFGSimplificationPass());
-    funPassManager->add(createConstantPropagationPass());
 }
 
 
@@ -98,7 +86,19 @@ TLMBasicPass::TLMBasicPass(Frontend *fe) : ModulePass(ID) {
 bool TLMBasicPass::runOnModule(Module &M) {
     
     std::cout << "\n============== TLM Basic Pass =============\n";
-
+    this->llvmMod = &M;
+    // Initialize function passes
+    TargetData *target = new TargetData(this->llvmMod);
+    funPassManager = new FunctionPassManager(this->llvmMod);
+    funPassManager->add(target);
+    funPassManager->add(createIndVarSimplifyPass());
+    funPassManager->add(createLoopUnrollPass());
+    funPassManager->add(createInstructionCombiningPass());
+    funPassManager->add(createReassociatePass());
+    funPassManager->add(createGVNPass());
+    funPassManager->add(createCFGSimplificationPass());
+    funPassManager->add(createConstantPropagationPass());
+    
     // Modules
     vector < sc_core::sc_module * >modules =
     sc_core::sc_get_curr_simcontext()->get_module_registry()->m_module_vec;
@@ -153,10 +153,16 @@ bool TLMBasicPass::runOnModule(Module &M) {
             }
 		}
 	}
+
+    // Check if the module is corrupt
+    verifyModule(*this->llvmMod);
+    
     std::cout << "\n Pass report - " << callOptCounter 
     << "/" << "?" << " - opt/total" << std::endl;
-    
     std::cout << "===========================================\n\n";
+    
+    // TODO : handle false case
+    return true;
 }
 
 
@@ -178,17 +184,21 @@ void TLMBasicPass::optimize(basic::compatible_socket* target,
     sc_core::sc_process_table * processes = 
     initiatorMod->sc_get_curr_simcontext()->m_process_table;
     sc_core::sc_thread_handle thread_p;
-    for (thread_p = processes->thread_q_head(); thread_p; thread_p = thread_p->next_exist()) {
+    for (thread_p = processes->thread_q_head(); 
+         thread_p; thread_p = thread_p->next_exist()) {
         sc_core::sc_process_b *proc = thread_p;
         std::cout << "      Replace in thread : " << proc << std::endl;
-        replaceCallsInProcess(target, initiatorMod, proc, writef, readf, bus);
+        replaceCallsInProcess(target, initiatorMod, targetMod,
+                              proc, writef, readf, bus);
     }
     sc_core::sc_method_handle method_p;
-    for (method_p = processes->method_q_head(); method_p; method_p = method_p->next_exist()) {
+    for (method_p = processes->method_q_head(); 
+         method_p; method_p = method_p->next_exist()) {
         //sc_core::sc_method_process *proc = method_p;
         sc_core::sc_process_b *proc = method_p;
         std::cout << "      Replace in method : " << proc << std::endl;
-        replaceCallsInProcess(target, initiatorMod, proc, writef, readf, bus);
+        replaceCallsInProcess(target, initiatorMod, targetMod, 
+                              proc, writef, readf, bus);
     }
     
 }
@@ -201,23 +211,22 @@ void TLMBasicPass::optimize(basic::compatible_socket* target,
 // in the given process.
 // =============================================================================
 void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target, 
-                                         sc_core::sc_module *mod, 
+                                         sc_core::sc_module *initiatorMod, 
+                                         sc_core::sc_module *targetMod,
                                          sc_core::sc_process_b *proc,
                                          Function *writef, Function *readf, 
                                          Bus *bus) {
    
     // Get associate function
     std::string fctName = proc->func_process;
-	std::string modType = typeid(*mod).name();
-	std::string mainFctName = "_ZN" + modType + utostr(fctName.size()) + fctName + "Ev";
-	Function *procf = this->fe->getLLVMModule()->getFunction(mainFctName);
+	std::string modType = typeid(*initiatorMod).name();
+	std::string mainFctName = "_ZN" + modType + 
+    utostr(fctName.size()) + fctName + "Ev";
+	Function *procf = this->llvmMod->getFunction(mainFctName);
+    if (procf==NULL)
+        return;
     
-    // Run preloaded passes on the function to propagate constants
-    //funPassManager->run(*procf);
-    //verifyFunction(*procf);
-    
-    
-    std::map<CallSite,Instruction*> callsToReplace;
+    std::map<Instruction*,Instruction*> callsToReplace;
     
     inst_iterator ii;
     for (ii = inst_begin(procf); ii!=inst_end(procf); ii++) {
@@ -231,23 +240,25 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                 
                 // === Write ===
                 if (writef!=NULL && !strcmp(name.c_str(), wFunName.c_str())) {
+                    
+                    Instruction *oldcall = cs.getInstruction();
                     std::cout << "       Checking adress : ";
                     // Retreive the argument by executing 
                     // the appropriated piece of code
-                    SCJit *scjit = new SCJit(this->fe->getLLVMModule(), this->elab);
+                    SCJit *scjit = new SCJit(this->llvmMod, this->elab);
                     Process *irProc = this->elab->getProcess(proc);
                     scjit->setCurrentProcess(irProc);
                     bool errb = false;
                     Value *arg = cs.getArgument(1);
-                    Instruction *inst = cs.getInstruction();
-                    int value = scjit->jitInt(procf, inst, arg, &errb);
+                    int value = scjit->jitInt(procf, oldcall, arg, &errb);
                     std::cout << "0x" << std::hex << value << std::endl;
                     basic::addr_t a = static_cast<basic::addr_t>(value);
                     
                     // Checking adress and target concordance
                     bool concordErr = bus->checkAdressConcordance(target, a);
                     if(!concordErr) {
-                        std::cout << "       return, no concordances!" << std::endl;
+                        std::cout << "       return, no concordances!" 
+                        << std::endl;
                         return;
                     }
                     
@@ -265,11 +276,44 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                         std::hex << value << std::endl;
                         abort();
                     }
-                     
-                    // Resolve the undirect call
-                    cs.setCalledFunction(writef);
-                    callOptCounter++;
-                    std::cout << "       Call optimized (^_^)" << std::endl;
+                    
+                    // Retreive a pointer to target module 
+                    //  %1 = module
+                    //  %2 = inttoptr i64 %1 to %struct.target*
+                    const FunctionType *writeFunType = writef->getFunctionType();  
+                    const Type *targetType = writeFunType->getParamType(0);
+                    LLVMContext &context = getGlobalContext();
+                    const IntegerType *i64 = Type::getInt64Ty(context);
+                    ConstantInt *targetModVal =
+                    ConstantInt::getSigned(i64,
+                        *reinterpret_cast<uint64_t*>(targetMod));
+                    IntToPtrInst *structTarget = 
+                        new IntToPtrInst(targetModVal, targetType, "", oldcall);
+                    
+                    // Get a pointer to the data argument
+                    //  %6 = alloca i32
+                    //  store i32 %data, i32* %6
+                    Value *dataArg = cs.getArgument(2);
+                    Instruction *dataArgInst = dyn_cast<Instruction>(dataArg);
+                    const IntegerType *i32 = Type::getInt32Ty(context);
+                    AllocaInst* dataArgPtr = 
+                        new AllocaInst(dataArg->getType(), 0, "", oldcall);
+                    dataArgPtr->setAlignment(4);
+                    StoreInst *storeData = 
+                        new StoreInst(dataArg, dataArgPtr, oldcall);
+                    storeData->setAlignment(4);
+                    
+                    // Set arguments
+                    Value **argsKeep = new Value*[3];
+                    Value **argsKeepEnd = argsKeep;
+                    *argsKeepEnd++ = structTarget; // struct.target*
+                    *argsKeepEnd++ = cs.getArgument(1); // addr_t*
+                    *argsKeepEnd++ = dataArgPtr; // data_t*
+                   
+                    // Create a new call
+                    CallInst *newcall = CallInst::Create(writef, argsKeep,
+                                                    argsKeepEnd,"");
+                    callsToReplace[oldcall] = newcall;
                     
                 } else 
                     
@@ -283,6 +327,32 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
         }
     }
     
+    // Replace calls
+    map<Instruction*,Instruction*>::const_iterator
+    mit (callsToReplace.begin()),
+    mend(callsToReplace.end());
+    for(;mit!=mend;++mit) {
+        Instruction *oldcall = mit->first;
+        Instruction *newcall = mit->second;
+        Function *caller = oldcall->getParent()->getParent();
+        caller->dump();
+        
+        BasicBlock::iterator it(oldcall);
+        ReplaceInstWithInst(oldcall->getParent()->getInstList(), it, newcall);
+        oldcall->replaceAllUsesWith(newcall);
+        //oldcall->eraseFromParent();
+        
+        std::cout << "==================================\n";
+        
+        // Run preloaded passes on the function to propagate constants
+        funPassManager->run(*caller);
+        // Check if the function is corrupt
+        caller->dump();
+        verifyFunction(*caller);
+        std::cout << "       Call optimized (^_-)" << std::endl;
+        callOptCounter++;
+    }
+       
 }
 
 
@@ -293,11 +363,11 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
 // in the given SystemC module
 // =============================================================================
 Function* TLMBasicPass::lookForWriteFunction(sc_core::sc_module *module) {
-    Module *llvmMod = this->fe->getLLVMModule();
     // Reverse mangling
     std::string moduleType = typeid(*module).name();    
-    std::string name("_ZN"+moduleType+"5writeERKjS1_");
-    Function *f = llvmMod->getFunction(name);
+    //std::string name("_ZN"+moduleType+"5writeERKjS1_");
+    std::string name("_ZN9initiator7mywriteERKjS1_");
+    Function *f = this->llvmMod->getFunction(name);
     if(f!=NULL) {
         std::string moduleName = (std::string) module->name();
         std::cout << "      Found 'write' function in the module : " 
@@ -314,11 +384,10 @@ Function* TLMBasicPass::lookForWriteFunction(sc_core::sc_module *module) {
 // in the given SystemC module
 // =============================================================================
 Function* TLMBasicPass::lookForReadFunction(sc_core::sc_module *module) {
-    Module *llvmMod = this->fe->getLLVMModule();
     // Reverse mangling
     std::string moduleType = typeid(*module).name();
     std::string name("_ZN"+moduleType+"4readERKjRj");    
-    Function *f = llvmMod->getFunction(name);
+    Function *f = this->llvmMod->getFunction(name);
     if(f!=NULL) {
         std::string moduleName = (std::string) module->name();
         std::cout << "      Found 'read' function in the module : " 
