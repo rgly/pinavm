@@ -262,7 +262,7 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                     if(!concordErr) {
                         std::cout << "       return, no concordances!" 
                         << std::endl;
-                        return;
+                        break;
                     }
                     
                     // Checking adress alignment
