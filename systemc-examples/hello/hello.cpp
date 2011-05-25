@@ -2,10 +2,10 @@
 #include "systemc.h"
 
 // FIXME: move this code in a bytecode library
-/*extern "C" void tweto_call_process_method(sc_core::SC_ENTRY_FUNC vfct, sc_core::sc_process_host *host);
+extern "C" void tweto_call_process_method(sc_core::SC_ENTRY_FUNC vfct, sc_core::sc_process_host *host);
 void tweto_call_process_method(sc_core::SC_ENTRY_FUNC vfct, sc_core::sc_process_host *host) {
     (host->*vfct)();
-}*/
+}
 
 using namespace std;
 

@@ -42,8 +42,9 @@
 #include "TwetoConstMemory.h"
 #include <systemc>
 
-//TEST
 #include "TLMBasicPass.h"
+#include "DummyPass.h"
+#include "DummyFunctionPass.h"
 
 using namespace llvm;
 
@@ -87,17 +88,14 @@ static void tweto_optimize(Frontend * fe, ExecutionEngine *ee,
     // Initialize the builder
     IRB = new IRBuilder<>(Context);    
     
-    
-	/** 
-	 * Build up all of the passes that we want to do to the module.
-	 */
+    // Build up all of the passes that we want to do to the module.
     TD = new TargetData(llvmMod);
 	PM = new PassManager();
 	// Defines target properties related to datatype  
 	// size/offset/alignment information
 	PM->add(TD); 
 	// Check a module or function for validity
-	PM->add(createVerifierPass()); 
+	/*PM->add(createVerifierPass()); 
 	// Performs target-independent LLVM IR 
 	// transformations for highly portable strategies
 	PM->add(createGCLoweringPass()); 
@@ -114,17 +112,11 @@ static void tweto_optimize(Frontend * fe, ExecutionEngine *ee,
 	PM->add(createInstructionCombiningPass());
 	/*PM->add(createReassociatePass());
 	PM->add(createGVNPass());*/
-    PM->add(new TLMBasicPass(fe)); 
+    PM->add(new TLMBasicPass(fe, ee));
     
-	/**
-	 * Execute all of the passes scheduled for execution
-	 */
+	// Execute all of the passes scheduled for execution
 	PM->run(*llvmMod);
     
-    
-    /**
-     * 
-     */
     // Sort the addresses-to-functions map
     std::sort(addr2function.begin(),addr2function.end());
     // Print specialized functions
@@ -177,6 +169,7 @@ void tweto_mark_const(const void *ptr_to_cst, size_t size) {
 sc_core::SC_ENTRY_FUNC_OPT
 tweto_optimize_process(sc_core::SC_ENTRY_FUNC vfct, sc_core::sc_process_host *host) {
     
+    optimizeProcess = false;
     // Do not optimize 
     if(!optimizeProcess) {
         return NULL;
@@ -191,7 +184,7 @@ tweto_optimize_process(sc_core::SC_ENTRY_FUNC vfct, sc_core::sc_process_host *ho
     LLVMContext &Context = getGlobalContext();
     sc_core::sc_module *m = dynamic_cast<sc_core::sc_module*>(host);
     if (sc_core::sc_module *m = dynamic_cast<sc_core::sc_module*>(host)) {
-        // std::cerr <<"tweto: the process host is the module \"" <<m->name() <<"\".\n";
+        std::cerr <<"tweto: the process host is the module \"" <<m->name() <<"\".\n";
         add_interval(const_addresses,(intptr_t)m,sizeof(void*)); // vtable
         // std::cerr <<"tweto: vtable " <<*reinterpret_cast<intptr_t*>(m) <<'\n';
     } else {
@@ -206,14 +199,18 @@ tweto_optimize_process(sc_core::SC_ENTRY_FUNC vfct, sc_core::sc_process_host *ho
         std::cerr <<"              use the 'run' option to disable optimizations.\n";
         exit(1);
     }
+    
+    call_proc->dump();
+    
     const FunctionType *call_proc_FT = call_proc->getFunctionType();
     const IntegerType *i64 = Type::getInt64Ty(Context);
     const IntegerType *i32 = Type::getInt32Ty(Context);
     
     // Enter machine-dependent code
     Value *args[3];
+    // DO NOT WORK : BUG ON FIRST ARGUMENT (i8 instead of i64)
     if (call_proc_FT->getNumParams()==3 &&
-        call_proc_FT->getParamType(0)==i64 &&
+        call_proc_FT->getParamType(0)==i64 && 
         call_proc_FT->getParamType(1)==i64 &&
         sizeof(void*)==8) {
         // Case used on 64-bits Machine running Snow Leopard

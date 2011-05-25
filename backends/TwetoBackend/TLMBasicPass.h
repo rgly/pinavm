@@ -79,13 +79,14 @@ class TLMBasicPass : public ModulePass {
         int callOptCounter;
         int rwCallsCounter;
         Frontend *fe;
+        ExecutionEngine *engine;
         SCElab* elab;
         FunctionPassManager *funPassManager;
         Module *llvmMod;
 
     public:
         static char ID;
-        TLMBasicPass(Frontend *fe);
+        TLMBasicPass(Frontend *fe, ExecutionEngine *ee);
         bool runOnModule(Module &M);
     
     private:

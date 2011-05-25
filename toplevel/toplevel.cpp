@@ -28,7 +28,6 @@ using namespace llvm;
 
 #include "llvm/System/DynamicLibrary.h"
 
-
 //#include "BCLoader.h"
 
 #include "FrontendItf.hpp"
@@ -226,8 +225,7 @@ int load_and_run_sc_main(std::string & InputFile)
 
 	// Run static constructors.
 	EE->runStaticConstructorsDestructors(false);
-
-
+    
 	TRACE_2("Running elaboration\n");
 	// Run main.
 	int Result = EE->runFunctionAsMain(EntryFn, InputArgv, NULL);

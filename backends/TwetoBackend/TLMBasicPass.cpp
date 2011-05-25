@@ -9,7 +9,9 @@
  * @copyright : Verimag 2011
  */
 
+#include <iostream>
 #include <string>
+#include <fstream>
 #include <map>
 
 #include "llvm/GlobalValue.h"
@@ -69,10 +71,11 @@ const std::string rFunName = "_ZN5basic21initiator_socket_baseXXXXXXXXXXXXXXXXXX
 // Constructor
 // 
 // =============================================================================
-TLMBasicPass::TLMBasicPass(Frontend *fe) : ModulePass(ID) {
+TLMBasicPass::TLMBasicPass(Frontend *fe, ExecutionEngine *ee) : ModulePass(ID) {
     this->callOptCounter = 0;
     this->rwCallsCounter = 0;
     this->fe = fe; 
+    this->engine = ee;
     this->elab = fe->getElab();
 }
 
@@ -309,7 +312,7 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                     *argsKeepEnd++ = structTarget; // struct.target*
                     *argsKeepEnd++ = cs.getArgument(1); // addr_t*
                     *argsKeepEnd++ = dataArgPtr; // data_t*
-                   
+                    
                     // Create a new call
                     CallInst *newcall = CallInst::Create(writef, argsKeep,
                                                     argsKeepEnd,"");
@@ -335,20 +338,20 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
         Instruction *oldcall = mit->first;
         Instruction *newcall = mit->second;
         Function *caller = oldcall->getParent()->getParent();
+        // Before
         caller->dump();
-        
+        // Replace
         BasicBlock::iterator it(oldcall);
         ReplaceInstWithInst(oldcall->getParent()->getInstList(), it, newcall);
         oldcall->replaceAllUsesWith(newcall);
-        //oldcall->eraseFromParent();
-        
         std::cout << "==================================\n";
-        
         // Run preloaded passes on the function to propagate constants
         funPassManager->run(*caller);
-        // Check if the function is corrupt
+        // After
         caller->dump();
+        // Check if the function is corrupt
         verifyFunction(*caller);
+        this->engine->recompileAndRelinkFunction(caller);
         std::cout << "       Call optimized (^_-)" << std::endl;
         callOptCounter++;
     }
@@ -365,8 +368,7 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
 Function* TLMBasicPass::lookForWriteFunction(sc_core::sc_module *module) {
     // Reverse mangling
     std::string moduleType = typeid(*module).name();    
-    //std::string name("_ZN"+moduleType+"5writeERKjS1_");
-    std::string name("_ZN9initiator7mywriteERKjS1_");
+    std::string name("_ZN"+moduleType+"5writeERKjS1_");
     Function *f = this->llvmMod->getFunction(name);
     if(f!=NULL) {
         std::string moduleName = (std::string) module->name();
