@@ -78,6 +78,12 @@ TLMBasicPass::TLMBasicPass(Frontend *fe, ExecutionEngine *ee,
     this->engine = ee;
     this->disableMsg = disableMsg;
     this->elab = fe->getElab();
+    // Checking machine's data size
+    int n = sizeof(void *);
+    if(n==8)
+        this->is64Bit = true;
+    else // n = 4
+        this->is64Bit = false;
 }
 
 
@@ -259,7 +265,7 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                     Value *arg = cs.getArgument(1);
                     int value = scjit->jitInt(procf, oldcall, arg, &errb);
                     oss.str("");  oss << std::hex << value;
-                    MSG("0x"+oss.str()+"\n");// TODO : hex value
+                    MSG("0x"+oss.str()+"\n");
                     basic::addr_t a = static_cast<basic::addr_t>(value);
                     
                     // Checking adress and target concordance
@@ -287,14 +293,19 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                     
                     // Retreive a pointer to target module 
                     //  %1 = module
-                    //  %2 = inttoptr i64 %1 to %struct.target*
+                    //  %2 = inttoptr i64/i32 %1 to %struct.target*
                     const FunctionType *writeFunType = writef->getFunctionType();  
                     const Type *targetType = writeFunType->getParamType(0);
                     LLVMContext &context = getGlobalContext();
-                    const IntegerType *i64 = Type::getInt64Ty(context);
+                    const IntegerType *intType;
+                    if (this->is64Bit) {
+                        intType = Type::getInt64Ty(context);
+                    } else {
+                        intType = Type::getInt32Ty(context);
+                    }
                     ConstantInt *targetModVal = 
-                    ConstantInt::getSigned(i64,reinterpret_cast<intptr_t>(targetMod));
-                    
+                    ConstantInt::getSigned(intType,
+                        reinterpret_cast<intptr_t>(targetMod));
                     IntToPtrInst *structTarget = 
                         new IntToPtrInst(targetModVal, targetType, "", oldcall);
                     
@@ -409,6 +420,12 @@ Function* TLMBasicPass::lookForReadFunction(sc_core::sc_module *module) {
 }
 
 
+// =============================================================================
+// MSG
+// 
+// Print the given message 
+// if the user did not use -dbg-opt-msg
+// =============================================================================
 void TLMBasicPass::MSG(std::string msg) {
     if(!this->disableMsg)
         std::cout << msg;

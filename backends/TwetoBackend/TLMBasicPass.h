@@ -81,6 +81,7 @@ class TLMBasicPass : public ModulePass {
         Frontend *fe;
         ExecutionEngine *engine;
         bool disableMsg;
+        bool is64Bit;
         SCElab* elab;
         FunctionPassManager *funPassManager;
         Module *llvmMod;
