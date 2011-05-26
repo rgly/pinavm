@@ -77,7 +77,8 @@ static std::vector<IntFctPair> addr2function;
  */
 static void tweto_optimize(Frontend * fe, ExecutionEngine *ee, 
                          sc_core::sc_simcontext* simcontext, 
-                         const sc_core::sc_time& simduration)
+                         const sc_core::sc_time& simduration,
+                         bool disableMsg)
 {
 	
 	llvmMod = fe->getLLVMModule();
@@ -112,7 +113,7 @@ static void tweto_optimize(Frontend * fe, ExecutionEngine *ee,
 	PM->add(createInstructionCombiningPass());
 	/*PM->add(createReassociatePass());
 	PM->add(createGVNPass());*/
-    PM->add(new TLMBasicPass(fe, ee));
+    PM->add(new TLMBasicPass(fe, ee, disableMsg));
     
 	// Execute all of the passes scheduled for execution
 	PM->run(*llvmMod);
@@ -132,11 +133,11 @@ static void tweto_optimize(Frontend * fe, ExecutionEngine *ee,
 void launch_twetobackend(Frontend * fe, ExecutionEngine *ee, 
                          sc_core::sc_simcontext* simcontext, 
                          const sc_core::sc_time& simduration,
-			 bool optimize)
+                         bool optimize, bool disablePrintMsg)
 {
     if (optimize) {
         optimizeProcess = true;
-        tweto_optimize(fe, ee, simcontext, simduration);
+        tweto_optimize(fe, ee, simcontext, simduration, disablePrintMsg);
     } else {
         optimizeProcess = false;
     }
@@ -157,7 +158,7 @@ void launch_twetobackend(Frontend * fe, ExecutionEngine *ee,
  */
 void tweto_mark_const(const void *ptr_to_cst, size_t size) {
     //if (PrintMarkConst)
-        std::cerr <<"tweto_mark_const: " <<std::dec <<(intptr_t)ptr_to_cst <<" (size " <<size <<").\n";
+    //    std::cerr <<"tweto_mark_const: " <<std::dec <<(intptr_t)ptr_to_cst <<" (size " <<size <<").\n";
     add_interval(const_addresses,(intptr_t)ptr_to_cst,size);
 }
 

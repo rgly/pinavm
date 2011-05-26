@@ -84,6 +84,9 @@ static cl::opt < bool >
 DisableDbgMsg("dis-dbg-msg", cl::desc("Disable debug messages"));
 
 static cl::opt < bool >
+DisableOptDbgMsg("dis-opt-msg", cl::desc("Disable debug messages from the optimizer"));
+
+static cl::opt < bool >
 InlineFcts("inline", cl::desc("Inline all functions"));
 
 bool disable_debug_msg;
@@ -116,9 +119,9 @@ void pinavm_callback(sc_core::sc_simcontext* context,
 		} 
 		// Tweto backend
 		else if(Backend == "tweto" || Backend == "Tweto") {
-			launch_twetobackend(fe, EE, context, duration, true);
+			launch_twetobackend(fe, EE, context, duration, true, DisableOptDbgMsg);
 		} else if (Backend == "run") {
-			launch_twetobackend(fe, EE, context, duration, false);
+			launch_twetobackend(fe, EE, context, duration, false, DisableOptDbgMsg);
 		} else {
 			ERROR("Backend " << Backend << " unknown\n");
 		}

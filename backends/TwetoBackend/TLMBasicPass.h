@@ -80,13 +80,14 @@ class TLMBasicPass : public ModulePass {
         int rwCallsCounter;
         Frontend *fe;
         ExecutionEngine *engine;
+        bool disableMsg;
         SCElab* elab;
         FunctionPassManager *funPassManager;
         Module *llvmMod;
 
     public:
         static char ID;
-        TLMBasicPass(Frontend *fe, ExecutionEngine *ee);
+        TLMBasicPass(Frontend *fe, ExecutionEngine *ee, bool disableMsg);
         bool runOnModule(Module &M);
     
     private:
@@ -96,6 +97,7 @@ class TLMBasicPass : public ModulePass {
                       Bus *bus);
         Function* lookForWriteFunction(sc_core::sc_module *module);
         Function* lookForReadFunction(sc_core::sc_module *module);
+    void MSG(std::string msg);
         void replaceCallsInProcess(basic::compatible_socket* target, 
                           sc_core::sc_module *initiatorMod, 
                           sc_core::sc_module *targetMod,

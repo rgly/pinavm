@@ -59,7 +59,6 @@
 
 #include "TLMBasicPass.h"
 
-
 char TLMBasicPass::ID = 0;
 const std::string wFunName = "_ZN5basic21initiator_socket_baseILb0EE5writeERKjji";
 const std::string rFunName = "_ZN5basic21initiator_socket_baseXXXXXXXXXXXXXXXXXX";
@@ -71,11 +70,13 @@ const std::string rFunName = "_ZN5basic21initiator_socket_baseXXXXXXXXXXXXXXXXXX
 // Constructor
 // 
 // =============================================================================
-TLMBasicPass::TLMBasicPass(Frontend *fe, ExecutionEngine *ee) : ModulePass(ID) {
+TLMBasicPass::TLMBasicPass(Frontend *fe, ExecutionEngine *ee, 
+                           bool disableMsg) : ModulePass(ID) {
     this->callOptCounter = 0;
     this->rwCallsCounter = 0;
     this->fe = fe; 
     this->engine = ee;
+    this->disableMsg = disableMsg;
     this->elab = fe->getElab();
 }
 
@@ -88,7 +89,7 @@ TLMBasicPass::TLMBasicPass(Frontend *fe, ExecutionEngine *ee) : ModulePass(ID) {
 // =============================================================================
 bool TLMBasicPass::runOnModule(Module &M) {
     
-    std::cout << "\n============== TLM Basic Pass =============\n";
+    MSG("\n============== TLM Basic Pass =============\n");
     this->llvmMod = &M;
     // Initialize function passes
     TargetData *target = new TargetData(this->llvmMod);
@@ -128,7 +129,7 @@ bool TLMBasicPass::runOnModule(Module &M) {
             std::string initiatorName = initiator->name(); 
             if (initiatorName.find("basic::initiator_socket")!=string::npos) {
                 
-                std::cout << "== Initiator : " << initiatorName << std::endl;
+                MSG("== Initiator : "+initiatorName+"\n");
                
                 // Target ports
                 basic::target_socket_base<true> *tsb =
@@ -139,8 +140,8 @@ bool TLMBasicPass::runOnModule(Module &M) {
                         basic::compatible_socket* target =
                         dynamic_cast<basic::compatible_socket*>(b->initiator[i]);
                         if (target) {
-                            std::cout << " = Target : " << target->name() 
-                            << std::endl; 
+                            std::string targetName = target->name();
+                            MSG(" = Target : "+targetName+"\n");
                             
                             sc_core::sc_object *o = target->get_parent();
                             sc_core::sc_module *targetMod = 
@@ -159,10 +160,11 @@ bool TLMBasicPass::runOnModule(Module &M) {
 
     // Check if the module is corrupt
     verifyModule(*this->llvmMod);
-    
-    std::cout << "\n Pass report - " << callOptCounter 
-    << "/" << "?" << " - opt/total" << std::endl;
-    std::cout << "===========================================\n\n";
+    std::ostringstream oss;
+    oss << callOptCounter;
+    MSG("\n Pass report - "+oss.str()+"/"+"?");
+    MSG(" - opt/total\n");
+    MSG("===========================================\n\n");
     
     // TODO : handle false case
     return true;
@@ -178,7 +180,7 @@ void TLMBasicPass::optimize(basic::compatible_socket* target,
                             sc_core::sc_module *initiatorMod, 
                             sc_core::sc_module *targetMod, 
                             Bus *bus) {
-
+    std::ostringstream oss;
     // Looking for declarations of functions
     Function *writef = lookForWriteFunction(targetMod);
     Function *readf = lookForReadFunction(targetMod);
@@ -190,7 +192,8 @@ void TLMBasicPass::optimize(basic::compatible_socket* target,
     for (thread_p = processes->thread_q_head(); 
          thread_p; thread_p = thread_p->next_exist()) {
         sc_core::sc_process_b *proc = thread_p;
-        std::cout << "      Replace in thread : " << proc << std::endl;
+        oss.str("");  oss << proc;
+        MSG("      Replace in thread : "+oss.str()+"\n");
         replaceCallsInProcess(target, initiatorMod, targetMod,
                               proc, writef, readf, bus);
     }
@@ -199,7 +202,8 @@ void TLMBasicPass::optimize(basic::compatible_socket* target,
          method_p; method_p = method_p->next_exist()) {
         //sc_core::sc_method_process *proc = method_p;
         sc_core::sc_process_b *proc = method_p;
-        std::cout << "      Replace in method : " << proc << std::endl;
+        oss.str("");  oss << proc;
+        MSG("      Replace in method : "+oss.str()+"\n");
         replaceCallsInProcess(target, initiatorMod, targetMod, 
                               proc, writef, readf, bus);
     }
@@ -219,7 +223,7 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                                          sc_core::sc_process_b *proc,
                                          Function *writef, Function *readf, 
                                          Bus *bus) {
-   
+    std::ostringstream oss;
     // Get associate function
     std::string fctName = proc->func_process;
 	std::string modType = typeid(*initiatorMod).name();
@@ -245,7 +249,7 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                 if (writef!=NULL && !strcmp(name.c_str(), wFunName.c_str())) {
                     
                     Instruction *oldcall = cs.getInstruction();
-                    std::cout << "       Checking adress : ";
+                    MSG("       Checking adress : \n");
                     // Retreive the argument by executing 
                     // the appropriated piece of code
                     SCJit *scjit = new SCJit(this->llvmMod, this->elab);
@@ -254,7 +258,8 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                     bool errb = false;
                     Value *arg = cs.getArgument(1);
                     int value = scjit->jitInt(procf, oldcall, arg, &errb);
-                    std::cout << "0x" << std::hex << value << std::endl;
+                    oss.str("");  oss << std::hex << value;
+                    MSG("0x"+oss.str()+"\n");// TODO : hex value
                     basic::addr_t a = static_cast<basic::addr_t>(value);
                     
                     // Checking adress and target concordance
@@ -297,8 +302,6 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                     //  %6 = alloca i32
                     //  store i32 %data, i32* %6
                     Value *dataArg = cs.getArgument(2);
-                    Instruction *dataArgInst = dyn_cast<Instruction>(dataArg);
-                    const IntegerType *i32 = Type::getInt32Ty(context);
                     BasicBlock &front = 
                     oldcall->getParent()->getParent()->getEntryBlock();
                     Instruction *nophi = front.getFirstNonPHI();
@@ -359,7 +362,7 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
         // Check if the function is corrupt
         verifyFunction(*caller);
         this->engine->recompileAndRelinkFunction(caller);
-        std::cout << "       Call optimized (^_-)" << std::endl;
+        MSG("       Call optimized (^_-)\n");
         callOptCounter++;
     }
        
@@ -379,8 +382,8 @@ Function* TLMBasicPass::lookForWriteFunction(sc_core::sc_module *module) {
     Function *f = this->llvmMod->getFunction(name);
     if(f!=NULL) {
         std::string moduleName = (std::string) module->name();
-        std::cout << "      Found 'write' function in the module : " 
-        << moduleName << std::endl;
+        MSG("      Found 'write' function in the module : "); 
+        MSG(moduleName+"\n");
     }
     return f;
 }
@@ -399,9 +402,15 @@ Function* TLMBasicPass::lookForReadFunction(sc_core::sc_module *module) {
     Function *f = this->llvmMod->getFunction(name);
     if(f!=NULL) {
         std::string moduleName = (std::string) module->name();
-        std::cout << "      Found 'read' function in the module : " 
-        << moduleName << std::endl;
+        MSG("      Found 'read' function in the module : "); 
+        MSG(moduleName+"\n");
     }
     return f;
+}
+
+
+void TLMBasicPass::MSG(std::string msg) {
+    if(!this->disableMsg)
+        std::cout << msg;
 }
 

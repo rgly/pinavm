@@ -38,10 +38,10 @@ namespace basic {
       tlm::tlm_response_status read(const addr_t& addr, data_t& data, int port = 0) {
          
           // Testing the bypass
-          std::cout << "[!] CALL THE INITIATOR'S READ FUNCTION [!]" << std::endl;
+          TRACE_DEBUG("[!] CALL THE INITIATOR'S READ FUNCTION [!]\n");
           
           tlm::tlm_generic_payload* trans;
-	 // allocate the payload
+          // allocate the payload
          if(!container.empty()) {
             trans = container.back();
             container.pop_back();
@@ -71,7 +71,7 @@ namespace basic {
       tlm::tlm_response_status write(const addr_t& addr, data_t data, int port = 0) {
          
           // Testing the bypass
-          std::cout << "[!] CALL THE INITIATOR'S WRITE FUNCTION [!]" << std::endl;
+          TRACE_DEBUG("[!] CALL THE INITIATOR'S WRITE FUNCTION [!]\n");
           
           tlm::tlm_generic_payload* trans;
 
