@@ -299,8 +299,15 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                     Value *dataArg = cs.getArgument(2);
                     Instruction *dataArgInst = dyn_cast<Instruction>(dataArg);
                     const IntegerType *i32 = Type::getInt32Ty(context);
+                    BasicBlock &front = 
+                    oldcall->getParent()->getParent()->getEntryBlock();
+                    Instruction *nophi = front.getFirstNonPHI();
+                    if(nophi==NULL) {
+                        std::cerr << "  Code insertion error [PHI inst]\n";
+                        abort();
+                    }
                     AllocaInst* dataArgPtr = 
-                        new AllocaInst(dataArg->getType(), 0, "", oldcall);
+                        new AllocaInst(dataArg->getType(), 0, "", nophi);
                     dataArgPtr->setAlignment(4);
                     StoreInst *storeData = 
                         new StoreInst(dataArg, dataArgPtr, oldcall);
@@ -339,16 +346,16 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
         Instruction *newcall = mit->second;
         Function *caller = oldcall->getParent()->getParent();
         // Before
-        caller->dump();
+        //caller->dump();
         // Replace
         BasicBlock::iterator it(oldcall);
         ReplaceInstWithInst(oldcall->getParent()->getInstList(), it, newcall);
         oldcall->replaceAllUsesWith(newcall);
-        std::cout << "==================================\n";
+        //std::cout << "==================================\n";
         // Run preloaded passes on the function to propagate constants
         funPassManager->run(*caller);
         // After
-        caller->dump();
+        //caller->dump();
         // Check if the function is corrupt
         verifyFunction(*caller);
         this->engine->recompileAndRelinkFunction(caller);
