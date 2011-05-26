@@ -249,7 +249,7 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                 if (writef!=NULL && !strcmp(name.c_str(), wFunName.c_str())) {
                     
                     Instruction *oldcall = cs.getInstruction();
-                    MSG("       Checking adress : \n");
+                    MSG("       Checking adress : ");
                     // Retreive the argument by executing 
                     // the appropriated piece of code
                     SCJit *scjit = new SCJit(this->llvmMod, this->elab);
@@ -292,9 +292,9 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                     const Type *targetType = writeFunType->getParamType(0);
                     LLVMContext &context = getGlobalContext();
                     const IntegerType *i64 = Type::getInt64Ty(context);
-                    ConstantInt *targetModVal =
-                    ConstantInt::getSigned(i64,
-                        *reinterpret_cast<uint64_t*>(targetMod));
+                    ConstantInt *targetModVal = 
+                    ConstantInt::getSigned(i64,reinterpret_cast<intptr_t>(targetMod));
+                    
                     IntToPtrInst *structTarget = 
                         new IntToPtrInst(targetModVal, targetType, "", oldcall);
                     
