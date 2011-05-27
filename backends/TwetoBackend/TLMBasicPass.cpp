@@ -190,28 +190,44 @@ void TLMBasicPass::optimize(basic::compatible_socket* target,
     // Looking for declarations of functions
     Function *writef = lookForWriteFunction(targetMod);
     Function *readf = lookForReadFunction(targetMod);
+    if (writef==NULL && readf==NULL)
+        return;
     
     // Looking for calls in process
+    std::vector<std::string> doneThreads;
+    std::vector<std::string> doneMethods;
+    vector<std::string>::iterator it;
+    std::string fctName;
     sc_core::sc_process_table * processes = 
     initiatorMod->sc_get_curr_simcontext()->m_process_table;
     sc_core::sc_thread_handle thread_p;
     for (thread_p = processes->thread_q_head(); 
          thread_p; thread_p = thread_p->next_exist()) {
         sc_core::sc_process_b *proc = thread_p;
-        oss.str("");  oss << proc;
-        MSG("      Replace in thread : "+oss.str()+"\n");
-        replaceCallsInProcess(target, initiatorMod, targetMod,
-                              proc, writef, readf, bus);
+        // Test if the thread's function has already 
+        // been optimized for this target
+        fctName = proc->func_process;
+        it = find (doneThreads.begin(), doneThreads.end(), fctName);
+        if (it==doneThreads.end()) {
+            doneThreads.push_back(fctName);
+            replaceCallsInProcess(target, initiatorMod, targetMod,
+                                  proc, writef, readf, bus);
+        }
     }
     sc_core::sc_method_handle method_p;
     for (method_p = processes->method_q_head(); 
          method_p; method_p = method_p->next_exist()) {
         //sc_core::sc_method_process *proc = method_p;
         sc_core::sc_process_b *proc = method_p;
-        oss.str("");  oss << proc;
-        MSG("      Replace in method : "+oss.str()+"\n");
-        replaceCallsInProcess(target, initiatorMod, targetMod, 
-                              proc, writef, readf, bus);
+        // Test if the method's function has already 
+        // been optimized for this target
+        fctName = proc->func_process;
+        it = find (doneMethods.begin(), doneMethods.end(), fctName);
+        if (it==doneMethods.end()) {
+            doneMethods.push_back(fctName);
+            replaceCallsInProcess(target, initiatorMod, targetMod, 
+                                  proc, writef, readf, bus);
+        }
     }
     
 }
@@ -229,7 +245,6 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                                          sc_core::sc_process_b *proc,
                                          Function *writef, Function *readf, 
                                          Bus *bus) {
-    std::ostringstream oss;
     // Get associate function
     std::string fctName = proc->func_process;
 	std::string modType = typeid(*initiatorMod).name();
@@ -239,6 +254,9 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
     if (procf==NULL)
         return;
     
+    MSG("      Replace in process's function : "+mainFctName+"\n");
+    
+    std::ostringstream oss;
     std::map<Instruction*,Instruction*> callsToReplace;
     
     inst_iterator ii;
@@ -256,11 +274,11 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                     
                     Instruction *oldcall = cs.getInstruction();
                     MSG("       Checking adress : ");
-                    // Retreive the argument by executing 
+                    // Retrieve the argument by executing 
                     // the appropriated piece of code
                     SCJit *scjit = new SCJit(this->llvmMod, this->elab);
                     Process *irProc = this->elab->getProcess(proc);
-                    scjit->setCurrentProcess(irProc);
+                    scjit->setCurrentProcess(irProc);                    
                     bool errb = false;
                     Value *arg = cs.getArgument(1);
                     int value = scjit->jitInt(procf, oldcall, arg, &errb);
@@ -268,7 +286,7 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                     MSG("0x"+oss.str()+"\n");
                     basic::addr_t a = static_cast<basic::addr_t>(value);
                     
-                    // Checking adress and target concordance
+                    // Checking address and target concordance
                     bool concordErr = bus->checkAdressConcordance(target, a);
                     if(!concordErr) {
                         std::cout << "       return, no concordances!" 
@@ -276,7 +294,7 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                         break;
                     }
                     
-                    // Checking adress alignment
+                    // Checking address alignment
                     if(value % sizeof(basic::data_t)) {
                         std::cerr << "  unaligned write : " <<
                         std::hex << value << std::endl;
@@ -291,7 +309,7 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                         abort();
                     }
                     
-                    // Retreive a pointer to target module 
+                    // Retrieve a pointer to target module 
                     //  %1 = module
                     //  %2 = inttoptr i64/i32 %1 to %struct.target*
                     const FunctionType *writeFunType = writef->getFunctionType();  
@@ -424,7 +442,7 @@ Function* TLMBasicPass::lookForReadFunction(sc_core::sc_module *module) {
 // MSG
 // 
 // Print the given message 
-// if the user did not use -dbg-opt-msg
+// if the user did not use -dis-opt-msg
 // =============================================================================
 void TLMBasicPass::MSG(std::string msg) {
     if(!this->disableMsg)
