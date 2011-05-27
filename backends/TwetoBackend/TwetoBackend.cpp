@@ -145,8 +145,10 @@ void launch_twetobackend(Frontend * fe, ExecutionEngine *ee,
 	/**
 	 * Launching simulation
 	 */    
-    std::cout << "########### Launching simulation ############\n"; 
-    std::cout.flush();
+    if(!disablePrintMsg) {
+        std::cout << "########### Launching simulation ############\n"; 
+        std::cout.flush();
+    }
     assert(simcontext);
     simcontext->simulate(simduration);
 }
