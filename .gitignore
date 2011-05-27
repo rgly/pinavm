@@ -9,6 +9,7 @@ configure
 autom4te.cache
 *.d
 *.so
+basic-timestamp.txt
 
 .DS_Store
 *.dSYM
