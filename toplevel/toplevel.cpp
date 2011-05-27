@@ -36,6 +36,9 @@ using namespace llvm;
 #include "42Backend.h"
 #include "TwetoBackend.h"
 
+#include <ctime>
+#include <sys/time.h>
+
 // get a -load option.
 //#include "llvm/Support/PluginLoader.h"
 
@@ -81,6 +84,10 @@ PrintIR("print-ir",
 	cl::desc("Print Intermediate representation for all processes"));
 
 static cl::opt < bool >
+PrintDuration("print-dura",
+        cl::desc("Print the processing duration of the Tweto backend"));
+
+static cl::opt < bool >
 DisableDbgMsg("dis-dbg-msg", cl::desc("Disable debug messages"));
 
 static cl::opt < bool >
@@ -108,6 +115,12 @@ void pinavm_callback(sc_core::sc_simcontext* context,
 	if (PrintElab) {
 		fe->printElab("");
 	}
+    
+    struct timeval start;
+    struct timeval end;     
+    long mtime, seconds, useconds;
+    gettimeofday(&start, NULL);
+    
 
 	if (Backend != "-") {
 		if (Backend == "simple" || Backend == "Simple") {
@@ -126,6 +139,14 @@ void pinavm_callback(sc_core::sc_simcontext* context,
 			ERROR("Backend " << Backend << " unknown\n");
 		}
 	}
+    
+    if(PrintDuration) {
+        gettimeofday(&end, NULL);
+        seconds  = end.tv_sec  - start.tv_sec;
+        useconds = end.tv_usec - start.tv_usec;
+        mtime = ((seconds) * 1000 + useconds/1000.0) + 0.5;
+        printf("%ld\n", mtime);
+    }
 }
 
 void resolve_weak_symbol(GlobalVariable &GV) {
