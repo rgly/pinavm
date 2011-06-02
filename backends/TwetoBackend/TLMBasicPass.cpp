@@ -30,6 +30,12 @@
 #include <llvm/Support/IRBuilder.h>
 #include <llvm/Support/InstIterator.h>
 #include <llvm/Transforms/Utils/Cloning.h>
+#include "llvm/Analysis/LoopPass.h"
+#include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Pass.h"
+#include "llvm/PassManagers.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Function.h"
 
 #include "Port.hpp"
 #include "Channel.hpp"
@@ -58,10 +64,29 @@
 #include "bus.h"
 
 #include "TLMBasicPass.h"
+#include "LoopChecker.h"
 
 char TLMBasicPass::ID = 0;
 const std::string wFunName = "_ZN5basic21initiator_socket_baseILb0EE5writeERKjji";
 const std::string rFunName = "_ZN5basic21initiator_socket_baseXXXXXXXXXXXXXXXXXX";
+
+
+// =============================================================================
+// Handy structure that keeps the informations for a possible call creation
+// =============================================================================
+namespace {
+        struct CallInfo {
+        // Target module info 
+        ConstantInt *targetModVal;
+        const Type *targetType;
+        // Argument info
+        Value *dataArg;
+        Value *addrArg;
+        // Call info
+        Instruction *oldcall;
+        Instruction *newcall;
+    };
+}
 
 
 // =============================================================================
@@ -136,8 +161,6 @@ bool TLMBasicPass::runOnModule(Module &M) {
             if (initiatorName.find("basic::initiator_socket")!=string::npos) {
                 
                 MSG("== Initiator : "+initiatorName+"\n");
-               
-                // Target ports
                 basic::target_socket_base<true> *tsb =
                 dynamic_cast<basic::target_socket_base<true> *>(initiatorItf);
                 if (tsb) {
@@ -254,10 +277,10 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
     if (procf==NULL)
         return;
     
-    MSG("      Replace in process's function : "+mainFctName+"\n");
+    MSG("      Replace in the process's function : "+mainFctName+"\n");
     
     std::ostringstream oss;
-    std::map<Instruction*,Instruction*> callsToReplace;
+    std::vector<CallInfo*> work;
     
     inst_iterator ii;
     for (ii = inst_begin(procf); ii!=inst_end(procf); ii++) {
@@ -272,7 +295,8 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                 // === Write ===
                 if (writef!=NULL && !strcmp(name.c_str(), wFunName.c_str())) {
                     
-                    Instruction *oldcall = cs.getInstruction();
+                    CallInfo *info = new CallInfo();
+                    info->oldcall = dyn_cast<CallInst>(cs.getInstruction());
                     MSG("       Checking adress : ");
                     // Retrieve the argument by executing 
                     // the appropriated piece of code
@@ -280,11 +304,12 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                     Process *irProc = this->elab->getProcess(proc);
                     scjit->setCurrentProcess(irProc);                    
                     bool errb = false;
-                    Value *arg = cs.getArgument(1);
-                    int value = scjit->jitInt(procf, oldcall, arg, &errb);
+                    info->addrArg = cs.getArgument(1);
+                    int value = 
+                    scjit->jitInt(procf, info->oldcall, info->addrArg, &errb);
                     oss.str("");  oss << std::hex << value;
                     MSG("0x"+oss.str()+"\n");
-                    basic::addr_t a = static_cast<basic::addr_t>(value);
+                    basic::addr_t a = static_cast<basic::addr_t>(value);            
                     
                     // Checking address and target concordance
                     bool concordErr = bus->checkAdressConcordance(target, a);
@@ -309,11 +334,9 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                         abort();
                     }
                     
-                    // Retrieve a pointer to target module 
-                    //  %1 = module
-                    //  %2 = inttoptr i64/i32 %1 to %struct.target*
+                    // Save informations to build a new call later
                     const FunctionType *writeFunType = writef->getFunctionType();  
-                    const Type *targetType = writeFunType->getParamType(0);
+                    info->targetType = writeFunType->getParamType(0);
                     LLVMContext &context = getGlobalContext();
                     const IntegerType *intType;
                     if (this->is64Bit) {
@@ -321,43 +344,12 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                     } else {
                         intType = Type::getInt32Ty(context);
                     }
-                    ConstantInt *targetModVal = 
-                    ConstantInt::getSigned(intType,
-                        reinterpret_cast<intptr_t>(targetMod));
-                    IntToPtrInst *structTarget = 
-                        new IntToPtrInst(targetModVal, targetType, "", oldcall);
-                    
-                    // Get a pointer to the data argument
-                    //  %6 = alloca i32
-                    //  store i32 %data, i32* %6
-                    Value *dataArg = cs.getArgument(2);
-                    BasicBlock &front = 
-                    oldcall->getParent()->getParent()->getEntryBlock();
-                    Instruction *nophi = front.getFirstNonPHI();
-                    if(nophi==NULL) {
-                        std::cerr << "  Code insertion error [PHI inst]\n";
-                        abort();
-                    }
-                    AllocaInst* dataArgPtr = 
-                        new AllocaInst(dataArg->getType(), 0, "", nophi);
-                    dataArgPtr->setAlignment(4);
-                    StoreInst *storeData = 
-                        new StoreInst(dataArg, dataArgPtr, oldcall);
-                    storeData->setAlignment(4);
-                    
-                    // Set arguments
-                    Value **argsKeep = new Value*[3];
-                    Value **argsKeepEnd = argsKeep;
-                    *argsKeepEnd++ = structTarget; // struct.target*
-                    *argsKeepEnd++ = cs.getArgument(1); // addr_t*
-                    *argsKeepEnd++ = dataArgPtr; // data_t*
-                    
-                    // Create a new call
-                    CallInst *newcall = CallInst::Create(writef, argsKeep,
-                                                    argsKeepEnd,"");
-                    callsToReplace[oldcall] = newcall;
-                    
-                } else 
+                    info->targetModVal = ConstantInt::getSigned(intType,
+                                        reinterpret_cast<intptr_t>(targetMod));
+                    info->dataArg = cs.getArgument(2);
+                    work.push_back(info);
+   
+                } else
                     
                 // === Read ===
                 if (readf!=NULL && !strcmp(name.c_str(), rFunName.c_str())) {
@@ -369,25 +361,65 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
         }
     }
     
+    
     // Replace calls
-    map<Instruction*,Instruction*>::const_iterator
-    mit (callsToReplace.begin()),
-    mend(callsToReplace.end());
-    for(;mit!=mend;++mit) {
-        Instruction *oldcall = mit->first;
-        Instruction *newcall = mit->second;
-        Function *caller = oldcall->getParent()->getParent();
+    std::vector<CallInfo*>::iterator it;
+    for (it = work.begin(); it!=work.end(); ++it) {
+        CallInfo *i = *it;
+        Function *caller = i->oldcall->getParent()->getParent();
+        
+        // Retrieve a pointer to target module 
+        //  %1 = module
+        //  %2 = inttoptr i64/i32 %1 to %struct.target*
+        IntToPtrInst *structTarget = 
+        new IntToPtrInst(i->targetModVal, i->targetType, "", i->oldcall);
+        
+        // Get a pointer to the data argument
+        //  %6 = alloca i32
+        //  store i32 %data, i32* %6	
+        BasicBlock &front = 
+        i->oldcall->getParent()->getParent()->getEntryBlock();
+        Instruction *nophi = front.getFirstNonPHI();
+        if(nophi==NULL) {
+            std::cerr << "  Code insertion error [PHI inst]\n";
+            abort();
+        }
+        AllocaInst* dataArgPtr = 
+        new AllocaInst(i->dataArg->getType(), 0, "", nophi);
+        dataArgPtr->setAlignment(4);
+        StoreInst *storeData = 
+        new StoreInst(i->dataArg, dataArgPtr, i->oldcall);
+        storeData->setAlignment(4);
+        
+        // Set arguments
+        Value **argsKeep = new Value*[3];
+        Value **argsKeepEnd = argsKeep;
+        *argsKeepEnd++ = structTarget; // struct.target*
+        *argsKeepEnd++ = i->addrArg; // addr_t*
+        *argsKeepEnd++ = dataArgPtr; // data_t*
+        
+        // Create a new call
+        i->newcall = CallInst::Create(writef, argsKeep,argsKeepEnd,"");
+
         // Before
-        //caller->dump();
+        caller->dump();
         // Replace
-        BasicBlock::iterator it(oldcall);
-        ReplaceInstWithInst(oldcall->getParent()->getInstList(), it, newcall);
-        oldcall->replaceAllUsesWith(newcall);
+        BasicBlock::iterator it(i->oldcall);
+        ReplaceInstWithInst(i->oldcall->getParent()->getInstList(), it, i->newcall);
+        i->oldcall->replaceAllUsesWith(i->newcall);
         //std::cout << "==================================\n";
         // Run preloaded passes on the function to propagate constants
         funPassManager->run(*caller);
+        
+        // Check loops
+        bool status;
+        TargetData *target = new TargetData(this->llvmMod);
+        FunctionPassManager *fpm = new FunctionPassManager(this->llvmMod);
+        //fpm->add(new LoopChecker(i->addrArg, status));
+        //fpm->run(*caller);
+        
         // After
-        //caller->dump();
+        //caller->dump();        
         // Check if the function is corrupt
         verifyFunction(*caller);
         this->engine->recompileAndRelinkFunction(caller);

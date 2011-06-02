@@ -98,7 +98,7 @@ class TLMBasicPass : public ModulePass {
                       Bus *bus);
         Function* lookForWriteFunction(sc_core::sc_module *module);
         Function* lookForReadFunction(sc_core::sc_module *module);
-    void MSG(std::string msg);
+        void MSG(std::string msg);
         void replaceCallsInProcess(basic::compatible_socket* target, 
                           sc_core::sc_module *initiatorMod, 
                           sc_core::sc_module *targetMod,
