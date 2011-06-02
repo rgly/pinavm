@@ -43,8 +43,6 @@
 #include <systemc>
 
 #include "TLMBasicPass.h"
-#include "DummyPass.h"
-#include "DummyFunctionPass.h"
 
 using namespace llvm;
 
