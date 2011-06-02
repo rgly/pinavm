@@ -584,12 +584,12 @@ inline
 void
 sc_port_b<IF>::add_interface( sc_interface* interface_ )
 {
-	printf("Interface : %s\n", typeid(*interface_).name());
+	//printf("Interface : %s\n", typeid(*interface_).name());
 //    IF* iface = DCAST<IF*>( interface_ );
     IF* iface = RCAST<IF*>( interface_ );
 //    IF* iface = CAST<IF*>( interface_ );
 
-    printf("done\n");
+    //printf("done\n");
     assert( iface != 0 );
 
     // make sure that the interface is not already bound:

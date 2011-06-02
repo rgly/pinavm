@@ -48,9 +48,9 @@ void Bus::end_of_elaboration() {
 			}
 		}
 	}
-//   #ifdef DEBUG
+   #ifdef DEBUG
 	print_addr_map();
-//   #endif
+   #endif
 }
 
 void Bus::print_addr_map() {
@@ -149,9 +149,9 @@ Bus::checkAdressConcordance(basic::compatible_socket *target,
         addr_range current = (*it).second;
         basic::compatible_socket *socket = (*it).first; 
         if(!(current<range) && !(range<current) && socket==target) {
-            std::cout << "         range : " << std::hex
-            << "[0x" << current.begin << "-0x" << current.end << "["
-            << std::endl;
+            //std::cout << "         range : " << std::hex
+            //<< "[0x" << current.begin << "-0x" << current.end << "["
+            //<< std::endl;
             return true;
         }
     }
