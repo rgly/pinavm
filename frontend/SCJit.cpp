@@ -199,7 +199,7 @@ void *SCJit::jitAddr(Function * f, Instruction* inst, Value * arg)
 	}
 
 	void *(*fct) (sc_core::sc_module *) = (void *(*)(sc_core::sc_module *)) ee->getPointerToFunction(fctToJit);
-	IRModule* mod = this->getCurrentProcess()->getModule();
+    IRModule* mod = this->getCurrentProcess()->getModule();
 	TRACE_4("Function built. Now executing with SC MODULE : " << mod << "\n");
 	void *res = fct(this->elab->getSCModule(mod));
 	TRACE_4("JIT-ed function executed\n");
@@ -296,8 +296,7 @@ SCJit::jitInt(Function * f, Instruction* inst, Value * arg, bool* errb) {
 
 	int (*fct) (sc_core::sc_module *) =
 		(int (*)(sc_core::sc_module *)) ee->getPointerToFunction(fctToJit);
-	
-	IRModule* mod = this->getCurrentProcess()->getModule();
+    IRModule* mod = this->getCurrentProcess()->getModule();
 	TRACE_4("********************* SC MODULE : " << mod << "\n");
 	int res = fct(this->elab->getSCModule(mod));
 	
