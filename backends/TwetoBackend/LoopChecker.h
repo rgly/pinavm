@@ -12,10 +12,13 @@
 #ifndef LOOPCHECKER_H
 #define LOOPCHECKER_H
 
+#include <vector>
 
 #include "llvm/Pass.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
+
+#include "TLMBasicPass.h"
 
 using namespace llvm;
 
@@ -25,12 +28,11 @@ class LoopChecker : public FunctionPass {
 
 private:
     bool status;
-    Value *addr;
-
+    std::vector<CallInfo*> *infos;
     
 public:
     static char ID;
-    LoopChecker(Value *a, bool &s);
+    LoopChecker(std::vector<CallInfo*> *infos, bool &status);
     virtual bool runOnFunction(Function &F);
     bool isInvariant(Loop *l);
     virtual void getAnalysisUsage(AnalysisUsage &Info) const {

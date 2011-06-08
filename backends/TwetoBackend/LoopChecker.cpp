@@ -11,7 +11,6 @@
 
 #include <iostream>
 #include <string>
-#include <vector>
 
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -30,9 +29,10 @@ char LoopChecker::ID = 0;
 // 
 // 
 // =============================================================================
-LoopChecker::LoopChecker(Value *a, bool &s) : FunctionPass(ID) {
-    this->addr = a;
-    this->status = s;
+LoopChecker::LoopChecker(std::vector<CallInfo*> *infos, bool &status) 
+            : FunctionPass(ID) {
+    this->infos = infos;
+    this->status = status;
     this->status = true; // if there is no loop
 }
 
@@ -65,7 +65,7 @@ bool LoopChecker::runOnFunction(Function &F) {
 // store %x, %addr
 // =============================================================================
 bool LoopChecker::isInvariant(Loop *l) {
-    std::vector<Instruction*> operators;
+    /*std::vector<Instruction*> operators;
     std::vector<StoreInst*> stores;
     //std::cout << "= Loop ======================\n";
     Loop::block_iterator bb, e;
@@ -101,7 +101,7 @@ bool LoopChecker::isInvariant(Loop *l) {
                 return false;
             }
         }
-    }
+    }*/
     return true;
 }
 
