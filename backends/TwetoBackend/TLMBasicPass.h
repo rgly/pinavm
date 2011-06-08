@@ -44,6 +44,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/System/Host.h"
 #include "llvm/Config/config.h"
+#include "llvm/ExecutionEngine/ExecutionEngine.h"
 
 #include <map>
 #include <vector>
@@ -69,6 +70,24 @@ struct Port;
 
 
 using namespace llvm;
+
+namespace sc_core {
+    typedef void (*SC_ENTRY_FUNC_OPT)();
+}
+
+// Handy structure that keeps the 
+// informations for a possible call creation
+struct CallInfo {
+    // Target module info 
+    ConstantInt *targetModVal;
+    const Type *targetType;
+    // Argument info
+    Value *dataArg;
+    Value *addrArg;
+    // Call info
+    Instruction *oldcall;
+    Instruction *newcall;
+};
 
 
 //============================================================================
@@ -105,7 +124,9 @@ class TLMBasicPass : public ModulePass {
                           sc_core::sc_process_b *proc,
                           Function *writef, Function *readf, 
                           Bus *bus);
-
+        Function *createProcess(Function *oldProc, 
+                                sc_core::sc_module *initiatorMod);
+    
 };
 //============================================================================
 

@@ -69,24 +69,7 @@
 char TLMBasicPass::ID = 0;
 const std::string wFunName = "_ZN5basic21initiator_socket_baseILb0EE5writeERKjji";
 const std::string rFunName = "_ZN5basic21initiator_socket_baseXXXXXXXXXXXXXXXXXX";
-
-
-// =============================================================================
-// Handy structure that keeps the informations for a possible call creation
-// =============================================================================
-namespace {
-        struct CallInfo {
-        // Target module info 
-        ConstantInt *targetModVal;
-        const Type *targetType;
-        // Argument info
-        Value *dataArg;
-        Value *addrArg;
-        // Call info
-        Instruction *oldcall;
-        Instruction *newcall;
-    };
-}
+int proc_counter = 0;
 
 
 // =============================================================================
@@ -273,9 +256,17 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
 	std::string modType = typeid(*initiatorMod).name();
 	std::string mainFctName = "_ZN" + modType + 
     utostr(fctName.size()) + fctName + "Ev";
-	Function *procf = this->llvmMod->getFunction(mainFctName);
-    if (procf==NULL)
+	Function *oldProcf = this->llvmMod->getFunction(mainFctName);
+    if (oldProcf==NULL)
         return;
+    
+    // We do not modifie the original function
+    // Instead, we create a clone.
+    Function *procf = createProcess(oldProcf, initiatorMod);
+    void *funPtr = this->engine->getPointerToFunction(procf); 
+    sc_core::SC_ENTRY_FUNC_OPT scfun = 
+    reinterpret_cast<sc_core::SC_ENTRY_FUNC_OPT>(funPtr);
+    proc->m_semantics_p = scfun;
     
     MSG("      Replace in the process's function : "+mainFctName+"\n");
     
@@ -361,12 +352,22 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
         }
     }
     
+    // Check loops in the parent function
+    // Only calls with invariant address will be retained
+    bool status;
+    TargetData *td = new TargetData(this->llvmMod);
+    FunctionPassManager *fpm = new FunctionPassManager(this->llvmMod);
+    //fpm->add(td);
+    //fpm->add(new LoopChecker(i->addrArg, status));
+    //fpm->run(*procf);
+    
+    // Before
+    procf->dump();
     
     // Replace calls
     std::vector<CallInfo*>::iterator it;
     for (it = work.begin(); it!=work.end(); ++it) {
         CallInfo *i = *it;
-        Function *caller = i->oldcall->getParent()->getParent();
         
         // Retrieve a pointer to target module 
         //  %1 = module
@@ -377,8 +378,7 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
         // Get a pointer to the data argument
         //  %6 = alloca i32
         //  store i32 %data, i32* %6	
-        BasicBlock &front = 
-        i->oldcall->getParent()->getParent()->getEntryBlock();
+        BasicBlock &front = procf->getEntryBlock();
         Instruction *nophi = front.getFirstNonPHI();
         if(nophi==NULL) {
             std::cerr << "  Code insertion error [PHI inst]\n";
@@ -401,31 +401,23 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
         // Create a new call
         i->newcall = CallInst::Create(writef, argsKeep,argsKeepEnd,"");
 
-        // Before
-        caller->dump();
         // Replace
         BasicBlock::iterator it(i->oldcall);
         ReplaceInstWithInst(i->oldcall->getParent()->getInstList(), it, i->newcall);
         i->oldcall->replaceAllUsesWith(i->newcall);
-        //std::cout << "==================================\n";
-        // Run preloaded passes on the function to propagate constants
-        funPassManager->run(*caller);
         
-        // Check loops
-        bool status;
-        TargetData *target = new TargetData(this->llvmMod);
-        FunctionPassManager *fpm = new FunctionPassManager(this->llvmMod);
-        //fpm->add(new LoopChecker(i->addrArg, status));
-        //fpm->run(*caller);
-        
-        // After
-        //caller->dump();        
-        // Check if the function is corrupt
-        verifyFunction(*caller);
-        this->engine->recompileAndRelinkFunction(caller);
         MSG("       Call optimized (^_-)\n");
         callOptCounter++;
     }
+    
+    //std::cout << "==================================\n";
+    // Run preloaded passes on the function to propagate constants
+    funPassManager->run(*procf);
+    // After
+    //procf->dump();        
+    // Check if the function is corrupt
+    verifyFunction(*procf);
+    this->engine->recompileAndRelinkFunction(procf);
        
 }
 
@@ -447,6 +439,96 @@ Function* TLMBasicPass::lookForWriteFunction(sc_core::sc_module *module) {
         MSG(moduleName+"\n");
     }
     return f;
+}
+
+
+// =============================================================================
+// createProcess
+// 
+// Create a new function that contains a call to the old function.
+// We inline the call in order to clone the old function's implementation.
+// =============================================================================
+Function *TLMBasicPass::createProcess(Function *oldProc, 
+                                      sc_core::sc_module *initiatorMod) {
+    
+    LLVMContext &context = getGlobalContext();
+    const IntegerType *intType;
+    if (this->is64Bit) {
+        intType = Type::getInt64Ty(context);
+    } else {
+        intType = Type::getInt32Ty(context);
+    }
+    
+    // Retrieve a pointer to the initiator module 
+    ConstantInt *initiatorModVal = 
+    ConstantInt::getSigned(intType,reinterpret_cast<intptr_t>(initiatorMod));
+    const FunctionType *funType = oldProc->getFunctionType();  
+    const Type *type = funType->getParamType(0);
+    IntToPtrInst *thisAddr = 
+    new IntToPtrInst(initiatorModVal, type, "");
+    
+    // Compute the type of the new function
+    const FunctionType *oldProcType = oldProc->getFunctionType();
+    Value **argsBegin = new Value*[1];
+    Value **argsEnd = argsBegin;
+    *argsEnd++ = thisAddr;
+    const unsigned argsSize = argsEnd-argsBegin;
+    Value **args = argsBegin;
+    assert(oldProcType->getNumParams()==argsSize);
+    assert(!oldProc->isDeclaration());
+    std::vector<const Type*> argTypes;
+    for (unsigned i = 0; i!=argsSize; ++i)
+        //if (args[i]==NULL)
+            argTypes.push_back(oldProcType->getParamType(i));
+    const FunctionType *newProcType =
+    FunctionType::get(oldProc->getReturnType(), argTypes, false);
+    
+    // Create the new function
+    std::ostringstream id;
+    id << proc_counter++;
+    std::string name = oldProc->getNameStr()+std::string("_clone_")+id.str();
+    Function *newProc = 
+    Function::Create(newProcType, Function::ExternalLinkage, name, this->llvmMod);
+    assert(newProc->empty());
+    newProc->addFnAttr(Attribute::InlineHint);
+    
+    { // Set name of newfunc arguments and complete args
+        Function::arg_iterator nai = newProc->arg_begin();
+        Function::arg_iterator oai = oldProc->arg_begin();
+        for (unsigned i = 0; i!=argsSize; ++i, ++oai)
+            if (args[i]==NULL) {
+                nai->setName(oai->getName());
+                args[i] = nai;
+                ++nai;
+            }
+        assert(nai==newProc->arg_end());
+        assert(oai==oldProc->arg_end());
+    }
+    
+    // Create call to old function
+    BasicBlock *bb = BasicBlock::Create(context, "entry", newProc);
+    IRBuilder<> *irb = new IRBuilder<>(context);
+    irb->SetInsertPoint(bb);
+    CallInst *ci = irb->CreateCall(oldProc, argsBegin, argsEnd);
+    bb->getInstList().insert(ci, thisAddr);
+    if (ci->getType()->isVoidTy())
+        irb->CreateRetVoid();
+    else
+        irb->CreateRet(ci);
+
+    // The function should be valid now
+    verifyFunction(*newProc);
+    
+    { // Inline the call
+        TargetData *td = new TargetData(this->llvmMod);
+        InlineFunctionInfo i(NULL, td);
+        bool success = InlineFunction(ci, i);
+        assert(success);
+        verifyFunction(*newProc);
+    }    
+    
+    //newProc->dump();
+    return newProc;
 }
 
 

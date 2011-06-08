@@ -176,10 +176,10 @@ void sc_thread_process::kill_process()
 void sc_thread_process::prepare_for_simulation()
 {
     // tweto patch
-    #ifdef TWETO
+    /*#ifdef TWETO
     assert(m_semantics_p==NULL);
     m_semantics_p = tweto_optimize_process(m_semantics_method_p, m_semantics_host_p);
-    #endif
+    #endif*/
     
     m_cor_p = simcontext()->cor_pkg()->create( m_stack_size,
                          sc_thread_cor_fn, this );

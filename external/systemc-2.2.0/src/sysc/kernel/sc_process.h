@@ -380,12 +380,14 @@ class sc_process_b : public sc_object {
 
 // Tweto patch
 #ifdef TWETO
+    public:
 #ifdef SC_USE_MEMBER_FUNC_PTR
     typedef void (*SC_ENTRY_FUNC_OPT)();
     SC_ENTRY_FUNC_OPT m_semantics_p; // Method merged with host for semantics.
 #endif
+    protected:
 #endif
-    
+  
     sc_event*                    m_term_event_p;    // Terminated event.
     process_throw_type           m_throw_type;      // Throw type.
     bool                         m_timed_out;       // True if we timed out.
@@ -543,7 +545,7 @@ inline void sc_process_b::semantics()
          m_semantics_p();
     }
     #endif
-#else // !TWETO    
+#else // !TWETO 
     #ifndef SC_USE_MEMBER_FUNC_PTR
     m_semantics_method_p->invoke( m_semantics_host_p );
     #else

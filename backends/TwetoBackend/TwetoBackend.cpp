@@ -209,7 +209,7 @@ tweto_optimize_process(sc_core::SC_ENTRY_FUNC vfct, sc_core::sc_process_host *ho
     
     // Enter machine-dependent code
     Value *args[3];
-    // DO NOT WORK : BUG ON FIRST ARGUMENT (i8 instead of i64)
+    // DO NOT WORK (ON MACOSX 10.6.6) : BUG ON FIRST ARGUMENT (i8 instead of i64)
     if (call_proc_FT->getNumParams()==3 &&
         call_proc_FT->getParamType(0)==i64 && 
         call_proc_FT->getParamType(1)==i64 &&
