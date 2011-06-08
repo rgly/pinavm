@@ -267,8 +267,8 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
     sc_core::SC_ENTRY_FUNC_OPT scfun = 
     reinterpret_cast<sc_core::SC_ENTRY_FUNC_OPT>(funPtr);
     proc->m_semantics_p = scfun;
-    
-    MSG("      Replace in the process's function : "+mainFctName+"\n");
+    std::string procfName = procf->getName();
+    MSG("      Replace in the process's function : "+procfName+"\n");
     
     std::ostringstream oss;
     std::vector<CallInfo*> work;
@@ -282,7 +282,6 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
             Function *oldfun = cs.getCalledFunction();
             if (oldfun!=NULL && !oldfun->isDeclaration()) {
                 std::string name = oldfun->getName();
-                
                 // === Write ===
                 if (writef!=NULL && !strcmp(name.c_str(), wFunName.c_str())) {
                     
@@ -307,8 +306,8 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                     if(!concordErr) {
                         std::cout << "       return, no concordances!" 
                         << std::endl;
-                        break;
-                    }
+                    } 
+                    else {
                     
                     // Checking address alignment
                     if(value % sizeof(basic::data_t)) {
@@ -339,6 +338,7 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                                         reinterpret_cast<intptr_t>(targetMod));
                     info->dataArg = cs.getArgument(2);
                     work.push_back(info);
+                    }
    
                 } else
                     
@@ -350,6 +350,7 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                 }
             }  
         }
+    
     }
     
     // Check loops in the parent function
@@ -362,7 +363,7 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
     //fpm->run(*procf);
     
     // Before
-    procf->dump();
+    //procf->dump();
     
     // Replace calls
     std::vector<CallInfo*>::iterator it;
