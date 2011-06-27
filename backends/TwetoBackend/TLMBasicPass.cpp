@@ -131,14 +131,6 @@ bool TLMBasicPass::runOnModule(Module &M) {
 		for (it = ports->begin(); it < ports->end(); ++it) {
 			sc_core::sc_port_base * initiator = *it;
             sc_core::sc_interface* initiatorItf = initiator->get_interface();
-        
-            // DO NOT WORK 
-            //const char* initiatorTypeName = typeid(*initiatorItf).name();            
-            //std::string initiatorItfTypeName(initiatorTypeName);
-            //std::string match1 = "N5basic21initiator_socket_trueE";
-            //std::string match2 = "N5basic16initiator_socket";
-            //if ((initiatorItfTypeName.find(match1) == 0) 
-            //  || (initiatorItfTypeName.find(match2) == 0)) {
             
             std::string initiatorName = initiator->name(); 
             if (initiatorName.find("basic::initiator_socket")!=string::npos) {
@@ -158,7 +150,7 @@ bool TLMBasicPass::runOnModule(Module &M) {
                             sc_core::sc_object *o = target->get_parent();
                             sc_core::sc_module *targetMod = 
                             dynamic_cast<sc_core::sc_module *>(o);
-
+                            
                             optimize(target, initiatorMod, targetMod, b); 
                             
                         }
@@ -271,7 +263,7 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
     MSG("      Replace in the process's function : "+procfName+"\n");
     
     std::ostringstream oss;
-    std::vector<CallInfo*> work;
+    std::vector<CallInfo*> *work = new std::vector<CallInfo*>;
     
     inst_iterator ii;
     for (ii = inst_begin(procf); ii!=inst_end(procf); ii++) {
@@ -293,10 +285,14 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                     SCJit *scjit = new SCJit(this->llvmMod, this->elab);
                     Process *irProc = this->elab->getProcess(proc);
                     scjit->setCurrentProcess(irProc);                    
-                    bool errb = false;
+                    bool jitErr = false;
                     info->addrArg = cs.getArgument(1);
                     int value = 
-                    scjit->jitInt(procf, info->oldcall, info->addrArg, &errb);
+                    scjit->jitInt(procf, info->oldcall, info->addrArg, &jitErr);
+                    if(jitErr) {
+                        std::cout << "       cannot get the address value!" 
+                          << std::endl;
+                    } else {
                     oss.str("");  oss << std::hex << value;
                     MSG("0x"+oss.str()+"\n");
                     basic::addr_t a = static_cast<basic::addr_t>(value);            
@@ -304,7 +300,7 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                     // Checking address and target concordance
                     bool concordErr = bus->checkAdressConcordance(target, a);
                     if(!concordErr) {
-                        std::cout << "       return, no concordances!" 
+                        std::cout << "       return, no concordances!"
                         << std::endl;
                     } 
                     else {
@@ -337,7 +333,8 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                     info->targetModVal = ConstantInt::getSigned(intType,
                                         reinterpret_cast<intptr_t>(targetMod));
                     info->dataArg = cs.getArgument(2);
-                    work.push_back(info);
+                    work->push_back(info);
+                    }
                     }
    
                 } else
@@ -352,22 +349,13 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
         }
     
     }
-    
-    // Check loops in the parent function
-    // Only calls with invariant address will be retained
-    bool status;
-    TargetData *td = new TargetData(this->llvmMod);
-    FunctionPassManager *fpm = new FunctionPassManager(this->llvmMod);
-    //fpm->add(td);
-    //fpm->add(new LoopChecker(i->addrArg, status));
-    //fpm->run(*procf);
-    
+        
     // Before
     //procf->dump();
     
     // Replace calls
     std::vector<CallInfo*>::iterator it;
-    for (it = work.begin(); it!=work.end(); ++it) {
+    for (it = work->begin(); it!=work->end(); ++it) {
         CallInfo *i = *it;
         
         // Retrieve a pointer to target module 
@@ -419,27 +407,6 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
     // Check if the function is corrupt
     verifyFunction(*procf);
     this->engine->recompileAndRelinkFunction(procf);
-       
-}
-
-
-// =============================================================================
-// lookForWriteFunction
-// 
-// Look for a write function definition 
-// in the given SystemC module
-// =============================================================================
-Function* TLMBasicPass::lookForWriteFunction(sc_core::sc_module *module) {
-    // Reverse mangling
-    std::string moduleType = typeid(*module).name();    
-    std::string name("_ZN"+moduleType+"5writeERKjS1_");
-    Function *f = this->llvmMod->getFunction(name);
-    if(f!=NULL) {
-        std::string moduleName = (std::string) module->name();
-        MSG("      Found 'write' function in the module : "); 
-        MSG(moduleName+"\n");
-    }
-    return f;
 }
 
 
@@ -530,6 +497,26 @@ Function *TLMBasicPass::createProcess(Function *oldProc,
     
     //newProc->dump();
     return newProc;
+}
+
+
+// =============================================================================
+// lookForWriteFunction
+// 
+// Look for a write function definition 
+// in the given SystemC module
+// =============================================================================
+Function* TLMBasicPass::lookForWriteFunction(sc_core::sc_module *module) {
+    // Reverse mangling
+    std::string moduleType = typeid(*module).name();    
+    std::string name("_ZN"+moduleType+"5writeERKjS1_");
+    Function *f = this->llvmMod->getFunction(name);
+    if(f!=NULL) {
+        std::string moduleName = (std::string) module->name();
+        MSG("      Found 'write' function in the module : "); 
+        MSG(moduleName+"\n");
+    }
+    return f;
 }
 
 
