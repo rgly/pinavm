@@ -18,6 +18,18 @@ extern "C" void tweto_call_process_method(sc_core::SC_ENTRY_FUNC vfct, sc_core::
 void tweto_call_process_method(sc_core::SC_ENTRY_FUNC vfct, sc_core::sc_process_host *host) {
     (host->*vfct)();
 }
+extern "C" void tweto_call_write_method(basic::target_module_base *module, 
+                                        basic::addr_t a, basic::data_t d);
+void tweto_call_write_method(basic::target_module_base *module, 
+                             basic::addr_t a, basic::data_t d) {
+    module->write(a, d);
+}
+extern "C" void tweto_call_read_method(basic::target_module_base *module, 
+                                       basic::addr_t a, basic::data_t d);
+void tweto_call_read_method(basic::target_module_base *module, 
+                            basic::addr_t a, basic::data_t d) {
+    module->read(a, d);
+}
 
 using namespace std;
 using namespace sc_core;

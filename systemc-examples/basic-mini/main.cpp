@@ -18,6 +18,18 @@ extern "C" void tweto_call_process_method(sc_core::SC_ENTRY_FUNC vfct, sc_core::
 void tweto_call_process_method(sc_core::SC_ENTRY_FUNC vfct, sc_core::sc_process_host *host) {
     (host->*vfct)();
 }
+extern "C" void tweto_call_write_method(basic::target_module_base *module, 
+                                        basic::addr_t a, basic::data_t d);
+void tweto_call_write_method(basic::target_module_base *module, 
+                             basic::addr_t a, basic::data_t d) {
+    module->write(a, d);
+}
+extern "C" void tweto_call_read_method(basic::target_module_base *module, 
+                                       basic::addr_t a, basic::data_t d);
+void tweto_call_read_method(basic::target_module_base *module, 
+                            basic::addr_t a, basic::data_t d) {
+    module->read(a, d);
+}
 
 using namespace std;
 using namespace sc_core;
@@ -25,11 +37,14 @@ using namespace sc_core;
 struct initiator : sc_module {
         basic::initiator_socket<initiator> socket;
         void thread(void) {
-		basic::addr_t addr = 4;
-		for (basic::data_t val = 1; val <= 10; val++) {
-			val++;
-                        socket.write(addr, val);
-                }
+            
+            basic::addr_t addr = 4;
+            basic::addr_t valc = 4;
+            for (basic::data_t val = 1; val <= 10; val++) {
+                val++; 
+                socket.write(addr, val);
+            }
+            
         }
         SC_CTOR(initiator) {
                 SC_THREAD(thread);
@@ -43,7 +58,7 @@ struct target : sc_module, basic::target_module_base {
                 cout << "j'ai reçu : " << d << endl;
                 return tlm::TLM_OK_RESPONSE;
         }
-        tlm::tlm_response_status read (const basic::addr_t &a,
+        tlm::tlm_response_status read(const basic::addr_t &a,
                                        /* */ basic::data_t &d) {
                 SC_REPORT_ERROR("TLM", "non implémenté");
                 abort();
