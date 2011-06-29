@@ -105,6 +105,26 @@ bool TLMBasicPass::runOnModule(Module &M) {
     
     MSG("\n============== TLM Basic Pass =============\n");
     this->llvmMod = &M;
+    
+    // Retrieve the method that does all the vtable calculations
+    // in order to call the actual 'write' method (see replaceCallsInProcess)
+    this->writeFun = this->llvmMod->getFunction("tweto_call_write_method");
+    if(!this->writeFun) {
+        std::cerr << "tweto_call_write_method is missing,"; 
+        std::cerr << "pass aborded!" << std::endl;
+        return false;
+    }
+    // Retrieve the base write method in order to get the types
+    // of the 'this' pointer, the address and the data
+    // (should be always mangled like this, so if the Basic-protocol's includes
+    //  are correctly imported, no error will be throw)
+    this->basicWriteFun = this->llvmMod->getFunction(wFunName);
+    if(!this->basicWriteFun) {
+        std::cerr << "basic's write method is missing,"; 
+        std::cerr << "pass aborded!" << std::endl;
+        return false;
+    }
+    
     // Initialize function passes
     TargetData *target = new TargetData(this->llvmMod);
     funPassManager = new FunctionPassManager(this->llvmMod);
@@ -157,7 +177,6 @@ bool TLMBasicPass::runOnModule(Module &M) {
                     }
                 
                 }                
-                
             }
 		}
 	}
@@ -185,12 +204,6 @@ void TLMBasicPass::optimize(basic::compatible_socket* target,
                             sc_core::sc_module *targetMod, 
                             Bus *bus) {
     std::ostringstream oss;
-    // Looking for declarations of functions
-    Function *writef = lookForWriteFunction(targetMod);
-    Function *readf = lookForReadFunction(targetMod);
-    if (writef==NULL && readf==NULL)
-        return;
-    
     // Looking for calls in process
     std::vector<std::string> doneThreads;
     std::vector<std::string> doneMethods;
@@ -209,7 +222,7 @@ void TLMBasicPass::optimize(basic::compatible_socket* target,
         if (it==doneThreads.end()) {
             doneThreads.push_back(fctName);
             replaceCallsInProcess(target, initiatorMod, targetMod,
-                                  proc, writef, readf, bus);
+                                  proc, bus);
         }
     }
     sc_core::sc_method_handle method_p;
@@ -224,7 +237,7 @@ void TLMBasicPass::optimize(basic::compatible_socket* target,
         if (it==doneMethods.end()) {
             doneMethods.push_back(fctName);
             replaceCallsInProcess(target, initiatorMod, targetMod, 
-                                  proc, writef, readf, bus);
+                                  proc, bus);
         }
     }
     
@@ -241,7 +254,6 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                                          sc_core::sc_module *initiatorMod, 
                                          sc_core::sc_module *targetMod,
                                          sc_core::sc_process_b *proc,
-                                         Function *writef, Function *readf, 
                                          Bus *bus) {
     // Get associate function
     std::string fctName = proc->func_process;
@@ -275,7 +287,7 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
             if (oldfun!=NULL && !oldfun->isDeclaration()) {
                 std::string name = oldfun->getName();
                 // === Write ===
-                if (writef!=NULL && !strcmp(name.c_str(), wFunName.c_str())) {
+                if (!strcmp(name.c_str(), wFunName.c_str())) {
                     
                     CallInfo *info = new CallInfo();
                     info->oldcall = dyn_cast<CallInst>(cs.getInstruction());
@@ -321,7 +333,8 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                     }
                     
                     // Save informations to build a new call later
-                    const FunctionType *writeFunType = writef->getFunctionType();  
+                    const FunctionType *writeFunType = 
+                        this->basicWriteFun->getFunctionType();  
                     info->targetType = writeFunType->getParamType(0);
                     LLVMContext &context = getGlobalContext();
                     const IntegerType *intType;
@@ -340,7 +353,7 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                 } else
                     
                 // === Read ===
-                if (readf!=NULL && !strcmp(name.c_str(), rFunName.c_str())) {
+                if (!strcmp(name.c_str(), rFunName.c_str())) {
                     
                     // Not yet supported
                                         
@@ -358,42 +371,37 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
     for (it = work->begin(); it!=work->end(); ++it) {
         CallInfo *i = *it;
         
-        // Retrieve a pointer to target module 
-        //  %1 = module
-        //  %2 = inttoptr i64/i32 %1 to %struct.target*
-        IntToPtrInst *structTarget = 
-        new IntToPtrInst(i->targetModVal, i->targetType, "", i->oldcall);
+        LLVMContext &context = getGlobalContext();
+        const FunctionType *writeFunType = 
+        this->writeFun->getFunctionType();
+        const IntegerType *i64 = Type::getInt64Ty(context);
+        // Get a pointer to the target module
+        basic::target_module_base *tmb = 
+        dynamic_cast<basic::target_module_base*>(targetMod);
+        Value *ptr = 
+        ConstantInt::getSigned(i64, reinterpret_cast<intptr_t>(tmb));
+        IntToPtrInst *modPtr = new IntToPtrInst(ptr, 
+                                                writeFunType->getParamType(0),
+                                                "myitp", i->oldcall);
+        // Get a the address value
+        LoadInst *addr = new LoadInst(i->addrArg, "", i->oldcall);
         
-        // Get a pointer to the data argument
-        //  %6 = alloca i32
-        //  store i32 %data, i32* %6	
-        BasicBlock &front = procf->getEntryBlock();
-        Instruction *nophi = front.getFirstNonPHI();
-        if(nophi==NULL) {
-            std::cerr << "  Code insertion error [PHI inst]\n";
-            abort();
-        }
-        AllocaInst* dataArgPtr = 
-        new AllocaInst(i->dataArg->getType(), 0, "", nophi);
-        dataArgPtr->setAlignment(4);
-        StoreInst *storeData = 
-        new StoreInst(i->dataArg, dataArgPtr, i->oldcall);
-        storeData->setAlignment(4);
-        
-        // Set arguments
-        Value **argsKeep = new Value*[3];
-        Value **argsKeepEnd = argsKeep;
-        *argsKeepEnd++ = structTarget; // struct.target*
-        *argsKeepEnd++ = i->addrArg; // addr_t*
-        *argsKeepEnd++ = dataArgPtr; // data_t*
-        
-        // Create a new call
-        i->newcall = CallInst::Create(writef, argsKeep,argsKeepEnd,"");
+        // Create the new call
+        Value *args[] = {modPtr, addr, i->dataArg};
+        i->newcall = CallInst::Create(this->writeFun, args, args+3);
 
-        // Replace
+        // Replace the old call
         BasicBlock::iterator it(i->oldcall);
         ReplaceInstWithInst(i->oldcall->getParent()->getInstList(), it, i->newcall);
         i->oldcall->replaceAllUsesWith(i->newcall);
+        
+        // Inline the new call
+        TargetData *td = new TargetData(this->llvmMod);
+        InlineFunctionInfo ifi(NULL, td);
+        bool success = InlineFunction(i->newcall, ifi);
+        if(!success) {
+            MSG("       The call cannot be inlined (it's not an error :D)");
+        }
         
         MSG("       Call optimized (^_-)\n");
         callOptCounter++;
@@ -497,46 +505,6 @@ Function *TLMBasicPass::createProcess(Function *oldProc,
     
     //newProc->dump();
     return newProc;
-}
-
-
-// =============================================================================
-// lookForWriteFunction
-// 
-// Look for a write function definition 
-// in the given SystemC module
-// =============================================================================
-Function* TLMBasicPass::lookForWriteFunction(sc_core::sc_module *module) {
-    // Reverse mangling
-    std::string moduleType = typeid(*module).name();    
-    std::string name("_ZN"+moduleType+"5writeERKjS1_");
-    Function *f = this->llvmMod->getFunction(name);
-    if(f!=NULL) {
-        std::string moduleName = (std::string) module->name();
-        MSG("      Found 'write' function in the module : "); 
-        MSG(moduleName+"\n");
-    }
-    return f;
-}
-
-
-// =============================================================================
-// lookForWriteFunction
-// 
-// Look for a read function definition 
-// in the given SystemC module
-// =============================================================================
-Function* TLMBasicPass::lookForReadFunction(sc_core::sc_module *module) {
-    // Reverse mangling
-    std::string moduleType = typeid(*module).name();
-    std::string name("_ZN"+moduleType+"4readERKjRj");    
-    Function *f = this->llvmMod->getFunction(name);
-    if(f!=NULL) {
-        std::string moduleName = (std::string) module->name();
-        MSG("      Found 'read' function in the module : "); 
-        MSG(moduleName+"\n");
-    }
-    return f;
 }
 
 

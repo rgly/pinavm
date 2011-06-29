@@ -97,6 +97,8 @@ class TLMBasicPass : public ModulePass {
     private:
         int callOptCounter;
         int rwCallsCounter;
+        Function *writeFun;
+        Function *basicWriteFun;
         Frontend *fe;
         ExecutionEngine *engine;
         bool disableMsg;
@@ -115,17 +117,14 @@ class TLMBasicPass : public ModulePass {
                       sc_core::sc_module *initiatorMod, 
                       sc_core::sc_module *targetMod, 
                       Bus *bus);
-        Function* lookForWriteFunction(sc_core::sc_module *module);
-        Function* lookForReadFunction(sc_core::sc_module *module);
-        void MSG(std::string msg);
         void replaceCallsInProcess(basic::compatible_socket* target, 
                           sc_core::sc_module *initiatorMod, 
                           sc_core::sc_module *targetMod,
                           sc_core::sc_process_b *proc,
-                          Function *writef, Function *readf, 
                           Bus *bus);
         Function *createProcess(Function *oldProc, 
                                 sc_core::sc_module *initiatorMod);
+        void MSG(std::string msg);
     
 };
 //============================================================================
