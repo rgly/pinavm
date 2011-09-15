@@ -6,7 +6,7 @@
  * @author : Claude Helmstetter, Si-Mohamed Lamraoui
  * @contact : si-mohamed.lamraoui@imag.fr
  * @date : 2011/03/01
- * @copyright : Verimag 2011
+ * @copyright : LIAMA 2010, Verimag 2011
  */
 
 #define DEBUG_TYPE "tweto"
