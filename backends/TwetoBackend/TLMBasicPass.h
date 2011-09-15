@@ -113,15 +113,11 @@ class TLMBasicPass : public ModulePass {
         bool runOnModule(Module &M);
     
     private:
-        void optimize(basic::compatible_socket* target, 
-                      sc_core::sc_module *initiatorMod, 
-                      sc_core::sc_module *targetMod, 
-                      Bus *bus);
-        void replaceCallsInProcess(basic::compatible_socket* target, 
-                          sc_core::sc_module *initiatorMod, 
-                          sc_core::sc_module *targetMod,
-                          sc_core::sc_process_b *proc,
-                          Bus *bus);
+        void optimize(sc_core::sc_module *initiatorMod);
+        void replaceCallsInProcess(sc_core::sc_module *initiatorMod, 
+                                   sc_core::sc_process_b *proc);
+        sc_core::sc_module *getTargetModule(sc_core::sc_module *initiatorMod,
+                                        basic::addr_t a);
         Function *createProcess(Function *oldProc, 
                                 sc_core::sc_module *initiatorMod);
         void MSG(std::string msg);

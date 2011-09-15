@@ -125,6 +125,8 @@ bool TLMBasicPass::runOnModule(Module &M) {
         return false;
     }
     
+    writeFun->dump();    
+    
     // Initialize function passes
     TargetData *target = new TargetData(this->llvmMod);
     funPassManager = new FunctionPassManager(this->llvmMod);
@@ -144,42 +146,14 @@ bool TLMBasicPass::runOnModule(Module &M) {
 	for (modIt = modules.begin(); modIt < modules.end(); ++modIt) {
 		sc_core::sc_module * initiatorMod = *modIt;
         std::string moduleName = (std::string) initiatorMod->name();
-        
-        // Initiator ports
-		std::vector < sc_core::sc_port_base * >*ports = initiatorMod->m_port_vec;
-		vector < sc_core::sc_port_base * >::iterator it;
-		for (it = ports->begin(); it < ports->end(); ++it) {
-			sc_core::sc_port_base * initiator = *it;
-            sc_core::sc_interface* initiatorItf = initiator->get_interface();
-            
-            std::string initiatorName = initiator->name(); 
-            if (initiatorName.find("basic::initiator_socket")!=string::npos) {
-                
-                MSG("== Initiator : "+initiatorName+"\n");
-                basic::target_socket_base<true> *tsb =
-                dynamic_cast<basic::target_socket_base<true> *>(initiatorItf);
-                if (tsb) {
-                    Bus *b = dynamic_cast<Bus *>(tsb->get_parent_object());
-                    for(int i = 0; i < b->initiator.size(); ++i) {
-                        basic::compatible_socket* target =
-                        dynamic_cast<basic::compatible_socket*>(b->initiator[i]);
-                        if (target) {
-                            std::string targetName = target->name();
-                            MSG(" = Target : "+targetName+"\n");
-                            
-                            sc_core::sc_object *o = target->get_parent();
-                            sc_core::sc_module *targetMod = 
-                            dynamic_cast<sc_core::sc_module *>(o);
-                            
-                            optimize(target, initiatorMod, targetMod, b); 
-                            
-                        }
-                    }
-                
-                }                
-            }
-		}
-	}
+        // Does the module have ports
+        std::vector < sc_core::sc_port_base * > *ports = 
+        initiatorMod->m_port_vec;
+        if(ports->size()>0) {
+            // Optimize this module
+            optimize(initiatorMod); 
+        }
+    }
 
     // Check if the module is corrupt
     verifyModule(*this->llvmMod);
@@ -199,10 +173,8 @@ bool TLMBasicPass::runOnModule(Module &M) {
 // 
 // Optimize all process that use write or read functions
 // =============================================================================
-void TLMBasicPass::optimize(basic::compatible_socket* target, 
-                            sc_core::sc_module *initiatorMod, 
-                            sc_core::sc_module *targetMod, 
-                            Bus *bus) {
+void TLMBasicPass::optimize(sc_core::sc_module *initiatorMod) {
+    
     std::ostringstream oss;
     // Looking for calls in process
     std::vector<std::string> doneThreads;
@@ -221,8 +193,7 @@ void TLMBasicPass::optimize(basic::compatible_socket* target,
         it = find (doneThreads.begin(), doneThreads.end(), fctName);
         if (it==doneThreads.end()) {
             doneThreads.push_back(fctName);
-            replaceCallsInProcess(target, initiatorMod, targetMod,
-                                  proc, bus);
+            replaceCallsInProcess(initiatorMod, proc);
         }
     }
     sc_core::sc_method_handle method_p;
@@ -236,8 +207,7 @@ void TLMBasicPass::optimize(basic::compatible_socket* target,
         it = find (doneMethods.begin(), doneMethods.end(), fctName);
         if (it==doneMethods.end()) {
             doneMethods.push_back(fctName);
-            replaceCallsInProcess(target, initiatorMod, targetMod, 
-                                  proc, bus);
+            replaceCallsInProcess(initiatorMod, proc);
         }
     }
     
@@ -250,11 +220,9 @@ void TLMBasicPass::optimize(basic::compatible_socket* target,
 // Replace indirect calls to write() or read() by direct calls 
 // in the given process.
 // =============================================================================
-void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target, 
-                                         sc_core::sc_module *initiatorMod, 
-                                         sc_core::sc_module *targetMod,
-                                         sc_core::sc_process_b *proc,
-                                         Bus *bus) {
+void TLMBasicPass::replaceCallsInProcess(sc_core::sc_module *initiatorMod,
+                                         sc_core::sc_process_b *proc) {
+    
     // Get associate function
     std::string fctName = proc->func_process;
 	std::string modType = typeid(*initiatorMod).name();
@@ -275,6 +243,7 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
     MSG("      Replace in the process's function : "+procfName+"\n");
     
     std::ostringstream oss;
+    sc_core::sc_module *targetMod;
     std::vector<CallInfo*> *work = new std::vector<CallInfo*>;
     
     inst_iterator ii;
@@ -292,7 +261,7 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                     CallInfo *info = new CallInfo();
                     info->oldcall = dyn_cast<CallInst>(cs.getInstruction());
                     MSG("       Checking adress : ");
-                    // Retrieve the argument by executing 
+                    // Retrieve the adress argument by executing 
                     // the appropriated piece of code
                     SCJit *scjit = new SCJit(this->llvmMod, this->elab);
                     Process *irProc = this->elab->getProcess(proc);
@@ -309,29 +278,16 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                     MSG("0x"+oss.str()+"\n");
                     basic::addr_t a = static_cast<basic::addr_t>(value);            
                     
-                    // Checking address and target concordance
-                    bool concordErr = bus->checkAdressConcordance(target, a);
-                    if(!concordErr) {
-                        std::cout << "       return, no concordances!"
-                        << std::endl;
-                    } 
-                    else {
-                    
                     // Checking address alignment
                     if(value % sizeof(basic::data_t)) {
                         std::cerr << "  unaligned write : " <<
                         std::hex << value << std::endl;
                         abort();
                     }
-                    
-                    // Checking address range
-                    bool addrErr = bus->checkAdressRange(a);
-                    if(!addrErr) {
-                        std::cerr << "  no target at address " <<
-                        std::hex << value << std::endl;
-                        abort();
-                    }
-                    
+
+                    // Retreive the target module using the address
+                    targetMod =  getTargetModule(initiatorMod, a);
+                                    
                     // Save informations to build a new call later
                     const FunctionType *writeFunType = 
                         this->basicWriteFun->getFunctionType();  
@@ -347,7 +303,6 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
                                         reinterpret_cast<intptr_t>(targetMod));
                     info->dataArg = cs.getArgument(2);
                     work->push_back(info);
-                    }
                     }
    
                 } else
@@ -389,7 +344,7 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
         // Create the new call
         Value *args[] = {modPtr, addr, i->dataArg};
         i->newcall = CallInst::Create(this->writeFun, args, args+3);
-
+        
         // Replace the old call
         BasicBlock::iterator it(i->oldcall);
         ReplaceInstWithInst(i->oldcall->getParent()->getInstList(), it, i->newcall);
@@ -415,6 +370,52 @@ void TLMBasicPass::replaceCallsInProcess(basic::compatible_socket* target,
     // Check if the function is corrupt
     verifyFunction(*procf);
     this->engine->recompileAndRelinkFunction(procf);
+}
+
+
+// =============================================================================
+// getTargetModule
+// 
+// Retreive a module that is in the range of the given address.
+// Of course, this module and the initiator module (arg) must be 
+// connected to the same bus.
+// =============================================================================
+sc_core::sc_module *TLMBasicPass::getTargetModule(
+                                    sc_core::sc_module *initiatorMod,
+                                    basic::addr_t a) {
+    
+    std::vector < sc_core::sc_port_base * >*ports = initiatorMod->m_port_vec;
+    vector < sc_core::sc_port_base * >::iterator it;
+    for (it = ports->begin(); it < ports->end(); ++it) {
+        sc_core::sc_port_base * initiator = *it;
+        sc_core::sc_interface* initiatorItf = initiator->get_interface();
+        std::string initiatorName = initiator->name(); 
+        if (initiatorName.find("basic::initiator_socket")!=string::npos) {
+            basic::target_socket_base<true> *tsb =
+            dynamic_cast<basic::target_socket_base<true> *>(initiatorItf);
+            if (tsb) {
+                Bus *b = dynamic_cast<Bus *>(tsb->get_parent_object());
+                for(int i = 0; i < b->initiator.size(); ++i) {
+                    basic::compatible_socket* target =
+                    dynamic_cast<basic::compatible_socket*>(b->initiator[i]);
+                    if (target) {
+                        bool concordErr = b->checkAdressConcordance(target, a);
+                        if(concordErr) {
+                                                
+                            std::string targetName = target->name();
+                            //MSG(" = "+initiatorName+" -> "+targetName+"\n");
+
+                            sc_core::sc_object *o = target->get_parent();
+                            sc_core::sc_module *targetMod = 
+                            dynamic_cast<sc_core::sc_module *>(o);
+                            return targetMod;
+                        }
+                    }
+                }
+            }                
+        }
+    }
+    return NULL;
 }
 
 
