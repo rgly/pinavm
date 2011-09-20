@@ -1,3 +1,6 @@
+# DEPRECADED Makefile to compile PinaVM. It is kept here in case of
+# problem with CMake, but you should use CMake instead.
+
 SRCS = ${filter-out pinavm.cpp, ${wildcard *.cpp}}
 TARGET_EXE = pinavm
 

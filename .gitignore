@@ -8,7 +8,8 @@ configure.out
 configure
 autom4te.cache
 *.d
-*.so
+lib*.so
+lib*.a
 basic-timestamp.txt
 
 .DS_Store
@@ -19,3 +20,19 @@ pinavm-xcode*
 *.pbxsymbols
 control
 strings
+
+# CMake's own stuff ...
+CMakeCache.txt
+CMakeFiles
+cmake_install.cmake
+# ... and generated Makefile
+/Makefile
+/backends/42Backend/Makefile
+/backends/PromelaBackend/Makefile
+/backends/SimpleBackend/Makefile
+/backends/TwetoBackend/Makefile
+/external/basic/Makefile
+/external/systemc-2.2.0/Makefile
+/frontend/Makefile
+/toplevel/Makefile
+/utils/Makefile

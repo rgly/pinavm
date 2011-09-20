@@ -6,6 +6,8 @@ $ which g++
 Make sure your version isn't listed here:
 http://llvm.org/docs/GettingStarted.html#brokengcc
 
+If needed, install cmake (http://www.cmake.org/)
+
 1) Download the tool
 
 TOOL=/where/you/want/
@@ -23,18 +25,17 @@ as simple as
   aptitude install llvm-dev
   aptitude install llvm-gcc
 
-LLVM's version should be 2.6. Note that the version of LLVM provided
+LLVM's version should be 2.8. Note that the version of LLVM provided
 by Debian requires libffi, so you may need to run
 
   aptitude install libffi-dev
 
 too.
 
-4) Run configure:
+4) Run cmake:
 
 cd $TOOL
-autoconf
-./configure --with-tools-dir=$DOWNLOAD
+cmake -DEXTERNAL_TOOLS_DIR=$DOWNLOAD .
 
 5) Execute the script
 
@@ -44,7 +45,7 @@ cd $TOOL
 The script may have to install LLVM and llvm-gcc. If it does so, then
 the installed tools must be added to your PATH, like:
 
-export PATH=$PATH:$DOWNLOAD/lib/llvm-gcc/bin:$DOWNLOAD/lib/llvm-2.6/bin
+export PATH=$PATH:$DOWNLOAD/lib/llvm-gcc/bin:$DOWNLOAD/lib/llvm-2.8/bin
 
 You may have to restart ./install-pinavm.sh after setting your PATH.
 
