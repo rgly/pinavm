@@ -1,7 +1,7 @@
 #!/bin/bash
 
 trap 'echo "Error detected! End of script.";exit 1' ERR
-#set -x
+set -x
 
 
 SCRIPT_DIR=$(cd "$(dirname $0)"; pwd)
@@ -55,11 +55,11 @@ if ! [ "$(llvm-config --version | sed 's/svn//')" = 2.8 ]; then
     do_you_want install_llvm
 fi
 
-# Included in compile_pinavm.
-# install_systemc_gcc
-# No longer usefull.
-# ( install_systemc_llvm )
-compile_pinavm
+# Build PinaVM
+cd "$SCRIPT_DIR"
+# We probably just installed llvm-config, and CMake needs it
+cmake .
+make
 
 date
 echo "

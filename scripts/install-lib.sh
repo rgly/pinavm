@@ -24,6 +24,7 @@ version_greater () {
     return 0
 }
 
+# unit-tests for version_greater
 test_version_greater_true () {
     version_greater "$1" "$2" || echo "FAIL: version_greater $1 $2"
 }
@@ -51,8 +52,8 @@ install_llvm() {
 
     echo "Building llvm..."
     cd "$DOWNLOAD_AND_COMPILE_DIR"
-    svn checkout http://llvm.org/svn/llvm-project/llvm/branches/release_27/ llvm-2.7
-    cd llvm-2.7
+    svn checkout http://llvm.org/svn/llvm-project/llvm/branches/release_28/ llvm-2.8
+    cd llvm-2.8
     test -d objdir || mkdir objdir
     cd objdir
     ../configure ${llvm_configure_flags}
@@ -87,14 +88,14 @@ install_llvm_gcc () {
 
     case $(uname) in
 	Darwin)
-	    LLVM_GCC_BASE=llvm-gcc-4.2-2.6-i386-darwin9
-	    LLVM_GCC_TAR="$LLVM_GCC_BASE".tar.gz
-	    LLVM_GCC_URL=http://llvm.org/releases/2.6/$LLVM_GCC_TAR
+	    LLVM_GCC_BASE=llvm-gcc-4.2-2.8-i386-darwin9
+	    LLVM_GCC_TAR="$LLVM_GCC_BASE".tgz
+	    LLVM_GCC_URL=http://llvm.org/releases/2.8/$LLVM_GCC_TAR
 	    ;;
 	Linux)
-	    LLVM_GCC_BASE=llvm-gcc-4.2-2.6-i686-linux
-	    LLVM_GCC_TAR="$LLVM_GCC_BASE".tar.gz
-	    LLVM_GCC_URL=http://llvm.org/releases/2.6/$LLVM_GCC_TAR
+	    LLVM_GCC_BASE=llvm-gcc-4.2-2.8-i686-linux
+	    LLVM_GCC_TAR="$LLVM_GCC_BASE".tgz
+	    LLVM_GCC_URL=http://llvm.org/releases/2.8/$LLVM_GCC_TAR
 	    ;;
 	*)
 	    echo "Unsupported platform $(uname), sorry"
@@ -106,6 +107,8 @@ install_llvm_gcc () {
     test -f "LLVM_GCC_TAR" || \
 	wget "$LLVM_GCC_URL"
     tar xzf "$LLVM_GCC_TAR"
+    # make sure just the parent directory exists
+    mkdir -p "$INSTALL_PATH_LLVMGCC"
     rm -rf "$INSTALL_PATH_LLVMGCC"
     mv "$LLVM_GCC_BASE" "$INSTALL_PATH_LLVMGCC"
 }
@@ -113,7 +116,7 @@ install_llvm_gcc () {
 ####################################################
 ########## SYSTEMC (compiled with LLVM) ############
 ####################################################
-
+# deprecated
 build_systemc_for_llvm () {
     case $(uname) in
 	Darwin)
@@ -191,15 +194,6 @@ install_systemc_llvm () {
     cd systemc-2.2.0-llvm
 
     build_systemc_for_llvm
-}
-
-###############################
-########### PINAVM ############
-###############################
-compile_pinavm () {
-    echo "Building PinaVM..."
-    cd ${SRC_ROOT_DIR}/toplevel
-    make
 }
 
 do_you_want () {
