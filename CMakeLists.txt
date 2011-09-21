@@ -44,6 +44,9 @@ STRING(REGEX REPLACE " -l" ";" LLVM_LIBS "${LLVM_LIBS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS " ${CMAKE_EXE_LINKER_FLAGS} ${LLVM_LDFLAGS}")
 
+find_program(LLVM_GXX llvm-g++)
+find_program(LLVM_GCC llvm-gcc)
+
 # subdirectories
 include_directories(${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/src)
 include_directories(${CMAKE_SOURCE_DIR}/external/basic/)
@@ -77,3 +80,23 @@ set(abs_top_srcdir ${CMAKE_SOURCE_DIR})
 
 configure_file(config.sh.in config.sh)
 configure_file(config.mk.in config.mk)
+
+set(PROG_MISSING "no")
+if("${LLVM_LDFLAGS}" STREQUAL "")
+  message(WARNING "Could not find llvm-config. Please, install LLVM.\n"
+    "Run ./install-llvm.sh if you want me to do so for you,\nand then run cmake again.")
+  set(PROG_MISSING "yes")
+endif()
+
+
+if("${LLVM_GXX}" STREQUAL "LLVM_GXX-NOTFOUND")
+  message(WARNING "Could not find llvm-g++. Please, install LLVM-GCC.\n"
+    "Run ./install-llvm.sh if you want me to do so for you.")
+  set(PROG_MISSING "yes")
+endif()
+
+if("${PROG_MISSING}" STREQUAL "no")
+  message("PinaVM's dependancies are OK, you will be able to launch the build when cmake is done")
+else()
+  message("External tools will be installed in ${ABS_TOOLS_DIR} by install-pinavm.sh")
+endif()
