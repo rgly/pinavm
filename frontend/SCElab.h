@@ -70,7 +70,6 @@ class SCElab : public ElabMember
     
     
   void printElab(int sep, std::string prefix);
-  void printIR(SCCFactory* sccfactory);
 
   sc_core::sc_module* getSCModule(IRModule* irmod);
 
