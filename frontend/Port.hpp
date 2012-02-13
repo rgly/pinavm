@@ -8,6 +8,8 @@
 
 #include "ElabMember.hpp"
 #include "Channel.hpp"
+#include "Process.hpp"
+#include "SCElab.h"
 
 using namespace std;
 using namespace llvm;
@@ -23,8 +25,10 @@ protected:
 	channel_id channelID;
 	Type* type;
 
+	sc_core::sc_port_base* sc_port;
+
 public:
-	Port(IRModule * module, string portName);
+	Port(IRModule * module, string portName, sc_core::sc_port_base* sc_port_);
 	IRModule *getModule();
 	string getName();
 	void printElab(int sep, string prefix);
@@ -33,6 +37,9 @@ public:
 	void addChannel(Channel* ch);
 	Type* getType();
 	Channel* getChannel();
+
+	// there are two types of process, Thread and Method.
+	vector<Process*>* getSensitive(SCElab* elab, bool IsThread);
 };
 
 #endif

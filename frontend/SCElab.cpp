@@ -145,7 +145,8 @@ Port * SCElab::trySc_Signal(IRModule * mod,
 		}
 		TRACE_4("typeName of variable accessed through port : " << variableTypeName << "\n");
 		TRACE_4("type of variable accessed through port : " << itfType << "\n");
-		theNewPort = new Port(mod, portName);
+
+		theNewPort = new Port(mod, portName, port);
 		std::map < sc_core::sc_interface*, Channel * >::iterator itM;
 		if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
 			ch = new SimpleChannel((Type*) itfType, variableTypeName);
@@ -172,7 +173,8 @@ Port * SCElab::trySc_Clock(IRModule * mod,
 	Port * theNewPort = NULL;
 	string match = "N7sc_core8sc_clockE";
 	if (itfTypeName.find(match) == 0) {
-		theNewPort = new Port(mod, portName);
+
+		theNewPort = new Port(mod, portName, port);
 		Channel* ch;
 		std::map < sc_core::sc_interface*, Channel * >::iterator itM;
 		if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
@@ -202,7 +204,8 @@ Port * SCElab::tryBasicTarget(IRModule * mod,
 	
 	if ((itfTypeName.find(match1) == 0) ||
 	    (itfTypeName.find(match2) == 0)) {
-		theNewPort = new Port(mod, portName);
+		theNewPort = new Port(mod, portName, port);
+
 		std::map < sc_core::sc_interface*, Channel * >::iterator itM;
 		Channel* ch;
 		// initiator socket bound to target socket on
@@ -284,7 +287,8 @@ Port * SCElab::tryBasicInitiator(IRModule * mod,
 
 	if ((itfTypeName.find(match1) == 0) ||
 	    (itfTypeName.find(match2) == 0)) {
-		theNewPort = new Port(mod, portName);
+		theNewPort = new Port(mod, portName, port);
+
 		std::map < sc_core::sc_interface*, Channel * >::iterator itM;
 		BasicChannel* ch;
 		basic::initiator_socket_base<true> *tp =
@@ -550,4 +554,25 @@ SCElab::complete()
 		sc_core::sc_module * mod = (sc_core::sc_module *) theP->m_semantics_host_p;
 		addProcessAndEvents(theP, mod);
 	}
+}
+
+std::vector < Process * >* SCElab::getProcessOfPort(sc_core::sc_port_base* scport, bool IsThread)
+{
+	vector<Process * >* static_thread_of_port = new vector<Process * >;
+	vector<sc_core::sc_bind_ef*> sc_processes  ;
+
+	if (IsThread) {
+		sc_processes = scport->m_bind_info->thread_vec ;
+	} else {
+		sc_processes = scport->m_bind_info->method_vec ;
+	}
+
+        for (unsigned int i = 0 ; i < sc_processes.size() ; i++) {
+		sc_core::sc_process_b* temp_sc_process = (sc_processes[i])->handle ;
+		Process* temp_process = this->processMap[ temp_sc_process ] ;
+		static_thread_of_port->push_back(temp_process) ;
+	}
+
+
+	return static_thread_of_port ;
 }

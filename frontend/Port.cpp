@@ -12,13 +12,14 @@
 
 using namespace std;
 
-Port::Port(IRModule * module, string portName)
+Port::Port(IRModule * module, string portName, sc_core::sc_port_base* sc_port_)
 {
 	this->irModule = module;
 	this->name = portName;
 	this->channel = NULL;
 	this->channels = new vector<Channel*>();
 	this->channelID = UNDEFINED_CHANNEL;
+	this->sc_port = sc_port_ ;
 }
 
 IRModule *Port::getModule()
@@ -77,4 +78,10 @@ void Port::printElab(int sep, string prefix)
 	Channel* channel = this->channel;
 	std::string chstr = channel ? this->channel->toString() : "(unbound)";
 	TRACE("Port : " << this->getName() << " (\"" << (void*) this << "\"), bounded to channel " << chstr << "\n");
+}
+
+
+vector<Process*>* Port::getSensitive(SCElab* elab, bool IsThread)
+{
+		return elab->getProcessOfPort(this->sc_port, IsThread) ;
 }
