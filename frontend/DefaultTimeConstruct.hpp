@@ -16,6 +16,7 @@ using namespace llvm;
 struct DefaultTimeConstruct:public TimeConstruct {
 	DefaultTimeConstruct(int t):    TimeConstruct::TimeConstruct(t) {}
 	DefaultTimeConstruct(double t): TimeConstruct::TimeConstruct(t) {}
+	DefaultTimeConstruct(double t, time_unit tu): TimeConstruct::TimeConstruct(t, tu) {}
 	string toString();
 };
 

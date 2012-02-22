@@ -2,10 +2,24 @@
 #include "DefaultTimeHandler.hpp"
 #include "DefaultTimeConstruct.hpp"
 #include <llvm/Support/CallSite.h>
+#include "sysc/kernel/sc_time.h"
 
 #include <ostream>
 
 using namespace llvm;
+
+static time_unit sc2pinavm_time_unit(sc_core::sc_time_unit sc_tu) {
+	switch (sc_tu) {
+	case SC_FS : return SC_FS;
+	case SC_PS : return SC_PS;
+	case SC_NS : return SC_NS;
+	case SC_US : return SC_US;
+	case SC_MS : return SC_MS;
+	case SC_SEC : return SC_SEC;
+	default : return SC_NS;
+	}
+}
+
 
 SCConstruct *DefaultTimeHandler::handle(Function * fct, BasicBlock * bb, Instruction* callInst, Function* calledFunction)
 {
@@ -13,6 +27,13 @@ SCConstruct *DefaultTimeHandler::handle(Function * fct, BasicBlock * bb, Instruc
 	// arg0 is the module, argument 1 is the time to wait.
 	Value *arg = CallSite(callInst).getArgument(1);
 	bool errb = false;
+
+	Value* arg2 = NULL;
+	Function* callee = CallSite(callInst).getCalledFunction();
+	unsigned arg_num = callee->getArgumentList().size();
+	if (arg_num > 2)
+		arg2 = CallSite(callInst).getArgument(2);
+
 
 	if (arg->getType()->isIntegerTy()) {
 		int time_waited = this->scjit->jitInt(fct, callInst, arg, &errb);
@@ -24,7 +45,16 @@ SCConstruct *DefaultTimeHandler::handle(Function * fct, BasicBlock * bb, Instruc
 		double time_waited = this->scjit->jitDouble(fct, callInst, arg, &errb);
 		// MM: TODO: check errb.
 		TRACE_3("Double time waited: " << time_waited << "\n");
-		return new DefaultTimeConstruct(time_waited);
+
+		if (arg2) {
+			sc_core::sc_time_unit time_u =
+				this->scjit->jitType<sc_core::sc_time_unit>(fct, callInst, arg2, &errb);
+
+			return new DefaultTimeConstruct(time_waited,
+							sc2pinavm_time_unit(time_u));
+		} else {
+			return new DefaultTimeConstruct(time_waited);
+		}
 	} else {
 		ERROR("call to wait with argument not int nor double\n");
 	}

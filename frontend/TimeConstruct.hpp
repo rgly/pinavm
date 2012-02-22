@@ -10,10 +10,11 @@ using namespace llvm;
 
 typedef enum e_time_unit {
 	SC_FS = 0,
-	SC_PS = 1,
-	SC_NS = 2,
-	SC_MS = 3,
-	SC_SEC = 4
+	SC_PS,
+	SC_NS,
+	SC_US,
+	SC_MS,
+	SC_SEC
 } time_unit;
 
 
