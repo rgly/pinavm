@@ -25,7 +25,7 @@ TimeConstruct::TimeConstruct(double t, time_unit tunit)
 {
 	this->id = TIMECONSTRUCT;
 	this->time = t;
-	this->tu = tu;
+	this->tu = tunit;
 }
 
 double
