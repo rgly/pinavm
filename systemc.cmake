@@ -1,4 +1,6 @@
 
+SET(SYSTEMC_SOURCE_DIR "${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/src/sysc" )
+
 # We can't just link against libsystemc.a, since linking against a
 # static library would take only the usefull symbols. pinavm doesn't
 # use all of SystemC's symbols, and the platform may use some that we
@@ -7,112 +9,109 @@
 
 # Object list is hardcoded. It's the only way to have the list of
 # objects reliably before the first compilation.
-SET(SYSTEMC_OBJS ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/tracing/sc_wif_trace.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/tracing/sc_trace.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/tracing/sc_vcd_trace.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/utils/sc_stop_here.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/utils/sc_list.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/utils/sc_mempool.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/utils/sc_report.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/utils/sc_pq.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/utils/sc_utils_ids.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/utils/sc_hash.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/utils/sc_report_handler.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/utils/sc_string.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/communication/sc_event_finder.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/communication/sc_export.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/communication/sc_event_queue.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/communication/sc_semaphore.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/communication/sc_signal_resolved_ports.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/communication/sc_signal_resolved.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/communication/sc_signal.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/communication/veri_signal.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/communication/sc_signal_ports.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/communication/sc_port.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/communication/sc_interface.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/communication/sc_clock.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/communication/sc_prim_channel.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/communication/sc_mutex.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/qt/qtmdc.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/qt/qt.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/qt/qtmds.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/datatypes/int/sc_nbutils.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/datatypes/int/sc_nbdefs.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/datatypes/int/sc_signed.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/datatypes/int/sc_int64_io.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/datatypes/int/sc_length_param.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/datatypes/int/sc_int32_mask.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/datatypes/int/sc_uint_base.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/datatypes/int/sc_int64_mask.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/datatypes/int/sc_unsigned.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/datatypes/int/sc_int_base.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/datatypes/int/sc_nbexterns.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/datatypes/fx/scfx_pow10.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/datatypes/fx/sc_fxnum_observer.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/datatypes/fx/sc_fxnum.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/datatypes/fx/sc_fxval.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/datatypes/fx/sc_fxtype_params.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/datatypes/fx/sc_fxdefs.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/datatypes/fx/scfx_utils.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/datatypes/fx/sc_fxcast_switch.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/datatypes/fx/scfx_mant.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/datatypes/fx/scfx_rep.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/datatypes/fx/sc_fxval_observer.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/datatypes/misc/sc_concatref.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/datatypes/misc/sc_value_base.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/datatypes/bit/sc_bit.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/datatypes/bit/sc_bv_base.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/datatypes/bit/sc_lv_base.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/datatypes/bit/sc_logic.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/kernel/sc_object.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/kernel/sc_cor_fiber.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/kernel/sc_join.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/kernel/sc_module.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/kernel/sc_sensitive.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/kernel/sc_thread_process.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/kernel/sc_attribute.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/kernel/sc_module_registry.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/kernel/sc_module_name.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/kernel/sc_method_process.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/kernel/sc_reset.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/kernel/sc_cthread_process.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/kernel/sc_wait.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/kernel/sc_cor_pthread.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/kernel/sc_object_manager.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/kernel/sc_main_main.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/kernel/sc_name_gen.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/kernel/sc_ver.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/kernel/sc_main.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/kernel/sc_simcontext.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/kernel/sc_wait_cthread.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/kernel/sc_process.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/kernel/sc_event.o
-	         ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/src/sysc/kernel/sc_time.o)
+SET(SYSTEMC_CPP_SRC
+	         tracing/sc_wif_trace
+	         tracing/sc_trace
+	         tracing/sc_vcd_trace
+	         utils/sc_stop_here
+	         utils/sc_list
+	         utils/sc_mempool
+	         utils/sc_report
+	         utils/sc_pq
+	         utils/sc_utils_ids
+	         utils/sc_hash
+	         utils/sc_report_handler
+	         utils/sc_string
+	         communication/sc_event_finder
+	         communication/sc_export
+	         communication/sc_event_queue
+	         communication/sc_semaphore
+	         communication/sc_signal_resolved_ports
+	         communication/sc_signal_resolved
+	         communication/sc_signal
+	         communication/veri_signal
+	         communication/sc_signal_ports
+	         communication/sc_port
+	         communication/sc_interface
+	         communication/sc_clock
+	         communication/sc_prim_channel
+	         communication/sc_mutex
+	         datatypes/int/sc_nbutils
+	         datatypes/int/sc_nbdefs
+	         datatypes/int/sc_signed
+	         datatypes/int/sc_int64_io
+	         datatypes/int/sc_length_param
+	         datatypes/int/sc_int32_mask
+	         datatypes/int/sc_uint_base
+	         datatypes/int/sc_int64_mask
+	         datatypes/int/sc_unsigned
+	         datatypes/int/sc_int_base
+	         datatypes/int/sc_nbexterns
+	         datatypes/fx/scfx_pow10
+	         datatypes/fx/sc_fxnum_observer
+	         datatypes/fx/sc_fxnum
+	         datatypes/fx/sc_fxval
+	         datatypes/fx/sc_fxtype_params
+	         datatypes/fx/sc_fxdefs
+	         datatypes/fx/scfx_utils
+	         datatypes/fx/sc_fxcast_switch
+	         datatypes/fx/scfx_mant
+	         datatypes/fx/scfx_rep
+	         datatypes/fx/sc_fxval_observer
+	         datatypes/misc/sc_concatref
+	         datatypes/misc/sc_value_base
+	         datatypes/bit/sc_bit
+	         datatypes/bit/sc_bv_base
+	         datatypes/bit/sc_lv_base
+	         datatypes/bit/sc_logic
+	         kernel/sc_object
+	         kernel/sc_cor_fiber
+	         kernel/sc_join
+	         kernel/sc_module
+	         kernel/sc_sensitive
+	         kernel/sc_thread_process
+	         kernel/sc_attribute
+	         kernel/sc_module_registry
+	         kernel/sc_module_name
+	         kernel/sc_method_process
+	         kernel/sc_reset
+	         kernel/sc_cthread_process
+	         kernel/sc_wait
+	         kernel/sc_cor_pthread
+	         kernel/sc_object_manager
+	         kernel/sc_main_main
+	         kernel/sc_name_gen
+	         kernel/sc_ver
+	         kernel/sc_main
+	         kernel/sc_simcontext
+	         kernel/sc_wait_cthread
+	         kernel/sc_process
+	         kernel/sc_event
+	         kernel/sc_time
+	         kernel/sc_cor_qt )
 
-# We let make check whether a rebuild is needed or not before
-# launching a recursive $(MAKE). This allows the main target to do
-# re-link pinavm only when some source file (SystemC or not) is
-# needed. For that, a .PHONY target wouldn't do (it's considered to be
-# never up to date), but a timestamp file together with the explicit
-# list of sources works fine.
-execute_process(COMMAND find external/systemc-2.2.0/src/ -type f
-  OUTPUT_VARIABLE SYSTEMC_SRC)
-STRING(REGEX REPLACE "\n" ";" SYSTEMC_SRC "${SYSTEMC_SRC}")
 
-SET(SYSTEMC_STAMP ${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/objdir-gcc/systemc-timestamp.txt)
+# Extending ${SYSTEMC_CPP_SRC} to full file names like
+FOREACH(systemc_short_file_name ${SYSTEMC_CPP_SRC})
+  SET(SYSTEMC_OBJS ${SYSTEMC_OBJS} "${SYSTEMC_SOURCE_DIR}/${systemc_short_file_name}.cpp")
+ENDFOREACH(systemc_short_file_name)
 
-STRING(REGEX REPLACE ";" " " SYSTEMC_OBJS_SPC "${SYSTEMC_OBJS}")
+# Since QuickThread contains assembly code for different platform.
+# Detect the Host Architecture and assign assembly code.
+TRY_RUN(run_result compile_result "${CMAKE_BINARY_DIR}/tmp"
+    "${CMAKE_SOURCE_DIR}/scripts/check_host_architecture.cpp"
+    RUN_OUTPUT_VARIABLE QTMDS )
 
-# Add SystemC's .o files manually on the command-line. A bit hackish,
-# but the .o files are generated files that escape CMake's control, so
-# they're not really source files, and not really generated files
-# either.
-SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${SYSTEMC_OBJS_SPC}")
+FOREACH(qt_obj "md/${QTMDS}.s" qt.c md/null.c )
+  SET(temp_qt_obj "${SYSTEMC_SOURCE_DIR}/qt/${qt_obj}")
+	 
+  # Since gxx can compile assembly code, we treat *.s file as CXX code.
+  # (I do not know why my CMake not recognize LANGUAGE C)
+  SET_PROPERTY(SOURCE ${temp_qt_obj} PROPERTY LANGUAGE CXX)
+  #  Quick Thread sources to be included.
+  SET(SYSTEMC_OBJS ${SYSTEMC_OBJS} ${temp_qt_obj}   )
+ENDFOREACH(qt_obj)
 
-add_custom_command(OUTPUT ./external/systemc-2.2.0/objdir-gcc/systemc-timestamp.txt
-  DEPENDS ${SYSTEMC_SRC}
-  COMMAND echo "Building SystemC ..."
-  COMMAND MAKE=$(MAKE) ./build-systemc.sh
-  COMMAND date > ./external/systemc-2.2.0/objdir-gcc/systemc-timestamp.txt)
+add_library(systemc_lib OBJECT ${SYSTEMC_OBJS})
 
-ADD_CUSTOM_TARGET(systemc-all ALL DEPENDS ./external/systemc-2.2.0/objdir-gcc/systemc-timestamp.txt)
+
