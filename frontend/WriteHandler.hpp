@@ -1,12 +1,9 @@
 #ifndef _WRITEHANDLER_HPP
 #define _WRITEHANDLER_HPP
 
-#include "llvm/Function.h"
-#include "llvm/Instructions.h"
 
 #include "SCConstructHandler.hpp"
 
-struct Port;
 struct SCJit;
 
 using namespace llvm;

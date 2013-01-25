@@ -1,5 +1,7 @@
 #include "ReadConstruct.hpp"
-#include <llvm/Value.h>
+#include "Port.hpp"
+
+#include "llvm/Value.h"
 
 ReadConstruct::ReadConstruct(Port * p, Value* callInst)
 {

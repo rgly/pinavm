@@ -1,12 +1,9 @@
 #include <vector>
 
-#include <llvm/Type.h>
-
 #include "Channel.hpp"
 
-using namespace llvm;
 
-Channel::Channel(Type* t, std::string typeName)
+Channel::Channel(llvm::Type* t, std::string typeName)
 {
 	this->chTypeName = typeName;
 	this->type = t;
@@ -20,7 +17,7 @@ Channel::getID()
 	return this->id;
 }
 
-Type*
+llvm::Type*
 Channel::getType()
 {
 	return this->type;

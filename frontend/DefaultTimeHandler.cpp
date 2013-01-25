@@ -4,7 +4,6 @@
 #include <llvm/Support/CallSite.h>
 #include "sysc/kernel/sc_time.h"
 
-#include <ostream>
 
 using namespace llvm;
 

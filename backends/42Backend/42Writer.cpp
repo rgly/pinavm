@@ -12,6 +12,7 @@
 
 #include "Port.hpp"
 #include "Channel.hpp"
+#include "Event.hpp"
 #include "SimpleChannel.hpp"
 #include "SCCFactory.hpp"
 #include "SCElab.h"
@@ -20,6 +21,8 @@
 #include "EventConstruct.hpp"
 #include "ReadConstruct.hpp"
 #include "WriteConstruct.hpp"
+#include "NotifyConstruct.hpp"
+#include "TimeConstruct.hpp"
 #include "Process.hpp"
 #include "IRModule.hpp"
 #include "SCJit.hpp"

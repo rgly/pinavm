@@ -3,7 +3,6 @@
 #include "SCJit.hpp"
 
 using namespace llvm;
-using namespace std;
 
 SCConstructHandler::SCConstructHandler()
 {
@@ -16,16 +15,16 @@ SCConstructHandler::SCConstructHandler(SCJit * jit)
 
 void SCConstructHandler::insertInMap(std::map < Function *,
 				     SCConstructHandler * >*scchandlers,
-				     string fctName)
+				     std::string fctName)
 {
 	Function *targetFct =
 	    this->scjit->getModule()->getFunction(fctName);
 	if (!targetFct) {
 		TRACE_3("Handler for function " << fctName <<
-			" : NOT found\n" << std::endl);
+			" : NOT found\n\n" );
 	} else {
 		TRACE_3("Handler for function " << fctName << " : "
-			<< targetFct << std::endl);
-		scchandlers->insert(make_pair(targetFct, this));
+			<< targetFct << '\n');
+		scchandlers->insert(std::make_pair(targetFct, this));
 	}
 }

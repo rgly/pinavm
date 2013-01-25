@@ -8,15 +8,7 @@
 #include "llvm/Instruction.h"
 
 #include "SCConstructHandler.hpp"
-#include "EventHandler.hpp"
-#include "DefaultTimeHandler.hpp"
-#include "NotifyHandler.hpp"
-#include "ZeroTimeHandler.hpp"
-#include "WriteHandler.hpp"
-#include "ReadHandler.hpp"
-#include "RandHandler.h"
-#include "AssertHandler.h"
-#include "BasicHandler.h"
+
 
 struct Process;
 

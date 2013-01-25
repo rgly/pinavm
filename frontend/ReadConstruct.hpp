@@ -2,7 +2,7 @@
 #define _READCONSTRUCT_HPP
 
 #include "SCConstruct.hpp"
-#include "Port.hpp"
+struct Port;
 
 using namespace llvm;
 

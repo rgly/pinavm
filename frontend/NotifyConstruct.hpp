@@ -1,11 +1,9 @@
 #ifndef _NOTIFYCONSTRUCT_HPP
 #define _NOTIFYCONSTRUCT_HPP
 
-#include "llvm/Function.h"
-#include "llvm/Instructions.h"
+#include "llvm/Value.h"
 
 #include "SCConstruct.hpp"
-#include "Event.hpp"
 
 using namespace llvm;
 
@@ -21,7 +19,7 @@ public:
 	NotifyConstruct(Value * missingE);
 	void setNotifiedEvent(Event * e);
 	Event *getNotifiedEvent();
-	string toString();
+	std::string toString();
 };
 
 #endif

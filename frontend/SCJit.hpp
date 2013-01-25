@@ -1,52 +1,14 @@
 #ifndef _SCJIT_HPP
 #define _SCJIT_HPP
 
-#include <string>
-#include <iterator>
-#include <queue>
-#include <iostream>
-#include <algorithm>
-
-#include "sysc/datatypes/int/sc_uint.h"
-
-
-#include "llvm/ADT/StringExtras.h"
-#include "llvm/Support/raw_ostream.h"
-
-//#include "llvm/Analysis/Verifier.h"
-
-#include "llvm/Analysis/MemoryDependenceAnalysis.h"
-#include "llvm/Transforms/Scalar.h"
-
-#include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetSelect.h"
-
-#include "llvm/Analysis/Dominators.h"
-#include "llvm/Analysis/Verifier.h"
-#include "llvm/PassManager.h"
-#include "llvm/Value.h"
-#include "llvm/User.h"
-#include "llvm/Module.h"
-#include "llvm/Type.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Function.h"
-#include "llvm/Instructions.h"
-#include <llvm/Support/MemoryBuffer.h>
-#include <llvm/Bitcode/ReaderWriter.h>
-#include <llvm/ExecutionEngine/ExecutionEngine.h>
-#include "llvm/Support/IRBuilder.h"
-#include "llvm/CallingConv.h"
-#include "llvm/TypeSymbolTable.h"
-
-#include "llvm/ExecutionEngine/JIT.h"
-#include <llvm/ExecutionEngine/GenericValue.h>
-
 #include "SCElab.h"
 #include "FunctionBuilder.h"
 #include "Process.hpp"
 #include "config.h"
 
-using namespace std;
+#include <llvm/ExecutionEngine/ExecutionEngine.h>
+
+
 using namespace llvm;
 
 struct SCJit {

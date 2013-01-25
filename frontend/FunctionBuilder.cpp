@@ -1,7 +1,10 @@
 #include "FunctionBuilder.h"
 #include "llvm/LLVMContext.h"
-#include "llvm/ADT/ilist.h"
 #include <llvm/Support/CallSite.h>
+#include "llvm/TypeSymbolTable.h"
+#include "llvm/Support/IRBuilder.h"
+
+#include <algorithm>
 
 FunctionBuilder::FunctionBuilder(Function * origFunction,
 				Function * functionToJit,
@@ -75,7 +78,7 @@ bool FunctionBuilder::mark(Value * arg)
 
 	/* Do not consider some instructions as well as already-visited instructions */
 	Instruction *argAsInst = cast < Instruction > (arg);
-	if (find(used_insts.begin(), used_insts.end(), argAsInst) != used_insts.end()) {
+	if (std::find(used_insts.begin(), used_insts.end(), argAsInst) != used_insts.end()) {
 		TRACE_6("Arg has already been visited\n");
 		return false;
 	} else {
@@ -88,7 +91,7 @@ bool FunctionBuilder::mark(Value * arg)
 	}
 
 	currentBlock = argAsInst->getParent();
-	if (find(used_bb.begin(), used_bb.end(), currentBlock) == used_bb.end()) {
+	if (std::find(used_bb.begin(), used_bb.end(), currentBlock) == used_bb.end()) {
 		TRACE_5("Block useful :" << currentBlock->getNameStr() << "\n");
 		used_bb.push_back(currentBlock);
 	}
@@ -99,7 +102,7 @@ bool FunctionBuilder::mark(Value * arg)
 bool
 FunctionBuilder::isBeforeTargetInst(Value* v)
 {
-	return find(this->predecessors->begin(), this->predecessors->end(), v) != this->predecessors->end();
+	return std::find(this->predecessors->begin(), this->predecessors->end(), v) != this->predecessors->end();
 }
 
 
@@ -147,7 +150,7 @@ FunctionBuilder::markUsefulInstructions()
 			if (isa<PHINode>(arg)) {
 				PHINode* pn = dyn_cast<PHINode>(arg);
 				int numIncoming = pn->getNumIncomingValues();
-				for (int i = 0; i < numIncoming; i++) {
+				for (int i = 0; i < numIncoming; ++i) {
 					BasicBlock* incomingBB = pn->getIncomingBlock(i);
 					if (! isBeforeTargetInst(&incomingBB->front()))
 						return 1;
@@ -168,7 +171,7 @@ void FunctionBuilder::cloneBlocks()
 		BasicBlock *BB = &*BI;
 		
 		/*** Avoid basic blocks with no useful instruction ***/
-		if (find(used_bb.begin(), used_bb.end(), BB) ==	used_bb.end())
+		if (std::find(used_bb.begin(), used_bb.end(), BB) ==	used_bb.end())
 			continue;
 		
 		/*** Register the (new) basic block in the value map, set its (new) name ***/
@@ -208,7 +211,7 @@ Function *FunctionBuilder::buildFct()
 				end = true;
 			else
 				this->predecessors->push_back(currentInst);
-			i++;
+			++i;
 		}
 	}
 
@@ -228,8 +231,8 @@ Function *FunctionBuilder::buildFct()
 	Function::arg_iterator argIt = this->fctToJit->arg_begin();
 	while (origIt != this->origFct->arg_end()) {
 		ValueMap[origIt] = argIt;
-		origIt++;
-		argIt++;
+		++origIt;
+		++argIt;
 	}
 	
 	/****** Useful instructions are pushed in the list of *********/
@@ -279,7 +282,7 @@ Function *FunctionBuilder::buildFct()
 			Instruction *origInst = &*origInstIt;
 
 			/*** ...clone the instruction if it is useful ***/
-			if (find(used_insts.begin(), used_insts.end(), origInst) != used_insts.end()) {
+			if (std::find(used_insts.begin(), used_insts.end(), origInst) != used_insts.end()) {
 				Instruction *NewInst = origInst->clone();
 				TRACE_6("Found useful and cloned : " <<	origInst << " -> " << NewInst << "  ");
 				PRINT_6(origInst->dump());
@@ -292,7 +295,7 @@ Function *FunctionBuilder::buildFct()
 				/* - the basic blocks are already in the ValueMap (necessary for branch instructions)             */
 				ValueMap[origInst] = NewInst;
 			}
-			origInstIt++;
+			++origInstIt;
 		}
 		oldCurrentBlock = NewBB;
 	}
@@ -303,7 +306,7 @@ Function *FunctionBuilder::buildFct()
 	while (origbb != origbe) {
 		currentBlock = &*origbb++;
 		/*** ...get the corresponding block in the fctToJit if it exists ***/
-		if (find(used_bb.begin(), used_bb.end(), currentBlock) == used_bb.end()) {
+		if (std::find(used_bb.begin(), used_bb.end(), currentBlock) == used_bb.end()) {
 			TRACE_6("   not useful\n");
 			continue;
 		}			
@@ -319,7 +322,7 @@ Function *FunctionBuilder::buildFct()
 			TRACE_6("\n");
 			
 			RemapInstruction(inst, ValueMap, true);	// Important: link the instruction to others (use-def chain)
-			instIt++;
+			++instIt;
 		}
 	}
 	

@@ -72,10 +72,10 @@ std::string WriteConstruct::getValue()
 
 bool WriteConstruct::isValueDefined()
 {
-	return this->missingValue == NULL;
+	return (this->missingValue == NULL);
 }
 
 bool WriteConstruct::isPortDefined()
 {
-	return this->missingPort == NULL;
+	return (this->missingPort == NULL);
 }

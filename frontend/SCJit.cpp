@@ -1,7 +1,13 @@
 #include "SCJit.hpp"
-#include "llvm/LLVMContext.h"
 
-using namespace std;
+#include "llvm/LLVMContext.h"
+#include "llvm/Target/TargetData.h"
+//#include "llvm/Analysis/Dominators.h"
+#include "llvm/CallingConv.h"
+#include "llvm/Analysis/Verifier.h"
+#include "llvm/PassManager.h"
+#include "llvm/Support/IRBuilder.h"
+
 using namespace llvm;
 
 SCJit::SCJit(Module * mod, SCElab * scelab)
@@ -74,12 +80,12 @@ Process *SCJit::getCurrentProcess()
 }
 
 void
-pushInst(Instruction * inst, vector < Instruction * >&temp_queue,
-	 vector < Instruction * >&inst_queue, bool temp)
+pushInst(Instruction * inst, std::vector < Instruction * >&temp_queue,
+	 std::vector < Instruction * >&inst_queue, bool temp)
 {
 	if (temp) {
 		if (temp_queue.size() > 0) {
-			vector < Instruction * >::iterator invalid =
+			std::vector < Instruction * >::iterator invalid =
 			    remove(temp_queue.begin(), temp_queue.end(),
 				   inst);
 			temp_queue.erase(invalid, temp_queue.end());
@@ -88,7 +94,7 @@ pushInst(Instruction * inst, vector < Instruction * >&temp_queue,
 	}
 
 	if (inst_queue.size() > 0) {
-		vector < Instruction * >::iterator invalid =
+		std::vector < Instruction * >::iterator invalid =
 		    remove(inst_queue.begin(), inst_queue.end(), inst);
 		inst_queue.erase(invalid, inst_queue.end());
 	}

@@ -1,21 +1,16 @@
-#include <string>
 #include <sstream>
 
 #include "SimpleChannel.hpp"
 
-#include "llvm/Type.h"
-
 #include "config.h"
 
-using namespace std;
-
-SimpleChannel::SimpleChannel(Type* globalVariableType, string globalVarTypeName) : Channel(globalVariableType, globalVarTypeName)
+SimpleChannel::SimpleChannel(llvm::Type* globalVariableType, std::string globalVarTypeName) : Channel(globalVariableType, globalVarTypeName)
 {
 	this->globalVariableName = "SimpleChannel_" + globalVarTypeName;
 	this->id = SIMPLE_CHANNEL;
 }
 
-string
+std::string
 SimpleChannel::getGlobalVariableName()
 {
 	return this->globalVariableName;

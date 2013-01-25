@@ -1,11 +1,8 @@
-#include <iostream>
 #include <sstream>
 
 #include "DefaultTimeConstruct.hpp"
 
-using namespace llvm;
-
-string DefaultTimeConstruct::toString()
+std::string DefaultTimeConstruct::toString()
 {
 	std::string s;
 	{

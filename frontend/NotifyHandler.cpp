@@ -1,5 +1,7 @@
 #include "SCJit.hpp"
 #include "NotifyHandler.hpp"
+#include "NotifyConstruct.hpp"
+#include "Event.hpp"
 #include <llvm/Support/CallSite.h>
 
 using namespace llvm;
@@ -7,7 +9,7 @@ using namespace llvm;
 
 SCConstruct *NotifyHandler::handle(Function * fct, BasicBlock * bb, Instruction* callInst, Function* calledFunction)
 {
-	string eventName = "eventName";
+	std::string eventName = "eventName";
 	TRACE_3("Handling call to notify(event)\n");
 
 	Value *arg = CallSite(callInst).getArgument(0);

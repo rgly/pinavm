@@ -1,23 +1,15 @@
-#include <string>
-#include <vector>
 #include <algorithm>
-
-#include "IRModule.hpp"
 #include "Port.hpp"
-#include "Channel.hpp"
-
-#include "llvm/Type.h"
-
 #include "config.h"
+#include "SCElab.h"
 
-using namespace std;
 
-Port::Port(IRModule * module, string portName, sc_core::sc_port_base* sc_port_)
+Port::Port(IRModule * module, std::string portName, sc_core::sc_port_base* sc_port_)
 {
 	this->irModule = module;
 	this->name = portName;
 	this->channel = NULL;
-	this->channels = new vector<Channel*>();
+	this->channels = new std::vector<Channel*>();
 	this->channelID = UNDEFINED_CHANNEL;
 	this->sc_port = sc_port_ ;
 }
@@ -27,12 +19,12 @@ IRModule *Port::getModule()
 	return this->irModule;
 }
 
-string Port::getName()
+std::string Port::getName()
 {
 	return this->name;
 }
 
-vector<Channel*>*
+std::vector<Channel*>*
 Port::getChannels()
 {
 	return this->channels;
@@ -47,7 +39,7 @@ Port::getChannel()
 void
 Port::addChannel(Channel* ch)
 {
-	if (find(this->channels->begin(), this->channels->end(), ch) != this->channels->end()) {
+	if (std::find(this->channels->begin(), this->channels->end(), ch) != this->channels->end()) {
 		ERROR("Channel added twice to the same port : " << ch << "\n");
 	} else if (this->channelID == UNDEFINED_CHANNEL) {
 		this->channelID = ch->getID();
@@ -72,7 +64,7 @@ Port::getType()
 }
 
 /********** Pretty print **********/
-void Port::printElab(int sep, string prefix)
+void Port::printElab(int sep, std::string prefix)
 {
 	this->printPrefix(sep, prefix);
 	Channel* channel = this->channel;
@@ -81,7 +73,7 @@ void Port::printElab(int sep, string prefix)
 }
 
 
-vector<Process*>* Port::getSensitive(SCElab* elab, bool IsThread)
+std::vector<Process*>* Port::getSensitive(SCElab* elab, bool IsThread)
 {
 		return elab->getProcessOfPort(this->sc_port, IsThread) ;
 }

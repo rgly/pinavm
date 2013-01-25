@@ -10,7 +10,7 @@ using namespace llvm;
 
 extern std::stringstream ErrorMsg;
 
-std::string& replaceAll(string& context, const string& from, const string& to);
+std::string& replaceAll(std::string& context, const std::string& from, const std::string& to);
 std::string intToString(int anInt);
 void triggerError(formatted_raw_ostream & Out);
 void triggerError(formatted_raw_ostream & Out, std::string msg);

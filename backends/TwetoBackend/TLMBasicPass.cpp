@@ -140,9 +140,9 @@ bool TLMBasicPass::runOnModule(Module &M) {
     funPassManager->add(createConstantPropagationPass());
     
     // Modules
-    vector < sc_core::sc_module * >modules =
+    std::vector < sc_core::sc_module * >modules =
     sc_core::sc_get_curr_simcontext()->get_module_registry()->m_module_vec;
-	vector < sc_core::sc_module * >::iterator modIt;
+	std::vector < sc_core::sc_module * >::iterator modIt;
 	for (modIt = modules.begin(); modIt < modules.end(); ++modIt) {
 		sc_core::sc_module * initiatorMod = *modIt;
         std::string moduleName = (std::string) initiatorMod->name();
@@ -179,7 +179,7 @@ void TLMBasicPass::optimize(sc_core::sc_module *initiatorMod) {
     // Looking for calls in process
     std::vector<std::string> doneThreads;
     std::vector<std::string> doneMethods;
-    vector<std::string>::iterator it;
+    std::vector<std::string>::iterator it;
     std::string fctName;
     sc_core::sc_process_table * processes = 
     initiatorMod->sc_get_curr_simcontext()->m_process_table;
@@ -385,12 +385,12 @@ sc_core::sc_module *TLMBasicPass::getTargetModule(
                                     basic::addr_t a) {
     
     std::vector < sc_core::sc_port_base * >*ports = initiatorMod->m_port_vec;
-    vector < sc_core::sc_port_base * >::iterator it;
+    std::vector < sc_core::sc_port_base * >::iterator it;
     for (it = ports->begin(); it < ports->end(); ++it) {
         sc_core::sc_port_base * initiator = *it;
         sc_core::sc_interface* initiatorItf = initiator->get_interface();
         std::string initiatorName = initiator->name(); 
-        if (initiatorName.find("basic::initiator_socket")!=string::npos) {
+        if (initiatorName.find("basic::initiator_socket")!=std::string::npos) {
             basic::target_socket_base<true> *tsb =
             dynamic_cast<basic::target_socket_base<true> *>(initiatorItf);
             if (tsb) {

@@ -7,7 +7,7 @@ RandConstruct::RandConstruct()
 	this->id = RANDCONSTRUCT;
 }
 
-string RandConstruct::toString()
+std::string RandConstruct::toString()
 {
 	return "RAND()";
 }

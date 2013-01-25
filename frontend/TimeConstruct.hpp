@@ -1,12 +1,10 @@
 #ifndef _TIMECONSTRUCT_HPP
 #define _TIMECONSTRUCT_HPP
 
-#include "llvm/Function.h"
-#include "llvm/Instructions.h"
+#include "llvm/Value.h"
 
 #include "SCConstruct.hpp"
 
-using namespace llvm;
 
 typedef enum e_time_unit {
 	SC_FS = 0,
@@ -22,15 +20,15 @@ struct TimeConstruct:public SCConstruct {
 protected:
 	double time;
 	time_unit tu;
-	Value* missingTime;
+	llvm::Value* missingTime;
 public:
-	TimeConstruct(Value* missingT);
+	TimeConstruct(llvm::Value* missingT);
 	TimeConstruct(int t);
 	TimeConstruct(double t);
 	TimeConstruct(double t, time_unit tunit);
 	double getTime();
 	time_unit getTimeUnit();
-	Value* getMissingTime();
+	llvm::Value* getMissingTime();
 };
 
 #endif

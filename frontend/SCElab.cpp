@@ -16,6 +16,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/InstrTypes.h"
 
 
 #include "sysc/kernel/sc_process_table.h"
@@ -49,7 +50,7 @@ SCElab::~SCElab()
 	this->processMap.clear();
 	this->eventsMap.clear();
 	this->portsMap.clear();
-    this->busMap.clear();
+	this->busMap.clear();
 	this->ir2scModules.clear();
 
 	FUtils::deleteVector < IRModule * >(&this->modules);
@@ -65,9 +66,9 @@ IRModule *SCElab::addModule(sc_core::sc_module * mod)
 	IRModule *m = new IRModule(moduleType, moduleName);
 	this->modules.push_back(m);
 	this->modulesMap.insert(this->modulesMap.end(),
-				pair < sc_core::sc_module *,
+				std::pair < sc_core::sc_module *,
 				IRModule * >(mod, m));
-	this->ir2scModules.insert(this->ir2scModules.end(), pair <IRModule *, sc_core::sc_module *>(m, mod));
+	this->ir2scModules.insert(this->ir2scModules.end(), std::pair <IRModule *, sc_core::sc_module *>(m, mod));
 	TRACE_2("Added (sc_module)  " << (void *) mod << " -> (IRModule) "
 		<< m << " with name " << moduleName << "\n");
 	return m;
@@ -93,14 +94,16 @@ Process *SCElab::addProcess(IRModule * mod,
 
 	mod->addProcess(p);
 	this->processes.push_back(p);
-	this->processMap.insert(this->processMap.end(), pair < sc_core::sc_process_b *,	Process * >(process, p));
+	this->processMap.insert(this->processMap.end(), std::pair < sc_core::sc_process_b *,	Process * >(process, p));
 
 	return p;
 }
 
 Port * SCElab::trySc_Signal(IRModule * mod, 
-			    sc_core::sc_interface * itf, string &itfTypeName,
-			    sc_core::sc_port_base * port, string portName) {
+                            sc_core::sc_interface * itf,
+                            std::string &itfTypeName,
+                            sc_core::sc_port_base * port, 
+                            std::string portName         ) {
 	Port * theNewPort = NULL;
 	Channel* ch;
 	std::string match = "N7sc_core9sc_signalI";
@@ -151,7 +154,7 @@ Port * SCElab::trySc_Signal(IRModule * mod,
 		if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
 			ch = new SimpleChannel((Type*) itfType, variableTypeName);
 			this->channels.push_back(ch);
-			this->channelsMap.insert(this->channelsMap.end(), pair < sc_core::sc_interface *, Channel * >(itf, ch));
+			this->channelsMap.insert(this->channelsMap.end(), std::pair < sc_core::sc_interface *, Channel * >(itf, ch));
             TRACE_4("New channel !\n");
 		} else {
 			ch = itM->second;
@@ -168,10 +171,10 @@ Port * SCElab::trySc_Signal(IRModule * mod,
 
 
 Port * SCElab::trySc_Clock(IRModule * mod, 
-			 sc_core::sc_interface* itf, string &itfTypeName,
-			 sc_core::sc_port_base * port, string portName) {
+			 sc_core::sc_interface* itf, std::string &itfTypeName,
+			 sc_core::sc_port_base * port, std::string portName) {
 	Port * theNewPort = NULL;
-	string match = "N7sc_core8sc_clockE";
+	std::string match = "N7sc_core8sc_clockE";
 	if (itfTypeName.find(match) == 0) {
 
 		theNewPort = new Port(mod, portName, port);
@@ -179,7 +182,7 @@ Port * SCElab::trySc_Clock(IRModule * mod,
 		std::map < sc_core::sc_interface*, Channel * >::iterator itM;
 		if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
 			ch = new ClockChannel();
-			this->channelsMap.insert(this->channelsMap.end(), pair < sc_core::sc_interface *, Channel * >(itf, ch));
+			this->channelsMap.insert(this->channelsMap.end(), std::pair < sc_core::sc_interface *, Channel * >(itf, ch));
         } else {
 			ch = itM->second;
 		}
@@ -190,13 +193,15 @@ Port * SCElab::trySc_Clock(IRModule * mod,
 }
 
 Port * SCElab::tryBasicTarget(IRModule * mod, 
-			      sc_core::sc_interface* itf, string &itfTypeName,
-			      sc_core::sc_port_base * port, string portName) {
+                              sc_core::sc_interface* itf,
+                              std::string &itfTypeName,
+                              sc_core::sc_port_base * port,
+                              std::string portName) {
 	Port * theNewPort = NULL;
 	// basic::target_socket<Bus, true>
-	string match1 = "N5basic13target_socketI3BusLb1EEE";
+	std::string match1 = "N5basic13target_socketI3BusLb1EEE";
 	// basic::target_socket<target, false>
-	string match2 = "N5basic13target_socketI6targetLb0EEE";
+	std::string match2 = "N5basic13target_socketI6targetLb0EEE";
 
 	// TODO: too fuzzy
 	match1 = "N5basic13target_socket";
@@ -218,10 +223,8 @@ Port * SCElab::tryBasicTarget(IRModule * mod,
 			ASSERT(bb);
 			if ((itM = this->channelsMap.find(bb)) == this->channelsMap.end()) {
 				ch = new BasicChannel(bb->name());
-				this->channelsMap.insert(this->channelsMap.end(),
-							 pair < sc_core::sc_interface *, Channel * >(bb, ch));
-                this->busMap.insert(this->busMap.end(),
-                            pair <Channel * , Bus *>(ch, bb));
+				this->channelsMap.insert(this->channelsMap.end(),std::pair < sc_core::sc_interface *, Channel * >(bb, ch));
+				this->busMap.insert(this->busMap.end(),std::pair <Channel * , Bus *>(ch, bb));
 				TRACE_2("BasicChannel bus name " << bb->name() << "\n");
 			} else {
 				ch = itM->second;
@@ -248,7 +251,7 @@ static void try_type (sc_core::sc_interface* itf,
 	}
 }
 
-string SCElab::getBasicChannelName(sc_core::sc_interface* itf) {
+std::string SCElab::getBasicChannelName(sc_core::sc_interface* itf) {
 
 	const char *res = NULL;
 
@@ -267,18 +270,18 @@ string SCElab::getBasicChannelName(sc_core::sc_interface* itf) {
 				   
 
 Port * SCElab::tryBasicInitiator(IRModule * mod, 
-				 sc_core::sc_interface* itf, string &itfTypeName,
-				 sc_core::sc_port_base * port, string portName) {
+				 sc_core::sc_interface* itf, std::string &itfTypeName,
+				 sc_core::sc_port_base * port, std::string portName) {
 	Port * theNewPort = NULL;
 	// basic::initiator_socket<Bus, true>
 	//string match1 = "N5basic16initiator_socketI3BusLb1EEE";
 	// TODO: match is too fuzzy 
-	string match1 = "N5basic16initiator_socketI";
+	std::string match1 = "N5basic16initiator_socketI";
 
 	// basic::initiator_socket<initiator, false>
 	//string match2 = "N5basic16initiator_socketI9initiatorLb0EEE";
 	// TODO: match is too fuzzy 
-	string match2 = "N5basic16initiator_socketI";
+	std::string match2 = "N5basic16initiator_socketI";
 
 	// TODO: debug
 	match1 = "N5basic21initiator_socket_trueE";
@@ -300,9 +303,9 @@ Port * SCElab::tryBasicInitiator(IRModule * mod,
 			if ((itM = this->channelsMap.find(bb)) == this->channelsMap.end()) {
 				ch = new BasicChannel(bb->name());
 				this->channelsMap.insert(this->channelsMap.end(),
-							 pair < sc_core::sc_interface *, Channel * >(bb, ch));
+							 std::pair < sc_core::sc_interface *, Channel * >(bb, ch));
                 this->busMap.insert(this->busMap.end(),
-                            pair <Channel * , Bus *>(ch, bb));
+                            std::pair <Channel * , Bus *>(ch, bb));
 				TRACE_2("BasicChannel bus name " << bb->name() << "\n");
 			} else {
 				ch = dynamic_cast<BasicChannel *>(itM->second);
@@ -331,9 +334,9 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 
 	if ((it = this->portsMap.find(port)) == this->portsMap.end()) {
 
-		stringstream ss;
+		std::stringstream ss;
 		ss << mod->getUniqueName() << "_" << static_cast<void *>(port);
-		string portName = ss.str();
+		std::string portName = ss.str();
 
 		int nbItfs = ((sc_core::sc_port_b<int>*) port)->size();
 		TRACE_6("port concerned: " << portName << " Nb_itfs = " << nbItfs << "\n");
@@ -376,7 +379,7 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 		}
 		mod->addPort(theNewPort);
 		this->ports.push_back(theNewPort);
-		this->portsMap.insert(this->portsMap.end(), pair < sc_core::sc_port_base *, Port * >(port, theNewPort));
+		this->portsMap.insert(this->portsMap.end(), std::pair < sc_core::sc_port_base *, Port * >(port, theNewPort));
 	}  else {
 		theNewPort = it->second;
 	}
@@ -395,7 +398,7 @@ Event *SCElab::addEvent(Process * process, sc_core::sc_event * event)
 		TRACE_3("NOT Found !\n");
 		char suffix[10];
 		sprintf(suffix, "%d", ++counter );
-		string eventName = mod->getUniqueName() + "_event_" + suffix;
+		std::string eventName = mod->getUniqueName() + "_event_" + suffix;
 		e = new Event(eventName);
 		this->events.push_back(e);
 		this->eventsMap[event] = e;
@@ -435,7 +438,7 @@ void SCElab::printElab(int sep, std::string prefix)
 {
 	std::vector < IRModule * >::iterator itM;
 	this->printPrefix(sep, prefix);
-	for (itM = this->modules.begin(); itM < this->modules.end(); itM++) {
+	for (itM = this->modules.begin(); itM < this->modules.end(); ++itM) {
 		IRModule *m = *itM;
 		m->printElab(sep, prefix);
 	}
@@ -506,8 +509,8 @@ SCElab::addProcessAndEvents(sc_core::sc_process_b *theProcess, sc_core::sc_modul
 	Process *process = this->addProcess(m, theProcess);
 	
 	std::vector < const sc_core::sc_event * >eventsVector = theProcess->m_static_events;
-	vector < const sc_core::sc_event * >::iterator it;
-	for (it = eventsVector.begin(); it < eventsVector.end(); it++) {
+	std::vector < const sc_core::sc_event * >::iterator it;
+	for (it = eventsVector.begin(); it < eventsVector.end(); ++it) {
 		sc_core::sc_event * ev = (sc_core::sc_event *) * it;
 		this->addEvent(process, ev);
 	}
@@ -527,14 +530,14 @@ SCElab::complete()
 //	sc_core::sc_get_curr_simcontext()->initialize(true);
 
 	//------- Get modules and ports --------
-	vector < sc_core::sc_module * >modules =
+	std::vector < sc_core::sc_module * >modules =
 		sc_core::sc_get_curr_simcontext()->get_module_registry()->m_module_vec;
-	vector < sc_core::sc_module * >::iterator modIt;
+	std::vector < sc_core::sc_module * >::iterator modIt;
 	for (modIt = modules.begin(); modIt < modules.end(); ++modIt) {
 		sc_core::sc_module * mod = *modIt;
 		IRModule *m = this->addModule(mod);
 		std::vector < sc_core::sc_port_base * >*ports = mod->m_port_vec;
-		vector < sc_core::sc_port_base * >::iterator it;
+		std::vector < sc_core::sc_port_base * >::iterator it;
 		for (it = ports->begin(); it < ports->end(); ++it) {
 			sc_core::sc_port_base * p = *it;
 			this->addPort(m, p);
@@ -556,10 +559,13 @@ SCElab::complete()
 	}
 }
 
-std::vector < Process * >* SCElab::getProcessOfPort(sc_core::sc_port_base* scport, bool IsThread)
+// The Reason I do not get Sensitive List while initializing Ports
+// is that Processes are initialized after Ports, so getting Process
+// List is impossible when construct Port.
+std::vector < Process*>* SCElab::getProcessOfPort(sc_core::sc_port_base* scport, bool IsThread)
 {
-	vector<Process * >* static_thread_of_port = new vector<Process * >;
-	vector<sc_core::sc_bind_ef*> sc_processes  ;
+	std::vector<Process*>* static_thread_of_port = new std::vector<Process*>;
+	std::vector<sc_core::sc_bind_ef*> sc_processes  ;
 
 	if (IsThread) {
 		sc_processes = scport->m_bind_info->thread_vec ;
@@ -567,9 +573,12 @@ std::vector < Process * >* SCElab::getProcessOfPort(sc_core::sc_port_base* scpor
 		sc_processes = scport->m_bind_info->method_vec ;
 	}
 
-        for (unsigned int i = 0 ; i < sc_processes.size() ; i++) {
-		sc_core::sc_process_b* temp_sc_process = (sc_processes[i])->handle ;
-		Process* temp_process = this->processMap[ temp_sc_process ] ;
+
+        sc_core::sc_process_b* temp_sc_process;
+        Process* temp_process;
+        for (unsigned int i = 0 ; i < sc_processes.size() ; ++i) {
+		temp_sc_process = (sc_processes[i])->handle ;
+		temp_process = this->processMap[ temp_sc_process ] ;
 		static_thread_of_port->push_back(temp_process) ;
 	}
 

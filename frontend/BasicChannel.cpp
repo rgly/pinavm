@@ -1,6 +1,4 @@
 #include <sstream>
-#include <string>
-#include "Channel.hpp"
 #include "BasicChannel.hpp"
 
 BasicChannel::BasicChannel(std::string const &channelName) 

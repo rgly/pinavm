@@ -26,7 +26,7 @@ bool AssertConstruct::getCond()
 	return this->cond;
 }
 
-string AssertConstruct::toString()
+std::string AssertConstruct::toString()
 {
 	if (this->staticallyFound)
 		if (this->cond)

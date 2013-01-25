@@ -1,14 +1,9 @@
-#include <systemc>
-
 #include "llvm/Intrinsics.h"
-#include "llvm/Pass.h"
 #include "llvm/Function.h"
 #include "llvm/Module.h"
-#include "llvm/CallingConv.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/InstrTypes.h"
 #include "llvm/Instructions.h"
-#include "llvm/Transforms/Utils/BasicInliner.h"
+#include "llvm/Transforms/Utils/Cloning.h"
+//#include "llvm/Transforms/Utils/BasicInliner.h"
 
 #include "Frontend.hpp"
 
@@ -17,9 +12,6 @@
 #include "SCElab.h"
 
 #include "config.h"
-
-#include <iostream>
-#include <typeinfo>
 
 Frontend::Frontend(Module * M)
 {
@@ -60,7 +52,7 @@ void Frontend::setInlineFunctions(bool b)
 	this->inlineFunctions = b;
 }
 
-void Frontend::printElab(string prefix)
+void Frontend::printElab(std::string prefix)
 {
 	TRACE("############### Printing ELAB ###############\n");
 	this->elab->printElab(0, prefix);
@@ -74,7 +66,7 @@ void Frontend::printIR()
 
 	TRACE("############### Printing IR ###############\n");
 
-	for (itP = procs->begin(); itP < procs->end(); itP++) {
+	for (itP = procs->begin(); itP < procs->end(); ++itP) {
 		Process *p = *itP;
 		TRACE("************ IR for process " << p <<
 		      "*************\n");
@@ -115,8 +107,8 @@ bool Frontend::run()
 	TRACE_1("Analyzing code\n");
 
 	// Walk through call graph and build intermediate representation
-	vector < Process * >::iterator processIt = this->elab->getProcesses()->begin();
-	vector < Process * >::iterator endIt = this->elab->getProcesses()->end();
+	std::vector < Process * >::iterator processIt = this->elab->getProcesses()->begin();
+	std::vector < Process * >::iterator endIt = this->elab->getProcesses()->end();
 	std::vector < Function * >*fctStack = new std::vector < Function * >();
 
 
@@ -128,7 +120,7 @@ bool Frontend::run()
 	}
 	if (this->inlineFunctions) {
 								
-		for (; processIt < endIt; processIt++) {
+		for (; processIt < endIt; ++processIt) {
 			Process *proc = *processIt;
 			Function *F = proc->getMainFct();
 			TRACE_3("Parsing Function : " << F->getNameStr() << "\n");
@@ -165,7 +157,7 @@ bool Frontend::run()
 						if (isInlined)
 							goto start_for;
 					}
-					i++;
+					++i;
 				}
 			}
 		}
@@ -176,7 +168,7 @@ bool Frontend::run()
 	processIt = this->elab->getProcesses()->begin();	
 	fctStack = new std::vector < Function * >();
 
-	for (; processIt < endIt; processIt++) {
+	for (; processIt < endIt; ++processIt) {
 		Process *proc = *processIt;
 		fctStack->push_back(proc->getMainFct());
 		proc->addUsedFunction(proc->getMainFct());
@@ -218,7 +210,7 @@ bool Frontend::run()
 					if (! callB) {
 						fillGlobalVars(&*i);
 					}
-					i++;
+					++i;
 				}
 			}
 		}

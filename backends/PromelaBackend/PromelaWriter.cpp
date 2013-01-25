@@ -23,6 +23,8 @@
 #include "EventConstruct.hpp"
 #include "ReadConstruct.hpp"
 #include "WriteConstruct.hpp"
+#include "NotifyConstruct.hpp"
+#include "TimeConstruct.hpp"
 #include "AssertConstruct.hpp"
 #include "RandConstruct.hpp"
 #include "Process.hpp"
@@ -31,6 +33,8 @@
 
 #include "utils.h"
 #include "config.h"
+
+using namespace std;
 
 static Function* currentFunction;
 static Instruction* pointerToInst;
@@ -1652,8 +1656,8 @@ void PromelaWriter::printModuleTypes(const TypeSymbolTable & TST)
 	}
 	Out << '\n';
 
-	vector < Process * >::iterator processIt = this->elab->getProcesses()->begin();
-	vector < Process * >::iterator endIt = this->elab->getProcesses()->end();
+	std::vector < Process * >::iterator processIt = this->elab->getProcesses()->begin();
+	std::vector < Process * >::iterator endIt = this->elab->getProcesses()->end();
 
 	for (; processIt < endIt; ++processIt) {
 
@@ -1822,7 +1826,7 @@ void PromelaWriter::printFunctionSignature(const Function * F,
 }
 
 void
-PromelaWriter::addVectors(std::vector<pair<std::string, const Type*> >* from,
+PromelaWriter::addVectors(std::vector<std::pair<std::string, const Type*> >* from,
 			std::vector<pair<std::string, const Type*> >* to)
 {
 	std::vector<pair<std::string, const Type*> >::iterator itFrom;
@@ -2912,11 +2916,11 @@ PromelaWriter::printProcesses()
 }
 bool ifNotDeclared(string ObjName)
 {
-	static vector<string> declaredObjs;
+	static std::vector<std::string> declaredObjs;
 	static int size;
 	declaredObjs.resize(++size);
-	vector<string>::iterator st=declaredObjs.begin();
-	vector<string>::iterator end=declaredObjs.end();
+	std::vector<std::string>::iterator st=declaredObjs.begin();
+	std::vector<std::string>::iterator end=declaredObjs.end();
 	for (;st!=end;st++)
 		if (!ObjName.compare(*st))
 			return false;
@@ -2930,12 +2934,12 @@ bool ifNotDeclared(string ObjName)
 void
 PromelaWriter::printInitSection()
 {
-	vector < Process * >::iterator processIt = this->elab->getProcesses()->begin();
-	vector < Process * >::iterator endIt = this->elab->getProcesses()->end();
-	vector < GlobalValue * >::iterator globalIt = this->elab->getGlobalVariables()->begin();
-	vector < GlobalValue * >::iterator globalEnd = this->elab->getGlobalVariables()->end();
-	vector <Channel *>::iterator ChannelIt=this->elab->getChannels()->begin();
-	vector <Channel *>::iterator ChannelEnd=this->elab->getChannels()->end();
+	std::vector < Process * >::iterator processIt = this->elab->getProcesses()->begin();
+	std::vector < Process * >::iterator endIt = this->elab->getProcesses()->end();
+	std::vector < GlobalValue * >::iterator globalIt = this->elab->getGlobalVariables()->begin();
+	std::vector < GlobalValue * >::iterator globalEnd = this->elab->getGlobalVariables()->end();
+	std::vector <Channel *>::iterator ChannelIt=this->elab->getChannels()->begin();
+	std::vector <Channel *>::iterator ChannelEnd=this->elab->getChannels()->end();
 	
 	TRACE_2("PromelaWriter > Emitting init section \n");
 	Out << "/* ----------------------------- Init --------------------------------- */\n"
@@ -2997,7 +3001,7 @@ PromelaWriter::printInitSection()
 	}
 	for (; globalIt < globalEnd; ++globalIt) {
 		GlobalValue* gv = *globalIt;
-		string NameSoFar = "llvm_cbe" + Mang->getNameWithPrefix(gv);
+		std::string NameSoFar = "llvm_cbe" + Mang->getNameWithPrefix(gv);
 		
 		const Type *Ty=gv->getType();
 		while (isa<PointerType>(Ty)) {
@@ -3047,7 +3051,7 @@ PromelaWriter::printInitSection()
 	}
 	for (; ChannelIt < ChannelEnd; ++ChannelIt) {
 		Channel* chan = *ChannelIt;
-		string NameSoFar = "llvm_chan_" + chan->getTypeName();
+		std::string NameSoFar = "llvm_chan_" + chan->getTypeName();
 		if (notInitialized(NameSoFar)){		
 			const Type *Ty=chan->getType();
 			switch (Ty->getTypeID()) {
@@ -3136,8 +3140,8 @@ PromelaWriter::visitSCConstruct(SCConstruct * scc)
 	AssertConstruct *ac;
 	Event* event;
 	Port* port;
-	vector<Channel*>* channels;
-	vector<Channel*>::iterator channelsIt;
+	std::vector<Channel*>* channels;
+	std::vector<Channel*>::iterator channelsIt;
 	SimpleChannel* sc;
 
 	TRACE_4("/***** visitSCConstruct() *****/\n");

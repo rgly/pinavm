@@ -4,23 +4,15 @@
 
 #include <systemc>
 
-#include <iterator>
 #include <map>
 #include <vector>
 
-#include <string>
-#include <sstream>
-
 #include "llvm/Module.h"
 
-struct sc_module;
-struct sc_process_b;
-struct sc_event;
-struct sc_port;
 
-#include "FUtils.hpp"
 #include "ElabMember.hpp"
 
+// PinaVM frondend classes.
 struct SCCFactory;
 struct IRModule;
 struct Process;
@@ -85,7 +77,7 @@ class SCElab : public ElabMember
 
   void addProcessAndEvents(sc_core::sc_process_b *theProcess, sc_core::sc_module * mod);
   void complete();
-  std::vector < Process * >* getProcessOfPort(sc_core::sc_port_base* , bool);
+  std::vector<Process*>* getProcessOfPort(sc_core::sc_port_base* , bool);
 
 
 private:

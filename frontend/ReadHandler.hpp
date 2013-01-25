@@ -1,14 +1,12 @@
 #ifndef _READHANDLER_HPP
 #define _READHANDLER_HPP
 
-#include "llvm/Function.h"
-#include "llvm/Instructions.h"
-
-struct SCJit;
 
 #include "SCConstructHandler.hpp"
 
 using namespace llvm;
+
+struct SCJit;
 
 struct ReadHandler:public SCConstructHandler {
       public:
