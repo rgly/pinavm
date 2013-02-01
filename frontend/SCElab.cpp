@@ -325,15 +325,15 @@ Port * SCElab::tryBasicInitiator(IRModule * mod,
 Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 {
 	std::string match;
-	char buffer[10];
 
 	Port* theNewPort = NULL;
 	std::map < sc_core::sc_port_base *, Port * >::iterator it;
 
 	if ((it = this->portsMap.find(port)) == this->portsMap.end()) {
 
-		sprintf(buffer, "%lx", (unsigned long) port);
-		string portName = mod->getUniqueName() + "_0x" + buffer;
+		stringstream ss;
+		ss << mod->getUniqueName() << "_0x" << static_cast<void *>(port);
+		string portName = ss.str();
 
 		int nbItfs = ((sc_core::sc_port_b<int>*) port)->size();
 		TRACE_6("port concerned: " << portName << " Nb_itfs = " << nbItfs << "\n");
