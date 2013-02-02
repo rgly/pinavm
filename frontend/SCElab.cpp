@@ -332,7 +332,7 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 	if ((it = this->portsMap.find(port)) == this->portsMap.end()) {
 
 		stringstream ss;
-		ss << mod->getUniqueName() << "_0x" << static_cast<void *>(port);
+		ss << mod->getUniqueName() << "_" << static_cast<void *>(port);
 		string portName = ss.str();
 
 		int nbItfs = ((sc_core::sc_port_b<int>*) port)->size();
