@@ -84,9 +84,9 @@ void Process::printIR(SCCFactory * sccfactory)
 	
 	for (std::vector < Function * >::iterator itF = this->usedFunctions.begin(); itF < this->usedFunctions.end(); ++itF) {
 		Function *F = *itF;
-		TRACE("Function : " << F->getNameStr() << "\n");
+		TRACE("Function : " << F->getName().str() << "\n");
 		for (Function::iterator bb = F->begin(), be = F->end(); bb != be; ++bb) {
-			TRACE("   BasicBlock : " << bb->getNameStr() << "\n");
+			TRACE("   BasicBlock : " << bb->getName().str() << "\n");
 			BasicBlock::iterator i = bb->begin(), ie = bb->end();
 			printBB = false;
 			bool isACall = false;

@@ -1,12 +1,12 @@
 #include "SCJit.hpp"
 
 #include "llvm/LLVMContext.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 //#include "llvm/Analysis/Dominators.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/PassManager.h"
-#include "llvm/Support/IRBuilder.h"
+#include "llvm/IRBuilder.h"
 
 using namespace llvm;
 
@@ -142,7 +142,7 @@ Function *SCJit::buildFct(Function * f, FunctionType * FT, Instruction* inst, Va
 	std::string fctName = std::string("") + ss.str();
 	fctToJit = Function::Create(FT, Function::PrivateLinkage, ss.str(), this->mdl);
 	fctToJit->setCallingConv(CallingConv::C);
-	TRACE_4("Building fctToJit : " << fctToJit->getNameStr() << " " << fctToJit << "\n");
+	TRACE_4("Building fctToJit : " << fctToJit->getName().str() << " " << fctToJit << "\n");
 
 	FunctionBuilder fb(f, fctToJit, inst, arg);
 	if (fb.buildFct() == NULL) {
@@ -160,9 +160,9 @@ Function *SCJit::buildFct(Function * f, FunctionType * FT, Instruction* inst, Va
 
 	// Set up the optimizer pipeline.  Start with registering info about how the
 	// target lays out data structures.
-	TargetData *td = new TargetData(*this->ee->getTargetData());
+	DataLayout *dl = new DataLayout(*this->ee->getDataLayout());
 
-	FPM.add(td);
+	FPM.add(dl);
 	// Promote allocas to registers.
 	//   FPM.add(createPromoteMemoryToRegisterPass());
 	//    MemoryDependenceAnalysis* mda = new MemoryDependenceAnalysis();
@@ -182,20 +182,20 @@ Function *SCJit::buildFct(Function * f, FunctionType * FT, Instruction* inst, Va
 	return fctToJit;
 }
 
-void SCJit::fillArgsType(Function * f, std::vector < const Type * >*argsType)
+void SCJit::fillArgsType(Function * f, std::vector <Type * >*argsType)
 {
-	const Type *t = f->getArgumentList().front().getType();
+	Type *t = f->getArgumentList().front().getType();
 	argsType->push_back(t);
 }
 
 void *SCJit::jitAddr(Function * f, Instruction* inst, Value * arg)
 {
-	const std::vector < const Type *>argsType;
+	const std::vector <Type *>argsType;
 	Function *fctToJit;
 
 	TRACE_5("jitAddr()\n");
 
-	fillArgsType(f, (std::vector < const Type * >*) &argsType);
+	fillArgsType(f, (std::vector <Type * >*) &argsType);
 	FunctionType *FT =
 	    FunctionType::get(arg->getType(), argsType, false);
 
@@ -221,10 +221,10 @@ double SCJit::jitDouble(Function * f, Instruction* inst, Value * arg, bool* errb
 {
 	*errb = false;
 	Function *fctToJit;
-	const std::vector < const Type *>argsType;
+	const std::vector <Type *>argsType;
 
 	TRACE_5("jitDouble() \n");
-	fillArgsType(f, (std::vector < const Type * >*) &argsType);
+	fillArgsType(f, (std::vector <Type * >*) &argsType);
 	FunctionType *FT = FunctionType::get(Type::getDoubleTy(getGlobalContext()), argsType, false);
 
 	fctToJit = buildFct(f, FT, inst, arg);
@@ -250,10 +250,10 @@ bool SCJit::jitBool(Function * f, Instruction* inst, Value * arg, bool* errb)
 {
 	*errb = false;
 	Function *fctToJit;
-	const std::vector < const Type *>argsType;
+	const std::vector <Type *>argsType;
 
 	TRACE_5("jitBool() \n");
-	fillArgsType(f, (std::vector < const Type * >*) &argsType);
+	fillArgsType(f, (std::vector <Type * >*) &argsType);
 	FunctionType *FT =  FunctionType::get(Type::getInt8Ty(getGlobalContext()), argsType, false);
 
 	fctToJit = buildFct(f, FT, inst, arg);
@@ -282,17 +282,17 @@ int
 SCJit::jitInt(Function * f, Instruction* inst, Value * arg, bool* errb) {
 	*errb = false;
 	Function *fctToJit;
-	const std::vector < const Type *>argsType;
+	const std::vector <Type *>argsType;
 	
 	TRACE_5("jitInt() \n");
 	
-	fillArgsType(f, (std::vector < const Type * >*) &argsType);
-	FunctionType *FT;
-	if (isa<PointerType>(arg->getType())) {
-		const Type* pt = dyn_cast<PointerType>(arg->getType())->getElementType();
-		FT = FunctionType::get(pt, argsType, false);
-	} else
-		FT = FunctionType::get(arg->getType(), argsType, false);
+	fillArgsType(f, (std::vector <Type * >*) &argsType);
+
+	Type* ret_arg_ty = arg->getType();
+	if (isa<PointerType>(ret_arg_ty)) {
+		ret_arg_ty = dyn_cast<PointerType>(ret_arg_ty)->getElementType();
+	}
+	FunctionType *FT = FunctionType::get(ret_arg_ty, ArrayRef<Type *>(argsType), false);
 	
 	fctToJit = buildFct(f, FT, inst, arg);
 	if (fctToJit == NULL) {

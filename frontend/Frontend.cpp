@@ -101,8 +101,6 @@ bool Frontend::run()
 	this->scjit = new SCJit(llvmMod, elab);
 	this->sccfactory = new SCCFactory(scjit);
 
-// 	TRACE_1("Dumping typeSymbolTable\n");
-// 	this->llvmMod->getTypeSymbolTable().dump();
 
 	TRACE_1("Analyzing code\n");
 
@@ -123,7 +121,7 @@ bool Frontend::run()
 		for (; processIt < endIt; ++processIt) {
 			Process *proc = *processIt;
 			Function *F = proc->getMainFct();
-			TRACE_3("Parsing Function : " << F->getNameStr() << "\n");
+			TRACE_3("Parsing Function : " << F->getName().str() << "\n");
 
 		start_for:
 			for (Function::iterator bb = F->begin(), be = F->end(); bb != be; ++bb) {
@@ -145,8 +143,8 @@ bool Frontend::run()
 						TRACE_6("CallInst : " << currentInst << "\n");
 						TRACE_6("CalledFct : " << calledFunction << "\n");
 						PRINT_6(currentInst->dump());
-						TRACE_4("Call not handled : " << calledFunction->getNameStr() << "\n");
-						TRACE_4("Inlining function : " << calledFunction->getNameStr() << "\n");
+						TRACE_4("Call not handled : " << calledFunction->getName().str() << "\n");
+						TRACE_4("Inlining function : " << calledFunction->getName().str() << "\n");
 						isInlined = false;
 						llvm::InlineFunctionInfo ifi;
 						if (isInvoke)
@@ -177,7 +175,7 @@ bool Frontend::run()
 		while (!fctStack->empty()) {
 			Function* F = fctStack->back();
 			fctStack->pop_back();
-			TRACE_3("Parsing Function : " << F->getNameStr() << "\n");
+			TRACE_3("Parsing Function : " << F->getName().str() << "\n");
 			PRINT_3(F->dump());
 			for (Function::iterator bb = F->begin(), be = F->end(); bb != be; ++bb) {
 				BasicBlock::iterator i = bb->begin(), ie = bb->end();
@@ -200,12 +198,12 @@ bool Frontend::run()
 						TRACE_6("CallInst : " << currentInst << "\n");
 						TRACE_6("CalledFct : " << calledFunction << "\n");
 						PRINT_6(currentInst->dump());
-						TRACE_4("Call not handled : " << calledFunction->getNameStr() << "\n");
+						TRACE_4("Call not handled : " << calledFunction->getName().str() << "\n");
 						fctStack->push_back(calledFunction);
 						proc->addUsedFunction(calledFunction);
 						
 					} else if (calledFunction->getIntrinsicID() != Intrinsic::not_intrinsic) {
-						TRACE_6("Encountered call to intrinsic function \"" << calledFunction->getNameStr() << "\" (id = " << calledFunction->getIntrinsicID() << "). Not parsing it.\n");
+						TRACE_6("Encountered call to intrinsic function \"" << calledFunction->getName().str() << "\" (id = " << calledFunction->getIntrinsicID() << "). Not parsing it.\n");
 					}
 					if (! callB) {
 						fillGlobalVars(&*i);

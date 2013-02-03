@@ -28,7 +28,7 @@ struct SCJit {
 	SCElab *getElab();
 	void setCurrentProcess(Process * process);
 	Process *getCurrentProcess();
-	void fillArgsType(Function * f, std::vector < const Type * >*argsType);
+	void fillArgsType(Function * f, std::vector <Type * >*argsType);
 	void *jitAddr(Function * f, Instruction* inst, Value * arg);
 	int jitInt(Function * f, Instruction* inst, Value * arg, bool* errb);
 	double jitDouble(Function * f, Instruction* inst, Value * arg, bool* errb);
@@ -40,17 +40,17 @@ struct SCJit {
 	template<class RetTy>
 	RetTy jitType(Function * f, Instruction* inst, Value * arg, bool* errb) {
 		Function *fctToJit;
-		const std::vector < const Type *>argsType;
+		const std::vector <Type *>argsType;
 		
 		TRACE_5("jitType() \n");
 		
-		fillArgsType(f, (std::vector < const Type * >*) &argsType);
-		FunctionType *FT;
-		if (isa<PointerType>(arg->getType())) {
-			const Type* pt = dyn_cast<PointerType>(arg->getType())->getElementType();
-			FT = FunctionType::get(pt, argsType, false);
-		} else
-			FT = FunctionType::get(arg->getType(), argsType, false);
+		fillArgsType(f, (std::vector <Type * >*) &argsType);
+
+		Type* ret_arg_ty = arg->getType();
+		if (isa<PointerType>(ret_arg_ty)) {
+			ret_arg_ty = dyn_cast<PointerType>(ret_arg_ty)->getElementType();
+		}
+		FunctionType *FT = FunctionType::get(ret_arg_ty, ArrayRef<Type *>(argsType), false);
 		
 		fctToJit = buildFct(f, FT, inst, arg);
 		if (fctToJit == NULL) {

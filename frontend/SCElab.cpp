@@ -1,6 +1,5 @@
 #include <cxxabi.h>
 
-#include <llvm/TypeSymbolTable.h>
 #include <llvm/Type.h>
 
 #include "IRModule.hpp"
@@ -90,7 +89,7 @@ Process *SCElab::addProcess(IRModule * mod,
 	Process *p = new Process(mod, mainFct, processName, mainFctName);
 //	mainFct->dump();
 	TRACE_2("Add (sc_process_b) " << process << " -> (Process) " << p
-		<< " ; Fonction : " << mainFctName << " " << mainFct << " mainFct->name = " << mainFct->getNameStr() << " type arg 1 : " << this->llvmMod->getTypeName(cast<PointerType>(mainFct->arg_begin()->getType())->getElementType()) << "\n");
+		<< " ; Fonction : " << mainFctName << " " << static_cast<void *>(mainFct) << " mainFct->name = " << mainFct->getName().str() << " type arg 1 : " << cast<PointerType>(mainFct->arg_begin()->getType())->getElementType()->getStructName().str() << "\n");
 
 	mod->addProcess(p);
 	this->processes.push_back(p);
@@ -137,7 +136,7 @@ Port * SCElab::trySc_Signal(IRModule * mod,
 			if (itfType)
 				TRACE_4("Unsigned integer type found !\n");
 		} else {
-			itfType = this->llvmMod->getTypeSymbolTable().lookup(itfTypeName);
+			itfType = this->llvmMod->getTypeByName(StringRef(itfTypeName));
 
 			if (itfType) {
 				TRACE_4("Type found !\n");
@@ -161,7 +160,7 @@ Port * SCElab::trySc_Signal(IRModule * mod,
 		}
 
 		TRACE_2("Add (sc_port_base) " << port << " -> (SIMPLE_PORT) " << portName << " with channel " << ch << "\n");
-		TRACE_4("Channel contains type: " << this->llvmMod->getTypeName(ch->getType()) << "\n");
+		TRACE_4("Channel contains type: " << ch->getType()->getStructName().str() << "\n");
 
 		theNewPort->addChannel(ch);
 	}

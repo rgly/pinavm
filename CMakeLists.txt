@@ -9,7 +9,7 @@ project(PinaVM CXX)
 # In practice, I didn't manage to get llvm_map_components_to_libraries
 # to work, hence we do it by calling llvm-config ourselves instead.
 
-execute_process(COMMAND llvm-config --cxxflags jit interpreter nativecodegen bitreader selectiondag
+execute_process(COMMAND llvm-config --cxxflags 
                 OUTPUT_VARIABLE LLVM_CXXFLAGS)
 # CMake doesn't like newline in CXXFLAGS, and there's at least a
 # trailing \n in llvm-config's output.

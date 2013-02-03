@@ -1,8 +1,7 @@
 #include "FunctionBuilder.h"
 #include "llvm/LLVMContext.h"
 #include <llvm/Support/CallSite.h>
-#include "llvm/TypeSymbolTable.h"
-#include "llvm/Support/IRBuilder.h"
+#include "llvm/IRBuilder.h"
 
 #include <algorithm>
 
@@ -25,21 +24,6 @@ FunctionBuilder::~FunctionBuilder()
 //	ValueMap.clear();
 }
 
-// Looks up the type in the symbol table and returns a pointer to its name or
-// a null pointer if it wasn't found. Note that this isn't the same as the
-// Mode::getTypeName function which will return an empty string, not a null
-// pointer if the name is not found.
-inline const std::string
-findTypeName(const TypeSymbolTable & ST, const Type * Ty)
-{
-	TypeSymbolTable::const_iterator TI = ST.begin();
-	TypeSymbolTable::const_iterator TE = ST.end();
-	for (; TI != TE; ++TI)
-		if (TI->second == Ty)
-			return TI->first;
-	return 0;
-}
-
 bool FunctionBuilder::mark(Value * arg)
 {
 	BasicBlock *currentBlock;
@@ -55,13 +39,6 @@ bool FunctionBuilder::mark(Value * arg)
 //       TRACE_5("Arg is this \n");
 //     }
 
-//     if (isa<PointerType>(arg->getType())) {
-//       const PointerType* PTy = cast<const PointerType>(arg->getType());
-//       if (isa<StructType>(PTy->getElementType())) {
-//      const StructType* STy = cast<const StructType>(PTy->getElementType());
-//      const std::string tName = findTypeName(this->mdl->getTypeSymbolTable(), STy);
-//       }
-//     }
 	}
 
 
@@ -92,7 +69,7 @@ bool FunctionBuilder::mark(Value * arg)
 
 	currentBlock = argAsInst->getParent();
 	if (std::find(used_bb.begin(), used_bb.end(), currentBlock) == used_bb.end()) {
-		TRACE_5("Block useful :" << currentBlock->getNameStr() << "\n");
+		TRACE_5("Block useful :" << currentBlock->getName().str() << "\n");
 		used_bb.push_back(currentBlock);
 	}
 
@@ -179,7 +156,7 @@ void FunctionBuilder::cloneBlocks()
 		if (BB->hasName())
 			NewBB->setName(BB->getName());
 
-		TRACE_6("Clone block : " << BB << "->" << NewBB << " (" <<	NewBB->getNameStr() << ")\n");
+		TRACE_6("Clone block : " << BB << "->" << NewBB << " (" <<	NewBB->getName().str() << ")\n");
 		ValueMap[BB] = NewBB;
 	}
 }
@@ -252,7 +229,7 @@ Function *FunctionBuilder::buildFct()
 
 		currentBlock = &*origbb++;
 			
-		TRACE_6("Current block : " << currentBlock->getNameStr() << "\n");
+		TRACE_6("Current block : " << currentBlock->getName().str() << "\n");
 		
 		
 		/*** ...get the corresponding block in the fctToJit if it exists ***/
@@ -321,7 +298,7 @@ Function *FunctionBuilder::buildFct()
 			PRINT_6(inst->dump());
 			TRACE_6("\n");
 			
-			RemapInstruction(inst, ValueMap, true);	// Important: link the instruction to others (use-def chain)
+			RemapInstruction(inst, ValueMap, RF_None);	// Important: link the instruction to others (use-def chain)
 			++instIt;
 		}
 	}
