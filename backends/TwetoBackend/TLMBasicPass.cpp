@@ -27,7 +27,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Analysis/Verifier.h"
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
-#include <llvm/Support/IRBuilder.h>
+#include <llvm/IRBuilder.h>
 #include <llvm/Support/InstIterator.h>
 #include <llvm/Transforms/Utils/Cloning.h>
 #include "llvm/Analysis/LoopPass.h"
@@ -128,7 +128,7 @@ bool TLMBasicPass::runOnModule(Module &M) {
     writeFun->dump();    
     
     // Initialize function passes
-    TargetData *target = new TargetData(this->llvmMod);
+    DataLayout *target = new DataLayout(this->llvmMod);
     funPassManager = new FunctionPassManager(this->llvmMod);
     funPassManager->add(target);
     funPassManager->add(createIndVarSimplifyPass());
@@ -249,7 +249,7 @@ void TLMBasicPass::replaceCallsInProcess(sc_core::sc_module *initiatorMod,
     inst_iterator ii;
     for (ii = inst_begin(procf); ii!=inst_end(procf); ii++) {
         Instruction &i = *ii;
-        CallSite cs = CallSite::get(&i);
+        CallSite cs(&i);
         if (cs.getInstruction()) {
             // Candidate for a replacement
             Function *oldfun = cs.getCalledFunction();
@@ -289,11 +289,11 @@ void TLMBasicPass::replaceCallsInProcess(sc_core::sc_module *initiatorMod,
                     targetMod =  getTargetModule(initiatorMod, a);
                                     
                     // Save informations to build a new call later
-                    const FunctionType *writeFunType = 
+                    FunctionType *writeFunType = 
                         this->basicWriteFun->getFunctionType();  
                     info->targetType = writeFunType->getParamType(0);
                     LLVMContext &context = getGlobalContext();
-                    const IntegerType *intType;
+                    IntegerType *intType;
                     if (this->is64Bit) {
                         intType = Type::getInt64Ty(context);
                     } else {
@@ -327,9 +327,9 @@ void TLMBasicPass::replaceCallsInProcess(sc_core::sc_module *initiatorMod,
         CallInfo *i = *it;
         
         LLVMContext &context = getGlobalContext();
-        const FunctionType *writeFunType = 
+        FunctionType *writeFunType = 
         this->writeFun->getFunctionType();
-        const IntegerType *i64 = Type::getInt64Ty(context);
+        IntegerType *i64 = Type::getInt64Ty(context);
         // Get a pointer to the target module
         basic::target_module_base *tmb = 
         dynamic_cast<basic::target_module_base*>(targetMod);
@@ -343,7 +343,7 @@ void TLMBasicPass::replaceCallsInProcess(sc_core::sc_module *initiatorMod,
         
         // Create the new call
         Value *args[] = {modPtr, addr, i->dataArg};
-        i->newcall = CallInst::Create(this->writeFun, args, args+3);
+        i->newcall = CallInst::Create(this->writeFun, ArrayRef<Value*>(args, 3));
         
         // Replace the old call
         BasicBlock::iterator it(i->oldcall);
@@ -351,7 +351,7 @@ void TLMBasicPass::replaceCallsInProcess(sc_core::sc_module *initiatorMod,
         i->oldcall->replaceAllUsesWith(i->newcall);
         
         // Inline the new call
-        TargetData *td = new TargetData(this->llvmMod);
+        DataLayout *td = new DataLayout(this->llvmMod);
         InlineFunctionInfo ifi(NULL, td);
         bool success = InlineFunction(i->newcall, ifi);
         if(!success) {
@@ -429,7 +429,7 @@ Function *TLMBasicPass::createProcess(Function *oldProc,
                                       sc_core::sc_module *initiatorMod) {
     
     LLVMContext &context = getGlobalContext();
-    const IntegerType *intType;
+    IntegerType *intType;
     if (this->is64Bit) {
         intType = Type::getInt64Ty(context);
     } else {
@@ -439,13 +439,13 @@ Function *TLMBasicPass::createProcess(Function *oldProc,
     // Retrieve a pointer to the initiator module 
     ConstantInt *initiatorModVal = 
     ConstantInt::getSigned(intType,reinterpret_cast<intptr_t>(initiatorMod));
-    const FunctionType *funType = oldProc->getFunctionType();  
-    const Type *type = funType->getParamType(0);
+    FunctionType *funType = oldProc->getFunctionType();  
+    Type *type = funType->getParamType(0);
     IntToPtrInst *thisAddr = 
     new IntToPtrInst(initiatorModVal, type, "");
     
     // Compute the type of the new function
-    const FunctionType *oldProcType = oldProc->getFunctionType();
+    FunctionType *oldProcType = oldProc->getFunctionType();
     Value **argsBegin = new Value*[1];
     Value **argsEnd = argsBegin;
     *argsEnd++ = thisAddr;
@@ -453,21 +453,21 @@ Function *TLMBasicPass::createProcess(Function *oldProc,
     Value **args = argsBegin;
     assert(oldProcType->getNumParams()==argsSize);
     assert(!oldProc->isDeclaration());
-    std::vector<const Type*> argTypes;
+    std::vector<Type*> argTypes;
     for (unsigned i = 0; i!=argsSize; ++i)
         //if (args[i]==NULL)
             argTypes.push_back(oldProcType->getParamType(i));
-    const FunctionType *newProcType =
-    FunctionType::get(oldProc->getReturnType(), argTypes, false);
+    FunctionType *newProcType =
+    FunctionType::get(oldProc->getReturnType(), ArrayRef<Type*>(argTypes), false);
     
     // Create the new function
     std::ostringstream id;
     id << proc_counter++;
-    std::string name = oldProc->getNameStr()+std::string("_clone_")+id.str();
+    std::string name = oldProc->getName().str()+std::string("_clone_")+id.str();
     Function *newProc = 
     Function::Create(newProcType, Function::ExternalLinkage, name, this->llvmMod);
     assert(newProc->empty());
-    newProc->addFnAttr(Attribute::InlineHint);
+    newProc->addFnAttr(Attributes::InlineHint);
     
     { // Set name of newfunc arguments and complete args
         Function::arg_iterator nai = newProc->arg_begin();
@@ -486,7 +486,7 @@ Function *TLMBasicPass::createProcess(Function *oldProc,
     BasicBlock *bb = BasicBlock::Create(context, "entry", newProc);
     IRBuilder<> *irb = new IRBuilder<>(context);
     irb->SetInsertPoint(bb);
-    CallInst *ci = irb->CreateCall(oldProc, argsBegin, argsEnd);
+    CallInst *ci = irb->CreateCall(oldProc, ArrayRef<Value*>(argsBegin, argsEnd));
     bb->getInstList().insert(ci, thisAddr);
     if (ci->getType()->isVoidTy())
         irb->CreateRetVoid();
@@ -497,7 +497,7 @@ Function *TLMBasicPass::createProcess(Function *oldProc,
     verifyFunction(*newProc);
     
     { // Inline the call
-        TargetData *td = new TargetData(this->llvmMod);
+        DataLayout *td = new DataLayout(this->llvmMod);
         InlineFunctionInfo i(NULL, td);
         bool success = InlineFunction(ci, i);
         assert(success);

@@ -11,7 +11,7 @@
 #include "TwetoConstMemory.h"
 
 #include <llvm/Type.h>
-#include <llvm/Target/TargetData.h>
+#include <llvm/DataLayout.h>
 #include <llvm/DerivedTypes.h>
 #include <iostream>
 
@@ -53,7 +53,7 @@ void fill_const_addressses(Module *Mod, ExecutionEngine *EE) {
     if (gv.hasName() && !std::string(gv.getName()).compare(0,4,"_ZTV") &&
         gv.hasInitializer()) {
       size_t gv_size =
-        EE->getTargetData()->getTypeAllocSize(gv.getType()->getElementType());
+        EE->getDataLayout()->getTypeAllocSize(gv.getType()->getElementType());
       intptr_t gv_ptr = reinterpret_cast<intptr_t>(EE->getPointerToGlobal(&gv));
       // std::cerr <<"GlobalVariable: " <<std::string(gv.getName())
       //           <<' ' <<gv_ptr <<' ' <<gv_size <<'\n';

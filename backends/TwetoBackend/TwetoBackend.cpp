@@ -16,16 +16,13 @@
 #include <llvm/ExecutionEngine/GenericValue.h>
 #include <llvm/ExecutionEngine/JIT.h>
 #include <llvm/ExecutionEngine/JITEventListener.h>
-#include <llvm/Target/TargetData.h>
+#include <llvm/DataLayout.h>
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/ManagedStatic.h>
 #include <llvm/Support/MemoryBuffer.h>
 #include <llvm/Support/PrettyStackTrace.h>
 #include <llvm/Support/raw_ostream.h>
-#include <llvm/System/Process.h>
-#include <llvm/System/Signals.h>
-#include <llvm/Target/TargetSelect.h>
-#include <llvm/Support/IRBuilder.h>
+#include <llvm/IRBuilder.h>
 #include <llvm/Support/FormattedStream.h>
 #include <llvm/PassManager.h>
 #include <llvm/Analysis/Verifier.h>
@@ -61,7 +58,7 @@ using namespace llvm;
 
 static ExecutionEngine *EE = 0;
 static IRBuilder<> *IRB = 0; 
-static TargetData *TD = NULL;
+static DataLayout *TD = NULL;
 static Module *llvmMod = 0;
 static PassManager *PM = NULL;
 static bool optimizeProcess = true;
@@ -88,7 +85,7 @@ static void tweto_optimize(Frontend * fe, ExecutionEngine *ee,
     IRB = new IRBuilder<>(Context);    
     
     // Build up all of the passes that we want to do to the module.
-    TD = new TargetData(llvmMod);
+    TD = new DataLayout(llvmMod);
 	PM = new PassManager();
 	// Defines target properties related to datatype  
 	// size/offset/alignment information
@@ -203,9 +200,9 @@ tweto_optimize_process(sc_core::SC_ENTRY_FUNC vfct, sc_core::sc_process_host *ho
     
     call_proc->dump();
     
-    const FunctionType *call_proc_FT = call_proc->getFunctionType();
-    const IntegerType *i64 = Type::getInt64Ty(Context);
-    const IntegerType *i32 = Type::getInt32Ty(Context);
+    FunctionType *call_proc_FT = call_proc->getFunctionType();
+    IntegerType *i64 = Type::getInt64Ty(Context);
+    IntegerType *i32 = Type::getInt32Ty(Context);
     
     // Enter machine-dependent code
     Value *args[3];
@@ -225,7 +222,7 @@ tweto_optimize_process(sc_core::SC_ENTRY_FUNC vfct, sc_core::sc_process_host *ho
         ConstantInt *vfct1 = ConstantInt::getSigned(i64,vfct_conv.nums[1]);
         args[1] = vfct1;
         ConstantInt *host_int = ConstantInt::getSigned(i64,reinterpret_cast<intptr_t>(host));
-        const Type *host_type_ptr = call_proc_FT->getParamType(2);
+        Type *host_type_ptr = call_proc_FT->getParamType(2);
         Value *host_ptr = IRB->CreateIntToPtr(host_int,host_type_ptr,"host_ptr");
         args[2] = host_ptr;
     } else if (call_proc_FT->getNumParams()==3 &&
@@ -238,12 +235,12 @@ tweto_optimize_process(sc_core::SC_ENTRY_FUNC vfct, sc_core::sc_process_host *ho
         } vfct_conv;
         vfct_conv.fct = vfct;
         ConstantInt *vfct0 = ConstantInt::getSigned(i32,vfct_conv.nums[0]);
-        const Type *arg0_type = call_proc_FT->getParamType(0);
+        Type *arg0_type = call_proc_FT->getParamType(0);
         args[0] = IRB->CreateIntToPtr(vfct0,arg0_type,"arg0");
         ConstantInt *vfct1 = ConstantInt::getSigned(i32,vfct_conv.nums[1]);
         args[1] = vfct1;
         ConstantInt *host_int = ConstantInt::getSigned(i32,reinterpret_cast<intptr_t>(host));
-        const Type *host_type_ptr = call_proc_FT->getParamType(2);
+        Type *host_type_ptr = call_proc_FT->getParamType(2);
         Value *host_ptr = IRB->CreateIntToPtr(host_int,host_type_ptr,"host_ptr");
         args[2] = host_ptr;
     } else {
