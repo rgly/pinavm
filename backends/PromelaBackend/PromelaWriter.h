@@ -23,7 +23,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
@@ -33,7 +33,7 @@
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/System/Host.h"
+//#include "llvm/System/Host.h"
 #include "llvm/Config/config.h"
 
 #include <map>
@@ -77,7 +77,7 @@ class PromelaWriter : public ModulePass, public InstVisitor<PromelaWriter> {
      compilation option later if needed.
      */
   const MCAsmInfo *TAsm;
-  const TargetData* TD;
+  const DataLayout* TD;
   std::map<const Type *, std::string> TypeNames;
   std::map<const ConstantFP *, unsigned> FPConstantMap;
   std::set<Function*> intrinsicPrototypesAlreadyGenerated;

@@ -3,7 +3,7 @@
 
 
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
 
 #include "PromelaBackendNameAllUsedStructsAndMergeFunctions.h"
 
@@ -22,7 +22,7 @@ namespace llvm {
 					  CodeGenOpt::Level OptLevel,
 					  bool DisableVerify = true);
 
-    virtual const TargetData*
+    virtual const DataLayout*
     getTargetData() const {
       return 0;
     }
