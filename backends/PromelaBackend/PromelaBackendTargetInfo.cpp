@@ -1,6 +1,6 @@
 #include "PromelaTargetMachine.h"
 #include "llvm/Module.h"
-#include "llvm/Target/TargetRegistry.h"
+#include "llvm/Support/TargetRegistry.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include <sstream>

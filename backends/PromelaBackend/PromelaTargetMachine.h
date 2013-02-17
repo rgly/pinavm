@@ -4,14 +4,16 @@
 
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/DataLayout.h"
+//#include "llvm/Target/TargetOptions.h"
+#include "llvm/PassManager.h"
 
-#include "PromelaBackendNameAllUsedStructsAndMergeFunctions.h"
+//#include "PromelaBackendNameAllUsedStructsAndMergeFunctions.h"
 
 namespace llvm {
   
   struct PromelaTargetMachine : public TargetMachine {
-  PromelaTargetMachine(const Target &T, const std::string &TT, const std::string &FS)
-    : TargetMachine(T) {}
+  PromelaTargetMachine(const Target &T, StringRef TargetTriple, StringRef CPU, StringRef FS, const TargetOptions &Options, Reloc::Model RM, CodeModel::Model CM, CodeGenOpt::Level OL)
+    : TargetMachine(T, TargetTriple, CPU, FS, Options ) {}
     
     virtual bool WantsWholeFile() const {
       return true;

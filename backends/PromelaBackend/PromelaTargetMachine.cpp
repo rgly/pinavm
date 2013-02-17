@@ -17,8 +17,8 @@ namespace llvm {
 //		PM.add(createLowerAllocationsPass(true));
 		PM.add(createLowerInvokePass());
 		PM.add(createCFGSimplificationPass());	// clean up after lower invoke.
-		PM.add(new
-		       PromelaBackendNameAllUsedStructsAndMergeFunctions());
+//		PM.add(new
+//		       PromelaBackendNameAllUsedStructsAndMergeFunctions());
 		PM.add(new PromelaWriter(o));
 		PM.add(createGCInfoDeleter());
 		return false;
