@@ -7,7 +7,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Type.h"
-#include "llvm/Bitcode/ReaderWriter.h"
+//#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/CodeGen/LinkAllCodegenComponents.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
@@ -16,24 +16,24 @@
 #include "llvm/ExecutionEngine/JITEventListener.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
-#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/System/Process.h"
-#include "llvm/System/Signals.h"
-#include "llvm/Target/TargetSelect.h"
+//#include "llvm/Support/Process.h"
+#include "llvm/Support/IRReader.h"
+#include "llvm/Support/Signals.h"
+#include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/DynamicLibrary.h"
 #include <cerrno>
 using namespace llvm;
 
-#include "llvm/System/DynamicLibrary.h"
 
 //#include "BCLoader.h"
 
 #include "FrontendItf.hpp"
-#include "SimpleBackend.h"
+//#include "SimpleBackend.h"
 #include "PromelaBackend.h"
-#include "42Backend.h"
+//#include "42Backend.h"
 #include "TwetoBackend.h"
 
 #include <ctime>
@@ -123,12 +123,12 @@ void pinavm_callback(sc_core::sc_simcontext* context,
     
 
 	if (Backend != "-") {
-		if (Backend == "simple" || Backend == "Simple") {
-			launch_simplebackend(fe, OutputFilename, EventsAsBool, RelativeClocks);
-		} else if (Backend == "promela" || Backend == "Promela") {
+		//if (Backend == "simple" || Backend == "Simple") {
+			//launch_simplebackend(fe, OutputFilename, EventsAsBool, RelativeClocks);
+		if (Backend == "promela" || Backend == "Promela") {
 			launch_promelabackend(fe, OutputFilename, EventsAsBool, RelativeClocks, Bug);
-		} else if (Backend == "42") {
-		        launch_42backend(fe, OutputFilename, EventsAsBool, RelativeClocks, Bug);
+		//} else if (Backend == "42") {
+		        //launch_42backend(fe, OutputFilename, EventsAsBool, RelativeClocks, Bug);
 		} 
 		// Tweto backend
 		else if(Backend == "tweto" || Backend == "Tweto") {
@@ -181,17 +181,13 @@ int load_and_run_sc_main(std::string & InputFile)
 	// So that JIT-ed code can call pinavm_callback.
 	//sys::DynamicLibrary::AddSymbol("pinavm_callback", (void *)pinavm_callback);
 
-	// Load the bitcode...
-	//Module *Mod = NULL;
-	if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFile,&ErrorMsg)){
-		Mod = ParseBitcodeFile(Buffer, Context, &ErrorMsg);
-		//Mod = getLazyBitcodeModule(Buffer, Context, &ErrorMsg);
-		if (!Mod) delete Buffer;
-	}
+	// Load the bitcode file as LLVM module
+	SMDiagnostic smdiagnostic;
+	Mod = ParseIRFile(InputFile, smdiagnostic, Context);
 
 	if (!Mod) {
 		errs() << "error loading program '" << InputFile << "': "
-		       << ErrorMsg << "\n";
+		       << smdiagnostic.getMessage() << "\n";
 		exit(1);
 	} else {
 		TRACE_2("bitcode file loaded\n");

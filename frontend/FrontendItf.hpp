@@ -16,11 +16,12 @@
 //#include "llvm/Support/ManagedStatic.h"
 #include "llvm/PassManager.h"
 //#include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/StandardPasses.h"
 //#include "llvm/Support/SystemUtils.h"
 //#include "llvm/Support/PassNameParser.h"
 //#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/Analysis/Verifier.h"
+#include "llvm/Transforms/Scalar.h"
 
 #include "config.h"
 

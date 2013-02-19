@@ -1,5 +1,6 @@
 #include <string>
 #include <map>
+#include <cstdio>
 
 #include "llvm/GlobalValue.h"
 #include "llvm/CallingConv.h"

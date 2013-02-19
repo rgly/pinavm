@@ -8,6 +8,8 @@
 #include "llvm/PassManager.h"
 #include "llvm/IRBuilder.h"
 
+#include <sstream>
+
 using namespace llvm;
 
 SCJit::SCJit(Module * mod, SCElab * scelab)

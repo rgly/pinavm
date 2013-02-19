@@ -33,7 +33,7 @@ macro(needs_no_rtti FILE)
   SET_SOURCE_FILES_PROPERTIES(${FILE} PROPERTIES COMPILE_FLAGS "-fno-rtti -fno-exceptions") 
 endmacro()
 
-execute_process(COMMAND llvm-config --libs jit interpreter nativecodegen bitreader selectiondag
+execute_process(COMMAND llvm-config --libs jit interpreter nativecodegen bitreader AsmParser selectiondag
                 OUTPUT_VARIABLE LLVM_LIBS)
 
 # turn -lfoo -lbar into foo;bar, so that CMake considers it as a list
@@ -59,9 +59,9 @@ add_subdirectory(frontend)
 add_subdirectory(utils)
 add_subdirectory(external/basic)
 
-add_subdirectory(backends/42Backend/)
+#add_subdirectory(backends/42Backend/)
 add_subdirectory(backends/PromelaBackend/)
-add_subdirectory(backends/SimpleBackend/)
+#add_subdirectory(backends/SimpleBackend/)
 add_subdirectory(backends/TwetoBackend/)
 
 # Config file generation
