@@ -1,7 +1,8 @@
-#include <systemc>
+//#include <systemc>
 
 #include <string>
 #include <algorithm>
+#include <cstdio>
 
 // For JIT
 #include "llvm/LLVMContext.h"
@@ -273,32 +274,24 @@ int toplevel_main(int argc, char **argv)
 {
 //	llvm_shutdown_obj X;	// Call llvm_shutdown() on exit.
 
-	try {
+	// If we have a native target, initialize it to ensure it is linked in and
+	// usable by the JIT.
+	InitializeNativeTarget();
 
-		// If we have a native target, initialize it to ensure it is linked in and
-		// usable by the JIT.
-		InitializeNativeTarget();
+	cl::ParseCommandLineOptions(argc, argv, "llvm .bc -> .bc modular optimizer and analysis printer\n");
 
-		cl::ParseCommandLineOptions(argc, argv, "llvm .bc -> .bc modular optimizer and analysis printer\n");
-
-		if (DisableDbgMsg.getValue()) {
-			disable_debug_msg = true;
-		} else {
-			disable_debug_msg = false;
-		}
-
-		sys::PrintStackTraceOnErrorSignal();
-
-		TRACE_1("Loading and running bitcode file\n");
-		// load_bc_and_run_sc_main(argc, argv, environ);
-		load_and_run_sc_main(InputFilename);
-	} catch(const std::string & msg) {
-		errs() << argv[0] << ": " << msg << "\n";
-	} catch(...) {
-		errs() << argv[0] <<
-		    ": Unexpected unknown exception occurred.\n";
+	if (DisableDbgMsg.getValue()) {
+		disable_debug_msg = true;
+	} else {
+		disable_debug_msg = false;
 	}
+
+	sys::PrintStackTraceOnErrorSignal();
+
+	TRACE_1("Loading and running bitcode file\n");
+	// load_bc_and_run_sc_main(argc, argv, environ);
+	load_and_run_sc_main(InputFilename);
+
 	TRACE_1("Shutdown...\n");
-//	llvm_shutdown();
 	return 0;
 }

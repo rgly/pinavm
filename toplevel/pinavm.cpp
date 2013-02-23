@@ -21,11 +21,21 @@ using namespace std;
 extern "C" int sc_main(int argc, char **argv);
 
 int sc_main(int argc, char **argv) {
-	cout << "sc_main from pinavm.cpp called." << endl;
-	cout << "This function is only usefull at link time, but should never be called" << endl;
+	std::cout << "sc_main from pinavm.cpp called.\n" ;
+	std::cout << "This function is only usefull at link time, but should never be called\n"  ;
 	abort();
 }
 
 int main(int argc, char **argv) {
-	return toplevel_main(argc, argv);
+	// Move exception handle here,
+	// since toplevel.cpp is compiled without rtti & exception.
+	try {
+		toplevel_main(argc, argv);
+	} catch(const std::string & msg) {
+		std::cerr << argv[0] << ": " << msg << "\n";
+	} catch(...) {
+		std::cerr << argv[0] <<
+		    ": Unexpected unknown exception occurred.\n";
+	}
+	return 0;
 }
