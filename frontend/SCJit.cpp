@@ -9,6 +9,7 @@
 #include "llvm/IRBuilder.h"
 
 #include <sstream>
+#include <iostream>
 
 using namespace llvm;
 

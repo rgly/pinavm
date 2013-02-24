@@ -160,7 +160,7 @@ Port * SCElab::trySc_Signal(IRModule * mod,
 		}
 
 		TRACE_2("Add (sc_port_base) " << port << " -> (SIMPLE_PORT) " << portName << " with channel " << ch << "\n");
-		TRACE_4("Channel contains type: " << ch->getType()->getStructName().str() << "\n");
+		TRACE_4("Channel contains type: "<< ch->getType() << "\n");
 
 		theNewPort->addChannel(ch);
 	}
