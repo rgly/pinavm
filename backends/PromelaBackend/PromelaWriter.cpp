@@ -1895,7 +1895,11 @@ PromelaWriter::isSystemCType(Type* ty)
 		return false;
  	std::string typeName =this->TypeNames.find(ty)->second;
 	
-	bool res = typeName.substr(0, 16).compare("struct_sc_core::") == 0 || typeName.substr(0, 12).compare("struct_std::") == 0;
+	// clang deals systemc namespace with class_sc_core::
+	// but llvm-gcc-4.2(llvm-2.8) uses struct_sc_core::
+	bool res = (typeName.substr(0, 16).compare("struct_sc_core::") == 0 )
+		|| (typeName.substr(0, 15).compare("class_sc_core::") == 0)
+		|| (typeName.substr(0, 12).compare("struct_std::") == 0);
  	return res;
 
 }
