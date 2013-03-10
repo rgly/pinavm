@@ -454,7 +454,6 @@ Function *TLMBasicPassImpl::createProcess(Function *oldProc,
     assert(!oldProc->isDeclaration());
     std::vector<Type*> argTypes;
     for (unsigned i = 0; i!=argsSize; ++i)
-        //if (args[i]==NULL)
             argTypes.push_back(oldProcType->getParamType(i));
     FunctionType *newProcType =
     FunctionType::get(oldProc->getReturnType(), ArrayRef<Type*>(argTypes), false);
@@ -471,12 +470,11 @@ Function *TLMBasicPassImpl::createProcess(Function *oldProc,
     { // Set name of newfunc arguments and complete args
         Function::arg_iterator nai = newProc->arg_begin();
         Function::arg_iterator oai = oldProc->arg_begin();
-        for (unsigned i = 0; i!=argsSize; ++i, ++oai)
-            if (args[i]==NULL) {
+        for (unsigned i = 0; i!=argsSize; ++i, ++oai) {
                 nai->setName(oai->getName());
                 args[i] = nai;
                 ++nai;
-            }
+        }
         assert(nai==newProc->arg_end());
         assert(oai==oldProc->arg_end());
     }
