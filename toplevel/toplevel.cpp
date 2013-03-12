@@ -34,7 +34,7 @@ using namespace llvm;
 #include "FrontendItf.hpp"
 //#include "SimpleBackend.h"
 #include "PromelaBackend.h"
-//#include "42Backend.h"
+#include "42Backend.h"
 #include "TwetoBackend.h"
 
 #include <ctime>
@@ -128,8 +128,8 @@ void pinavm_callback(sc_core::sc_simcontext* context,
 			//launch_simplebackend(fe, OutputFilename, EventsAsBool, RelativeClocks);
 		if (Backend == "promela" || Backend == "Promela") {
 			launch_promelabackend(fe, OutputFilename, EventsAsBool, RelativeClocks, Bug);
-		//} else if (Backend == "42") {
-		        //launch_42backend(fe, OutputFilename, EventsAsBool, RelativeClocks, Bug);
+		} else if (Backend == "42") {
+		        launch_42backend(fe, OutputFilename, EventsAsBool, RelativeClocks, Bug);
 		} 
 		// Tweto backend
 		else if(Backend == "tweto" || Backend == "Tweto") {

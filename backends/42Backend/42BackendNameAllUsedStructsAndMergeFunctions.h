@@ -1,3 +1,4 @@
+/*
 #ifndef _42BACKENDNAMEALLUSEDSTRUCTSANDMERGEFUNCTIONS_H
 #define _42BACKENDNAMEALLUSEDSTRUCTSANDMERGEFUNCTIONS_H
 
@@ -18,3 +19,4 @@ class _42BackendNameAllUsedStructsAndMergeFunctions :  public ModulePass  {
   virtual bool runOnModule(Module &M);
 };
 #endif
+*/
