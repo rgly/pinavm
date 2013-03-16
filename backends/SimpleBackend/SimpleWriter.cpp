@@ -1,5 +1,6 @@
 #include <string>
 #include <map>
+#include <cstdio>
 
 #include "llvm/GlobalValue.h"
 #include "llvm/CallingConv.h"
@@ -11,6 +12,10 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/MCObjectFileInfo.h"
+#include "llvm/Function.h"
+#include "llvm/ADT/SmallString.h"
 
 #include "Port.hpp"
 #include "Channel.hpp"
@@ -108,7 +113,7 @@ isDirectAlloca (const Value * V)
 /// print it as "Struct (*)(...)", for struct return functions.
 void
 SimpleWriter::printStructReturnPointerFunctionType (formatted_raw_ostream &
-						    Out, const AttrListPtr & PAL, const PointerType * TheTy)
+						    Out, const AttrListPtr & PAL, PointerType * TheTy)
 {
   const FunctionType *FTy = cast < FunctionType > (TheTy->getElementType ());
   std::stringstream FunctionInnards;
@@ -116,21 +121,21 @@ SimpleWriter::printStructReturnPointerFunctionType (formatted_raw_ostream &
   bool PrintedType = false;
 
   FunctionType::param_iterator I = FTy->param_begin (), E = FTy->param_end ();
-  const Type *RetTy = cast < PointerType > (I->get ())->getElementType ();
+  Type *RetTy = cast < PointerType > (*I)->getElementType();
   unsigned Idx = 1;
   for (++I, ++Idx; I != E; ++I, ++Idx)
     {
       if (PrintedType)
 	FunctionInnards << ", ";
-      const Type *ArgTy = *I;
-      if (PAL.paramHasAttr (Idx, Attribute::ByVal))
+      Type *ArgTy = *I;
+      if (PAL.paramHasAttr (Idx, this->getAttributes(Attributes::ByVal)))
 	{
 	  assert (isa < PointerType > (ArgTy));
 	  ArgTy = cast < PointerType > (ArgTy)->getElementType ();
 	}
       printType (FunctionInnards, ArgTy,
 		 /*isSigned= */ PAL.paramHasAttr (Idx,
-						  Attribute::SExt), "");
+						  this->getAttributes(Attributes::SExt)), "");
       PrintedType = true;
     }
   if (FTy->isVarArg ())
@@ -145,13 +150,13 @@ SimpleWriter::printStructReturnPointerFunctionType (formatted_raw_ostream &
   FunctionInnards << ')';
   std::string tstr = FunctionInnards.str ();
   printType (Out, RetTy,
-	     /*isSigned= */ PAL.paramHasAttr (0, Attribute::SExt),
+  /*isSigned= */ PAL.paramHasAttr (0, this->getAttributes(Attributes::SExt)),
 	     tstr);
 }
 
 raw_ostream &
   SimpleWriter::printSimpleType (formatted_raw_ostream & Out,
-				 const Type * Ty, bool isSigned, const std::string & NameSoFar)
+				 Type * Ty, bool isSigned, const std::string & NameSoFar)
 {
   assert ((Ty->isPrimitiveType () || Ty->isIntegerTy ()
 	   || isa < VectorType > (Ty)) && "Invalid type for printSimpleType");
@@ -182,7 +187,7 @@ raw_ostream &
     case Type::VectorTyID:
       {
 	triggerError (Out, "NYI : Vector type");
-	const VectorType *VTy = cast < VectorType > (Ty);
+	VectorType *VTy = cast < VectorType > (Ty);
 	return printSimpleType (Out, VTy->getElementType (),
 				isSigned,
 				" __attribute__((vector_size("
@@ -198,7 +203,7 @@ raw_ostream &
 }
 
 std::ostream &
-  SimpleWriter::printSimpleType (std::ostream & Out, const Type * Ty, bool isSigned, const std::string & NameSoFar)
+  SimpleWriter::printSimpleType (std::ostream & Out, Type * Ty, bool isSigned, const std::string & NameSoFar)
 {
   assert ((Ty->isPrimitiveType () || Ty->isIntegerTy ()
 	   || isa < VectorType > (Ty)) && "Invalid type for printSimpleType");
@@ -229,7 +234,7 @@ std::ostream &
     case Type::VectorTyID:
       {
 	triggerError (this->Out, "NYI : Vector type");
-	const VectorType *VTy = cast < VectorType > (Ty);
+	VectorType *VTy = cast < VectorType > (Ty);
 	return printSimpleType (Out, VTy->getElementType (),
 				isSigned,
 				" __attribute__((vector_size(" + utostr (TD->getTypeAllocSize (VTy)) + " ))) ");
@@ -248,7 +253,7 @@ std::ostream &
 //
 raw_ostream &
   SimpleWriter::printType (formatted_raw_ostream & Out,
-			   const Type * Ty,
+			   Type * Ty,
 			   bool isSigned, const std::string & NameSoFar, bool IgnoreName, const AttrListPtr & PAL)
 {
   if (Ty->isPrimitiveType () || Ty->isIntegerTy () || isa < VectorType > (Ty))
@@ -257,9 +262,9 @@ raw_ostream &
       return Out;
     }
   // Check to see if the type is named.
-  if (!IgnoreName || isa < OpaqueType > (Ty))
+  if (!IgnoreName /*|| isa < OpaqueType > (Ty)*/)
     {
-      std::map < const Type *, std::string >::iterator I = TypeNames.find (Ty);
+      std::map < Type *, std::string >::iterator I = TypeNames.find (Ty);
       if (I != TypeNames.end ())
 	return Out << I->second << ' ' << NameSoFar;
     }
@@ -277,8 +282,8 @@ raw_ostream &
 	unsigned Idx = 1;
 	for (FunctionType::param_iterator I = FTy->param_begin (), E = FTy->param_end (); I != E; ++I)
 	  {
-	    const Type *ArgTy = *I;
-	    if (PAL.paramHasAttr (Idx, Attribute::ByVal))
+	    Type *ArgTy = *I;
+	    if (PAL.paramHasAttr (Idx, this->getAttributes(Attributes::ByVal)))
 	      {
 		assert (isa < PointerType > (ArgTy));
 		ArgTy = cast < PointerType > (ArgTy)->getElementType ();
@@ -286,8 +291,8 @@ raw_ostream &
 	    if (I != FTy->param_begin ())
 	      FunctionInnards << ", ";
 	    printType (FunctionInnards, ArgTy,
-		       /*isSigned= */
-		       PAL.paramHasAttr (Idx, Attribute::SExt), "");
+   /*isSigned= */ PAL.paramHasAttr (Idx, this->getAttributes(Attributes::SExt)),
+			 "");
 	    ++Idx;
 	  }
 	if (FTy->isVarArg ())
@@ -303,12 +308,12 @@ raw_ostream &
 	std::string tstr = FunctionInnards.str ();
 	printType (Out, FTy->getReturnType (),
 		   /*isSigned= */ PAL.paramHasAttr (0,
-						    Attribute::SExt), tstr);
+	 			  this->getAttributes(Attributes::SExt)), tstr);
 	return Out;
       }
     case Type::StructTyID:
       {
-	const StructType *STy = cast < StructType > (Ty);
+	StructType *STy = cast < StructType > (Ty);
 	TRACE_4 ("/**** Handling StructTy type in printType() ****/\n");
 //     Out << NameSoFar + " {\n";
 	unsigned Idx = 0;
@@ -333,7 +338,7 @@ raw_ostream &
 
     case Type::PointerTyID:
       {
-	const PointerType *PTy = cast < PointerType > (Ty);
+	PointerType *PTy = cast < PointerType > (Ty);
 	std::string ptrName = NameSoFar;
 
 	TRACE_4 ("/**** Handling PointerTy type in printType() ****/\n");
@@ -362,6 +367,7 @@ raw_ostream &
 	printType (Out, ATy->getElementType (), false, "array[" + utostr (NumElements) + "]");
 	return Out << "; }";
       }
+/*   NO Opaque Type in LLVM 3.2, since the type system has been rewritten.
 
     case Type::OpaqueTyID:
       {
@@ -372,7 +378,7 @@ raw_ostream &
 	assert (TypeNames.find (Ty) == TypeNames.end ());
 	TypeNames[Ty] = TyName;
 	return Out << TyName << ' ' << NameSoFar;
-      }
+      }*/
     default:
       llvm_unreachable ("Unhandled case in getTypeProps!");
     }
@@ -386,7 +392,7 @@ raw_ostream &
 //
 std::ostream &
   SimpleWriter::printType (std::ostream & Out,
-			   const Type * Ty,
+			   Type * Ty,
 			   bool isSigned, const std::string & NameSoFar, bool IgnoreName, const AttrListPtr & PAL)
 {
   if (Ty->isPrimitiveType () || Ty->isIntegerTy () || isa < VectorType > (Ty))
@@ -395,9 +401,9 @@ std::ostream &
       return Out;
     }
   // Check to see if the type is named.
-  if (!IgnoreName || isa < OpaqueType > (Ty))
+  if (!IgnoreName /*|| isa < OpaqueType > (Ty)*/)
     {
-      std::map < const Type *, std::string >::iterator I = TypeNames.find (Ty);
+      std::map < Type *, std::string >::iterator I = TypeNames.find (Ty);
       if (I != TypeNames.end ())
 	return Out << I->second << ' ' << NameSoFar;
     }
@@ -415,8 +421,8 @@ std::ostream &
 	unsigned Idx = 1;
 	for (FunctionType::param_iterator I = FTy->param_begin (), E = FTy->param_end (); I != E; ++I)
 	  {
-	    const Type *ArgTy = *I;
-	    if (PAL.paramHasAttr (Idx, Attribute::ByVal))
+	    Type *ArgTy = *I;
+	    if (PAL.paramHasAttr (Idx, this->getAttributes(Attributes::ByVal)))
 	      {
 		assert (isa < PointerType > (ArgTy));
 		ArgTy = cast < PointerType > (ArgTy)->getElementType ();
@@ -425,7 +431,8 @@ std::ostream &
 	      FunctionInnards << ", ";
 	    printType (FunctionInnards, ArgTy,
 		       /*isSigned= */
-		       PAL.paramHasAttr (Idx, Attribute::SExt), "");
+		       PAL.paramHasAttr (Idx,
+				 this->getAttributes(Attributes::SExt)), "");
 	    ++Idx;
 	  }
 	if (FTy->isVarArg ())
@@ -441,12 +448,12 @@ std::ostream &
 	std::string tstr = FunctionInnards.str ();
 	printType (Out, FTy->getReturnType (),
 		   /*isSigned= */ PAL.paramHasAttr (0,
-						    Attribute::SExt), tstr);
+				this->getAttributes(Attributes::SExt)), tstr);
 	return Out;
       }
     case Type::StructTyID:
       {
-	const StructType *STy = cast < StructType > (Ty);
+	StructType *STy = cast < StructType > (Ty);
 	TRACE_4 ("/**** Handling StructTy type in printType() ****/\n");
 //     Out << NameSoFar + " {\n";
 	unsigned Idx = 0;
@@ -472,7 +479,7 @@ std::ostream &
 
     case Type::PointerTyID:
       {
-	const PointerType *PTy = cast < PointerType > (Ty);
+	PointerType *PTy = cast < PointerType > (Ty);
 	std::string ptrName = "*" + NameSoFar;
 
 	TRACE_4 ("/**** Handling PointerTy type in printType() ****/\n");
@@ -501,7 +508,7 @@ std::ostream &
 	printType (Out, ATy->getElementType (), false, "array[" + utostr (NumElements) + "]");
 	return Out << "; }";
       }
-
+/*
     case Type::OpaqueTyID:
       {
 	ErrorMsg << "NYI : use of complex type : OpaqueTy : " << NameSoFar;
@@ -511,7 +518,7 @@ std::ostream &
 	assert (TypeNames.find (Ty) == TypeNames.end ());
 	TypeNames[Ty] = TyName;
 	return Out << TyName << ' ' << NameSoFar;
-      }
+      }*/
     default:
       llvm_unreachable ("Unhandled case in getTypeProps!");
     }
@@ -527,7 +534,7 @@ SimpleWriter::printConstantArray (ConstantArray * CPA, bool Static)
   // As a special case, print the array as a string if it is an array of
   // ubytes or an array of sbytes with positive values.
   //
-  const Type *ETy = CPA->getType ()->getElementType ();
+  Type *ETy = CPA->getType ()->getElementType ();
   bool isString = (ETy == Type::getInt8Ty (CPA->getContext ()) || ETy == Type::getInt8Ty (CPA->getContext ()));
 
   // Make sure the last character is a null char, as automatically added by C
@@ -656,7 +663,11 @@ isFPCSafeToPrint (const ConstantFP * CFP)
     return APF.bitwiseIsEqual (APFloat (atof (Buffer)));
   return false;
 #else
-  std::string StrVal = ftostr (APF);
+  SmallString<10> smallstr;
+  // parameter : FormatPrecision, FormatMaxPadding 
+  // use scientific notation here due to MaxPadding=0
+  APF.toString(smallstr, 5, 0);
+  std::string StrVal = smallstr.str().str(); // ->StringRef -> std::string
 
   while (StrVal[0] == ' ')
     StrVal.erase (StrVal.begin ());
@@ -917,7 +928,7 @@ SimpleWriter::printConstant (Constant * CPV, bool Static)
 
   if (ConstantInt * CI = dyn_cast < ConstantInt > (CPV))
     {
-      const Type *Ty = CI->getType ();
+      Type *Ty = CI->getType ();
       if (Ty == Type::getInt1Ty (CPV->getContext ()))
 	Out << (CI->getZExtValue ()? '1' : '0');
       else if (Ty == Type::getInt32Ty (CPV->getContext ()))
@@ -1017,7 +1028,9 @@ SimpleWriter::printConstant (Constant * CPV, bool Static)
 		sprintf (Buffer, "%a", V);
 		Num = Buffer;
 #else
-		Num = ftostr (FPC->getValueAPF ());
+		SmallString<10> smallstr;
+		FPC->getValueAPF().toString(smallstr, 5, 0);
+		Num = smallstr.str().str();
 #endif
 		Out << Num;
 	      }
@@ -1074,7 +1087,7 @@ SimpleWriter::printConstant (Constant * CPV, bool Static)
       else
 	{
 	  assert (isa < ConstantAggregateZero > (CPV) || isa < UndefValue > (CPV));
-	  const VectorType *VT = cast < VectorType > (CPV->getType ());
+	  VectorType *VT = cast < VectorType > (CPV->getType ());
 	  Out << "{ ";
 	  Constant *CZ = Constant::getNullValue (VT->getElementType ());
 	  printConstant (CZ, Static);
@@ -1097,7 +1110,7 @@ SimpleWriter::printConstant (Constant * CPV, bool Static)
 	}
       if (isa < ConstantAggregateZero > (CPV) || isa < UndefValue > (CPV))
 	{
-	  const StructType *ST = cast < StructType > (CPV->getType ());
+	  StructType *ST = cast < StructType > (CPV->getType ());
 	  Out << '{';
 	  if (ST->getNumElements ())
 	    {
@@ -1153,8 +1166,11 @@ SimpleWriter::printConstant (Constant * CPV, bool Static)
 std::string SimpleWriter::GetValueName (const Value * Operand)
 {
   // Mangle globals with the standard mangler interface for LLC compatibility.
-  if (const GlobalValue * GV = dyn_cast < GlobalValue > (Operand))
-    return Mang->getNameWithPrefix (GV);
+  if (const GlobalValue * GV = dyn_cast < GlobalValue > (Operand)) {
+    SmallString<10> smallstr;
+    Mang->getNameWithPrefix (smallstr, GV, false);
+    return smallstr.str().str(); //-> StringRef -> String
+  }
 
   std::string Name = Operand->getName ();
 
@@ -1196,7 +1212,7 @@ SimpleWriter::writeInstComputationInline (Instruction & I)
 {
   // We can't currently support integer types other than 1, 8, 16, 32, 64.
   // Validate this.
-  const Type *Ty = I.getType ();
+  Type *Ty = I.getType ();
   if (Ty->isIntegerTy () && (Ty != Type::getInt1Ty (I.getContext ()) &&
 			     Ty != Type::getInt8Ty (I.getContext ()) &&
 			     Ty != Type::getInt16Ty (I.getContext ()) &&
@@ -1427,11 +1443,13 @@ SimpleWriter::printFloatingPointConstants (const Constant * C)
 /// type name is found, emit its declaration...
 ///
 void
-SimpleWriter::fillModuleTypes (const TypeSymbolTable & TST)
+SimpleWriter::fillModuleTypes (Module & M)
 {
+  TypeFinder TST;
+  TST.run(M, true);
   // We are only interested in the type plane of the symbol table.
-  TypeSymbolTable::const_iterator I = TST.begin ();
-  TypeSymbolTable::const_iterator End = TST.end ();
+  TypeFinder::const_iterator I = TST.begin ();
+  TypeFinder::const_iterator End = TST.end ();
 
   // If there are no type names, exit early.
   if (I == End)
@@ -1440,10 +1458,10 @@ SimpleWriter::fillModuleTypes (const TypeSymbolTable & TST)
   // Print out forward declarations for structure types before anything else!
   for (; I != End; ++I)
     {
-      std::string Name = "struct l_" + I->first;
+      std::string Name = "struct l_" + (*I)->getName().str();
       // MM: Used to call Mang->makeNameProper(I->first);
       // MM: but PromelaWriter is not using it either.
-      TypeNames.insert (std::make_pair (I->second, Name));
+      TypeNames.insert (std::make_pair (*I, Name));
     }
 }
 
@@ -1491,28 +1509,28 @@ SimpleWriter::printFunctionSignature (const Function * F, bool Prototype)
   // Print out the name...
   Out << "proc " << GetValueName (F) << '(';
 
-  std::vector < pair < std::string, const Type *> > *args = new std::vector < pair < std::string, const Type *> >();
-  std::vector < pair < std::string, const Type *> > *ret = new std::vector < pair < std::string, const Type *> >();
+  std::vector < pair < std::string, Type *> > *args = new std::vector < pair < std::string, Type *> >();
+  std::vector < pair < std::string, Type *> > *ret = new std::vector < pair < std::string, Type *> >();
 
   fillDependencies (F, string (""), args, ret);
 
   bool PrintedArg = false;
   if (!args->empty ())
     {
-      std::vector < pair < std::string, const Type *> >::iterator itArgs;
+      std::vector < pair < std::string, Type *> >::iterator itArgs;
 
       for (itArgs = args->begin (); itArgs != args->end (); itArgs++)
 	{
 	  std::string ArgName = itArgs->first;
 	  TRACE_7 ("PRINTING ARG : " << ArgName << "\n");
-	  const Type *ArgTy = itArgs->second;
+	  Type *ArgTy = itArgs->second;
 	  printType (Out, ArgTy, true, ArgName);
 	  PrintedArg = true;
 	}
     }
 
   Out << ')';
-  const Type *RetTy;
+  Type *RetTy;
 
   if (!isStructReturn)
     RetTy = F->getReturnType ();
@@ -1522,7 +1540,7 @@ SimpleWriter::printFunctionSignature (const Function * F, bool Prototype)
   // Print out the return type and the signature built above.
   Out << " returns (";
 
-  std::vector < pair < std::string, const Type *> >::iterator itRet;
+  std::vector < pair < std::string, Type *> >::iterator itRet;
   for (itRet = ret->begin (); itRet != ret->end (); itRet++)
     {
       printType (Out, itRet->second, true, itRet->first);
@@ -1537,9 +1555,9 @@ SimpleWriter::printFunctionSignature (const Function * F, bool Prototype)
 
 void
 SimpleWriter::addVectors (std::vector < pair < std::string,
-			  const Type * > >*from, std::vector < pair < std::string, const Type * > >*to)
+			  Type * > >*from, std::vector < pair < std::string, Type * > >*to)
 {
-  std::vector < pair < std::string, const Type *> >::iterator itFrom;
+  std::vector < pair < std::string, Type *> >::iterator itFrom;
   for (itFrom = from->begin (); itFrom != from->end (); ++itFrom)
     {
       to->push_back (*itFrom);
@@ -1550,7 +1568,7 @@ void
 SimpleWriter::fillDependencies (const Function * F,
 				std::string prefix,
 				std::vector < pair < std::string,
-				const Type * > >* args, std::vector < pair < std::string, const Type * > >* ret)
+				Type * > >* args, std::vector < pair < std::string, Type * > >* ret)
 {
   std::string argPrefix;
 
@@ -1569,13 +1587,13 @@ SimpleWriter::fillDependencies (const Function * F,
 	  ++Idx;
 	}
       std::map < Value *, std::string > *allDepsByValue = new std::map < Value *, std::string > ();
-      std::map < std::string, const Type *>*allDepsByName = new std::map < std::string, const Type *>;
+      std::map < std::string, Type *>*allDepsByName = new std::map < std::string, Type *>;
 
       for (; argI != argE; ++argI)
 	{
 	  const Value *currentArg = &*argI;
-	  std::vector < pair < std::string, const Type *> >* argDeps =
-	    new std::vector < pair < std::string, const Type *> >();
+	  std::vector < pair < std::string, Type *> >* argDeps =
+	    new std::vector < pair < std::string, Type *> >();
 	  argPrefix = prefix + GetValueName (currentArg);
 	  // Get the memory locations accessed through this prarameter
 	  getValueDependencies ((Value *) currentArg, argPrefix, argDeps, ret, allDepsByValue, allDepsByName);
@@ -1586,15 +1604,15 @@ SimpleWriter::fillDependencies (const Function * F,
   TRACE_7 ("RESULT of fillDependencies() :\n");
   TRACE_7 (" ARGS :\n");
 
-  std::vector < pair < std::string, const Type *> >::iterator itArgs = args->begin ();
-  std::vector < pair < std::string, const Type *> >::iterator itE = args->end ();
+  std::vector < pair < std::string, Type *> >::iterator itArgs = args->begin ();
+  std::vector < pair < std::string, Type *> >::iterator itE = args->end ();
   for (; itArgs != itE; ++itArgs)
     {
       TRACE_7 (itArgs->first);
       TRACE_7 ("\n");
     }
   TRACE_7 (" RETURNS :\n");
-  std::vector < pair < std::string, const Type *> > ::iterator itRet = ret->begin ();
+  std::vector < pair < std::string, Type *> > ::iterator itRet = ret->begin ();
   itE = ret->end ();
   for (; itRet != itE; ++itRet)
     {
@@ -1605,26 +1623,26 @@ SimpleWriter::fillDependencies (const Function * F,
 
 void
 SimpleWriter::insertAllFields (std::vector < pair < std::string,
-			       const Type * > >* deps, std::map < std::string,
-			       const Type * >*allDepsByName, std::string parentName, const StructType * structType)
+			       Type * > >* deps, std::map < std::string,
+			       Type * >*allDepsByName, std::string parentName, StructType * structType)
 {
   int numFields = structType->getNumElements ();
   TRACE_7 ("InsertAllFields()\n");
   for (int i = 0; i < numFields; i++)
     {
-      const Type *fieldType = structType->getElementType (i);
+      Type *fieldType = structType->getElementType (i);
       std::stringstream ss;
       ss << i;
       std::string fieldName = parentName + std::string ("-field") + ss.str ();
       if (isa < StructType > (fieldType))
 	{
-	  const StructType *structTy = cast < const StructType > (fieldType);
+	  StructType *structTy = cast < StructType > (fieldType);
 	  insertAllFields (deps, allDepsByName, fieldName, structTy);
 	}
       else if (allDepsByName->find (fieldName) == allDepsByName->end ())
 	{
 	  (*allDepsByName)[fieldName] = fieldType;
-	  deps->push_back (pair < std::string, const Type * >(fieldName, fieldType));
+	  deps->push_back (pair < std::string, Type * >(fieldName, fieldType));
 	  TRACE_7 ("Adding field to deps : " << fieldName << "\n");
 	}
       else
@@ -1647,23 +1665,28 @@ SimpleWriter::getNumField (GetElementPtrInst * inst)
 }
 
 bool
-SimpleWriter::isSystemCType (const Type * ty)
+SimpleWriter::isSystemCType (Type * ty)
 {
   std::string typeName = this->TypeNames[ty];
-  return typeName.substr (0, 15).compare ("struct.sc_core::") == 0;
+  // Different compiler will produce different name symbol.
+  // Keep compatible with them.
+  bool res = (typeName.substr (0, 16).compare ("struct_sc_core::") == 0)
+          || (typeName.substr (0, 15).compare ("class_sc_core::") == 0)
+          || (typeName.substr (0, 16).compare ("struct.sc_core::") == 0);
+  return res;
 }
 
 void
 SimpleWriter::getValueDependencies (Value * value,
 				    std::string prefix,
 				    std::vector < pair < std::string,
-				    const Type * > >* args,
+				    Type * > >* args,
 				    std::vector < pair < std::string,
-				    const Type * > >* ret, std::map < Value *,
-				    std::string > *allDepsByValue, std::map < std::string, const Type * >*allDepsByName)
+				    Type * > >* ret, std::map < Value *,
+				    std::string > *allDepsByValue, std::map < std::string, Type * >*allDepsByName)
 {
   std::vector < Value * >visited;
-  pair < std::string, const Type *>structPair;
+  pair < std::string, Type *>structPair;
   std::vector < Value * >::iterator itVisited;
 
   TRACE_6 ("SimpleWriter > getValueDependencies() ");
@@ -1685,7 +1708,7 @@ SimpleWriter::getValueDependencies (Value * value,
     {
       Value *currentValue = *(visited.begin ());
       std::string currentName = (*allDepsByValue)[currentValue];
-      const Type *currentTy = (*allDepsByName)[currentName];
+      Type *currentTy = (*allDepsByName)[currentName];
       visited.erase (visited.begin ());
 
       TRACE_7 ("GetValueDependencies loop 1 \n");
@@ -1696,7 +1719,7 @@ SimpleWriter::getValueDependencies (Value * value,
 	}
       TRACE_7 ("GetValueDependencies loop 2 \n");
 
-      const StructType *cst;
+      StructType *cst;
       if (isa < StructType > (currentTy))
 	cst = cast < StructType > (currentTy);
       else
@@ -1722,7 +1745,7 @@ SimpleWriter::getValueDependencies (Value * value,
 	  // if the current use is a getElementPointer instruction, let's see which field is accessed
 	  if (GetElementPtrInst * getEltPtrInst = dyn_cast < GetElementPtrInst > (currentUse))
 	    {
-	      const Type *fieldType;
+	      Type *fieldType;
 	      TRACE_7 ("Treating Geteltptr \n");
 
 	      int numField = getNumField (getEltPtrInst);
@@ -1765,25 +1788,25 @@ SimpleWriter::getValueDependencies (Value * value,
 	      else
 		{
 		  TRACE_7 ("Not a Struct type, adding " << name << " to args\n");
-		  args->push_back (pair < std::string, const Type * >(name, fieldType));
+		  args->push_back (pair < std::string, Type * >(name, fieldType));
 		}
 	    }
 	  else if (StoreInst * si = dyn_cast < StoreInst > (currentUse))
 	    {
-	      const Type *storeType = si->getOperand (1)->getType ();
+	      Type *storeType = si->getOperand (1)->getType ();
 	      TRACE_7 ("Treating StoreInst \n");
 
 	      if (isa < PointerType > (storeType))
 		{
-		  storeType = cast < const PointerType > (storeType);
+		  storeType = cast < PointerType > (storeType);
 		}
-	      if (const StructType * StructStoreType = cast < const StructType > (storeType))
+	      if (StructType * StructStoreType = cast < StructType > (storeType))
 		{
 		  insertAllFields (ret, allDepsByName, currentName, StructStoreType);
 		}
 	      else
 		{
-		  ret->push_back (pair < std::string, const Type * >(currentName, storeType));
+		  ret->push_back (pair < std::string, Type * >(currentName, storeType));
 		}
 	    }
 	  else if (CallInst * callInst = dyn_cast < CallInst > (currentUse))
@@ -1829,8 +1852,8 @@ isFPIntBitCast (const Instruction & I)
 {
   if (!isa < BitCastInst > (I))
     return false;
-  const Type *SrcTy = I.getOperand (0)->getType ();
-  const Type *DstTy = I.getType ();
+  Type *SrcTy = I.getOperand (0)->getType ();
+  Type *DstTy = I.getType ();
   return (SrcTy->isFloatingPointTy () && DstTy->isIntegerTy ()) ||
     (DstTy->isFloatingPointTy () && SrcTy->isIntegerTy ());
 }
@@ -1849,7 +1872,7 @@ SimpleWriter::printFunction (Function & F)
   if (isStructReturn)
     {
       triggerError (Out, "NYI : function returning a struct.");
-      const Type *StructTy = cast < PointerType > (F.arg_begin ()->getType ())->getElementType ();
+      Type *StructTy = cast < PointerType > (F.arg_begin ()->getType ())->getElementType ();
       Out << "  ";
       printType (Out, StructTy, false, "StructReturn");
       Out << ";  /* Struct return temporary */\n";
@@ -1955,7 +1978,7 @@ SimpleWriter::printLoop (Loop * L)
 void
 SimpleWriter::printBasicBlock (BasicBlock * BB)
 {
-  TRACE_6 ("SimpleWriter > printing basic block : " << BB->getNameStr () << "\n");
+  TRACE_6 ("SimpleWriter > printing basic block : " << BB->getName().str() << "\n");
 
   // Don't print the label for the basic block if there are no uses, or if
   // the only terminator use is the predecessor basic block's terminator.
@@ -2079,12 +2102,12 @@ SimpleWriter::visitInvokeInst (InvokeInst & I)
 {
   llvm_unreachable ("Lowerinvoke pass didn't work!");
 }
-
+/*
 void
 SimpleWriter::visitUnwindInst (UnwindInst & I)
 {
   llvm_unreachable ("Lowerinvoke pass didn't work!");
-}
+}*/
 
 void
 SimpleWriter::visitUnreachableInst (UnreachableInst & I)
@@ -2430,7 +2453,7 @@ SimpleWriter::visitFCmpInst (FCmpInst & I)
 }
 
 static const char *
-getFloatBitCastField (const Type * Ty)
+getFloatBitCastField (Type * Ty)
 {
   switch (Ty->getTypeID ())
     {
@@ -2454,8 +2477,8 @@ getFloatBitCastField (const Type * Ty)
 void
 SimpleWriter::visitCastInst (CastInst & I)
 {
-  const Type *DstTy = I.getType ();
-  const Type *SrcTy = I.getOperand (0)->getType ();
+  Type *DstTy = I.getType ();
+  Type *SrcTy = I.getOperand (0)->getType ();
 
   if (isFPIntBitCast (I))
     {
@@ -2519,7 +2542,9 @@ SimpleWriter::lowerIntrinsics (Function & F)
 	  switch (F->getIntrinsicID ())
 	    {
 	    case Intrinsic::not_intrinsic:
-	    case Intrinsic::memory_barrier:
+	    // no memory_barrier in LLVM 3.2
+	    // they have developed atomic instaruction.
+	    //case Intrinsic::memory_barrier:
 	    case Intrinsic::vastart:
 	    case Intrinsic::vacopy:
 	    case Intrinsic::vaend:
@@ -2788,7 +2813,9 @@ SimpleWriter::printGlobalVariables (Mangler * mang)
   for (; globalIt < globalEnd; ++globalIt)
     {
       GlobalValue *gv = *globalIt;
-      printType (Out, gv->getType (), false, mang->getNameWithPrefix (gv));
+      SmallString<10> smallstr;
+      mang->getNameWithPrefix (smallstr, gv, false);
+      printType (Out, gv->getType (), false, smallstr.str() );
     }
 
 
@@ -2815,7 +2842,7 @@ SimpleWriter::printProcesses ()
 	{
 
 	  Function *F = *itF;
-	  TRACE_4 ("SimpleWriter > printing function : " << F->getNameStr () << "\n");
+	  TRACE_4 ("SimpleWriter > printing function : " << F->getName().str() << "\n");
 
 	  // Do not codegen any 'available_externally' functions at all, they have
 	  // definitions outside the translation unit.
@@ -2994,7 +3021,7 @@ SimpleWriter::visitCallInst (CallInst & I)
 
   Value *Callee = I.getCalledValue ();
 
-  const PointerType *PTy = cast < PointerType > (Callee->getType ());
+  PointerType *PTy = cast < PointerType > (Callee->getType ());
   const FunctionType *FTy = cast < FunctionType > (PTy->getElementType ());
 
   // If this is a call to a struct-return function, assign to the first
@@ -3072,11 +3099,13 @@ SimpleWriter::visitCallInst (CallInst & I)
 	  Out << '(';
 	  printType (Out, FTy->getParamType (ArgNo),
 		     /*isSigned= */
-		     PAL.paramHasAttr (ArgNo + 1, Attribute::SExt));
+		     PAL.paramHasAttr (ArgNo + 1,
+					this->getAttributes(Attributes::SExt))
+			);
 	  Out << ')';
 	}
       // Check if the argument is expected to be passed by value.
-      if (I.paramHasAttr (ArgNo + 1, Attribute::ByVal))
+      if (I.paramHasAttr (ArgNo + 1, Attributes::ByVal))
 	writeOperandDeref (*AI);
       else
 	writeOperand (*AI);
@@ -3109,9 +3138,10 @@ bool SimpleWriter::visitBuiltinCall (CallInst & I, Intrinsic::ID ID, bool & Wrot
 	WroteCallee = true;
 	return false;
       }
+/*
     case Intrinsic::memory_barrier:
       Out << "__sync_synchronize()";
-      return true;
+      return true;  */
     case Intrinsic::vastart:
       Out << "0; ";
 
@@ -3297,7 +3327,7 @@ SimpleWriter::printGEPExpression (Value * Ptr, gep_type_iterator I, gep_type_ite
   // Find out if the last index is into a vector.  If so, we have to print this
   // specially.  Since vectors can't have elements of indexable type, only the
   // last index could possibly be of a vector element.
-  const VectorType *LastIndexIsVector = 0;
+  VectorType *LastIndexIsVector = 0;
   {
     for (gep_type_iterator TmpI = I; TmpI != E; ++TmpI)
       LastIndexIsVector = dyn_cast < VectorType > (*TmpI);
@@ -3398,7 +3428,7 @@ SimpleWriter::printGEPExpression (Value * Ptr, gep_type_iterator I, gep_type_ite
 }
 
 void
-SimpleWriter::writeMemoryAccess (Value * Operand, const Type * OperandType, bool IsVolatile, unsigned Alignment)
+SimpleWriter::writeMemoryAccess (Value * Operand, Type * OperandType, bool IsVolatile, unsigned Alignment)
 {
   writeOperand (Operand);
 }
@@ -3417,7 +3447,7 @@ SimpleWriter::visitStoreInst (StoreInst & I)
   Out << " = ";
   Value *Operand = I.getOperand (0);
   Constant *BitMask = 0;
-  if (const IntegerType * ITy = dyn_cast < IntegerType > (Operand->getType ()))
+  if (IntegerType * ITy = dyn_cast < IntegerType > (Operand->getType ()))
     {
       if (!ITy->isPowerOf2ByteWidth ())
 	{
@@ -3452,7 +3482,7 @@ SimpleWriter::visitVAArgInst (VAArgInst & I)
 void
 SimpleWriter::visitInsertElementInst (InsertElementInst & I)
 {
-  const Type *EltTy = I.getType ()->getElementType ();
+  Type *EltTy = I.getType ()->getElementType ();
   writeOperand (I.getOperand (0));
   Out << ";\n  ";
   Out << "((";
@@ -3469,7 +3499,7 @@ SimpleWriter::visitExtractElementInst (ExtractElementInst & I)
 {
   // We know that our operand is not inlined.
   Out << "((";
-  const Type *EltTy = cast < VectorType > (I.getOperand (0)->getType ())->getElementType ();
+  Type *EltTy = cast < VectorType > (I.getOperand (0)->getType ())->getElementType ();
   printType (Out, PointerType::getUnqual (EltTy));
   Out << ")(&" << GetValueName (I.getOperand (0)) << "))[";
   writeOperand (I.getOperand (1));
@@ -3482,9 +3512,9 @@ SimpleWriter::visitShuffleVectorInst (ShuffleVectorInst & SVI)
   Out << "(";
   printType (Out, SVI.getType ());
   Out << "){ ";
-  const VectorType *VT = SVI.getType ();
+  VectorType *VT = SVI.getType ();
   unsigned NumElts = VT->getNumElements ();
-  const Type *EltTy = VT->getElementType ();
+  Type *EltTy = VT->getElementType ();
 
   for (unsigned i = 0; i != NumElts; ++i)
     {
@@ -3529,8 +3559,9 @@ SimpleWriter::visitInsertValueInst (InsertValueInst & IVI)
   Out << GetValueName (&IVI);
   for (const unsigned *b = IVI.idx_begin (), *i = b, *e = IVI.idx_end (); i != e; ++i)
     {
-      const Type *IndexedTy = ExtractValueInst::getIndexedType (IVI.getOperand (0)->getType (), b,
-								i + 1);
+      Type *IndexedTy = ExtractValueInst::getIndexedType (
+				IVI.getOperand (0)->getType (),
+				ArrayRef<unsigned>(b, i + 1));
       if (isa < ArrayType > (IndexedTy))
 	Out << ".array[" << *i << "]";
       else
@@ -3555,8 +3586,9 @@ SimpleWriter::visitExtractValueInst (ExtractValueInst & EVI)
       Out << GetValueName (EVI.getOperand (0));
       for (const unsigned *b = EVI.idx_begin (), *i = b, *e = EVI.idx_end (); i != e; ++i)
 	{
-	  const Type *IndexedTy = ExtractValueInst::getIndexedType (EVI.getOperand (0)->getType (), b,
-								    i + 1);
+	  Type *IndexedTy = ExtractValueInst::getIndexedType (
+				EVI.getOperand (0)->getType (),
+				ArrayRef<unsigned>(b, i + 1));
 	  if (isa < ArrayType > (IndexedTy))
 	    Out << ".array[" << *i << "]";
 	  else
@@ -3581,14 +3613,15 @@ LLVMInitializeSimpleBackendTarget ()
 
 bool SimpleWriter::runOnModule (Module & M)
 {
-  TD = new TargetData (&M);
+  TD = new DataLayout (&M);
   IL = new IntrinsicLowering (*TD);
   IL->AddPrototypes (M);
 
   // Ensure that all structure types have names...
   TAsm = new MCAsmInfo ();
-
-  MCContext* mcc = new MCContext(*TAsm);
+  const MCRegisterInfo *mcRegisterInfo = new MCRegisterInfo();
+  const MCObjectFileInfo *mcObjectFileInfo = new MCObjectFileInfo();
+  MCContext* mcc = new MCContext(*TAsm, *mcRegisterInfo, mcObjectFileInfo);
   Mang = new Mangler(*mcc, *TD);
 
   // Keep track of which functions are static ctors/dtors so they can have
@@ -3611,8 +3644,6 @@ bool SimpleWriter::runOnModule (Module & M)
 //      if (!M.global_empty()) {
 //              Out << "\n\n/* Global Variable Declarations */\n";
 //              for (Module::global_iterator I = M.global_begin(), E =
-//                   M.global_end(); I != E; ++I)
-//                      if (!I->isDeclaration()) {
 //                              // Ignore special globals, such as debug info.
 //                              if (getGlobalVariableClass(I))
 //                                      continue;
@@ -3646,7 +3677,7 @@ bool SimpleWriter::runOnModule (Module & M)
 //      }
 
   /* Fill types table */
-  fillModuleTypes (M.getTypeSymbolTable ());
+  fillModuleTypes (M);
 
   /* Print Global variables from the program */
   printGlobalVariables (Mang);
@@ -3670,15 +3701,21 @@ bool SimpleWriter::runOnModule (Module & M)
 }
 
 void
-     SimpleWriter::getAnalysisUsage (AnalysisUsage & AU) const
-     {
-       AU.addRequired < LoopInfo > ();
-       AU.setPreservesAll ();
-     }
+SimpleWriter::getAnalysisUsage (AnalysisUsage & AU) const
+{
+  AU.addRequired < LoopInfo > ();
+  AU.setPreservesAll ();
+}
 
-     const char *SimpleWriter::getPassName () const
-     {
-       return "Simple backend";
-     }
+const char *SimpleWriter::getPassName () const
+{
+  return "Simple backend";
+}
 
-     char SimpleWriter::ID = 0;
+Attributes SimpleWriter::getAttributes(Attributes::AttrVal attr)
+{
+  return Attributes::get(getGlobalContext(),
+                         ArrayRef<Attributes::AttrVal>(attr));
+}
+
+char SimpleWriter::ID = 0;

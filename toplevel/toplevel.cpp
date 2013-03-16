@@ -32,7 +32,7 @@ using namespace llvm;
 //#include "BCLoader.h"
 
 #include "FrontendItf.hpp"
-//#include "SimpleBackend.h"
+#include "SimpleBackend.h"
 #include "PromelaBackend.h"
 #include "42Backend.h"
 #include "TwetoBackend.h"
@@ -124,9 +124,9 @@ void pinavm_callback(sc_core::sc_simcontext* context,
     
 
 	if (Backend != "-") {
-		//if (Backend == "simple" || Backend == "Simple") {
-			//launch_simplebackend(fe, OutputFilename, EventsAsBool, RelativeClocks);
-		if (Backend == "promela" || Backend == "Promela") {
+		if (Backend == "simple" || Backend == "Simple") {
+			launch_simplebackend(fe, OutputFilename, EventsAsBool, RelativeClocks);
+		} else if (Backend == "promela" || Backend == "Promela") {
 			launch_promelabackend(fe, OutputFilename, EventsAsBool, RelativeClocks, Bug);
 		} else if (Backend == "42") {
 		        launch_42backend(fe, OutputFilename, EventsAsBool, RelativeClocks, Bug);

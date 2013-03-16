@@ -1,3 +1,4 @@
+/*
 #include "SimpleBackendNameAllUsedStructsAndMergeFunctions.h"
 #include "SimpleWriter.h"
 
@@ -116,3 +117,4 @@ const char *SimpleBackendNameAllUsedStructsAndMergeFunctions::getPassName() cons
 }
 
 char SimpleBackendNameAllUsedStructsAndMergeFunctions::ID = 0;
+*/

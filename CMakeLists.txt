@@ -61,7 +61,7 @@ add_subdirectory(external/basic)
 
 add_subdirectory(backends/42Backend/)
 add_subdirectory(backends/PromelaBackend/)
-#add_subdirectory(backends/SimpleBackend/)
+add_subdirectory(backends/SimpleBackend/)
 add_subdirectory(backends/TwetoBackend/)
 
 # Config file generation
