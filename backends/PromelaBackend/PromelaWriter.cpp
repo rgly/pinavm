@@ -374,6 +374,20 @@ PromelaWriter::printType(formatted_raw_ostream & Out,
 	}
 	case Type::StructTyID:{
 		StructType *STy = cast < StructType > (Ty);
+
+		// if a OpaqueType
+		if (STy->isOpaque() ) {
+			ErrorMsg <<"NYI : use of complex type : OpaqueTy : "
+				 <<	NameSoFar;
+			triggerError(Out);
+
+			std::string TyName = "struct opaque_" 
+						+ itostr(OpaqueCounter++);
+			assert(TypeNames.find(Ty) == TypeNames.end());
+			insertTypeName(Ty, TyName);
+			return Out << TyName << ' ' << NameSoFar;
+		}
+
 		TRACE_4("/**** Handling StructTy type in printType() ****/\n");
 		Out << NameSoFar + " {\n";
 		unsigned Idx = 0;
@@ -435,15 +449,6 @@ PromelaWriter::printType(formatted_raw_ostream & Out,
 		//return Out << "; }";
 	}
 
-	/*case Type::OpaqueTyID:{
-		ErrorMsg <<"NYI : use of complex type : OpaqueTy : " <<	NameSoFar;
-		triggerError(Out);
-
-		std::string TyName = "struct opaque_" + itostr(OpaqueCounter++);
-		assert(TypeNames.find(Ty) == TypeNames.end());
-		insertTypeName(Ty, TyName);
-		return Out << TyName << ' ' << NameSoFar;
-	}*/
 	default:
 		Ty->dump();
 		llvm_unreachable("Unhandled case in getTypeProps!");
@@ -471,8 +476,16 @@ PromelaWriter::printType(std::ostream & Out,
 		printSimpleType(Out, Ty, isSigned, NameSoFar);
 		return Out;
 	}
+
+	// Check whether Ty is a OpaqueTy
+	bool IsOpaque = false;
+	if (isa<StructType>(Ty)){
+		StructType* STy = dyn_cast<StructType>(Ty);
+		IsOpaque = STy->isOpaque();
+	}
+
 	// Check to see if the type is named.
-	if (!IgnoreName /*|| isa < OpaqueType > (Ty)*/) {
+	if (!IgnoreName || IsOpaque ) {
 		if (isSystemCType(Ty))/*{
 			std::map < Type *, std::string >::iterator ITN = TypeNames.find(Ty), ETN = TypeNames.end();
 		        if (ITN != ETN) {
@@ -538,6 +551,21 @@ PromelaWriter::printType(std::ostream & Out,
 	}
 	case Type::StructTyID:{
 		StructType *STy = cast < StructType > (Ty);
+
+		//if a OpaqueType
+		if (STy->isOpaque()) {
+			ErrorMsg << "NYI : use of complex type : OpaqueTy : "
+				 << NameSoFar;
+			triggerError(this->Out);
+
+			std::string TyName =
+				"struct opaque_" + itostr(OpaqueCounter++);
+			assert(TypeNames.find(Ty) == TypeNames.end());
+			insertTypeName(Ty, TyName);
+			return Out << TyName << ' ' << NameSoFar;
+
+		}
+
 		TRACE_4("/**** Handling StructTy type in printType() ****/\n");
 		Out << NameSoFar + " {\n";
 		unsigned Idx = 0;
@@ -598,18 +626,6 @@ PromelaWriter::printType(std::ostream & Out,
 		return Out << "; }";
 	}
 
-/*	case Type::OpaqueTyID:{
-		ErrorMsg <<
-			"NYI : use of complex type : OpaqueTy : " <<
-			NameSoFar;
-		triggerError(this->Out);
-
-		std::string TyName =
-			"struct opaque_" + itostr(OpaqueCounter++);
-		assert(TypeNames.find(Ty) == TypeNames.end());
-		insertTypeName(Ty, TyName);
-		return Out << TyName << ' ' << NameSoFar;
-	}*/
 	default:
 		llvm_unreachable("Unhandled case in getTypeProps!");
 	}
@@ -2555,6 +2571,7 @@ void PromelaWriter::lowerIntrinsics(Function & F)
 						// atomic instruction. Atomic
 						// not available as llvm
 						// instrinsic anymore.
+						// refer to visitFenceInst()
 					//case Intrinsic::memory_barrier:
 					case Intrinsic::vastart:
 					case Intrinsic::vacopy:
@@ -3434,13 +3451,6 @@ bool PromelaWriter::visitBuiltinCall(CallInst & I, Intrinsic::ID ID,
 		return false;
 	}
 
-	// Since LLVM3.2 have developed atomic instruction. Atomic
-	// not available as llvm instrinsic anymore.
-	/* we should use other ways to achieve barrier.
-	case Intrinsic::memory_barrier:
-		Out << "__sync_synchronize()";
-		return true;
-	*/
 	case Intrinsic::vastart:
 		Out << "0; ";
 
@@ -3923,6 +3933,10 @@ void PromelaWriter::visitExtractValueInst(ExtractValueInst & EVI)
 	//Out << ")";
 }
 
+// Use FenceInst to replace llvm.mem_barrier intrinsics
+void PromelaWriter::visitFenceInst(FenceInst & FI){
+	Out << "__sync_synchronize()";
+}
 
 
 extern "C" void
@@ -4050,6 +4064,8 @@ bool PromelaWriter::runOnModule(Module & M)
 	delete IL;
 	delete TD;
 	delete Mang;
+	delete mcRegisterInfo;
+	delete mcObjectFileInfo;
 	FPConstantMap.clear();
 	TypeNames.clear();
 	ByValParams.clear();
@@ -4067,9 +4083,11 @@ const char *PromelaWriter::getPassName() const
 {
 	return "Promela backend";
 }
+
 Attributes PromelaWriter::getAttributes(Attributes::AttrVal attr)
 {
-	return Attributes::get(getGlobalContext(), ArrayRef<Attributes::AttrVal>(attr));
+	return Attributes::get(getGlobalContext(),
+                               ArrayRef<Attributes::AttrVal>(attr));
 }
 
 char PromelaWriter::ID = 0;

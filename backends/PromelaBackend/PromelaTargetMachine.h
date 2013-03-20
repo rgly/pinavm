@@ -4,15 +4,14 @@
 
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/DataLayout.h"
-//#include "llvm/Target/TargetOptions.h"
 #include "llvm/PassManager.h"
-
-//#include "PromelaBackendNameAllUsedStructsAndMergeFunctions.h"
 
 namespace llvm {
   
   struct PromelaTargetMachine : public TargetMachine {
-  PromelaTargetMachine(const Target &T, StringRef TargetTriple, StringRef CPU, StringRef FS, const TargetOptions &Options, Reloc::Model RM, CodeModel::Model CM, CodeGenOpt::Level OL)
+  PromelaTargetMachine(const Target &T, StringRef TargetTriple, StringRef CPU,
+                    StringRef FS, const TargetOptions &Options, Reloc::Model RM,
+                    CodeModel::Model CM, CodeGenOpt::Level OL)
     : TargetMachine(T, TargetTriple, CPU, FS, Options ) {}
     
     virtual bool WantsWholeFile() const {
@@ -25,7 +24,7 @@ namespace llvm {
 					  bool DisableVerify = true);
 
     virtual const DataLayout*
-    getTargetData() const {
+    getDataLayout() const {
       return 0;
     }
 

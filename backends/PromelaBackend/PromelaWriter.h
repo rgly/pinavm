@@ -220,6 +220,7 @@ public:
 
   void visitInsertValueInst(InsertValueInst &I);
   void visitExtractValueInst(ExtractValueInst &I);
+  void visitFenceInst(FenceInst &I);
 
   void visitInstruction(Instruction &I);
 
