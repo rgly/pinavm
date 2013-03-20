@@ -24,4 +24,5 @@ public:
 int sc_main(int argc, char **argv) {
 	Component c("c");
 	sc_start();
+	return 0;
 }

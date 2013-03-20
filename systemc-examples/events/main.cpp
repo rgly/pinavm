@@ -58,6 +58,7 @@ int sc_main( int argc, char* argv[] )
 	//    i = 5;
 	sc_start(-1);
 	//    j = handleI(i);
+	return 0;
 }
 
 

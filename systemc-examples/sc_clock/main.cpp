@@ -64,4 +64,5 @@ sc_main (int argc , char *argv[])
 	res.reset(reset);
 
 	sc_start(300, SC_NS);
+	return 0;
 }
