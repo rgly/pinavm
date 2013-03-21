@@ -261,8 +261,16 @@ raw_ostream &
       printSimpleType (Out, Ty, isSigned, NameSoFar);
       return Out;
     }
+
+  // Check whether Ty is a OpaqueTy
+  bool IsOpaque = false;
+  if (isa<StructType>(Ty)){
+          StructType* STy = dyn_cast<StructType>(Ty);
+          IsOpaque = STy->isOpaque();
+  }
+
   // Check to see if the type is named.
-  if (!IgnoreName /*|| isa < OpaqueType > (Ty)*/)
+  if (!IgnoreName || IsOpaque)
     {
       std::map < Type *, std::string >::iterator I = TypeNames.find (Ty);
       if (I != TypeNames.end ())
@@ -314,6 +322,19 @@ raw_ostream &
     case Type::StructTyID:
       {
 	StructType *STy = cast < StructType > (Ty);
+	// if a OpaqueType
+	if (STy->isOpaque() ) {
+		ErrorMsg << "NYI : use of complex type : OpaqueTy : "
+			 << NameSoFar;
+		triggerError (Out);
+
+		std::string TyName = "struct opaque_"
+					 + itostr (OpaqueCounter++);
+		assert (TypeNames.find (Ty) == TypeNames.end ());
+		TypeNames[Ty] = TyName;
+		return Out << TyName << ' ' << NameSoFar;
+	}
+
 	TRACE_4 ("/**** Handling StructTy type in printType() ****/\n");
 //     Out << NameSoFar + " {\n";
 	unsigned Idx = 0;
@@ -367,18 +388,6 @@ raw_ostream &
 	printType (Out, ATy->getElementType (), false, "array[" + utostr (NumElements) + "]");
 	return Out << "; }";
       }
-/*   NO Opaque Type in LLVM 3.2, since the type system has been rewritten.
-
-    case Type::OpaqueTyID:
-      {
-	ErrorMsg << "NYI : use of complex type : OpaqueTy : " << NameSoFar;
-	triggerError (Out);
-
-	std::string TyName = "struct opaque_" + itostr (OpaqueCounter++);
-	assert (TypeNames.find (Ty) == TypeNames.end ());
-	TypeNames[Ty] = TyName;
-	return Out << TyName << ' ' << NameSoFar;
-      }*/
     default:
       llvm_unreachable ("Unhandled case in getTypeProps!");
     }
@@ -454,6 +463,19 @@ std::ostream &
     case Type::StructTyID:
       {
 	StructType *STy = cast < StructType > (Ty);
+	// if a OpaqueType
+	if (STy->isOpaque() ) {
+		ErrorMsg << "NYI : use of complex type : OpaqueTy : "
+			 << NameSoFar;
+		triggerError (this->Out);
+
+		std::string TyName = "struct opaque_"
+					 + itostr (OpaqueCounter++);
+		assert (TypeNames.find (Ty) == TypeNames.end ());
+		TypeNames[Ty] = TyName;
+		return Out << TyName << ' ' << NameSoFar;
+	}
+
 	TRACE_4 ("/**** Handling StructTy type in printType() ****/\n");
 //     Out << NameSoFar + " {\n";
 	unsigned Idx = 0;
@@ -508,17 +530,6 @@ std::ostream &
 	printType (Out, ATy->getElementType (), false, "array[" + utostr (NumElements) + "]");
 	return Out << "; }";
       }
-/*
-    case Type::OpaqueTyID:
-      {
-	ErrorMsg << "NYI : use of complex type : OpaqueTy : " << NameSoFar;
-	triggerError (this->Out);
-
-	std::string TyName = "struct opaque_" + itostr (OpaqueCounter++);
-	assert (TypeNames.find (Ty) == TypeNames.end ());
-	TypeNames[Ty] = TyName;
-	return Out << TyName << ' ' << NameSoFar;
-      }*/
     default:
       llvm_unreachable ("Unhandled case in getTypeProps!");
     }
@@ -2542,9 +2553,6 @@ SimpleWriter::lowerIntrinsics (Function & F)
 	  switch (F->getIntrinsicID ())
 	    {
 	    case Intrinsic::not_intrinsic:
-	    // no memory_barrier in LLVM 3.2
-	    // they have developed atomic instaruction.
-	    //case Intrinsic::memory_barrier:
 	    case Intrinsic::vastart:
 	    case Intrinsic::vacopy:
 	    case Intrinsic::vaend:
@@ -3138,10 +3146,6 @@ bool SimpleWriter::visitBuiltinCall (CallInst & I, Intrinsic::ID ID, bool & Wrot
 	WroteCallee = true;
 	return false;
       }
-/*
-    case Intrinsic::memory_barrier:
-      Out << "__sync_synchronize()";
-      return true;  */
     case Intrinsic::vastart:
       Out << "0; ";
 
@@ -3598,6 +3602,10 @@ SimpleWriter::visitExtractValueInst (ExtractValueInst & EVI)
   Out << ")";
 }
 
+void
+SimpleWriter::visitFenceInst (FenceInst & FI){
+      Out << "__sync_synchronize()";
+}
 
 
 extern "C" void
@@ -3692,6 +3700,8 @@ bool SimpleWriter::runOnModule (Module & M)
   delete IL;
   delete TD;
   delete Mang;
+  delete mcRegisterInfo;
+  delete mcObjectFileInfo;
   FPConstantMap.clear ();
   TypeNames.clear ();
   ByValParams.clear ();
