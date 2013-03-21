@@ -284,8 +284,16 @@ _42Writer::printType(formatted_raw_ostream & Out,
     printSimpleType(Out, Ty, isSigned, NameSoFar);
     return Out;
   }
+
+  // Check whether Ty is a OpaqueTy
+  bool IsOpaque = false;
+  if (isa<StructType>(Ty)){
+          StructType* STy = dyn_cast<StructType>(Ty);
+          IsOpaque = STy->isOpaque();
+  }
+
   // Check to see if the type is named.
-  if (!IgnoreName /*|| isa < OpaqueType > (Ty)*/) {
+  if (!IgnoreName || IsOpaque ) {
     std::map < Type *, std::string >::iterator ITN = TypeNames.find(Ty), ETN = TypeNames.end();
     if (ITN != ETN) {
       std::string tName = ITN->second;
@@ -330,6 +338,17 @@ _42Writer::printType(formatted_raw_ostream & Out,
   }
   case Type::StructTyID:{
     StructType *STy = cast < StructType > (Ty);
+    // if a OpaqueType
+    if (STy->isOpaque() ) {
+        ErrorMsg <<"NYI : use of complex type : OpaqueTy : " <<	NameSoFar;
+        triggerError(Out);
+
+        std::string TyName = "struct opaque_" + itostr(OpaqueCounter++);
+        assert(TypeNames.find(Ty) == TypeNames.end());
+        insertTypeName(Ty, TyName);
+        return Out << TyName << ' ' << NameSoFar;
+    }
+
     TRACE_4("/**** Handling StructTy type in printType() ****/\n");
     Out << NameSoFar + " {\n";
     unsigned Idx = 0;
@@ -385,16 +404,6 @@ _42Writer::printType(formatted_raw_ostream & Out,
 	      "array[" + utostr(NumElements) + "]");
     return Out << "; }";
   }
-/*
-  case Type::OpaqueTyID:{
-    ErrorMsg <<"NYI : use of complex type : OpaqueTy : " <<	NameSoFar;
-    triggerError(Out);
-
-    std::string TyName = "struct opaque_" + itostr(OpaqueCounter++);
-    assert(TypeNames.find(Ty) == TypeNames.end());
-    insertTypeName(Ty, TyName);
-    return Out << TyName << ' ' << NameSoFar;
-  }*/
   default:
     llvm_unreachable("Unhandled case in getTypeProps!");
   }
@@ -417,8 +426,16 @@ _42Writer::printType(std::ostream & Out,
     printSimpleType(Out, Ty, isSigned, NameSoFar);
     return Out;
   }
+
+  // Check whether Ty is a OpaqueTy
+  bool IsOpaque = false;
+  if (isa<StructType>(Ty)){
+          StructType* STy = dyn_cast<StructType>(Ty);
+          IsOpaque = STy->isOpaque();
+  }
+
   // Check to see if the type is named.
-  if (!IgnoreName /*|| isa < OpaqueType > (Ty)*/) {
+  if (!IgnoreName || IsOpaque ) {
     if (isSystemCType(Ty))
       return Out;
 
@@ -474,6 +491,19 @@ _42Writer::printType(std::ostream & Out,
   }
   case Type::StructTyID:{
     StructType *STy = cast < StructType > (Ty);
+
+    // if a OpaqueType
+    if (STy->isOpaque() ) {
+        ErrorMsg <<
+          "NYI : use of complex type : OpaqueTy : " << NameSoFar;
+        triggerError(this->Out);
+
+        std::string TyName = "struct opaque_" + itostr(OpaqueCounter++);
+        assert(TypeNames.find(Ty) == TypeNames.end());
+        insertTypeName(Ty, TyName);
+        return Out << TyName << ' ' << NameSoFar;
+    }
+
     TRACE_4("/**** Handling StructTy type in printType() ****/\n");
     Out << NameSoFar + " {\n";
     unsigned Idx = 0;
@@ -530,19 +560,6 @@ _42Writer::printType(std::ostream & Out,
 	      "array[" + utostr(NumElements) + "]");
     return Out << "; }";
   }
-/*
-  case Type::OpaqueTyID:{
-    ErrorMsg <<
-      "NYI : use of complex type : OpaqueTy : " <<
-      NameSoFar;
-    triggerError(this->Out);
-
-    std::string TyName =
-      "struct opaque_" + itostr(OpaqueCounter++);
-    assert(TypeNames.find(Ty) == TypeNames.end());
-    insertTypeName(Ty, TyName);
-    return Out << TyName << ' ' << NameSoFar;
-  }*/
   default:
     llvm_unreachable("Unhandled case in getTypeProps!");
   }
@@ -3012,11 +3029,6 @@ void _42Writer::lowerIntrinsics(Function & F)
 	if (Function * F = CI->getCalledFunction())
 	  switch (F->getIntrinsicID()) {
 	  case Intrinsic::not_intrinsic:
-               // Since LLVM3.2 have developed
-               // atomic instruction. Atomic
-               // not available as llvm
-               // instrinsic anymore.
-	  //case Intrinsic::memory_barrier:
 	  case Intrinsic::vastart:
 	  case Intrinsic::vacopy:
 	  case Intrinsic::vaend:
@@ -3661,9 +3673,6 @@ bool _42Writer::visitBuiltinCall(CallInst & I, Intrinsic::ID ID,
     WroteCallee = true;
     return false;
   }
-  //case Intrinsic::memory_barrier:
-    //Out << "__sync_synchronize()";
-    //return true;
   case Intrinsic::vastart:
     Out << "0; ";
 
@@ -4142,6 +4151,12 @@ void _42Writer::visitExtractValueInst(ExtractValueInst & EVI)
   Out << ")";
 }
 
+// Since LLVM3.2 have developed atomic instruction.
+// Use it to replace intrinsic::memory_barrier.
+void _42Writer::visitFenceInst(FenceInst & EVI)
+{
+    Out << "__sync_synchronize()";
+}
 
 
 extern "C" void
@@ -4189,6 +4204,8 @@ bool _42Writer::runOnModule(Module & M)
   delete IL;
   delete TD;
   delete Mang;
+  delete mcRegisterInfo;
+  delete mcObjectFileInfo;
   FPConstantMap.clear();
   TypeNames.clear();
   ByValParams.clear();
