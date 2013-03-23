@@ -3,7 +3,7 @@
 OVERRIDING = default
 
 #Default Timeout Value 2 seconds of CPU TIME (can be overriden by command line arguments)
-TIMEOUT = 3
+TIMEOUT = 30
 
 #Default Argument Value 3 (can be overriden by command line arguments)
 ARG=3
