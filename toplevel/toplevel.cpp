@@ -32,10 +32,9 @@ using namespace llvm;
 //#include "BCLoader.h"
 
 #include "FrontendItf.hpp"
-#include "SimpleBackend.h"
-#include "PromelaBackend.h"
-#include "42Backend.h"
-#include "TwetoBackend.h"
+// a container for options. check util/ for more details.
+#include "BackendOption.h"
+extern bool launch_backends(Frontend*, std::string backend, BackendOption&);
 
 #include <ctime>
 #include <sys/time.h>
@@ -121,25 +120,23 @@ void pinavm_callback(sc_core::sc_simcontext* context,
     struct timeval end;     
     long mtime, seconds, useconds;
     gettimeofday(&start, NULL);
-    
 
-	if (Backend != "-") {
-		if (Backend == "simple" || Backend == "Simple") {
-			launch_simplebackend(fe, OutputFilename, EventsAsBool, RelativeClocks);
-		} else if (Backend == "promela" || Backend == "Promela") {
-			launch_promelabackend(fe, OutputFilename, EventsAsBool, RelativeClocks, Bug);
-		} else if (Backend == "42") {
-		        launch_42backend(fe, OutputFilename, EventsAsBool, RelativeClocks, Bug);
-		} 
-		// Tweto backend
-		else if(Backend == "tweto" || Backend == "Tweto") {
-			launch_twetobackend(fe, EE, context, duration, true, DisableOptDbgMsg);
-		} else if (Backend == "run") {
-			launch_twetobackend(fe, EE, context, duration, false, DisableOptDbgMsg);
-		} else {
-			ERROR("Backend " << Backend << " unknown\n");
-		}
-	}
+    BackendOption option;
+    option.OutputFilename = OutputFilename;
+    option.EventsAsBool = EventsAsBool;
+    option.RelativeClocks = RelativeClocks;
+    option.Bug = Bug;
+    option.EE = EE;
+    option.context = context;
+    option.duration = &duration;
+    option.DisableMsg = DisableDbgMsg;
+    option.DisableOptDbgMsg = DisableOptDbgMsg;
+    
+    // Running backends.
+    bool match_backend = launch_backends(fe, Backend, option);
+    if (! match_backend) {
+        ERROR("Backend " << Backend << " unknown\n"); 
+    }
     
     if(PrintDuration) {
         gettimeofday(&end, NULL);

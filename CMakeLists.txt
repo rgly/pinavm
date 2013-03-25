@@ -5,6 +5,8 @@ project(PinaVM CXX)
 # Find and set LLVM.
 include(${CMAKE_SOURCE_DIR}/scripts/findLLVM.cmake)
 
+set(BACKENDS Tweto 42 Promela Simple)
+
 # Some files define classes that inherit from LLVM classes, which are
 # compiled with -fno-rtti as of svn version 98434 (14 mach 2010) while
 # we do need -frtti (see above). Deriving a rtti class from a no-rtti
@@ -29,10 +31,10 @@ add_subdirectory(frontend)
 add_subdirectory(utils)
 add_subdirectory(external/basic)
 
-add_subdirectory(backends/42Backend/)
-add_subdirectory(backends/PromelaBackend/)
-add_subdirectory(backends/SimpleBackend/)
-add_subdirectory(backends/TwetoBackend/)
+# add backends
+foreach(backend ${BACKENDS})
+  add_subdirectory(backends/${backend}Backend/)
+endforeach(backend)
 
 # Config file generation
 set(EXTERNAL_TOOLS_DIR "./external/downloaded/"

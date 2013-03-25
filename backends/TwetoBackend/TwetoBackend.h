@@ -1,6 +1,7 @@
 #ifndef _TWETOBACKEND_H
 #define _TWETOBACKEND_H
 
+#include "BackendOption.h"
 namespace sc_core {
     
     class sc_process_host;
@@ -18,6 +19,17 @@ extern void launch_twetobackend(Frontend * fe, ExecutionEngine *ee,
                                 const sc_core::sc_time& simduration, 
                                 bool optimize, bool disableMsg);
 
+void launch_twetobackend(Frontend * fe,
+			BackendOption& option)
+{
+    launch_twetobackend(fe, option.EE, option.context, *(option.duration), true, option.DisableOptDbgMsg);
+};
+
+void launch_runbackend(Frontend * fe,
+			BackendOption& option)
+{
+    launch_twetobackend(fe, option.EE, option.context, *(option.duration), false, option.DisableOptDbgMsg);
+};
  
 extern "C" sc_core::SC_ENTRY_FUNC_OPT
 tweto_optimize_process(sc_core::SC_ENTRY_FUNC fct, sc_core::sc_process_host *arg);
