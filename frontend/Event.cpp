@@ -1,24 +1,17 @@
-#include <string>
-#include <vector>
-
-#include "llvm/Function.h"
-#include "llvm/Instructions.h"
-
 #include "Event.hpp"
-#include "Process.hpp"
+#include "config.h"
 
-using namespace llvm;
-using namespace std;
+struct Process;
 
 static int numberOfEvents = 1;
 
-Event::Event(string name)
+Event::Event(std::string name)
 {
   this->eventName = name;
   this->numEvent = numberOfEvents++;
 }
 
-string Event::getEventName()
+std::string Event::getEventName()
 {
   return this->eventName;
 }
@@ -41,7 +34,7 @@ Event::addProcess(Process* p)
 }
 
 /********** Pretty print **********/
-void Event::printElab(int sep, string prefix)
+void Event::printElab(int sep, std::string prefix)
 {
 	this->printPrefix(sep, prefix);
 	TRACE("Event : " << this << " (\"" << this->getEventName() << "\")\n");

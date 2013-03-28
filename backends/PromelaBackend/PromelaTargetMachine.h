@@ -3,15 +3,16 @@
 
 
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetData.h"
-
-#include "PromelaBackendNameAllUsedStructsAndMergeFunctions.h"
+#include "llvm/DataLayout.h"
+#include "llvm/PassManager.h"
 
 namespace llvm {
   
   struct PromelaTargetMachine : public TargetMachine {
-  PromelaTargetMachine(const Target &T, const std::string &TT, const std::string &FS)
-    : TargetMachine(T) {}
+  PromelaTargetMachine(const Target &T, StringRef TargetTriple, StringRef CPU,
+                    StringRef FS, const TargetOptions &Options, Reloc::Model RM,
+                    CodeModel::Model CM, CodeGenOpt::Level OL)
+    : TargetMachine(T, TargetTriple, CPU, FS, Options ) {}
     
     virtual bool WantsWholeFile() const {
       return true;
@@ -22,8 +23,8 @@ namespace llvm {
 					  CodeGenOpt::Level OptLevel,
 					  bool DisableVerify = true);
 
-    virtual const TargetData*
-    getTargetData() const {
+    virtual const DataLayout*
+    getDataLayout() const {
       return 0;
     }
 

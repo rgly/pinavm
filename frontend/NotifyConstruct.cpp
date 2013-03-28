@@ -1,4 +1,5 @@
 #include "NotifyConstruct.hpp"
+#include "Event.hpp"
 
 using namespace llvm;
 
@@ -26,7 +27,7 @@ Event *NotifyConstruct::getNotifiedEvent()
 	return this->event;
 }
 
-string NotifyConstruct::toString()
+std::string NotifyConstruct::toString()
 {
 	if (this->staticallyFound)
 		return "NOTIFY(" + this->event->getEventName() + ")";

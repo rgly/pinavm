@@ -6,21 +6,22 @@
 #include "FrontendPass.hpp"
 #include "Frontend.hpp"
 
-#include "llvm/Transforms/Scalar.h"
+//#include "llvm/Transforms/Scalar.h"
 #include "llvm/Module.h"
-#include "llvm/Support/PassNameParser.h"
-#include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetSelect.h"
-#include "llvm/Support/ManagedStatic.h"
+//#include "llvm/Support/PassNameParser.h"
+//#include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/DataLayout.h"
+//#include "llvm/Target/TargetMachine.h"
+//#include "llvm/Target/TargetSelect.h"
+//#include "llvm/Support/ManagedStatic.h"
 #include "llvm/PassManager.h"
-#include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/StandardPasses.h"
-#include "llvm/Support/SystemUtils.h"
-#include "llvm/Support/PassNameParser.h"
-#include "llvm/Bitcode/ReaderWriter.h"
+//#include "llvm/Support/MemoryBuffer.h"
+//#include "llvm/Support/SystemUtils.h"
+//#include "llvm/Support/PassNameParser.h"
+//#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/Analysis/Verifier.h"
+#include "llvm/Transforms/Scalar.h"
 
 #include "config.h"
 
@@ -44,11 +45,11 @@ Frontend *launch_frontend(std::string InputFilename, bool inlineFcts,Module *Mod
 	//
 	PassManager Passes;
 
-	// Add an appropriate TargetData instance for this module...
-	TargetData *td = new TargetData(Mod);
+	// Add an appropriate DataLayout instance for this module...
+	DataLayout *dl = new DataLayout(Mod);
 // 	Passes.add(createLoopSimplifyPass());
 // 	Passes.add(createLoopUnrollPass());
-	Passes.add(td);
+	Passes.add(dl);
 
 	// Check that the module is well formed on completion of optimization
 	FunctionPass *vp = createVerifierPass();

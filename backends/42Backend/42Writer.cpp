@@ -1,5 +1,6 @@
 #include <string>
 #include <map>
+#include <cstdio>
 
 #include "llvm/GlobalValue.h"
 #include "llvm/CallingConv.h"
@@ -9,9 +10,13 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/MCObjectFileInfo.h"
+#include "llvm/Function.h"
 
 #include "Port.hpp"
 #include "Channel.hpp"
+#include "Event.hpp"
 #include "SimpleChannel.hpp"
 #include "SCCFactory.hpp"
 #include "SCElab.h"
@@ -20,6 +25,8 @@
 #include "EventConstruct.hpp"
 #include "ReadConstruct.hpp"
 #include "WriteConstruct.hpp"
+#include "NotifyConstruct.hpp"
+#include "TimeConstruct.hpp"
 #include "Process.hpp"
 #include "IRModule.hpp"
 #include "SCJit.hpp"
@@ -128,7 +135,7 @@ _42Writer::_42Writer(formatted_raw_ostream &o)
 void _42Writer::
 printStructReturnPointerFunctionType(formatted_raw_ostream & Out,
 				     const AttrListPtr & PAL,
-				     const PointerType * TheTy)
+				     PointerType * TheTy)
 {
   const FunctionType *FTy = cast < FunctionType > (TheTy->getElementType());
   std::stringstream FunctionInnards;
@@ -137,20 +144,20 @@ printStructReturnPointerFunctionType(formatted_raw_ostream & Out,
 
   FunctionType::param_iterator I = FTy->param_begin(), E =
     FTy->param_end();
-  const Type *RetTy =
-    cast < PointerType > (I->get())->getElementType();
+  Type *RetTy =
+    cast < PointerType > (*I)->getElementType();
   unsigned Idx = 1;
   for (++I, ++Idx; I != E; ++I, ++Idx) {
     if (PrintedType)
       FunctionInnards << ", ";
-    const Type *ArgTy = *I;
-    if (PAL.paramHasAttr(Idx, Attribute::ByVal)) {
+    Type *ArgTy = *I;
+    if (PAL.paramHasAttr(Idx, this->getAttributes(Attributes::ByVal))) {
       assert(isa < PointerType > (ArgTy));
       ArgTy =	cast < PointerType > (ArgTy)->getElementType();
     }
     printType(FunctionInnards, ArgTy,
 	      /*isSigned= */ PAL.paramHasAttr(Idx,
-					      Attribute::SExt),
+					      this->getAttributes(Attributes::SExt)),
 	      "");
     PrintedType = true;
   }
@@ -163,13 +170,13 @@ printStructReturnPointerFunctionType(formatted_raw_ostream & Out,
   FunctionInnards << ')';
   std::string tstr = FunctionInnards.str();
   printType(Out, RetTy,
-	    /*isSigned= */ PAL.paramHasAttr(0, Attribute::SExt),
+	    /*isSigned= */ PAL.paramHasAttr(0, this->getAttributes(Attributes::SExt)),
 	    tstr);
 }
 
 raw_ostream &
 _42Writer::printSimpleType(formatted_raw_ostream & Out,
-			   const Type * Ty, bool isSigned,
+			   Type * Ty, bool isSigned,
 			   const std::string & NameSoFar)
 {
   assert((Ty->isPrimitiveType() || Ty->isIntegerTy()
@@ -200,7 +207,7 @@ _42Writer::printSimpleType(formatted_raw_ostream & Out,
     triggerError(Out, "NYI : long type");
   case Type::VectorTyID:{
     triggerError(Out, "NYI : Vector type");
-    const VectorType *VTy = cast < VectorType > (Ty);
+    VectorType *VTy = cast < VectorType > (Ty);
     printSimpleType(Out, VTy->getElementType(),
 		    isSigned,
 		    NameSoFar + "[" + utostr(TD->getTypeAllocSize(VTy))+ "]");		
@@ -215,7 +222,7 @@ _42Writer::printSimpleType(formatted_raw_ostream & Out,
 }
 
 std::ostream &
-_42Writer::printSimpleType(std::ostream & Out, const Type * Ty,
+_42Writer::printSimpleType(std::ostream & Out, Type * Ty,
 			   bool isSigned,
 			   const std::string & NameSoFar)
 {
@@ -248,7 +255,7 @@ _42Writer::printSimpleType(std::ostream & Out, const Type * Ty,
 
   case Type::VectorTyID:{
     triggerError(this->Out, "NYI : Vector type");
-    const VectorType *VTy = cast < VectorType > (Ty);
+    VectorType *VTy = cast < VectorType > (Ty);
     return printSimpleType(Out, VTy->getElementType(),
 			   isSigned,
 			   " __attribute__((vector_size("
@@ -269,7 +276,7 @@ _42Writer::printSimpleType(std::ostream & Out, const Type * Ty,
 //
 raw_ostream &
 _42Writer::printType(formatted_raw_ostream & Out,
-		     const Type * Ty,
+		     Type * Ty,
 		     bool isSigned, const std::string & NameSoFar,
 		     bool IgnoreName, const AttrListPtr & PAL)
 {
@@ -277,9 +284,17 @@ _42Writer::printType(formatted_raw_ostream & Out,
     printSimpleType(Out, Ty, isSigned, NameSoFar);
     return Out;
   }
+
+  // Check whether Ty is a OpaqueTy
+  bool IsOpaque = false;
+  if (isa<StructType>(Ty)){
+          StructType* STy = dyn_cast<StructType>(Ty);
+          IsOpaque = STy->isOpaque();
+  }
+
   // Check to see if the type is named.
-  if (!IgnoreName || isa < OpaqueType > (Ty)) {
-    std::map < const Type *, std::string >::iterator ITN = TypeNames.find(Ty), ETN = TypeNames.end();
+  if (!IgnoreName || IsOpaque ) {
+    std::map < Type *, std::string >::iterator ITN = TypeNames.find(Ty), ETN = TypeNames.end();
     if (ITN != ETN) {
       std::string tName = ITN->second;
       return Out << tName << " " << NameSoFar;
@@ -299,14 +314,14 @@ _42Writer::printType(formatted_raw_ostream & Out,
     for (FunctionType::param_iterator I =
 	   FTy->param_begin(), E = FTy->param_end();
 	 I != E; ++I) {
-      const Type *ArgTy = *I;
-      if (PAL.paramHasAttr(Idx, Attribute::ByVal)) {
+      Type *ArgTy = *I;
+      if (PAL.paramHasAttr(Idx, this->getAttributes(Attributes::ByVal))) {
 	assert(isa < PointerType >(ArgTy));
 	ArgTy =	cast < PointerType > (ArgTy)->getElementType();
       }
       if (I != FTy->param_begin())
 	FunctionInnards << ", ";
-      printType(FunctionInnards, ArgTy, PAL.paramHasAttr(Idx, Attribute::SExt), "");
+      printType(FunctionInnards, ArgTy, PAL.paramHasAttr(Idx, this->getAttributes(Attributes::SExt)), "");
       ++Idx;
     }
     if (FTy->isVarArg()) {
@@ -317,11 +332,23 @@ _42Writer::printType(formatted_raw_ostream & Out,
     }
     FunctionInnards << ')';
     std::string tstr = FunctionInnards.str();
-    printType(Out, FTy->getReturnType(), PAL.paramHasAttr(0, Attribute::SExt), tstr);
+    printType(Out, FTy->getReturnType(),
+              PAL.paramHasAttr(0, this->getAttributes(Attributes::SExt)), tstr);
     return Out;
   }
   case Type::StructTyID:{
-    const StructType *STy = cast < StructType > (Ty);
+    StructType *STy = cast < StructType > (Ty);
+    // if a OpaqueType
+    if (STy->isOpaque() ) {
+        ErrorMsg <<"NYI : use of complex type : OpaqueTy : " <<	NameSoFar;
+        triggerError(Out);
+
+        std::string TyName = "struct opaque_" + itostr(OpaqueCounter++);
+        assert(TypeNames.find(Ty) == TypeNames.end());
+        insertTypeName(Ty, TyName);
+        return Out << TyName << ' ' << NameSoFar;
+    }
+
     TRACE_4("/**** Handling StructTy type in printType() ****/\n");
     Out << NameSoFar + " {\n";
     unsigned Idx = 0;
@@ -345,7 +372,7 @@ _42Writer::printType(formatted_raw_ostream & Out,
   }
 
   case Type::PointerTyID:{
-    const PointerType *PTy = cast < PointerType > (Ty);
+    PointerType *PTy = cast < PointerType > (Ty);
     std::string ptrName = NameSoFar;
 
     TRACE_4("/**** Handling PointerTy type in printType() ****/\n");
@@ -377,16 +404,6 @@ _42Writer::printType(formatted_raw_ostream & Out,
 	      "array[" + utostr(NumElements) + "]");
     return Out << "; }";
   }
-
-  case Type::OpaqueTyID:{
-    ErrorMsg <<"NYI : use of complex type : OpaqueTy : " <<	NameSoFar;
-    triggerError(Out);
-
-    std::string TyName = "struct opaque_" + itostr(OpaqueCounter++);
-    assert(TypeNames.find(Ty) == TypeNames.end());
-    insertTypeName(Ty, TyName);
-    return Out << TyName << ' ' << NameSoFar;
-  }
   default:
     llvm_unreachable("Unhandled case in getTypeProps!");
   }
@@ -400,7 +417,7 @@ _42Writer::printType(formatted_raw_ostream & Out,
 //
 std::ostream &
 _42Writer::printType(std::ostream & Out,
-		     const Type * Ty,
+		     Type * Ty,
 		     bool isSigned, const std::string & NameSoFar,
 		     bool IgnoreName, const AttrListPtr & PAL)
 {
@@ -409,12 +426,20 @@ _42Writer::printType(std::ostream & Out,
     printSimpleType(Out, Ty, isSigned, NameSoFar);
     return Out;
   }
+
+  // Check whether Ty is a OpaqueTy
+  bool IsOpaque = false;
+  if (isa<StructType>(Ty)){
+          StructType* STy = dyn_cast<StructType>(Ty);
+          IsOpaque = STy->isOpaque();
+  }
+
   // Check to see if the type is named.
-  if (!IgnoreName || isa < OpaqueType > (Ty)) {
+  if (!IgnoreName || IsOpaque ) {
     if (isSystemCType(Ty))
       return Out;
 
-    std::map < const Type *, std::string >::iterator I = TypeNames.find(Ty);
+    std::map < Type *, std::string >::iterator I = TypeNames.find(Ty);
     if (I != TypeNames.end())
       return Out << I->second << ' ' << NameSoFar;
   }
@@ -432,9 +457,9 @@ _42Writer::printType(std::ostream & Out,
     for (FunctionType::param_iterator I =
 	   FTy->param_begin(), E = FTy->param_end();
 	 I != E; ++I) {
-      const Type *ArgTy = *I;
+      Type *ArgTy = *I;
       if (PAL.
-	  paramHasAttr(Idx, Attribute::ByVal)) {
+	  paramHasAttr(Idx, this->getAttributes(Attributes::ByVal))) {
 	assert(isa < PointerType >
 	       (ArgTy));
 	ArgTy =
@@ -446,8 +471,7 @@ _42Writer::printType(std::ostream & Out,
       printType(FunctionInnards, ArgTy,
 		/*isSigned= */
 		PAL.paramHasAttr(Idx,
-				 Attribute::
-				 SExt), "");
+				 this->getAttributes(Attributes::SExt)), "");
       ++Idx;
     }
     if (FTy->isVarArg()) {
@@ -460,13 +484,26 @@ _42Writer::printType(std::ostream & Out,
     std::string tstr = FunctionInnards.str();
     printType(Out, FTy->getReturnType(),
 	      /*isSigned= */ PAL.paramHasAttr(0,
-					      Attribute::
-					      SExt),
+					      this->getAttributes(Attributes::
+					      SExt)),
 	      tstr);
     return Out;
   }
   case Type::StructTyID:{
-    const StructType *STy = cast < StructType > (Ty);
+    StructType *STy = cast < StructType > (Ty);
+
+    // if a OpaqueType
+    if (STy->isOpaque() ) {
+        ErrorMsg <<
+          "NYI : use of complex type : OpaqueTy : " << NameSoFar;
+        triggerError(this->Out);
+
+        std::string TyName = "struct opaque_" + itostr(OpaqueCounter++);
+        assert(TypeNames.find(Ty) == TypeNames.end());
+        insertTypeName(Ty, TyName);
+        return Out << TyName << ' ' << NameSoFar;
+    }
+
     TRACE_4("/**** Handling StructTy type in printType() ****/\n");
     Out << NameSoFar + " {\n";
     unsigned Idx = 0;
@@ -491,7 +528,7 @@ _42Writer::printType(std::ostream & Out,
   }
 
   case Type::PointerTyID:{
-    const PointerType *PTy = cast < PointerType > (Ty);
+    PointerType *PTy = cast < PointerType > (Ty);
     std::string ptrName = "*" + NameSoFar;
 
     TRACE_4("/**** Handling PointerTy type in printType() ****/\n");
@@ -523,19 +560,6 @@ _42Writer::printType(std::ostream & Out,
 	      "array[" + utostr(NumElements) + "]");
     return Out << "; }";
   }
-
-  case Type::OpaqueTyID:{
-    ErrorMsg <<
-      "NYI : use of complex type : OpaqueTy : " <<
-      NameSoFar;
-    triggerError(this->Out);
-
-    std::string TyName =
-      "struct opaque_" + itostr(OpaqueCounter++);
-    assert(TypeNames.find(Ty) == TypeNames.end());
-    insertTypeName(Ty, TyName);
-    return Out << TyName << ' ' << NameSoFar;
-  }
   default:
     llvm_unreachable("Unhandled case in getTypeProps!");
   }
@@ -551,7 +575,7 @@ _42Writer::printConstantArray(ConstantArray * CPA, bool Static)
   // As a special case, print the array as a string if it is an array of
   // ubytes or an array of sbytes with positive values.
   //
-  const Type *ETy = CPA->getType()->getElementType();
+  Type *ETy = CPA->getType()->getElementType();
   bool isString = (ETy == Type::getInt8Ty(CPA->getContext()) ||
 		   ETy == Type::getInt8Ty(CPA->getContext()));
 
@@ -688,7 +712,11 @@ static bool isFPCSafeToPrint(const ConstantFP * CFP)
     return APF.bitwiseIsEqual(APFloat(atof(Buffer)));
   return false;
 #else
-  std::string StrVal = ftostr(APF);
+   SmallString<10> smallstr;
+   // parameter : FormatPrecision, FormatMaxPadding 
+   // use scientific notation here due to MaxPadding=0
+   APF.toString(smallstr, 5, 0);
+   std::string StrVal = smallstr.str().str(); // ->StringRef -> std::string
 
   while (StrVal[0] == ' ')
     StrVal.erase(StrVal.begin());
@@ -707,8 +735,8 @@ static bool isFPCSafeToPrint(const ConstantFP * CFP)
 /// Print out the casting for a cast operation. This does the double casting
 /// necessary for conversion to the destination type, if necessary. 
 /// @brief Print a cast
-void _42Writer::printCast(unsigned opc, const Type * SrcTy,
-			  const Type * DstTy)
+void _42Writer::printCast(unsigned opc, Type * SrcTy,
+			  Type * DstTy)
 {
   // Print the destination type cast
   switch (opc) {
@@ -1035,7 +1063,7 @@ void _42Writer::printConstant(Constant * CPV, bool Static)
   }
 
   if (ConstantInt * CI = dyn_cast < ConstantInt > (CPV)) {
-    const Type *Ty = CI->getType();
+    Type *Ty = CI->getType();
     if (Ty == Type::getInt1Ty(CPV->getContext()))
       Out << (CI->getZExtValue()? '1' : '0');
     else if (Ty == Type::getInt32Ty(CPV->getContext()))
@@ -1163,7 +1191,9 @@ void _42Writer::printConstant(Constant * CPV, bool Static)
 	sprintf(Buffer, "%a", V);
 	Num = Buffer;
 #else
-	Num = ftostr(FPC->getValueAPF());
+        SmallString<10> smallstr;
+        FPC->getValueAPF().toString(smallstr, 5, 0);
+        Num = smallstr.str().str();
 #endif
 	Out << Num;
       }
@@ -1218,7 +1248,7 @@ void _42Writer::printConstant(Constant * CPV, bool Static)
     } else {
       assert(isa < ConstantAggregateZero > (CPV)
 	     || isa < UndefValue > (CPV));
-      const VectorType *VT =
+      VectorType *VT =
 	cast < VectorType > (CPV->getType());
       Out << "{ ";
       Constant *CZ =
@@ -1242,7 +1272,7 @@ void _42Writer::printConstant(Constant * CPV, bool Static)
     }
     if (isa < ConstantAggregateZero > (CPV)
 	|| isa < UndefValue > (CPV)) {
-      const StructType *ST =
+      StructType *ST =
 	cast < StructType > (CPV->getType());
       Out << '{';
       if (ST->getNumElements()) {
@@ -1307,7 +1337,7 @@ void _42Writer::printConstant(Constant * CPV, bool Static)
 bool _42Writer::printConstExprCast(const ConstantExpr * CE, bool Static)
 {
   bool NeedsExplicitCast = false;
-  const Type *Ty = CE->getOperand(0)->getType();
+  Type *Ty = CE->getOperand(0)->getType();
   bool TypeIsSigned = false;
   switch (CE->getOpcode()) {
   case Instruction::Add:
@@ -1367,7 +1397,7 @@ void _42Writer::printConstantWithCast(Constant * CPV, unsigned Opcode)
 {
 
   // Extract the operand's type, we'll need it.
-  const Type *OpTy = CPV->getType();
+  Type *OpTy = CPV->getType();
 
   // Indicate whether to do the cast or not.
   bool shouldCast = false;
@@ -1414,12 +1444,14 @@ void _42Writer::printConstantWithCast(Constant * CPV, unsigned Opcode)
 std::string _42Writer::GetValueName(const Value * Operand)
 {
   std::string res;
+  SmallString<10> smallstr;
 
   if (isa<Function>(Operand))
 
     // Mangle globals with the standard mangler interface for LLC compatibility.
     if (const GlobalValue * GV = dyn_cast < GlobalValue > (Operand)) {
-      res = Mang->getNameWithPrefix(GV);
+      Mang->getNameWithPrefix(smallstr, GV, false);
+      res = smallstr.str().str(); // -> StringRef -> String
       return replaceAll(res, ".", "-");
     }
   std::string Name = Operand->getName();
@@ -1456,7 +1488,7 @@ void _42Writer::writeInstComputationInline(Instruction & I)
 {
   // We can't currently support integer types other than 1, 8, 16, 32, 64.
   // Validate this.
-  const Type *Ty = I.getType();
+  Type *Ty = I.getType();
   if (Ty->isIntegerTy() && (Ty != Type::getInt1Ty(I.getContext()) &&
 			  Ty != Type::getInt8Ty(I.getContext()) &&
 			  Ty != Type::getInt16Ty(I.getContext()) &&
@@ -1541,7 +1573,7 @@ void _42Writer::writeOperand(Value * Operand, bool Static)
 // for the Instruction.
 bool _42Writer::writeInstructionCast(const Instruction & I)
 {
-  const Type *Ty = I.getOperand(0)->getType();
+  Type *Ty = I.getOperand(0)->getType();
   switch (I.getOpcode()) {
   case Instruction::Add:
   case Instruction::Sub:
@@ -1575,7 +1607,7 @@ void _42Writer::writeOperandWithCast(Value * Operand, unsigned Opcode)
 {
 
   // Extract the operand's type, we'll need it.
-  const Type *OpTy = Operand->getType();
+  Type *OpTy = Operand->getType();
 
   // Indicate whether to do the cast or not.
   bool shouldCast = false;
@@ -1644,7 +1676,7 @@ void _42Writer::writeOperandWithCast(Value * Operand,
   bool castIsSigned = Cmp.isSigned();
 
   // If the operand was a pointer, convert to a large integer type.
-  const Type *OpTy = Operand->getType();
+  Type *OpTy = Operand->getType();
   if (isa < PointerType > (OpTy))
     OpTy = TD->getIntPtrType(Operand->getContext());
 
@@ -1659,7 +1691,7 @@ void _42Writer::writeOperandWithCast(Value * Operand,
 // directives to cater to specific compilers as need be.
 //
 static void generateCompilerSpecificCode(formatted_raw_ostream & Out,
-					 const TargetData * TD)
+					 const DataLayout * TD)
 {
   // Alloca is hard to get, and we don't want to include stdlib.h here.
   Out << "/* get a declaration for alloca */\n"
@@ -1948,7 +1980,7 @@ void _42Writer::printFloatingPointConstants(const Constant * C)
 
 
 void
-_42Writer::insertTypeName(const Type* Ty, std::string TyName)
+_42Writer::insertTypeName(Type* Ty, std::string TyName)
 {
   this->TypeNames[Ty] = replaceAll(TyName, ".", "-");
 }
@@ -1962,15 +1994,18 @@ _42Writer::getTypeNamesSize()
 /// printSymbolTable - Run through symbol table looking for type names.  If a
 /// type name is found, emit its declaration...
 ///
-void _42Writer::printModuleTypes(const TypeSymbolTable & TST)
+void _42Writer::printModuleTypes(Module &M)
 {
-  std::set < const Type *>StructPrinted;
+  std::set < Type *>StructPrinted;
   TRACE_2("42Writer > Emitting types\n");
   Out << "\n\n/*---- Types ----*/\n";
 
+  TypeFinder TST;
+  TST.run(M,true);// only named types will be collected.
+
   // We are only interested in the type plane of the symbol table.
-  TypeSymbolTable::const_iterator I = TST.begin();
-  TypeSymbolTable::const_iterator End = TST.end();
+  TypeFinder::const_iterator I = TST.begin();
+  TypeFinder::const_iterator End = TST.end();
 
   // If there are no type names, exit early.
   if (I == End)
@@ -1979,8 +2014,8 @@ void _42Writer::printModuleTypes(const TypeSymbolTable & TST)
   // Print out forward declarations for structure types before anything else!
   Out << "/* Structure forward decls */\n";
   for (; I != End; ++I) {
-    std::string Name = I->first; //not using Mang->makeNameProper(...)
-    insertTypeName(I->second, Name);
+    std::string Name = (*I)->getStructName().str();
+    insertTypeName(*I, Name);
   }
   Out << '\n';
 
@@ -1992,14 +2027,14 @@ void _42Writer::printModuleTypes(const TypeSymbolTable & TST)
     Process *proc = *processIt;
     Function::arg_iterator argI = proc->getMainFct()->arg_begin();
     const Value* moduleArg = &*argI;		
-    const PointerType* PTy = cast<PointerType>(moduleArg->getType());
+    PointerType* PTy = cast<PointerType>(moduleArg->getType());
     fillContainedStructs(PTy->getElementType(), &StructPrinted);
   }
 
-  std::set < const Type *>::iterator itS;
+  std::set < Type *>::iterator itS;
   for (itS = StructPrinted.begin() ; itS != StructPrinted.end(); ++itS) {
     // Print structure type out.
-    const Type* Ty = *itS;
+    Type* Ty = *itS;
     std::string Name = TypeNames[Ty];
     TRACE_5("Emitting type " << Name << "\n");
     Out << "typedef ";
@@ -2015,7 +2050,7 @@ void _42Writer::printModuleTypes(const TypeSymbolTable & TST)
   // 		     itF < usedFcts->end(); ++itF) {
 
   // 			Function *F = *itF;
-  // 			TRACE_4("42Writer > printing function : " << F->getNameStr() << "\n");
+  // 			TRACE_4("42Writer > printing function : " << F->getName().str() << "\n");
 
 	
   // Now we can print out typedefs.  Above, we guaranteed that this can only be
@@ -2031,7 +2066,7 @@ void _42Writer::printModuleTypes(const TypeSymbolTable & TST)
   // 	Out << '\n';
 
   // 	// Keep track of which structures have been printed so far...
-  // 	std::set < const Type *>StructPrinted;
+  // 	std::set < Type *>StructPrinted;
 
   // 	// Loop over all structures then push them into the stack so they are
   // 	// printed in the correct order.
@@ -2049,7 +2084,7 @@ void _42Writer::printModuleTypes(const TypeSymbolTable & TST)
 //
 // TODO:  Make this work properly with vector types
 //
-bool _42Writer::fillContainedStructs(const Type * Ty, std::set <const Type * >* StructPrinted)
+bool _42Writer::fillContainedStructs(Type * Ty, std::set <Type * >* StructPrinted)
 {
   bool isEmpty = true;
 
@@ -2116,8 +2151,8 @@ void _42Writer::printFunctionSignature(const Function * F,
   std::string fctName = GetValueName(F) + "_pnumber_" + intToString(currentProcess->getPid());
   Out << fctName << '(';
 	
-  //	std::vector<pair<std::string, const Type*> >* args = new std::vector<pair<std::string, const Type*> >();
-  //	std::vector<pair<std::string, const Type*> >* ret = new std::vector<pair<std::string, const Type*> >();
+  //	std::vector<pair<std::string, Type*> >* args = new std::vector<pair<std::string, Type*> >();
+  //	std::vector<pair<std::string, Type*> >* ret = new std::vector<pair<std::string, Type*> >();
 
   //	fillDependencies(F, string(""), args, ret);
 	
@@ -2144,17 +2179,17 @@ void _42Writer::printFunctionSignature(const Function * F,
 }
 
 void
-_42Writer::addVectors(std::vector<pair<std::string, const Type*> >* from,
-		      std::vector<pair<std::string, const Type*> >* to)
+_42Writer::addVectors(std::vector<pair<std::string, Type*> >* from,
+		      std::vector<pair<std::string, Type*> >* to)
 {
-  std::vector<pair<std::string, const Type*> >::iterator itFrom;
+  std::vector<pair<std::string, Type*> >::iterator itFrom;
   for (itFrom = from->begin(); itFrom != from->end(); ++itFrom) {
     to->push_back(*itFrom);
   }
 }
 
 bool
-_42Writer::isTypeEmpty(const Type* ty)
+_42Writer::isTypeEmpty(Type* ty)
 {
   while (isa<PointerType>(ty)) {
     ty = cast<PointerType>(ty)->getElementType();
@@ -2164,7 +2199,7 @@ _42Writer::isTypeEmpty(const Type* ty)
 }
 
 bool
-_42Writer::isSystemCStruct(const StructType* ty)
+_42Writer::isSystemCStruct(StructType* ty)
 {
   std::string typeName = this->TypeNames.find(ty)->second;
   TRACE_7("------------------------> isSystemCStruct > " << typeName << "\n");
@@ -2172,7 +2207,7 @@ _42Writer::isSystemCStruct(const StructType* ty)
 }
 
 bool
-_42Writer::isSystemCType(const Type* ty)
+_42Writer::isSystemCType(Type* ty)
 {
   if (ty->isPrimitiveType() || ty->isIntegerTy())
     return false;
@@ -2191,8 +2226,8 @@ static inline bool isFPIntBitCast(const Instruction & I)
 {
   if (!isa < BitCastInst > (I))
     return false;
-  const Type *SrcTy = I.getOperand(0)->getType();
-  const Type *DstTy = I.getType();
+  Type *SrcTy = I.getOperand(0)->getType();
+  Type *DstTy = I.getType();
   return (SrcTy->isFloatingPointTy() && DstTy->isIntegerTy()) ||
     (DstTy->isFloatingPointTy() && SrcTy->isIntegerTy());
 }
@@ -2204,12 +2239,12 @@ void _42Writer::printFunction(Function & F, bool inlineFct)
   TRACE_5("42Writer > printing basic blocks\n");
   string name;
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
-    name=BB->getNameStr();
+    name=BB->getName().str();
   }
   Automat.set_lastBasicBlock(name);
   // print the basic blocks
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
-    //string name=E->getNameStr();
+    //string name=E->getName().str();
     // Automat.set_lastBasicBlock(name);
     if (Loop * L = LI->getLoopFor(BB)) {
       if (L->getHeader() == BB && L->getParentLoop() == 0)
@@ -2236,8 +2271,8 @@ void _42Writer::printLoop(Loop * L)
 
 void _42Writer::printBasicBlock(BasicBlock * BB)
 {
-  if(!Automat.isBasicBlockAlreadyVisited(BB->getNameStr())){
-    TRACE_6("42Writer > printing basic block : " << BB->getNameStr() << "\n");
+  if(!Automat.isBasicBlockAlreadyVisited(BB->getName().str())){
+    TRACE_6("42Writer > printing basic block : " << BB->getName().str() << "\n");
 
     // Output all of the instructions in the basic block...
 
@@ -2251,7 +2286,7 @@ void _42Writer::printBasicBlock(BasicBlock * BB)
       }
     }
 
-    Automat.addBasicBlockVisited(BB->getNameStr());
+    Automat.addBasicBlockVisited(BB->getName().str());
 	
 
     TRACE_4("/***** Visit terminator : " << *BB->getTerminator()->getOpcodeName() << "*****/\n");
@@ -2328,11 +2363,11 @@ void _42Writer::visitInvokeInst(InvokeInst & I)
   llvm_unreachable("Lowerinvoke pass didn't work!");
 }
 
-void _42Writer::visitUnwindInst(UnwindInst & I)
-{
-  TRACE_4("/***** visitUnwindInst ****/\n");
-  llvm_unreachable("Lowerinvoke pass didn't work!");
-}
+//void _42Writer::visitUnwindInst(UnwindInst & I)
+//{
+  //TRACE_4("/***** visitUnwindInst ****/\n");
+  //llvm_unreachable("Lowerinvoke pass didn't work!");
+//}
 
 void _42Writer::visitUnreachableInst(UnreachableInst & I)
 {
@@ -2415,13 +2450,13 @@ void _42Writer::visitBranchInst(BranchInst & I)
 	Automat.set_visitingWhileBranch(true);
 	while(!Automat.get_endWhileDetected()){
 	  printBasicBlock(BasicBlockBranchWhileIterator);
-	  Automat.addBasicBlockVisited(BasicBlockBranchWhileIterator->getNameStr());
+	  Automat.addBasicBlockVisited(BasicBlockBranchWhileIterator->getName().str());
 	  ++BasicBlockBranchWhileIterator;
 	}
 	Automat.set_visitingWhileBranch(false);
       }
       else{
-	//string name=I.getSuccessor(0)->getNameStr();
+	//string name=I.getSuccessor(0)->getName().str();
 	//Automat.set_nameFirstBasicBlockIf(name);
 
 
@@ -2444,10 +2479,10 @@ void _42Writer::visitBranchInst(BranchInst & I)
 	Function::iterator BasicBlockBranchIfIterator=I.getSuccessor(0);
 
 	Automat.set_visitingIfBranch(true);
-	while(BasicBlockBranchIfIterator->getNameStr()!=I.getSuccessor(1)->getNameStr() && 
+	while(BasicBlockBranchIfIterator->getName().str()!=I.getSuccessor(1)->getName().str() && 
 	      !Automat.get_existReturnInstInIfBranch()){
 	  printBasicBlock(BasicBlockBranchIfIterator);
-	  Automat.addBasicBlockVisited(BasicBlockBranchIfIterator->getNameStr());
+	  Automat.addBasicBlockVisited(BasicBlockBranchIfIterator->getName().str());
 	  ++BasicBlockBranchIfIterator;
 	}
 	Automat.set_visitingIfBranch(false);
@@ -2479,7 +2514,7 @@ void _42Writer::visitBranchInst(BranchInst & I)
 
 	if (isGotoCodeNecessary(I.getParent(), I.getSuccessor(1))) {
 	  string nameBasicBlock=Automat.get_nameBasicBlockAfterIf();
-	  if(nameBasicBlock==I.getSuccessor(1)->getNameStr() || I.getSuccessor(1)->getNameStr()=="return"){
+	  if(nameBasicBlock==I.getSuccessor(1)->getName().str() || I.getSuccessor(1)->getName().str()=="return"){
 	    string inputData =Automat.toString_eventsWaited();
 	    string outputData=Automat.toString_eventsNotified();
 	    string transition;
@@ -2497,19 +2532,19 @@ void _42Writer::visitBranchInst(BranchInst & I)
 	    Automat.set_existWait(existWaitBeforeIfElse);
 	    Function::iterator BasicBlockBranchElseIterator=I.getSuccessor(1);
 	    Automat.set_visitingElseBranch(true);
-	    while(BasicBlockBranchElseIterator->getNameStr()!=Automat.get_nameBasicBlockAfterIf() && 
-		  BasicBlockBranchElseIterator->getNameStr()!=Automat.get_lastBasicBlock()        &&
+	    while(BasicBlockBranchElseIterator->getName().str()!=Automat.get_nameBasicBlockAfterIf() && 
+		  BasicBlockBranchElseIterator->getName().str()!=Automat.get_lastBasicBlock()        &&
 		  !Automat.get_existReturnInstInElseBranch()){
 	      printBasicBlock(BasicBlockBranchElseIterator);
-	      Automat.addBasicBlockVisited(BasicBlockBranchElseIterator->getNameStr());
+	      Automat.addBasicBlockVisited(BasicBlockBranchElseIterator->getName().str());
 	      ++BasicBlockBranchElseIterator;
 	    }
 
-	    if(BasicBlockBranchElseIterator->getNameStr()==Automat.get_lastBasicBlock() &&
+	    if(BasicBlockBranchElseIterator->getName().str()==Automat.get_lastBasicBlock() &&
 	       !Automat.get_existReturnInstInElseBranch() &&
-	       BasicBlockBranchElseIterator->getNameStr()!=Automat.get_nameBasicBlockAfterIf()){
+	       BasicBlockBranchElseIterator->getName().str()!=Automat.get_nameBasicBlockAfterIf()){
 	      printBasicBlock(BasicBlockBranchElseIterator);
-	      Automat.addBasicBlockVisited(BasicBlockBranchElseIterator->getNameStr());
+	      Automat.addBasicBlockVisited(BasicBlockBranchElseIterator->getName().str());
 	    }
 
 	    Automat.set_visitingElseBranch(false);
@@ -2556,7 +2591,7 @@ void _42Writer::visitBranchInst(BranchInst & I)
     TRACE_4("/***** visitBranchInst() NOT CONDITIONAL *****/\n");
     if(!Automat.get_visitingIfBranch() && !Automat.get_visitingElseBranch()){
       if(!Automat.get_visitingWhileBranch() || 
-	 (Automat.get_visitingWhileBranch() && !Automat.isBasicBlockAlreadyVisited(I.getSuccessor(0)->getNameStr()))){
+	 (Automat.get_visitingWhileBranch() && !Automat.isBasicBlockAlreadyVisited(I.getSuccessor(0)->getName().str()))){
 	bool visitingWhileBeforeThis=Automat.get_visitingWhileBranch();
 	bool whileDetectedBeforeThis=Automat.get_whileDetected();
 	Automat.set_visitingWhileBranch(false);
@@ -2584,7 +2619,7 @@ void _42Writer::visitBranchInst(BranchInst & I)
 	Automat.clearEventsNotified();
 
 	printBasicBlock(I.getSuccessor(0));
-	Automat.addBasicBlockVisited(I.getSuccessor(0)->getNameStr());
+	Automat.addBasicBlockVisited(I.getSuccessor(0)->getName().str());
 
 	int lastBuildStateBranchWhile=Automat.get_lastBuildState();
 
@@ -2638,7 +2673,7 @@ void _42Writer::visitBranchInst(BranchInst & I)
       }
 
       if(a!=0){
-	Automat.set_nameBasicBlockAfterIf(I.getSuccessor(0)->getNameStr());
+	Automat.set_nameBasicBlockAfterIf(I.getSuccessor(0)->getName().str());
       }
       else{
 	if((*BB->getTerminator()).getNumSuccessors()==2){
@@ -2646,7 +2681,7 @@ void _42Writer::visitBranchInst(BranchInst & I)
 	    Automat.set_whileDetected(true);
 	  }
 	  else{
-	    Automat.set_nameBasicBlockAfterIf(I.getSuccessor(0)->getNameStr());
+	    Automat.set_nameBasicBlockAfterIf(I.getSuccessor(0)->getName().str());
 	  }
 	}
       }
@@ -2902,7 +2937,7 @@ void _42Writer::visitFCmpInst(FCmpInst & I)
   Out << ")";
 }
 
-static const char *getFloatBitCastField(const Type * Ty)
+static const char *getFloatBitCastField(Type * Ty)
 {
   switch (Ty->getTypeID()) {
   default:
@@ -2925,8 +2960,8 @@ static const char *getFloatBitCastField(const Type * Ty)
 void _42Writer::visitCastInst(CastInst & I)
 {
   TRACE_4("/***** visitCastInst ****/\n");
-  const Type *DstTy = I.getType();
-  const Type *SrcTy = I.getOperand(0)->getType();
+  Type *DstTy = I.getType();
+  Type *SrcTy = I.getOperand(0)->getType();
 
   if (isFPIntBitCast(I)) {
     Out << '(';
@@ -2994,7 +3029,6 @@ void _42Writer::lowerIntrinsics(Function & F)
 	if (Function * F = CI->getCalledFunction())
 	  switch (F->getIntrinsicID()) {
 	  case Intrinsic::not_intrinsic:
-	  case Intrinsic::memory_barrier:
 	  case Intrinsic::vastart:
 	  case Intrinsic::vacopy:
 	  case Intrinsic::vaend:
@@ -3291,7 +3325,7 @@ _42Writer::buildContract()
 	 itF < usedFcts->end(); ++itF) {
 
       Function *F = *itF;
-      TRACE_4("42Writer > printing function : " << F->getNameStr() << "\n");
+      TRACE_4("42Writer > printing function : " << F->getName().str() << "\n");
 
       // Do not codegen any 'available_externally' functions at all, they have
       // definitions outside the translation unit.
@@ -3497,7 +3531,7 @@ void _42Writer::visitCallInst(CallInst & I)
     std::map<Process*, SCConstruct * > CbyP = itC->second;
     return visitSCConstruct(CbyP.find(currentProcess)->second);
   }
-  TRACE_4("Visiting CallInst, function is : " << I.getCalledFunction()->getNameStr() << "\n");
+  TRACE_4("Visiting CallInst, function is : " << I.getCalledFunction()->getName().str() << "\n");
   if (isa < InlineAsm > (I.getOperand(0)))
     return visitInlineAsm(I);
 
@@ -3511,7 +3545,7 @@ void _42Writer::visitCallInst(CallInst & I)
 
   Value *Callee = I.getCalledValue();
 
-  const PointerType *PTy = cast < PointerType > (Callee->getType());
+  PointerType *PTy = cast < PointerType > (Callee->getType());
   const FunctionType *FTy = cast < FunctionType > (PTy->getElementType());
 
   // If this is a call to a struct-return function, assign to the first
@@ -3600,11 +3634,14 @@ void _42Writer::visitCallInst(CallInst & I)
     if (ArgNo < NumDeclaredParams &&
 	(*AI)->getType() != FTy->getParamType(ArgNo)) {
       Out << '(';
-      printType(Out, FTy->getParamType(ArgNo),/*isSigned= */ PAL.paramHasAttr(ArgNo + 1, Attribute::SExt));
+      printType(Out, FTy->getParamType(ArgNo),
+                /*isSigned= */ PAL.paramHasAttr(ArgNo + 1,
+                                      this->getAttributes(Attributes::SExt))
+               );
       Out << ')';
     }
     // Check if the argument is expected to be passed by value.
-    if (I.paramHasAttr(ArgNo + 1, Attribute::ByVal))
+    if (I.paramHasAttr(ArgNo + 1, Attributes::ByVal))
       writeOperandDeref(*AI);
     else
       writeOperand(*AI);
@@ -3636,9 +3673,6 @@ bool _42Writer::visitBuiltinCall(CallInst & I, Intrinsic::ID ID,
     WroteCallee = true;
     return false;
   }
-  case Intrinsic::memory_barrier:
-    Out << "__sync_synchronize()";
-    return true;
   case Intrinsic::vastart:
     Out << "0; ";
 
@@ -3821,7 +3855,7 @@ _42Writer::printGEPExpression(Value * Ptr, gep_type_iterator I,	gep_type_iterato
   // Find out if the last index is into a vector.  If so, we have to print this
   // specially.  Since vectors can't have elements of indexable type, only the
   // last index could possibly be of a vector element.
-  const VectorType *LastIndexIsVector = 0;
+  VectorType *LastIndexIsVector = 0;
   {
     for (gep_type_iterator TmpI = I; TmpI != E; ++TmpI)
       LastIndexIsVector =
@@ -3916,7 +3950,7 @@ _42Writer::printGEPExpression(Value * Ptr, gep_type_iterator I,	gep_type_iterato
 }
 
 void _42Writer::writeMemoryAccess(Value * Operand,
-				  const Type * OperandType,
+				  Type * OperandType,
 				  bool IsVolatile, unsigned Alignment)
 {
   //   bool IsUnaligned = Alignment &&
@@ -3963,7 +3997,7 @@ void _42Writer::visitStoreInst(StoreInst & I)
   Out << " = /* visitStore */";
   Value *Operand = I.getOperand(0);
   Constant *BitMask = 0;
-  if (const IntegerType * ITy =
+  if (IntegerType * ITy =
       dyn_cast < IntegerType > (Operand->getType())) {
     if (!ITy->isPowerOf2ByteWidth()) {
       // We have a bit width that doesn't match an even power-of-2 byte
@@ -4000,7 +4034,7 @@ void _42Writer::visitVAArgInst(VAArgInst & I)
 void _42Writer::visitInsertElementInst(InsertElementInst & I)
 {
   TRACE_4("/***** visitInsertElementInst ****/\n");
-  const Type *EltTy = I.getType()->getElementType();
+  Type *EltTy = I.getType()->getElementType();
   writeOperand(I.getOperand(0));
   Out << ";\n  ";
   Out << "((";
@@ -4017,7 +4051,7 @@ void _42Writer::visitExtractElementInst(ExtractElementInst & I)
   TRACE_4("/***** visitExtractElementInst ****/\n");
   // We know that our operand is not inlined.
   Out << "((";
-  const Type *EltTy =
+  Type *EltTy =
     cast < VectorType >
     (I.getOperand(0)->getType())->getElementType();
   printType(Out, PointerType::getUnqual(EltTy));
@@ -4033,9 +4067,9 @@ void _42Writer::visitShuffleVectorInst(ShuffleVectorInst & SVI)
   Out << "(";
   printType(Out, SVI.getType());
   Out << "){ ";
-  const VectorType *VT = SVI.getType();
+  VectorType *VT = SVI.getType();
   unsigned NumElts = VT->getNumElements();
-  const Type *EltTy = VT->getElementType();
+  Type *EltTy = VT->getElementType();
 
   for (unsigned i = 0; i != NumElts; ++i) {
     if (i)
@@ -4080,9 +4114,10 @@ void _42Writer::visitInsertValueInst(InsertValueInst & IVI)
   Out << GetValueName(&IVI);
   for (const unsigned *b = IVI.idx_begin(), *i = b, *e =
 	 IVI.idx_end(); i != e; ++i) {
-    const Type *IndexedTy =
+    Type *IndexedTy =
       ExtractValueInst::getIndexedType(IVI.getOperand(0)->
-				       getType(), b, i + 1);
+				       getType(),
+                                       ArrayRef<unsigned>(b, i + 1));
     if (isa < ArrayType > (IndexedTy))
       Out << ".array[" << *i << "]";
     else
@@ -4104,12 +4139,9 @@ void _42Writer::visitExtractValueInst(ExtractValueInst & EVI)
     Out << GetValueName(EVI.getOperand(0));
     for (const unsigned *b = EVI.idx_begin(), *i = b, *e =
 	   EVI.idx_end(); i != e; ++i) {
-      const Type *IndexedTy =
-	ExtractValueInst::getIndexedType(EVI.
-					 getOperand
-					 (0)->
-					 getType(), b,
-					 i + 1);
+      Type *IndexedTy =
+	ExtractValueInst::getIndexedType(EVI.getOperand (0)-> getType(),
+                                         ArrayRef<unsigned>(b, i + 1));
       if (isa < ArrayType > (IndexedTy))
 	Out << ".array[" << *i << "]";
       else
@@ -4119,6 +4151,12 @@ void _42Writer::visitExtractValueInst(ExtractValueInst & EVI)
   Out << ")";
 }
 
+// Since LLVM3.2 have developed atomic instruction.
+// Use it to replace intrinsic::memory_barrier.
+void _42Writer::visitFenceInst(FenceInst & EVI)
+{
+    Out << "__sync_synchronize()";
+}
 
 
 extern "C" void
@@ -4135,13 +4173,15 @@ LLVMInitialize42BackendTarget()
 
 bool _42Writer::runOnModule(Module & M)
 {
-  TD = new TargetData(&M);
+  TD = new DataLayout(&M);
   IL = new IntrinsicLowering(*TD);
   IL->AddPrototypes(M);
 
   // Ensure that all structure types have names...
   TAsm = new MCAsmInfo();
-  MCContext* MCC = new MCContext(*TAsm);
+  const MCRegisterInfo *mcRegisterInfo = new MCRegisterInfo();
+  const MCObjectFileInfo *mcObjectFileInfo = new MCObjectFileInfo();
+  MCContext* MCC = new MCContext(*TAsm, *mcRegisterInfo, mcObjectFileInfo);
 
   //  Mang = new Mangler(*TAsm);
   Mang = new Mangler(*MCC, *TD);
@@ -4164,6 +4204,8 @@ bool _42Writer::runOnModule(Module & M)
   delete IL;
   delete TD;
   delete Mang;
+  delete mcRegisterInfo;
+  delete mcObjectFileInfo;
   FPConstantMap.clear();
   TypeNames.clear();
   ByValParams.clear();
@@ -4182,6 +4224,13 @@ const char *_42Writer::getPassName() const
 {
   return "42 backend";
 }
+
+Attributes _42Writer::getAttributes(Attributes::AttrVal attr)
+{
+  return Attributes::get(getGlobalContext(),
+                         ArrayRef<Attributes::AttrVal>(attr));
+}
+
 
 char _42Writer::ID = 0;
 

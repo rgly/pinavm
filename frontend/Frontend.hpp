@@ -4,7 +4,6 @@
 #include <string>
 
 #include "llvm/Module.h"
-#include "llvm/Pass.h"
 
 using namespace llvm;
 
@@ -17,29 +16,29 @@ extern int launch_systemc(int argc, char *argv[]);
 
 class Frontend {
 
-      private:
-	SCJit * scjit;
-	SCCFactory *sccfactory;
-	SCElab *elab;
-	Module *llvmMod;
-	bool inlineFunctions;
+private:
+  SCJit * scjit;
+  SCCFactory *sccfactory;
+  SCElab *elab;
+  Module *llvmMod;
+  bool inlineFunctions;
 
-      public:
-	 Frontend(Module * M);
-	~Frontend();
+public:
+   Frontend(Module * M);
+  ~Frontend();
 
-	bool run();
-	SCElab *getElab();
-	void printElab(std::string prefix);
-	void printIR();
-	SCJit* getJit();
+  bool run();
+  SCElab *getElab();
+  void printElab(std::string prefix);
+  void printIR();
+  SCJit* getJit();
 
-	void setInlineFunctions(bool b);
+  void setInlineFunctions(bool b);
 
-	Module *getLLVMModule();
-	SCCFactory *getConstructs();
+  Module *getLLVMModule();
+  SCCFactory *getConstructs();
 
-	void fillGlobalVars(Instruction* inst);
+  void fillGlobalVars(Instruction* inst);
 };
 
 #endif

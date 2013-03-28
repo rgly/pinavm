@@ -1,11 +1,7 @@
-#include "llvm/ADT/StringExtras.h"
-#include "llvm/Support/raw_ostream.h"
-
-#include "llvm/Function.h"
-#include "llvm/Instructions.h"
+#ifndef NOTIFYHANDLER_HPP
+#define NOTIFYHANDLER_HPP
 
 #include "SCConstructHandler.hpp"
-#include "NotifyConstruct.hpp"
 
 using namespace llvm;
 
@@ -15,3 +11,5 @@ struct NotifyHandler:public SCConstructHandler {
 	SCConstruct *handle(Function * fct, BasicBlock * bb, Instruction* callInst, Function * calledFunction);
 	void insertInMap(std::map < Function *, SCConstructHandler * >*scchandlers);
 };
+
+#endif

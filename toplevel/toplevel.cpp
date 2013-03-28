@@ -1,13 +1,14 @@
-#include <systemc>
+//#include <systemc>
 
 #include <string>
 #include <algorithm>
+#include <cstdio>
 
 // For JIT
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Type.h"
-#include "llvm/Bitcode/ReaderWriter.h"
+//#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/CodeGen/LinkAllCodegenComponents.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
@@ -16,25 +17,24 @@
 #include "llvm/ExecutionEngine/JITEventListener.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
-#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/System/Process.h"
-#include "llvm/System/Signals.h"
-#include "llvm/Target/TargetSelect.h"
+//#include "llvm/Support/Process.h"
+#include "llvm/Support/IRReader.h"
+#include "llvm/Support/Signals.h"
+#include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/DynamicLibrary.h"
 #include <cerrno>
 using namespace llvm;
 
-#include "llvm/System/DynamicLibrary.h"
 
 //#include "BCLoader.h"
 
 #include "FrontendItf.hpp"
-#include "SimpleBackend.h"
-#include "PromelaBackend.h"
-#include "42Backend.h"
-#include "TwetoBackend.h"
+// a container for options. check util/ for more details.
+#include "BackendOption.h"
+extern bool launch_backends(Frontend*, std::string backend, BackendOption&);
 
 #include <ctime>
 #include <sys/time.h>
@@ -120,25 +120,23 @@ void pinavm_callback(sc_core::sc_simcontext* context,
     struct timeval end;     
     long mtime, seconds, useconds;
     gettimeofday(&start, NULL);
-    
 
-	if (Backend != "-") {
-		if (Backend == "simple" || Backend == "Simple") {
-			launch_simplebackend(fe, OutputFilename, EventsAsBool, RelativeClocks);
-		} else if (Backend == "promela" || Backend == "Promela") {
-			launch_promelabackend(fe, OutputFilename, EventsAsBool, RelativeClocks, Bug);
-		} else if (Backend == "42") {
-		        launch_42backend(fe, OutputFilename, EventsAsBool, RelativeClocks, Bug);
-		} 
-		// Tweto backend
-		else if(Backend == "tweto" || Backend == "Tweto") {
-			launch_twetobackend(fe, EE, context, duration, true, DisableOptDbgMsg);
-		} else if (Backend == "run") {
-			launch_twetobackend(fe, EE, context, duration, false, DisableOptDbgMsg);
-		} else {
-			ERROR("Backend " << Backend << " unknown\n");
-		}
-	}
+    BackendOption option;
+    option.OutputFilename = OutputFilename;
+    option.EventsAsBool = EventsAsBool;
+    option.RelativeClocks = RelativeClocks;
+    option.Bug = Bug;
+    option.EE = EE;
+    option.context = context;
+    option.duration = &duration;
+    option.DisableMsg = DisableDbgMsg;
+    option.DisableOptDbgMsg = DisableOptDbgMsg;
+    
+    // Running backends.
+    bool match_backend = launch_backends(fe, Backend, option);
+    if (! match_backend) {
+        ERROR("Backend " << Backend << " unknown\n"); 
+    }
     
     if(PrintDuration) {
         gettimeofday(&end, NULL);
@@ -181,17 +179,13 @@ int load_and_run_sc_main(std::string & InputFile)
 	// So that JIT-ed code can call pinavm_callback.
 	//sys::DynamicLibrary::AddSymbol("pinavm_callback", (void *)pinavm_callback);
 
-	// Load the bitcode...
-	//Module *Mod = NULL;
-	if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFile,&ErrorMsg)){
-		Mod = ParseBitcodeFile(Buffer, Context, &ErrorMsg);
-		//Mod = getLazyBitcodeModule(Buffer, Context, &ErrorMsg);
-		if (!Mod) delete Buffer;
-	}
+	// Load the bitcode file as LLVM module
+	SMDiagnostic smdiagnostic;
+	Mod = ParseIRFile(InputFile, smdiagnostic, Context);
 
 	if (!Mod) {
 		errs() << "error loading program '" << InputFile << "': "
-		       << ErrorMsg << "\n";
+		       << smdiagnostic.getMessage() << "\n";
 		exit(1);
 	} else {
 		TRACE_2("bitcode file loaded\n");
@@ -277,32 +271,24 @@ int toplevel_main(int argc, char **argv)
 {
 //	llvm_shutdown_obj X;	// Call llvm_shutdown() on exit.
 
-	try {
+	// If we have a native target, initialize it to ensure it is linked in and
+	// usable by the JIT.
+	InitializeNativeTarget();
 
-		// If we have a native target, initialize it to ensure it is linked in and
-		// usable by the JIT.
-		InitializeNativeTarget();
+	cl::ParseCommandLineOptions(argc, argv, "llvm .bc -> .bc modular optimizer and analysis printer\n");
 
-		cl::ParseCommandLineOptions(argc, argv, "llvm .bc -> .bc modular optimizer and analysis printer\n");
-
-		if (DisableDbgMsg.getValue()) {
-			disable_debug_msg = true;
-		} else {
-			disable_debug_msg = false;
-		}
-
-		sys::PrintStackTraceOnErrorSignal();
-
-		TRACE_1("Loading and running bitcode file\n");
-		// load_bc_and_run_sc_main(argc, argv, environ);
-		load_and_run_sc_main(InputFilename);
-	} catch(const std::string & msg) {
-		errs() << argv[0] << ": " << msg << "\n";
-	} catch(...) {
-		errs() << argv[0] <<
-		    ": Unexpected unknown exception occurred.\n";
+	if (DisableDbgMsg.getValue()) {
+		disable_debug_msg = true;
+	} else {
+		disable_debug_msg = false;
 	}
+
+	sys::PrintStackTraceOnErrorSignal();
+
+	TRACE_1("Loading and running bitcode file\n");
+	// load_bc_and_run_sc_main(argc, argv, environ);
+	load_and_run_sc_main(InputFilename);
+
 	TRACE_1("Shutdown...\n");
-//	llvm_shutdown();
 	return 0;
 }

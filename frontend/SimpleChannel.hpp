@@ -7,14 +7,13 @@
 
 #include <llvm/Type.h>
 
-using namespace llvm;
 
 class SimpleChannel : public Channel
 {
 protected:
 	std::string globalVariableName;
 public:
-	SimpleChannel(Type* globalVariableType, std::string globalVarTypeName);
+	SimpleChannel(llvm::Type* globalVariableType, std::string globalVarTypeName);
 	std::string getGlobalVariableName();
 	std::string toString();
 };

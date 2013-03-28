@@ -10,7 +10,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
-#include "llvm/TypeSymbolTable.h"
+#include "llvm/TypeFinder.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/InlineAsm.h"
@@ -23,8 +23,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetRegistry.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -33,7 +32,6 @@
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/System/Host.h"
 #include "llvm/Config/config.h"
 
 #include <map>
@@ -77,8 +75,8 @@ class PromelaWriter : public ModulePass, public InstVisitor<PromelaWriter> {
      compilation option later if needed.
      */
   const MCAsmInfo *TAsm;
-  const TargetData* TD;
-  std::map<const Type *, std::string> TypeNames;
+  const DataLayout* TD;
+  std::map<Type *, std::string> TypeNames;
   std::map<const ConstantFP *, unsigned> FPConstantMap;
   std::set<Function*> intrinsicPrototypesAlreadyGenerated;
   std::set<const Argument*> ByValParams;
@@ -92,7 +90,7 @@ class PromelaWriter : public ModulePass, public InstVisitor<PromelaWriter> {
   bool relativeClocks;
   bool eventsAsBool;
   bool insertBug;
-  std::set < const Type *>StructPrinted;
+  std::set < Type *>StructPrinted;
 
 public:
   static char ID;
@@ -103,29 +101,29 @@ public:
   bool runOnModule(Module &M);
 
   raw_ostream &printType(formatted_raw_ostream &Out,
-			 const Type *Ty, 
+			 Type *Ty, 
 			 bool isSigned = false,
 			 const std::string &VariableName = "",
 			 bool IgnoreName = false,
 			 const AttrListPtr &PAL = AttrListPtr());
-  std::ostream &printType(std::ostream &Out, const Type *Ty, 
+  std::ostream &printType(std::ostream &Out, Type *Ty, 
 			  bool isSigned = false,
 			  const std::string &VariableName = "",
 			  bool IgnoreName = false,
 			  const AttrListPtr &PAL = AttrListPtr());
   raw_ostream &printSimpleType(formatted_raw_ostream &Out,
-			       const Type *Ty, 
+			       Type *Ty, 
 			       bool isSigned, 
 			       const std::string &NameSoFar = "");
-  std::ostream &printSimpleType(std::ostream &Out, const Type *Ty, 
+  std::ostream &printSimpleType(std::ostream &Out, Type *Ty, 
 				bool isSigned, 
 				const std::string &NameSoFar = "");
 
   void printStructReturnPointerFunctionType(formatted_raw_ostream &Out,
 					    const AttrListPtr &PAL,
-					    const PointerType *Ty);
+					    PointerType *Ty);
  /* raw_ostream &printInitialValue(formatted_raw_ostream &Out,
-			const Type * Ty,
+			Type * Ty,
 			bool isSigned, const std::string & NameSoFar = "");*/
   /// writeOperandDeref - Print the result of dereferencing the specified
   /// operand with '*'.  This is equivalent to printing '*' then using
@@ -139,7 +137,7 @@ public:
   void writeOperandWithCast(Value* Operand, const ICmpInst &I);
   bool writeInstructionCast(const Instruction &I);
 
-  void writeMemoryAccess(Value *Operand, const Type *OperandType,
+  void writeMemoryAccess(Value *Operand, Type *OperandType,
 			 bool IsVolatile, unsigned Alignment);
 
   private :
@@ -148,8 +146,8 @@ public:
   void lowerIntrinsics(Function &F);
 
   void printModule(Module *M);
-  void printModuleTypes(const TypeSymbolTable &ST);
-  bool fillContainedStructs(const Type *Ty, bool fill);
+  void printModuleTypes(Module &M);
+  bool fillContainedStructs(Type *Ty, bool fill);
   void printFloatingPointConstants(Function &F);
   void printFloatingPointConstants(const Constant *C);
   void printFunctionSignature(const Function *F, bool Prototype, bool inlineFct);
@@ -158,7 +156,7 @@ public:
   void printFunction(Function &, bool inlineFct);
   void printBasicBlock(BasicBlock *BB);
 
-  void printCast(unsigned opcode, const Type *SrcTy, const Type *DstTy);
+  void printCast(unsigned opcode, Type *SrcTy, Type *DstTy);
   void printConstant(Constant *CPV, bool Static);
   void printConstantWithCast(Constant *CPV, unsigned Opcode);
   bool printConstExprCast(const ConstantExpr *CE, bool Static);
@@ -178,7 +176,8 @@ public:
   void visitBranchInst(BranchInst &I);
   void visitSwitchInst(SwitchInst &I);
   void visitInvokeInst(InvokeInst &I);
-  void visitUnwindInst(UnwindInst &I);
+// not supported by LLVM 3.2 , so remove.
+//  void visitUnwindInst(UnwindInst &I);
   void visitUnreachableInst(UnreachableInst &I);
 
   void visitPHINode(PHINode &I);
@@ -221,6 +220,7 @@ public:
 
   void visitInsertValueInst(InsertValueInst &I);
   void visitExtractValueInst(ExtractValueInst &I);
+  void visitFenceInst(FenceInst &I);
 
   void visitInstruction(Instruction &I);
 
@@ -237,27 +237,28 @@ public:
   
   void fillDependencies(const Function* F,
 		  std::string prefix,
-		  std::vector<std::pair<std::string, const Type*> >* args,
-		  std::vector<std::pair<std::string, const Type*> >* ret);
+		  std::vector<std::pair<std::string, Type*> >* args,
+		  std::vector<std::pair<std::string, Type*> >* ret);
   
-  void insertAllFields(std::vector<std::pair<std::string, const Type*> >* deps,
-		  std::map<std::string, const Type*>* allDepsByName,
+  void insertAllFields(std::vector<std::pair<std::string, Type*> >* deps,
+		  std::map<std::string, Type*>* allDepsByName,
 		  std::string parentName,
-		  const StructType* structType);
-  void addVectors(std::vector<std::pair<std::string, const Type*> >* from,
-		  std::vector<std::pair<std::string, const Type*> >* to);
-  bool isTypeEmpty(const Type* ty);
-  bool isSystemCStruct(const StructType* ty);
-  bool isSystemCType(const Type* ty);
+		  StructType* structType);
+  void addVectors(std::vector<std::pair<std::string, Type*> >* from,
+		  std::vector<std::pair<std::string, Type*> >* to);
+  bool isTypeEmpty(Type* ty);
+  bool isSystemCStruct(StructType* ty);
+  bool isSystemCType(Type* ty);
   void getValueDependencies(Value* value,
 			  std::string prefix,
-			  std::vector<std::pair<std::string, const Type*> >* args,
-			  std::vector<std::pair<std::string, const Type*> >* ret,
+			  std::vector<std::pair<std::string, Type*> >* args,
+			  std::vector<std::pair<std::string, Type*> >* ret,
 			  std::map<Value*, std::string>* allDepsByValue,
-			  std::map<std::string, const Type*>* allDepsByName);
+			  std::map<std::string, Type*>* allDepsByName);
   int getNumField(GetElementPtrInst* inst);
   int getTypeNamesSize();
-  void insertTypeName(const Type* Ty, std::string TyName);
+  void insertTypeName(Type* Ty, std::string TyName);
+  Attributes getAttributes(Attributes::AttrVal attr);
 
 
 };

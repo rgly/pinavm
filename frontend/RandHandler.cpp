@@ -1,5 +1,6 @@
 #include "SCJit.hpp"
 #include "RandHandler.h"
+#include "RandConstruct.hpp"
 
 using namespace llvm;
 

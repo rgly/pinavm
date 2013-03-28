@@ -1,8 +1,7 @@
 #ifndef _ASSERTCONSTRUCT_HPP
 #define _ASSERTCONSTRUCT_HPP
 
-#include "llvm/Function.h"
-#include "llvm/Instructions.h"
+#include "llvm/Value.h"
 
 #include "SCConstruct.hpp"
 #include "Event.hpp"
@@ -22,7 +21,7 @@ public:
 	void setCond(bool b);
 	bool getCond();
 	Value* getMissingCond();
-	string toString();
+	std::string toString();
 };
 
 #endif

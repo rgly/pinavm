@@ -1,9 +1,6 @@
-#include "llvm/Function.h"
-#include "llvm/Instructions.h"
 
 #include "SCConstruct.hpp"
 
-using namespace llvm;
 
 SCConstruct::SCConstruct()
 {
@@ -17,7 +14,7 @@ SCConstruct::SCConstruct(bool found)
 	this->staticallyFound = found;
 }
 
-string
+std::string
 SCConstruct::getThreadName()
 {
 	return this->threadName;

@@ -1,19 +1,19 @@
 #include "IRModule.hpp"
 #include "Process.hpp"
 #include "Port.hpp"
-#include "Event.hpp"
 
-using namespace std;
+#include "config.h"
+
 using namespace llvm;
 
-IRModule::IRModule(string moduleType, string moduleName)
+IRModule::IRModule(std::string moduleType, std::string moduleName)
 {
 	this->typeName = moduleType;
 	this->name = moduleName;
 }
 
 /******** Threads ********/
-vector < Process * >*IRModule::getProcesses()
+std::vector < Process * >*IRModule::getProcesses()
 {
 	return &this->processes;
 }
@@ -25,7 +25,7 @@ void IRModule::addProcess(Process * process)
 
 
 /******** Ports ********/
-vector < Port * >*IRModule::getPorts()
+std::vector < Port * >*IRModule::getPorts()
 {
 	return &this->ports;
 }
@@ -36,7 +36,7 @@ void IRModule::addPort(Port * port)
 }
 
 /******** Events ********/
-vector < Event * >*IRModule::getEvents()
+std::vector < Event * >*IRModule::getEvents()
 {
 	return &this->events;
 }
@@ -48,7 +48,7 @@ void IRModule::addEvent(Event * event)
 
 
 /******** Shared Variables ********/
-vector < GlobalVariable * >*IRModule::getSharedVariables()
+std::vector < GlobalVariable * >*IRModule::getSharedVariables()
 {
 	return &this->sharedVariables;
 }
@@ -58,18 +58,18 @@ void IRModule::addSharedVariable(GlobalVariable * gv)
 	this->sharedVariables.push_back(gv);
 }
 
-string IRModule::getModuleType()
+std::string IRModule::getModuleType()
 {
 	return this->typeName;
 }
 
-string IRModule::getUniqueName()
+std::string IRModule::getUniqueName()
 {
 	return this->name;
 }
 
 /********** Pretty print **********/
-void IRModule::printElab(int sep, string prefix)
+void IRModule::printElab(int sep, std::string prefix)
 {
 	std::vector < Process * >::iterator itProcesses;
 	std::vector < Port * >::iterator itPorts;
@@ -80,8 +80,7 @@ void IRModule::printElab(int sep, string prefix)
 		port->printElab(sep + 3, prefix);
 	}
 	TRACE("\n");
-	for (itProcesses = this->processes.begin(); itProcesses < this->processes.end();
-	     itProcesses++) {
+	for (itProcesses = this->processes.begin(); itProcesses < this->processes.end(); ++itProcesses) {
 		Process *p = *itProcesses;
 		p->printElab(sep + 3, prefix);
 	}

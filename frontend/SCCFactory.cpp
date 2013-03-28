@@ -1,5 +1,17 @@
 #include "SCCFactory.hpp"
 #include "Process.hpp"
+#include "SCConstruct.hpp"
+
+#include "EventHandler.hpp"
+#include "DefaultTimeHandler.hpp"
+#include "NotifyHandler.hpp"
+#include "ZeroTimeHandler.hpp"
+#include "WriteHandler.hpp"
+#include "ReadHandler.hpp"
+#include "RandHandler.h"
+#include "AssertHandler.h"
+#include "BasicHandler.h"
+
 
 SCCFactory::SCCFactory(SCJit * scjit)
 {
@@ -36,7 +48,7 @@ SCCFactory::~SCCFactory()
 	for (std::map < Instruction *, std::map<Process*, SCConstruct *> >::iterator it =
 		     this->scc.begin(); it != this->scc.end(); it++) {
 		std::map<Process*, SCConstruct *> aMap = it->second;
-		for (std::map<Process*, SCConstruct *>::iterator itM = aMap.begin(); itM != aMap.end(); itM++) {
+		for (std::map<Process*, SCConstruct *>::iterator itM = aMap.begin(); itM != aMap.end(); ++itM) {
 			SCConstruct *construct = itM->second;
 			delete construct;
 		}

@@ -1,3 +1,4 @@
+/*
 #ifndef SIMPLEBACKENDNAMEALLUSEDSTRUCTSANDMERGEFUNCTIONS_H
 #define SIMPLEBACKENDNAMEALLUSEDSTRUCTSANDMERGEFUNCTIONS_H
 
@@ -18,3 +19,4 @@ class SimpleBackendNameAllUsedStructsAndMergeFunctions :  public ModulePass  {
   virtual bool runOnModule(Module &M);
 };
 #endif
+*/

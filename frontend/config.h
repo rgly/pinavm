@@ -1,17 +1,13 @@
 #ifndef _CONFIG_H
 #define _CONFIG_H
 
-#include <iostream>
-#include <unistd.h>
-#include <stdlib.h>
-
-//#include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 
 extern bool disable_debug_msg;
 
 #define VERBOSE 7
 
-#define TRACE(Msg) std::cout << Msg; std::cout.flush();
+#define TRACE(Msg) llvm::outs() << Msg; llvm::outs().flush();
 
 #define TRACE_DEBUG(Msg) if (! disable_debug_msg) { TRACE(Msg) }
 

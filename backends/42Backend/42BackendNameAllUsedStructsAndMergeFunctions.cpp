@@ -1,3 +1,4 @@
+/*
 #include "42BackendNameAllUsedStructsAndMergeFunctions.h"
 #include "42Writer.h"
 
@@ -116,3 +117,4 @@ const char *_42BackendNameAllUsedStructsAndMergeFunctions::getPassName() const
 }
 
 char _42BackendNameAllUsedStructsAndMergeFunctions::ID = 0;
+*/

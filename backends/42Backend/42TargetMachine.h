@@ -3,16 +3,19 @@
 
 
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/DataLayout.h"
+#include "llvm/PassManager.h"
 
-#include "42BackendNameAllUsedStructsAndMergeFunctions.h"
+//#include "42BackendNameAllUsedStructsAndMergeFunctions.h"
 
 namespace llvm {
   
   struct _42TargetMachine : public TargetMachine {
-  _42TargetMachine(const Target &T, const std::string &TT, const std::string &FS)
-    : TargetMachine(T) {}
-    
+  _42TargetMachine(const Target &T, StringRef TargetTriple, StringRef CPU,
+                   StringRef FS, const TargetOptions &Options, Reloc::Model RM,
+                   CodeModel::Model CM, CodeGenOpt::Level OL)
+    : TargetMachine(T, TargetTriple, CPU, FS, Options ) {}
+
     virtual bool WantsWholeFile() const {
       return true;
     }
@@ -22,8 +25,8 @@ namespace llvm {
 					  CodeGenOpt::Level OptLevel,
 					  bool DisableVerify = true);
 
-    virtual const TargetData*
-    getTargetData() const {
+    virtual const DataLayout*
+    getDataLayout() const {
       return 0;
     }
 

@@ -1,6 +1,6 @@
 #include "TimeConstruct.hpp"
 
-TimeConstruct::TimeConstruct(Value* missingT) : SCConstruct(false)
+TimeConstruct::TimeConstruct(llvm::Value* missingT) : SCConstruct(false)
 {
 	this->id = TIMECONSTRUCT;
 	this->missingTime = missingT;

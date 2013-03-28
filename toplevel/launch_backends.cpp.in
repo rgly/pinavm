@@ -1,0 +1,25 @@
+#ifndef LAUNCH_BACKEND_CPP
+#define LAUNCH_BACKEND_CPP
+
+#include "BackendOption.h"
+class Frontend;
+
+#define EXTERN_F(little_name) \
+extern void launch_##little_name##backend(Frontend*, BackendOption&);
+
+#define LAUNCHBACKEND(big_name,little_name) \
+        else if (backend == #big_name || backend == #little_name ) \
+                launch_##little_name##backend(fe, option) ;
+
+@PRINT_BACKEND_INCLUDE@
+
+
+bool launch_backends(Frontend* fe, std::string backend, BackendOption& option)
+{
+if (backend == "-") ;
+@PRINT_BACKEND_LAUNCH@ 
+else return false;
+return true;
+}
+
+#endif

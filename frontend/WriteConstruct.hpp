@@ -12,7 +12,7 @@ protected:
 	Port * port;
 	Value * missingValue;
 	Value * missingPort;
-	string value;
+	std::string value;
 
 public:
 	WriteConstruct(Port * p);

@@ -1,18 +1,23 @@
 #include "Process.hpp"
-#include "IRModule.hpp"
-#include "SCConstruct.hpp"
+#include "Event.hpp"
 #include "SCCFactory.hpp"
 #include "utils.h"
-#include "llvm/Intrinsics.h"
+
+#include "llvm/Instructions.h"
 
 #include <algorithm>
-#include <vector>
+#include <map>
 
-using namespace std;
+#include "config.h"
+
+using namespace llvm;
+
+struct SCConstruct;
+struct IRModule;
 
 static int nbProcesses = 0;
 
-Process::Process(IRModule * mod, Function * mainFunc, string name, string funcName)
+Process::Process(IRModule * mod, Function * mainFunc, std::string name, std::string funcName)
 {
 	this->module = mod;
 	this->mainFct = mainFunc;
@@ -26,12 +31,12 @@ int Process::getPid()
 	return this->pid;
 }
 
-string Process::getFctName()
+std::string Process::getFctName()
 {
 	return this->fctName;
 }
 
-string Process::getName()
+std::string Process::getName()
 {
 	return this->processName;
 }
@@ -58,7 +63,7 @@ Process::getEvents()
 }
 
 /********** Pretty print **********/
-void Process::printElab(int sep, string prefix)
+void Process::printElab(int sep, std::string prefix)
 {
 	std::vector < Event * >::iterator itE;
 	this->printPrefix(sep, prefix);
@@ -72,7 +77,6 @@ void Process::printElab(int sep, string prefix)
 
 void Process::printIR(SCCFactory * sccfactory)
 {
-	Function *F;
 	bool printBB = false;
 
 	std::map < Instruction *, std::map<Process*, SCConstruct * > >* constructs = sccfactory->getConstructs();
@@ -80,9 +84,9 @@ void Process::printIR(SCCFactory * sccfactory)
 	
 	for (std::vector < Function * >::iterator itF = this->usedFunctions.begin(); itF < this->usedFunctions.end(); ++itF) {
 		Function *F = *itF;
-		TRACE("Function : " << F->getNameStr() << "\n");
+		TRACE("Function : " << F->getName().str() << "\n");
 		for (Function::iterator bb = F->begin(), be = F->end(); bb != be; ++bb) {
-			TRACE("   BasicBlock : " << bb->getNameStr() << "\n");
+			TRACE("   BasicBlock : " << bb->getName().str() << "\n");
 			BasicBlock::iterator i = bb->begin(), ie = bb->end();
 			printBB = false;
 			bool isACall = false;
@@ -101,14 +105,14 @@ void Process::printIR(SCCFactory * sccfactory)
 				}
 				if (isACall) {
 					if ((itC = constructs->find(currentInst)) != constructs->end()) {
-						map<Process*, SCConstruct*> CbyP = itC->second;
+						std::map<Process*, SCConstruct*> CbyP = itC->second;
 						SCConstruct *scc = CbyP.find(this)->second;
 						//						TRACE("    ---> SCC Construct : " << scc->toString() << "\n");
 					} else if (! calledFunction) {
 						TRACE("    Call function pointer\n");
 					}
 				}
-				i++;
+				++i;
 			}
 		}
 	}
@@ -121,7 +125,7 @@ std::vector < Function * >*Process::getUsedFunctions()
 
 void Process::addUsedFunction(Function * fct)
 {
-	if (find(this->usedFunctions.begin(), this->usedFunctions.end(), fct) == this->usedFunctions.end()) {
+	if (std::find(this->usedFunctions.begin(), this->usedFunctions.end(), fct) == this->usedFunctions.end()) {
 		this->usedFunctions.push_back(fct);
 	}
 }

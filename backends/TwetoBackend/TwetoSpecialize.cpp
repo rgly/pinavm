@@ -22,10 +22,10 @@
 #include <llvm/Support/CallSite.h>
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/FormattedStream.h>
-#include <llvm/Support/IRBuilder.h>
+#include <llvm/IRBuilder.h>
 #include <llvm/Support/InstIterator.h>
 #include <llvm/Support/raw_ostream.h>
-#include <llvm/Target/TargetData.h>
+#include <llvm/DataLayout.h>
 #include <llvm/Transforms/IPO.h>
 #include <llvm/Transforms/Scalar.h>
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
@@ -59,12 +59,12 @@ static bool NoTwetoOpt = false;
 
 static IRBuilder<> *IRB = NULL;
 static FunctionPassManager *FPM = NULL;
-static TargetData *TD = NULL;
-static const IntegerType *i64;
-static const IntegerType *i32;
-static const IntegerType *i16;
-static const IntegerType *i8;
-static const IntegerType *i_ptr;
+static DataLayout *TD = NULL;
+static IntegerType *i64;
+static IntegerType *i32;
+static IntegerType *i16;
+static IntegerType *i8;
+static IntegerType *i_ptr;
 
 static int execute_constant_loads(Function*);
 static int resolve_indirect_calls(Function*, Module*, ExecutionEngine*);
@@ -100,7 +100,7 @@ static void init(Module *Mod) {
   if (done) return;
   LLVMContext &Context = getGlobalContext();
   IRB = new IRBuilder<>(Context);
-  TD = new TargetData(Mod);
+  TD = new DataLayout(Mod);
   FPM = new FunctionPassManager(Mod);
   FPM->add(TD);
   FPM->add(createIndVarSimplifyPass());
@@ -157,18 +157,18 @@ void tweto_specialize__create(Module *Mod, Function *oldfunc,
   assert(!oldfunc->isDeclaration());
 
   // compute the type of the new function
-  std::vector<const Type*> arg_types;
+  std::vector<Type*> arg_types;
   for (unsigned i = 0; i!=args_size; ++i)
     if (args[i]==NULL)
       arg_types.push_back(oldfunc_type->getParamType(i));
-  const FunctionType *newfunc_type =
+  FunctionType *newfunc_type =
     FunctionType::get(oldfunc_type->getReturnType(), arg_types, false);
 
   // create the new function
-  std::string name = oldfunc->getNameStr()+std::string("_specialized");
-  newfunc = Function::Create(newfunc_type, Function::ExternalLinkage, name, Mod);
+  std::string name = oldfunc->getName().str()+std::string("_specialized");
+  newfunc = Function::Create(newfunc_type, Function::ExternalLinkage, StringRef(name), Mod);
   assert(newfunc->empty());
-  newfunc->addFnAttr(Attribute::InlineHint);
+  newfunc->addFnAttr(Attributes::InlineHint);
 
   { // set name of newfunc arguments and complete args
     Function::arg_iterator nai = newfunc->arg_begin(), oai = oldfunc->arg_begin();
@@ -185,7 +185,7 @@ void tweto_specialize__create(Module *Mod, Function *oldfunc,
   // create call to old function
   BasicBlock *BB = BasicBlock::Create(Context, "entry", newfunc);
   IRB->SetInsertPoint(BB);
-  ci = IRB->CreateCall(oldfunc,args_begin,args_end);
+  ci = IRB->CreateCall(oldfunc,ArrayRef<Value*>(args_begin,args_end));
   if (ci->getType()->isVoidTy())
     IRB->CreateRetVoid();
   else
@@ -228,7 +228,7 @@ void tweto_specialize__optimize(Function *newfunc, CallInst *ci,
                                 Value **args_begin, Value **args_end) {
   assert(newfunc);
   formatted_raw_ostream *Out = &fouts();
-  LLVMContext &Context = getGlobalContext();
+  // LLVMContext &Context = getGlobalContext();
   { // Inline the call
     InlineFunctionInfo i(NULL, TD);
     bool success = InlineFunction(ci, i);
@@ -277,7 +277,7 @@ int execute_constant_loads(Function *F) {
           if (ConstantInt *ci = dyn_cast<ConstantInt>(ce->getOperand(0))) {
             const intptr_t ip = ci->getZExtValue();
             if (is_member(const_addresses,ip)) {
-              const Type *lt = load_inst->getType();
+              Type *lt = load_inst->getType();
               if (lt==i32) {
                 ConstantInt *i32val =
                   ConstantInt::getSigned(i32,*reinterpret_cast<uint32_t*>(ip));
@@ -338,7 +338,7 @@ int resolve_indirect_calls(Function *F, Module *Mod, ExecutionEngine *EE) {
   int count = 0;
   for (inst_iterator ii = inst_begin(F), iie = inst_end(F); ii != iie; ++ii) {
     Instruction &i = *ii;
-    CallSite cs = CallSite::get(&i); // Treat Call and Invoke instructions
+    CallSite cs(&i); // Treat Call and Invoke instructions
     if (cs.getInstruction())
       if (ConstantExpr *ce = dyn_cast<ConstantExpr>(cs.getCalledValue()))
         if (ce->isCast() && !strcmp(ce->getOpcodeName(),"inttoptr"))
@@ -352,7 +352,7 @@ int resolve_indirect_calls(Function *F, Module *Mod, ExecutionEngine *EE) {
             Function *fun = Mod->getFunction(gv->getName());
              
               // TEST
-              std::cerr <<"FUN: " <<  gv->getNameStr() << std::endl;
+              std::cerr <<"FUN: " <<  gv->getName().str() << std::endl;
               
             assert(fun);
             cs.setCalledFunction(fun);
@@ -362,7 +362,7 @@ int resolve_indirect_calls(Function *F, Module *Mod, ExecutionEngine *EE) {
               if (ConstantExpr *ce = dyn_cast<ConstantExpr>(cs.getArgument(i)))
                 if (ce->isCast() && !strcmp(ce->getOpcodeName(),"inttoptr"))
                   if (ConstantInt *ci = dyn_cast<ConstantInt>(ce->getOperand(i))) {
-                    const Type *t = fun->getFunctionType()->getParamType(i);
+                    Type *t = fun->getFunctionType()->getParamType(i);
                     cs.setArgument(i,ConstantExpr::getIntToPtr(ci,t));
                   }
           }
@@ -392,7 +392,7 @@ int specialize_calls(ExecutionEngine *EE, Module *Mod, Function *F) {
     repeat = false;
     for (inst_iterator ii = inst_begin(F), iie = inst_end(F); ii != iie; ++ii) {
       Instruction &i = *ii;
-      CallSite cs = CallSite::get(&i); // Treat Call and Invoke instructions
+      CallSite cs(&i); // Treat Call and Invoke instructions
       if (cs.getInstruction())
         if (Function *oldfun = cs.getCalledFunction())
           if (!oldfun->isDeclaration()) {
@@ -425,15 +425,15 @@ int specialize_calls(ExecutionEngine *EE, Module *Mod, Function *F) {
                 BasicBlock *bb1 = i->getNormalDest();
                 BasicBlock *bb2 = i->getUnwindDest();
                 InvokeInst *newinvoke =
-                  InvokeInst::Create(newfun,bb1,bb2,args_keep,args_keep_end,"",i);
+                  InvokeInst::Create(newfun,bb1,bb2,ArrayRef<Value*>(args_keep,args_keep_end),"",i);
                 // newinvoke->setAttributes(attributes);
                 BasicBlock::iterator ii_r(i);
                 ReplaceInstWithValue(i->getParent()->getInstList(),
                                      ii_r, newinvoke);
               } else {
                 CallInst *newcall =
-                  CallInst::Create(newfun,args_keep,
-                                   args_keep_end,"",cs.getInstruction());
+                  CallInst::Create(newfun,ArrayRef<Value*>(args_keep,
+                                   args_keep_end),"",cs.getInstruction());
                 // newcall->setAttributes(attributes);
                 BasicBlock::iterator ii_r(cs.getInstruction());
                 ReplaceInstWithValue(cs.getInstruction()->getParent()->getInstList(),
