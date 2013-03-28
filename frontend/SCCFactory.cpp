@@ -1,5 +1,6 @@
 #include "SCCFactory.hpp"
 #include "Process.hpp"
+#include "SCConstruct.hpp"
 
 #include "EventHandler.hpp"
 #include "DefaultTimeHandler.hpp"
