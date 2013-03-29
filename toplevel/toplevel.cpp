@@ -57,15 +57,8 @@ static cl::opt < std::string >
 InputFilename(cl::Positional, cl::desc("<input bitcode file>"),
 	      cl::init("-"), cl::value_desc("filename"));
 
-static cl::opt < std::string >
-Args("args", cl::desc("<input args>"),
-	      cl::init(""), cl::value_desc("string"));
-
-/*
-TODO: this would be better than Args, to allow having multiple arguments.
 static cl::list<std::string>
 InputArgv(cl::ConsumeAfter, cl::desc("<program arguments>..."));
-*/
 
 
 static cl::opt < std::string >
@@ -166,7 +159,6 @@ void resolve_weak_symbol(GlobalVariable &GV) {
 
 int load_and_run_sc_main(std::string & InputFile)
 {
-	std::vector<std::string> InputArgv;
 	std::string ErrorMsg;
 
 	// Lot of copy-paste from lli.cpp
@@ -212,11 +204,8 @@ int load_and_run_sc_main(std::string & InputFile)
 
 	//EE->RegisterJITEventListener(createOProfileJITEventListener());
 
-	// TODO: manage multiple arguments correctly.
-
 	// Add the module's name to the start of the vector of arguments to main().
-	InputArgv.push_back("main.exe");
-	InputArgv.push_back(Args);
+	InputArgv.insert(InputArgv.begin(), "main.exe");
 
 	// Call the main function from M as if its signature were:
 	//   int main (int argc, char **argv, const char **envp)

@@ -105,7 +105,7 @@ PINAVM_ARGS=$(PRINT_IR_MAYBE) $(PRINT_ELAB_MAYBE) \
 endif
 
 ifdef ARG
-ARG_MAYBE=-args $(ARG)
+ARG_MAYBE=$(ARG)
 else
 ARG_MAYBE=
 endif
@@ -118,13 +118,13 @@ diff:
 
 frontend: $(PINAVM_INPUT_BC_M2R)
 	@$(MAKE) $(PINAVM)
-	$(PINAVM) $(PINAVM_INPUT_BC_M2R) $(PINAVM_ARGS) $(ARG_MAYBE)
+	$(PINAVM) $(PINAVM_ARGS) $(PINAVM_INPUT_BC_M2R) $(ARG_MAYBE)
 
 tweto: $(PINAVM_INPUT_BC) pinavm
-	$(PINAVM) -b tweto $(PINAVM_INPUT_BC) $(PINAVM_ARGS) $(ARG_MAYBE) $(REDIRECT)
+	$(PINAVM) -b tweto $(PINAVM_ARGS) $(PINAVM_INPUT_BC) $(ARG_MAYBE) $(REDIRECT)
 
 run: $(PINAVM_INPUT_BC) pinavm
-	$(PINAVM) -b run $(PINAVM_INPUT_BC) $(PINAVM_ARGS) $(ARG_MAYBE) $(REDIRECT)
+	$(PINAVM) -b run $(PINAVM_ARGS) $(PINAVM_INPUT_BC) $(ARG_MAYBE) $(REDIRECT)
 
 pan.c: $(PROMELA)
 	$(SPIN) -a $(PROMELA) 
@@ -225,7 +225,7 @@ endif
 	@echo running with $(ARG) and $(OVERRIDING);
 # If pinavm fails, make sure we don't keep a half-build .pr file around, so that next
 # "make promela" runs also fail.
-	$(PINAVM) $(PINAVM_ARGS) -b promela -o $@.part $(PINAVM_INPUT_BC_M2R) -inline $(ARG_MAYBE) $(REDIRECT)
+	$(PINAVM) $(PINAVM_ARGS) -b promela -o $@.part -inline $(PINAVM_INPUT_BC_M2R) $(ARG_MAYBE) $(REDIRECT)
 	@mv $@.part $@
 
 kascpar: $(SRC)
