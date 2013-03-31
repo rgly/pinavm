@@ -40,7 +40,7 @@ include_directories( ${LLVM_INCLUDE_DIRS} )
 link_directories( ${LLVM_LIBRARY_DIRS} )
 add_definitions( ${LLVM_DEFINITIONS} )
 
-llvm_map_components_to_libraries(REQ_LLVM_LIBRARIES jit interpreter nativecodegen bitreader selectiondag asmparser)
+llvm_map_components_to_libraries(REQ_LLVM_LIBRARIES jit interpreter nativecodegen bitreader selectiondag asmparser linker)
 
 # Find a compiler which compiles c++ source into llvm bitcode.
 # It first finds clang, then it finds llvm-g++ if there is no clang. 
@@ -52,9 +52,17 @@ find_program(LLVM_COMPILER "clang++-${LLVM_RECOMMAND_VERSION}"
 # A warning instread of error is beceuse that we don't need clang during
 # building pinavm.
 if(${LLVM_COMPILER} STREQUAL "LLVM_COMPILER-NOTFOUND")
-  message(WARNING "Could not find clang or llvm-g++."
+  message(FATAL_ERROR "Could not find clang or llvm-g++."
 		" Please install one of them !")
+else()
+  message(STATUS "Use ${LLVM_COMPILER} as llvmc")
 endif()
+
+SET(LLVMC_INCLUDE_DIR "-I${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/src/"
+                    "-I${CMAKE_SOURCE_DIR}/external/TLM-2009-07-15/include/tlm"
+                    "-I${CMAKE_SOURCE_DIR}/external/basic")
+SET(LLVMC_FLAGS ${LLVMC_INCLUDE_DIR} ${LLVM_DEFINITIONS} -fno-inline-functions
+                -fno-use-cxa-atexit -emit-llvm -c )
 
 # For debug use only
 if(false)

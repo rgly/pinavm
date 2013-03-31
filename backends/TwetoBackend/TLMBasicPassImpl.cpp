@@ -52,6 +52,8 @@
 #include "IRModule.hpp"
 #include "SCJit.hpp"
 
+#include "LinkExternalBitcode.h"
+
 #include "sysc/kernel/sc_process_table.h"
 #include "sysc/kernel/sc_simcontext.h"
 #include "sysc/kernel/sc_thread_process.h"
@@ -104,6 +106,9 @@ bool TLMBasicPassImpl::runOnModule(Module &M) {
     
     MSG("\n============== TLM Basic Pass =============\n");
     this->llvmMod = &M;
+
+    this->llvmMod = LinkExternalBitcode(this->llvmMod,
+         "backends/TwetoBackend/tweto_call_method.bc");
     
     // Retrieve the method that does all the vtable calculations
     // in order to call the actual 'write' method (see replaceCallsInProcess)
