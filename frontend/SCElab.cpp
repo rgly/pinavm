@@ -186,6 +186,17 @@ Port * SCElab::trySc_Clock(IRModule * mod,
 			ch = itM->second;
 		}
 		theNewPort->addChannel(ch);
+
+		// Read sc_clock information
+		// NOTE : clockchannel is not contained in SCElab.channels.
+                sc_core::sc_clock* sc_cch =
+				 dynamic_cast<sc_core::sc_clock*>(itf) ;
+                ClockChannel* cch = dynamic_cast<ClockChannel*>(ch) ;
+                cch->setClock(  sc_cch->period().to_seconds(),
+                                sc_cch->duty_cycle(),
+                                sc_cch->start_time().to_seconds(),
+                                sc_cch->posedge_first() ) ;
+
 		TRACE_2("Add (sc_port_base) " << port << " -> (CLOCK_PORT) " << theNewPort << " with channel " << ch <<"\n");
 	}
 	return theNewPort;
