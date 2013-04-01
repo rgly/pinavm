@@ -60,8 +60,3 @@ which should be redefined with respect to ELAB.
 small pass of my own). I propose to change it once a name has been
 found. If we keep "pinapa", renaming the file "PinapaPass" would be
 clearer.
-
-- Creating subdirectories (for instance, putting all constructs and
-handlers in a SCConstructs/ directory) would be nice, but my few tries
-were not successful and I decided not to waste time with that for the
-moment.

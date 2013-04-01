@@ -9,3 +9,5 @@ To create your own Construct:
     All Constructs must public inherit SCConstruct.
 
 
+To include :
+    use #include "ALLConstruct.h" , which includes all the constructs.

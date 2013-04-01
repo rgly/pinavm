@@ -7,7 +7,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Instruction.h"
 
-#include "SCConstructHandler.hpp"
+#include "SCConstructs/SCConstructHandler.hpp"
 
 
 struct Process;

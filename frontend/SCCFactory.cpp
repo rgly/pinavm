@@ -1,17 +1,7 @@
 #include "SCCFactory.hpp"
 #include "Process.hpp"
-#include "SCConstruct.hpp"
-
-#include "EventHandler.hpp"
-#include "DefaultTimeHandler.hpp"
-#include "NotifyHandler.hpp"
-#include "ZeroTimeHandler.hpp"
-#include "WriteHandler.hpp"
-#include "ReadHandler.hpp"
-#include "RandHandler.h"
-#include "AssertHandler.h"
-#include "BasicHandler.h"
-
+#include "SCConstructs/SCConstruct.hpp"
+#include "ALLHandler.h"
 
 SCCFactory::SCCFactory(SCJit * scjit)
 {
