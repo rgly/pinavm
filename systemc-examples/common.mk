@@ -151,13 +151,6 @@ ifndef SYSTEMC_INCLUDE
 SYSTEMC_INCLUDE=-I$(INSTALL_PATH_SYSTEMC_GCC)/include
 endif
 
-ifndef CPPSCFLAGS
-CPPSCFLAGS=-I$(SOURCE_ROOT)/external/systemc-2.2.0/src/ -I$(SOURCE_ROOT)/external/TLM-2009-07-15/include/tlm -I$(SOURCE_ROOT)/external/basic
-endif
-
-ifndef LLVMGCCFLAGS
-LLVMGCCFLAGS=-fno-inline-functions -fno-use-cxa-atexit -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS $(CPPSCFLAGS)
-endif
 
 GCC_SSA=${patsubst %.$(SUF),%.$(SUF).ssa,$(SRC)}
 LLOPT=${patsubst %.ll,%.opt.ll,$(LL)}
@@ -209,7 +202,7 @@ endif
 	llvm-dis -f $*.bc -o $*.ll
 
 %.bc: %.$(SUF) Makefile
-	clang $(LLVMGCCFLAGS) -emit-llvm -c $< -o $@ $(INCLUDE)
+	$(LLVM_COMPILER) $(LLVMC_FLAGS) $< -o $@ $(INCLUDE)
 
 %.simu: %.$(SUF) Makefile
 	$(COMP) $< -o $@ $(SYSTEMCLIB) $(CPPFLAGS) $(SYSTEMC_INCLUDE)

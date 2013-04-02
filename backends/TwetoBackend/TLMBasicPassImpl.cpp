@@ -103,7 +103,7 @@ bool TLMBasicPassImpl::runOnModule(Module &M) {
     this->llvmMod = &M;
 
     this->llvmMod = LinkExternalBitcode(this->llvmMod,
-         "backends/TwetoBackend/tweto_call_method.bc");
+         "backends/TwetoBackend/tweto_call_method.ll");
     
     // Retrieve the method that does all the vtable calculations
     // in order to call the actual 'write' method (see replaceCallsInProcess)

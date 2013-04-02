@@ -42,27 +42,90 @@ add_definitions( ${LLVM_DEFINITIONS} )
 
 llvm_map_components_to_libraries(REQ_LLVM_LIBRARIES jit interpreter nativecodegen bitreader selectiondag asmparser linker)
 
-# Find a compiler which compiles c++ source into llvm bitcode.
-# It first finds clang, then it finds llvm-g++ if there is no clang. 
-find_program(LLVM_COMPILER "clang++-${LLVM_RECOMMAND_VERSION}"
-		NAMES clang++ clang llvm-g++ llvm-gcc
-		HINTS ${LLVM_ROOT}/bin )
 
-# Checks whether a LLVM_COMPILER is found, give a warning if not found.
-# A warning instread of error is beceuse that we don't need clang during
-# building pinavm.
-if(${LLVM_COMPILER} STREQUAL "LLVM_COMPILER-NOTFOUND")
-  message(FATAL_ERROR "Could not find clang or llvm-g++."
-		" Please install one of them !")
+# Find a compiler which compiles c++ source into llvm bitcode.
+# ====================== find CLANG ===================================
+find_program(CLANG "clang++-${LLVM_RECOMMAND_VERSION}"
+      	  NAMES clang++ 
+      	  HINTS ${LLVM_ROOT}/bin /usr/bin )
+
+if(NOT (${CLANG} STREQUAL "CLANG-NOTFOUND"))
+  SET(CLANG_FOUND TRUE)
+  SET(CLANG_FLAGS -emit-llvm )
+  message(STATUS "find ${CLANG}")
 else()
-  message(STATUS "Use ${LLVM_COMPILER} as llvmc")
+  SET(CLANG_FOUND FALSE)
 endif()
+
+# ===================== find DragonEgg =================================
+# Since DragonEgg is compiled with certain Gcc version, and I do not
+# have any good idea to detect the gcc version which DragonEgg use.
+# Users should explicitly specify gcc version if they want to use
+# DragonEgg.  If users do not specify gcc version, then it is
+# meaningless to find DragonEgg.
+if(DEFINED DRAGONEGG_GCC)
+  # set it to true before finding anything.
+  SET(DRAGONEGG_FOUND TRUE)
+
+  # find the dragonegg, the gcc plugin.
+  find_library(DRAGONEGG "dragonegg-${LLVM_RECOMMAND_VERSION}.so"
+      	  NAMES dragonegg.so
+      	  HINTS ${LLVM_ROOT}/lib /usr/lib )
+  if(${DRAGONEGG} STREQUAL "DRAGONEGG-NOTFOUND")
+    SET(DRAGONEGG_FOUND FALSE)
+    message(WARNING "Finds no dragonegg.so")
+  endif()
+
+  # User may specify DRAGONEGG_GCC=g++-4.6, but I need absolute path.
+  find_program(ABS_DRAGONEGG_GCC ${DRAGONEGG_GCC})
+  if(${ABS_DRAGONEGG_GCC} STREQUAL "ABS_DRAGONEGG_GCC-NOFOUND")
+    SET(DRAGONEGG_FOUND FALSE)
+    message(WARNING "Finds no DRAGONEGG_GCC = \"${DRAGONEGG_GCC}\"")
+  endif()
+
+  # if condition true, means CMake finds the dragonegg.so and the correct gcc.
+  if(${DRAGONEGG_FOUND})
+    SET(DRAGONEGG_FOUND TRUE)
+    message(STATUS "find ${DRAGONEGG} with ${ABS_DRAGONEGG_GCC}")
+    SET(DRAGONEGG_FLAGS -fplugin=${DRAGONEGG} -fplugin-arg-dragonegg-emit-ir)
+  endif()
+endif()
+
+# I guess that users perfer DragonEgg if they are willing to take
+# a few seconds to specify DRAGONEGG_GCC,
+# If users specify nothing(ex: -DDRAGONEGG_GCC=g++-4.6), CMake would not
+# find DragonEgg, thus Clang is the only candidate.
+if(${DRAGONEGG_FOUND})
+  message(STATUS "Emit llvm with DragonEgg")
+  SET(LLVM_COMPILER ${ABS_DRAGONEGG_GCC})
+  SET(LLVMC_FLAGS ${DRAGONEGG_FLAGS})
+else()
+  if(${CLANG_FOUND})
+    message(STATUS "Emit llvm bitcode with Clang")
+    SET(LLVM_COMPILER ${CLANG})
+    SET(LLVMC_FLAGS ${CLANG_FLAGS})
+  else()
+    message(FATAL_ERROR "Could not find either clang or dragonegg."
+		" Please install one of them !")
+  endif()
+endif()
+
+
 
 SET(LLVMC_INCLUDE_DIR "-I${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/src/"
                     "-I${CMAKE_SOURCE_DIR}/external/TLM-2009-07-15/include/tlm"
                     "-I${CMAKE_SOURCE_DIR}/external/basic")
-SET(LLVMC_FLAGS ${LLVMC_INCLUDE_DIR} ${LLVM_DEFINITIONS} -fno-inline-functions
-                -fno-use-cxa-atexit -emit-llvm -c )
+
+# Generate llvm human readable assembly instead of llvm bitcode.
+# Quote from DragonEgg site:
+ #        Adding -fplugin-arg-dragonegg-emit-ir or -flto causes LLVM IR
+ #        to be output (you need to request assembler output, -S, rather
+ #        than object code output, -c, since otherwise gcc will pass the
+ #        LLVM IR to the system assembler, which will doubtless fail to
+ #        assemble it):
+
+SET(LLVMC_FLAGS ${LLVMC_FLAGS} ${LLVM_DEFINITIONS} ${LLVMC_INCLUDE_DIR}
+		-fno-inline-functions -fno-use-cxa-atexit -S )
 
 # For debug use only
 if(false)

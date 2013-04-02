@@ -50,6 +50,7 @@ set(INSTALL_PATH_SYSTEMC_GCC ${ABS_TOOLS_DIR}/lib/systemc-2.2.0-gcc)
 
 set(abs_top_srcdir ${CMAKE_SOURCE_DIR})
 
+string(REPLACE ";" " " LLVMC_FLAGS_SPACE "${LLVMC_FLAGS}")
 configure_file(config.sh.in config.sh)
 configure_file(config.mk.in config.mk)
 
