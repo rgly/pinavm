@@ -12,7 +12,7 @@ source "$PINAVM_DIR"/scripts/install-lib.sh
 ################ CONFIG  #####################
 ##############################################
 
-(cd "$PINAVM_DIR" && make config.sh) || exit 1
+(cd "$PINAVM_DIR" && cmake . && make config.sh) || exit 1
 source "$PINAVM_DIR"/config.sh
 
 # Make sure llvm-config and llvm-g++ are in the $PATH.
