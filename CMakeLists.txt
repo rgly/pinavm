@@ -43,7 +43,7 @@ set(EXTERNAL_TOOLS_DIR "./external/downloaded/"
 get_filename_component(ABS_TOOLS_DIR "${EXTERNAL_TOOLS_DIR}" ABSOLUTE)
 
 set(DOWNLOAD_AND_COMPILE_DIR "${ABS_TOOLS_DIR}/download")
-set(INSTALL_PATH_LLVM ${ABS_TOOLS_DIR}/lib/llvm-2.8)
+set(INSTALL_PATH_LLVM ${ABS_TOOLS_DIR}/lib/llvm-3.2)
 set(INSTALL_PATH_LLVMGCC ${ABS_TOOLS_DIR}/lib/llvm-gcc)
 set(INSTALL_PATH_SYSTEMC_LLVM ${ABS_TOOLS_DIR}/lib/systemc-2.2.0-llvm)
 set(INSTALL_PATH_SYSTEMC_GCC ${ABS_TOOLS_DIR}/lib/systemc-2.2.0-gcc)

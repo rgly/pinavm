@@ -52,8 +52,8 @@ install_llvm() {
 
     echo "Building llvm..."
     cd "$DOWNLOAD_AND_COMPILE_DIR"
-    svn checkout http://llvm.org/svn/llvm-project/llvm/branches/release_28/ llvm-2.8
-    cd llvm-2.8
+    svn checkout http://llvm.org/svn/llvm-project/llvm/branches/release_32/ llvm-3.2
+    cd llvm-3.2
     test -d objdir || mkdir objdir
     cd objdir
     ../configure ${llvm_configure_flags}
