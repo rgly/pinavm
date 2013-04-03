@@ -105,7 +105,7 @@ PINAVM_ARGS=$(PRINT_IR_MAYBE) $(PRINT_ELAB_MAYBE) \
 endif
 
 ifdef ARG
-ARG_MAYBE=-args $(ARG)
+ARG_MAYBE=$(ARG)
 else
 ARG_MAYBE=
 endif
@@ -118,13 +118,13 @@ diff:
 
 frontend: $(PINAVM_INPUT_BC_M2R)
 	@$(MAKE) $(PINAVM)
-	$(PINAVM) $(PINAVM_INPUT_BC_M2R) $(PINAVM_ARGS) $(ARG_MAYBE)
+	$(PINAVM) $(PINAVM_ARGS) $(PINAVM_INPUT_BC_M2R) $(ARG_MAYBE)
 
 tweto: $(PINAVM_INPUT_BC) pinavm
-	$(PINAVM) -b tweto $(PINAVM_INPUT_BC) $(PINAVM_ARGS) $(ARG_MAYBE) $(REDIRECT)
+	$(PINAVM) -b tweto $(PINAVM_ARGS) $(PINAVM_INPUT_BC) $(ARG_MAYBE) $(REDIRECT)
 
 run: $(PINAVM_INPUT_BC) pinavm
-	$(PINAVM) -b run $(PINAVM_INPUT_BC) $(PINAVM_ARGS) $(ARG_MAYBE) $(REDIRECT)
+	$(PINAVM) -b run $(PINAVM_ARGS) $(PINAVM_INPUT_BC) $(ARG_MAYBE) $(REDIRECT)
 
 pan.c: $(PROMELA)
 	$(SPIN) -a $(PROMELA) 
@@ -151,13 +151,6 @@ ifndef SYSTEMC_INCLUDE
 SYSTEMC_INCLUDE=-I$(INSTALL_PATH_SYSTEMC_GCC)/include
 endif
 
-ifndef CPPSCFLAGS
-CPPSCFLAGS=-I$(SOURCE_ROOT)/external/systemc-2.2.0/src/ -I$(SOURCE_ROOT)/external/TLM-2009-07-15/include/tlm -I$(SOURCE_ROOT)/external/basic
-endif
-
-ifndef LLVMGCCFLAGS
-LLVMGCCFLAGS=-fno-inline-functions -fno-use-cxa-atexit -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS $(CPPSCFLAGS)
-endif
 
 GCC_SSA=${patsubst %.$(SUF),%.$(SUF).ssa,$(SRC)}
 LLOPT=${patsubst %.ll,%.opt.ll,$(LL)}
@@ -209,7 +202,7 @@ endif
 	llvm-dis -f $*.bc -o $*.ll
 
 %.bc: %.$(SUF) Makefile
-	clang $(LLVMGCCFLAGS) -emit-llvm -c $< -o $@ $(INCLUDE)
+	$(LLVM_COMPILER) $(LLVMC_FLAGS) $< -o $@ $(INCLUDE)
 
 %.simu: %.$(SUF) Makefile
 	$(COMP) $< -o $@ $(SYSTEMCLIB) $(CPPFLAGS) $(SYSTEMC_INCLUDE)
@@ -225,7 +218,7 @@ endif
 	@echo running with $(ARG) and $(OVERRIDING);
 # If pinavm fails, make sure we don't keep a half-build .pr file around, so that next
 # "make promela" runs also fail.
-	$(PINAVM) $(PINAVM_ARGS) -b promela -o $@.part $(PINAVM_INPUT_BC_M2R) -inline $(ARG_MAYBE) $(REDIRECT)
+	$(PINAVM) $(PINAVM_ARGS) -b promela -o $@.part -inline $(PINAVM_INPUT_BC_M2R) $(ARG_MAYBE) $(REDIRECT)
 	@mv $@.part $@
 
 kascpar: $(SRC)

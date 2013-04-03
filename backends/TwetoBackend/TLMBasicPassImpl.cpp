@@ -40,17 +40,14 @@
 #include "Port.hpp"
 #include "Channel.hpp"
 #include "SimpleChannel.hpp"
-#include "SCCFactory.hpp"
 #include "SCElab.h"
-#include "SCConstruct.hpp"
-#include "EventConstruct.hpp"
-#include "ReadConstruct.hpp"
-#include "WriteConstruct.hpp"
-#include "AssertConstruct.hpp"
-#include "RandConstruct.hpp"
 #include "Process.hpp"
 #include "IRModule.hpp"
 #include "SCJit.hpp"
+#include "ALLConstruct.h"
+#include "SCCFactory.hpp"
+
+#include "LinkExternalBitcode.h"
 
 #include "sysc/kernel/sc_process_table.h"
 #include "sysc/kernel/sc_simcontext.h"
@@ -104,6 +101,9 @@ bool TLMBasicPassImpl::runOnModule(Module &M) {
     
     MSG("\n============== TLM Basic Pass =============\n");
     this->llvmMod = &M;
+
+    this->llvmMod = LinkExternalBitcode(this->llvmMod,
+         "backends/TwetoBackend/tweto_call_method.ll");
     
     // Retrieve the method that does all the vtable calculations
     // in order to call the actual 'write' method (see replaceCallsInProcess)

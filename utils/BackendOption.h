@@ -6,11 +6,11 @@
 namespace sc_core {
     class sc_simcontext;
     class sc_time;
-};
+}
 
 namespace llvm {
     class ExecutionEngine;
-};
+}
 
 struct BackendOption {
 std::string OutputFilename;
