@@ -27,14 +27,14 @@ export PATH
 
 llvm_configure_flags="--prefix=$INSTALL_PATH_LLVM --enable-debug-runtime --disable-optimized --enable-checking --enable-bindings=none --enable-libffi=no"
 
-# TODO: all this tests should probably be moved to the configure
-# script.
-if ! llvm-gcc --version > /dev/null; then
-    echo "llvm-gcc doesn't seem to be installed on your system."
-    echo "you can install it yourself (aptitude install llvm-gcc does the"
-    echo "trick on Debian systems), or let me do it."
-    do_you_want install_llvm_gcc
-fi
+# # TODO: all this tests should probably be moved to the configure
+# # script.
+# if ! llvm-gcc --version > /dev/null; then
+#     echo "llvm-gcc doesn't seem to be installed on your system."
+#     echo "you can install it yourself (aptitude install llvm-gcc does the"
+#     echo "trick on Debian systems), or let me do it."
+#     do_you_want install_llvm_gcc
+# fi
 
 # Debian's llvm-config give /usr/include/llvm while hand-compiled
 # llvm-config gives the path without llvm/.
