@@ -3,68 +3,87 @@
 
 # the llvm version is setting to this variable.
 SET(LLVM_RECOMMAND_VERSION 3.2)
+# the llvm libraries we need.
+SET(NEED_LLVM_LIB jit interpreter nativecodegen bitreader
+			selectiondag asmparser linker)
 
-
-if(NOT DEFINED ${LLVM_ROOT})
-  # find llvm-config. perfers to the one with version suffix, Ex:llvm-config-3.2
-  find_program(LLVM_CONFIG_EXE NAMES
-			"llvm-config-${LLVM_RECOMMAND_VERSION}" "llvm-config")
-
-  if(${LLVM_CONFIG_EXE} STREQUAL "LLVM_CONFIG_EXE-NOTFOUND")
-    if(NOT DEFINED AUTOINSTALL)
-      SET(AUTOINSTALL FALSE)
-    endif()
-
-    if(${AUTOINSTALL})
-      # if AUTOINSTALL is explicitly set to ture, then run installLLVM.
-      include(${CMAKE_SOURCE_DIR}/scripts/installLLVM.cmake)
-      # this find_program(llvm-config) should success.
-      find_program(LLVM_CONFIG_EXE NAMES
-			"llvm-config-${LLVM_RECOMMAND_VERSION}" "llvm-config")
-    else()
-      # on condition that finds no LLVM and user not specify AUTOINSTALL.
-      message(FATAL_ERROR "\tfinds no LLVM in your system.\n"
-		"\tPlease manually install LLVM.\n"
-		"\tOr (with root permission) :\n"
-		"\t\"cmake /where/pinavm -DAUTOINSTALL=TRUE\"\n"
-		"\twhich should automatically install LLVM for you"
-		" during cmake time.")
-    endif()
-  endif()
-
-  # Get the directory of llvm by using llvm-config. also remove whitespaces.
-  execute_process(COMMAND ${LLVM_CONFIG_EXE} --prefix OUTPUT_VARIABLE LLVM_ROOT
-		 OUTPUT_STRIP_TRAILING_WHITESPACE )
+# get the absolute path of LLVM_ROOT if it has a definition.
+if(DEFINED LLVM_ROOT)
+  get_filename_component(LLVM_ROOT ${LLVM_ROOT} ABSOLUTE)
+  message(STATUS "use LLVM_ROOT : ${LLVM_ROOT}")
 endif()
 
-# We incorporate the CMake features provided by LLVM:
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${LLVM_ROOT}/share/llvm/cmake")
+# find llvm-config. perfers to the one with version suffix, Ex:llvm-config-3.2
+find_program(LLVM_CONFIG_EXE NAMES
+      		"llvm-config-${LLVM_RECOMMAND_VERSION}" "llvm-config"
+		PATHS ${LLVM_ROOT}/bin)
 
-# Not using version check in find_package is that llvm version is 3.2svn,
-# which is different to 3.2 of debian package pool.
-# So checks version later.
-find_package(LLVM REQUIRED)
+# In case of finds no LLVM, give user a hint to install LLVM
+if(${LLVM_CONFIG_EXE} STREQUAL "LLVM_CONFIG_EXE-NOTFOUND")
+  if(NOT DEFINED AUTOINSTALL)
+    SET(AUTOINSTALL FALSE)
+  endif()
+
+  if(${AUTOINSTALL})
+    # if AUTOINSTALL is explicitly set to ture, then run installLLVM.
+    include(${CMAKE_SOURCE_DIR}/scripts/installLLVM.cmake)
+    # this find_program(llvm-config) should success.
+    find_program(LLVM_CONFIG_EXE NAMES
+      		"llvm-config-${LLVM_RECOMMAND_VERSION}" "llvm-config"
+		PATHS ${LLVM_ROOT}/bin)
+  else()
+    # on condition that finds no LLVM and user not specify AUTOINSTALL.
+    message(FATAL_ERROR "\tfinds no LLVM in your system.\n"
+      	"\tPlease manually install LLVM.\n"
+      	"\tOr (with root permission) :\n"
+      	"\t\"cmake /where/pinavm -DAUTOINSTALL=TRUE\"\n"
+      	"\twhich should automatically install LLVM for you"
+      	" during cmake time.")
+  endif()
+endif()
+
+# after here. LLVM_CONFIG_EXE is found.
+# we are going to set LLVM_ROOT
+if(NOT DEFINED LLVM_ROOT)
+  # Get the directory of llvm by using llvm-config. also remove whitespaces.
+  execute_process(COMMAND ${LLVM_CONFIG_EXE} --prefix
+		 OUTPUT_VARIABLE LLVM_ROOT
+                 OUTPUT_STRIP_TRAILING_WHITESPACE )
+endif()
+
+# set the cmake prefix so that we can search thing the ${LLVM_ROOT}
+LIST(APPEND CMAKE_PREFIX_PATH ${LLVM_ROOT}/bin)
+
+
+
+# try to load the CMake module of LLVM.
+include(${CMAKE_SOURCE_DIR}/scripts/loadLLVMModule.cmake)
 
 # Check whether LLVM 3.2 is found.
 if(NOT ${LLVM_FOUND})
-  message(FATAL_ERROR "LLVM_ROOT(${LLVM_ROOT}) is not a valid LLVM install\n"
-		"You can explicitly specify your llvm_root by "
-		"cmake /where/pinavm/is -DLLVM_ROOT=/my/llvm/install/dir\n"
+  # if CMake module of LLVM is not found, we collect infomation
+  # through llvm-config.
+  include(${CMAKE_SOURCE_DIR}/scripts/loadLLVMConfig.cmake)
+  if(NOT ${LLVM_FOUND})
+    message(FATAL_ERROR "(${LLVM_ROOT}) is not a valid LLVM install\n"
+		"You can explicitly specify your llvm_root by\n"
+		"\"cmake /where/pinavm/is -DLLVM_ROOT=/my/llvm/install/dir\"\n"
 		"or make llvm-config visible in $PATH")
+  endif()
 endif()
 
 # Check whether the LLVM version meets our requirement.
 # Maybe an ERROR is better than a WARNING message here?
-if( NOT ("${LLVM_VERSION_MAJOR}.${LLVM_VERSION_MINOR}" STREQUAL ${LLVM_RECOMMAND_VERSION} ))
-  message(WARNING "LLVM version is recommanded to be ${LLVM_RECOMMAND_VERSION}")
+if( NOT (${LLVM_VERSION} MATCHES ${LLVM_RECOMMAND_VERSION}* ))
+  message(WARNING "LLVM version is recommanded to be ${LLVM_RECOMMAND_VERSION}\n"
+	"Your current version is ${LLVM_VERSION}")
 endif()
 
-# Use settings from LLVM cmake module.
+# Use settings from LLVM cmake module or llvm-config.
 include_directories( ${LLVM_INCLUDE_DIRS} )
 link_directories( ${LLVM_LIBRARY_DIRS} )
 add_definitions( ${LLVM_DEFINITIONS} )
-
-llvm_map_components_to_libraries(REQ_LLVM_LIBRARIES jit interpreter nativecodegen bitreader selectiondag asmparser linker)
+SET(REQ_LLVM_LIBRARIES ${LLVM_LIBS})
 
 
 # Find a compiler which compiles c++ source into llvm bitcode.
@@ -151,12 +170,17 @@ SET(LLVMC_INCLUDE_DIR "-I${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/src/"
 SET(LLVMC_FLAGS ${LLVMC_FLAGS} ${LLVM_DEFINITIONS} ${LLVMC_INCLUDE_DIR}
 		-fno-inline-functions -fno-use-cxa-atexit -S )
 
+if(NOT DEFINED TEST_CMAKE)
+  SET(TEST_CMAKE FALSE)
+endif()
+
 # For debug use only
-if(false)
+if(${TEST_CMAKE})
   message("debug messages below")
   message("LLVM_ROOT is ${LLVM_ROOT}")
   message("REQ_LLVM_LIBRARIES is ${REQ_LLVM_LIBRARIES}")
   message("LLVM_COMPILER is ${LLVM_COMPILER}")
+  message("LLVMC_FLAGS is ${LLVMC_FLAGS}")
   message("LLVM_DEFINITIONS is ${LLVM_DEFINITIONS}")
   message("LLVM_LIBRARY_DIRS is ${LLVM_LIBRARY_DIRS}")
   message("LLVM_INCLUDE_DIRS is ${LLVM_INCLUDE_DIRS}")
