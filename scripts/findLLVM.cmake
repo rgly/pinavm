@@ -4,9 +4,33 @@
 # the llvm version is setting to this variable.
 SET(LLVM_RECOMMAND_VERSION 3.2)
 
+
 if(NOT DEFINED ${LLVM_ROOT})
   # find llvm-config. perfers to the one with version suffix, Ex:llvm-config-3.2
-  find_program(LLVM_CONFIG_EXE NAMES "llvm-config-${LLVM_RECOMMAND_VERSION}" "llvm-config")
+  find_program(LLVM_CONFIG_EXE NAMES
+			"llvm-config-${LLVM_RECOMMAND_VERSION}" "llvm-config")
+
+  if(${LLVM_CONFIG_EXE} STREQUAL "LLVM_CONFIG_EXE-NOTFOUND")
+    if(NOT DEFINED AUTOINSTALL)
+      SET(AUTOINSTALL FALSE)
+    endif()
+
+    if(${AUTOINSTALL})
+      # if AUTOINSTALL is explicitly set to ture, then run installLLVM.
+      include(${CMAKE_SOURCE_DIR}/scripts/installLLVM.cmake)
+      # this find_program(llvm-config) should success.
+      find_program(LLVM_CONFIG_EXE NAMES
+			"llvm-config-${LLVM_RECOMMAND_VERSION}" "llvm-config")
+    else()
+      # on condition that finds no LLVM and user not specify AUTOINSTALL.
+      message(FATAL_ERROR "\tfinds no LLVM in your system.\n"
+		"\tPlease manually install LLVM.\n"
+		"\tOr (with root permission) :\n"
+		"\t\"cmake /where/pinavm -DAUTOINSTALL=TRUE\"\n"
+		"\twhich should automatically install LLVM for you"
+		" during cmake time.")
+    endif()
+  endif()
 
   # Get the directory of llvm by using llvm-config. also remove whitespaces.
   execute_process(COMMAND ${LLVM_CONFIG_EXE} --prefix OUTPUT_VARIABLE LLVM_ROOT
