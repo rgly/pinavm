@@ -1,5 +1,6 @@
 #include "basic.h"
 #include "bus.h"
+#include "basic_config.h"
 
 
 Bus::Bus(sc_core::sc_module_name name) : sc_core::sc_module(name)
@@ -69,7 +70,7 @@ Bus::read(const basic::addr_t &a, /* */ basic::data_t& d)
 {
     
     // Testing the bypass
-    TRACE_DEBUG("[!] CALL THE BUS'S READ FUNCTION [!]\n");    
+    BASIC_TRACE_DEBUG("[!] CALL THE BUS'S READ FUNCTION [!]\n");    
 	if(a % sizeof(basic::data_t)) {
 		SC_REPORT_ERROR(name(),
 				"unaligned read");
@@ -101,7 +102,7 @@ Bus::write(const basic::addr_t &a, const basic::data_t &d)
 {
     
     // Testing the bypass
-    TRACE_DEBUG("[!] CALL THE BUS'S WRITE FUNCTION [!]\n");
+    BASIC_TRACE_DEBUG("[!] CALL THE BUS'S WRITE FUNCTION [!]\n");
     
 	if(a % sizeof(basic::data_t)) {
 		SC_REPORT_ERROR(name(),

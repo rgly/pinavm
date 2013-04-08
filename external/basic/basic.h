@@ -6,8 +6,6 @@
 #include <tlm.h>
 #include <stdint.h>
 
-#include "../../frontend/config.h"
-
 namespace basic {
    typedef uint32_t addr_t;
    typedef uint32_t data_t;
