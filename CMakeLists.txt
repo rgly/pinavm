@@ -36,20 +36,6 @@ foreach(backend ${BACKENDS})
   add_subdirectory(backends/${backend}Backend/)
 endforeach(backend)
 
-# Config file generation
-set(EXTERNAL_TOOLS_DIR "./external/downloaded/"
-  CACHE
-  PATH "Directory where external tools will be downloaded and compiled")
-get_filename_component(ABS_TOOLS_DIR "${EXTERNAL_TOOLS_DIR}" ABSOLUTE)
-
-set(DOWNLOAD_AND_COMPILE_DIR "${ABS_TOOLS_DIR}/download")
-set(INSTALL_PATH_LLVM ${ABS_TOOLS_DIR}/lib/llvm-3.2)
-set(INSTALL_PATH_LLVMGCC ${ABS_TOOLS_DIR}/lib/llvm-gcc)
-set(INSTALL_PATH_SYSTEMC_LLVM ${ABS_TOOLS_DIR}/lib/systemc-2.2.0-llvm)
-set(INSTALL_PATH_SYSTEMC_GCC ${ABS_TOOLS_DIR}/lib/systemc-2.2.0-gcc)
-
-set(abs_top_srcdir ${CMAKE_SOURCE_DIR})
-
 string(REPLACE ";" " " LLVMC_FLAGS_SPACE "${LLVMC_FLAGS}")
 configure_file(config.sh.in config.sh)
 configure_file(config.mk.in config.mk)
