@@ -1,62 +1,111 @@
-0) Set the PATH so that a good compiler is used, for instance gcc-4.4
 
-$ which g++
-/usr/local/soft/gcc/4.4.0/bin/g++
 
-Make sure your version isn't listed here:
-http://llvm.org/docs/GettingStarted.html#brokengcc
+This file introduces PinaVM about the required software and how to build.
 
-If needed, install cmake (http://www.cmake.org/)
+________________________________________________________________________
+    Requirements
+________________________________________________________________________
 
-1) Download the tool
 
-TOOL=/where/you/want/
-git clone [...] $TOOL
+ -- GCC (http://gcc.gnu.org/)
+   _____________________________________________________________________
+    Gcc is a open-source compiler, You need gcc to compile pinavm.
+    Make sure your gcc version isn't listed here:
+    http://llvm.org/docs/GettingStarted.html#brokengcc
 
-2) Choose a temporary directory to install SystemC and LLVM :
 
-DOWNLOAD=/somewhere/else/
 
-3) Optionnally: install llvm and llvm-gcc. If you do not do so, the
-installation script will do it for you (but will take time and disk
-space to do the compilation). On a Debian-based system, this should be
-as simple as
+ -- CMake (http://www.cmake.org/)
+   _____________________________________________________________________
+    Cmake is a cross-platform open-source build system.
+    Pinavm requires cmake version newer than 2.8.8.
 
-  aptitude install llvm-dev
-  aptitude install llvm-gcc
 
-LLVM's version should be 3.2. Note that the version of LLVM provided
-by Debian requires libffi, so you may need to run
 
-  aptitude install libffi-dev
+ -- LLVM (http://llvm.org/)
+   _____________________________________________________________________
+    LLVM is a collection of compiler libraries. The source code of
+    Pinavm relies on LLVM.
+    
+    Pinavm only accepts llvm version 3.2.
+    
+    The easiest way to install LLVM is via package manager. You can
+    try to find the package named "llvm-3.2" and install it. If there
+    is no llvm-3.2 in your distribution release. Downloading source from
+    llvm.org and build it is another way. If you are lazy to install,
+    PinaVM can automatically download, build and install LLVM for you.
 
-too.
+    Autoinstall script of PinaVM is executed while configuration. With
+    -DAUTOINSTALL=TRUE, PinaVM will install both LLVM and Clang for you
+    if finds no LLVM in your system.
 
-4) Run cmake:
 
-cd $TOOL
-cmake -DEXTERNAL_TOOLS_DIR=$DOWNLOAD .
 
-5) Execute the script
 
-cd $TOOL
-./install-pinavm.sh
+ -- Clang (http://clang.llvm.org/) 
+   _____________________________________________________________________
+    Clang is a C/C++ compiler based on LLVM.
+    Pinavm needs a compiler which can generate llvm assembly, so
+    that pinavm can JIT the generated assembly to collect information
+    of systemc.
+   
+    Pianvm only accepts clang version 3.2.
 
-The script may have to install LLVM and llvm-gcc. If it does so, then
-the installed tools must be added to your PATH, like:
 
-export PATH=$PATH:$DOWNLOAD/lib/llvm-gcc/bin:$DOWNLOAD/lib/llvm-2.8/bin
+________________________________________________________________________
+    Replacement of Clang
+________________________________________________________________________
 
-You may have to restart ./install-pinavm.sh after setting your PATH.
+ -- DragonEgg (http://dragonegg.llvm.org/)
+   _____________________________________________________________________
+    Dragonegg is a gcc plugin which generate llvm assembly from AST of
+    gcc. dragonegg is a replacement of clang. Compilation of dragonegg
+    is harder than clang, so there is no autoinstall script to help.
+   
+    Pianvm only accepts dragonegg version 3.2.
 
-The script will compile the front-end and back-end. We can now run the
-examples.
 
-6) Compile an example
 
-cd $TOOL/systemc-examples/jerome-chain
-make
 
-7) Run an example
+________________________________________________________________________
+    Build PinaVM
+________________________________________________________________________
 
-./main.exe -print-ir -print-elab -b promela -o ok.3.pr main.opt.sc.bc -inline -args 3
+Building PinaVM is easy if you have exprience using cmake, just follow
+those commands.
+
+  cd /where/you/want/to/build
+  cmake /where/your/pinavm/source <Options>
+  make
+
+
+________________________________________________________________________
+    Options for CMake
+________________________________________________________________________
+
+-DLLVM_ROOT=/where/llvm/should/be
+  This option denotes your llvm installation or the position you want
+  to install llvm via autoinstall.
+
+-DAUTOINSTALL=TRUE
+  This option denotes whether cmake automatically install llvm for
+  you, by default it is false. You can also set -DLLVM_ROOT=/where/llvm
+  to specify the path where llvm will be installed to. llvm is installed
+  to ./lib/llvm-3.2 if LLVM_ROOT is blank.
+
+-DDRAGONEGG_GCC=g++-4.x
+  Dragonegg is a gcc plugin, so cmake script must know you gcc version
+  corresponding to your dragonegg. If you set this option, cmake script
+  will finding the g++ and dragonegg. if finds nothing. clang will
+  substitute dragonegg and g++.  
+
+-DCMAKE_BUILD_TYPE=None,Debug,Release
+  Users can choose build type by assigning this parameter.  By default
+  it is None. The debug level is set to -g3 if Debug is chosen.
+
+-DTEST_CMAKE=TRUE
+  CAUTION : You should not use it unless you know what cmake script
+  actually doing. Only used when users testing cmake scripts. With this
+  option, CMake downloads llvm from local space instead of llvm.org
+  and shows llvm configurations.
+

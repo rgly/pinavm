@@ -1,0 +1,15 @@
+
+
+This file briefly introduces what PinaVM is.
+
+________________________________________________________________________
+    Overview
+________________________________________________________________________
+
+PinaVM is a systemc frontend which loads a systemc executable(in llvm
+bitcode or llvm assembly) and extract systemc information from the
+loaded code. 
+
+For more details, please refer to :
+http://www-verimag.imag.fr/~moy/publications/pinavm-emsoft.pdf
+
