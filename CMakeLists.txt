@@ -5,7 +5,7 @@ project(PinaVM CXX)
 # Find and set LLVM.
 include(${CMAKE_SOURCE_DIR}/scripts/findLLVM.cmake)
 
-set(BACKENDS Tweto 42 Promela Simple)
+set(BACKENDS Tweto 42 Promela Simple Hello)
 
 # Some files define classes that inherit from LLVM classes, which are
 # compiled with -fno-rtti as of svn version 98434 (14 mach 2010) while

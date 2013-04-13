@@ -1,0 +1,14 @@
+________________________________________________________________________
+    Add A New Backend
+________________________________________________________________________
+
+1. Think a Name for your backend, I take Foo as name for the following example.
+2. Create backends/FooBackend directory
+3. Write your code in the directory, you must implement a function named
+launch_foobackend(Frontend*, BackendOption&) there.
+4. Write backends/FooBackend/CMakeLists.txt, you must create a "foo"
+   target which contains your backend code.
+5. Append Foo in BACKENDS in CMakeLists.txt.
+6. PinaVM will accept Foo or foo as backend name while -b option.
+
+There is a Hello World example, please view the backends/HelloBackend.
