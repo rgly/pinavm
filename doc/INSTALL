@@ -71,7 +71,7 @@ ________________________________________________________________________
     Build PinaVM
 ________________________________________________________________________
 
-Building PinaVM is easy if you have exprience using cmake, just follow
+Building PinaVM is easy if you have experience using cmake, just follow
 those commands.
 
   cd /where/you/want/to/build

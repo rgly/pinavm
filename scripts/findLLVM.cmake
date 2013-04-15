@@ -25,7 +25,7 @@ if(${LLVM_CONFIG_EXE} STREQUAL "LLVM_CONFIG_EXE-NOTFOUND")
   endif()
 
   if(${AUTOINSTALL})
-    # if AUTOINSTALL is explicitly set to ture, then run installLLVM.
+    # if AUTOINSTALL is explicitly set to true, then run installLLVM.
     include(${CMAKE_SOURCE_DIR}/scripts/installLLVM.cmake)
     # this find_program(llvm-config) should success.
     find_program(LLVM_CONFIG_EXE NAMES
