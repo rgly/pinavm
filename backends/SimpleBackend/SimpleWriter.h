@@ -34,7 +34,6 @@
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/Support/MathExtras.h"
-//#include "llvm/System/Host.h"
 #include "llvm/Config/config.h"
 
 #include <map>

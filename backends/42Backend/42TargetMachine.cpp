@@ -15,7 +15,6 @@ namespace llvm {
 		PM.add(createGCLoweringPass());
 		PM.add(createLowerInvokePass());
 		PM.add(createCFGSimplificationPass());	// clean up after lower invoke.
-		//PM.add(new _42BackendNameAllUsedStructsAndMergeFunctions());
 		PM.add(new _42Writer(o));
 		PM.add(createGCInfoDeleter());
 		return false;
