@@ -52,7 +52,7 @@ void launch_simplebackend(Frontend * fe,
 	Passes.add(createGCLoweringPass());
 	Passes.add(createLowerInvokePass());
 	Passes.add(createCFGSimplificationPass());	// clean up after lower invoke.
-	//Passes.add(new SimpleBackendNameAllUsedStructsAndMergeFunctions());
+	Passes.add(new SimpleBackendNameAllUsedStructsAndMergeFunctions());
 	Passes.add(simpleWriter);
 	Passes.add(createGCInfoDeleter());
 
