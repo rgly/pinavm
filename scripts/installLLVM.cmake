@@ -7,11 +7,6 @@ if(NOT DEFINED LLVM_RECOMMAND_VERSION)
   message(FATAL_ERROR "finds no LLVM_RECOMMAND_VERSION")
 endif()
 
-# give TEST_CMAKE a definition
-if(NOT DEFINED TEST_CMAKE)
-  SET(TEST_CMAKE FALSE)
-endif()
-
 if(${TEST_CMAKE})
   # for test purpose, I don't want to waste bandwidth of llvm.org.
   SET(SITE_URL file://${CMAKE_SOURCE_DIR}/../source-tgz/llvm32)
@@ -21,7 +16,6 @@ else()
 endif()
 
 SET(DOWNLOAD_DIR ${CMAKE_BINARY_DIR}/download )
-SET(RECOMMAND_LLVM_PREFIX ${CMAKE_BINARY_DIR}/lib/llvm-${LLVM_RECOMMAND_VERSION})
 SET(LLVM_SUFFIX "-${LLVM_RECOMMAND_VERSION}.src")
 
 # just hard coding them.
@@ -125,12 +119,6 @@ extract_file(${CLANG_NAME} ${CLANG_FILE} ${CLANG_SOURCE_DIR})
 extract_file(${COMPILER-RT_NAME} ${COMPILER-RT_FILE} ${COMPILER-RT_SOURCE_DIR})
 
 message(STATUS "finish extraction for the source code.")
-
-# Make sure there is a clear definition of LLVM_ROOT.
-# because we are going to configure the llvm with LLVM_ROOT as prefix.
-if(NOT DEFINED LLVM_ROOT)
-  SET(LLVM_ROOT ${RECOMMAND_LLVM_PREFIX})
-endif()
 
 # Create necessary directories.
 FILE(MAKE_DIRECTORY ${LLVM_ROOT})

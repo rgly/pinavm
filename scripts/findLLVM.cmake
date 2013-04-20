@@ -1,18 +1,3 @@
-# Follows instructions from this site.
-# http://llvm.org/docs/CMake.html#embedding-llvm-in-your-project
-
-# the llvm version is setting to this variable.
-SET(LLVM_RECOMMAND_VERSION 3.2)
-# the llvm libraries we need.
-SET(NEED_LLVM_LIB jit interpreter nativecodegen bitreader
-			selectiondag asmparser linker)
-
-# get the absolute path of LLVM_ROOT if it has a definition.
-if(DEFINED LLVM_ROOT)
-  get_filename_component(LLVM_ROOT ${LLVM_ROOT} ABSOLUTE)
-  message(STATUS "use LLVM_ROOT : ${LLVM_ROOT}")
-endif()
-
 # find llvm-config. perfers to the one with version suffix, Ex:llvm-config-3.2
 find_program(LLVM_CONFIG_EXE NAMES
       		"llvm-config-${LLVM_RECOMMAND_VERSION}" "llvm-config"
@@ -20,10 +5,6 @@ find_program(LLVM_CONFIG_EXE NAMES
 
 # In case of finds no LLVM, give user a hint to install LLVM
 if(${LLVM_CONFIG_EXE} STREQUAL "LLVM_CONFIG_EXE-NOTFOUND")
-  if(NOT DEFINED AUTOINSTALL)
-    SET(AUTOINSTALL FALSE)
-  endif()
-
   if(${AUTOINSTALL})
     # if AUTOINSTALL is explicitly set to ture, then run installLLVM.
     include(${CMAKE_SOURCE_DIR}/scripts/installLLVM.cmake)
@@ -42,14 +23,12 @@ if(${LLVM_CONFIG_EXE} STREQUAL "LLVM_CONFIG_EXE-NOTFOUND")
   endif()
 endif()
 
-# after here. LLVM_CONFIG_EXE is found.
-# we are going to set LLVM_ROOT
-if(NOT DEFINED LLVM_ROOT)
-  # Get the directory of llvm by using llvm-config. also remove whitespaces.
-  execute_process(COMMAND ${LLVM_CONFIG_EXE} --prefix
-		 OUTPUT_VARIABLE LLVM_ROOT
-                 OUTPUT_STRIP_TRAILING_WHITESPACE )
-endif()
+message(STATUS "find LLVM-Config : ${LLVM_CONFIG_EXE}")
+
+# In here. LLVM_CONFIG_EXE is found. We can get valid LLVM_ROOT.
+execute_process(COMMAND ${LLVM_CONFIG_EXE} --prefix
+		OUTPUT_VARIABLE LLVM_ROOT
+                OUTPUT_STRIP_TRAILING_WHITESPACE )
 
 # set the cmake prefix so that we can search thing the ${LLVM_ROOT}
 LIST(APPEND CMAKE_PREFIX_PATH ${LLVM_ROOT}/bin)
@@ -169,10 +148,6 @@ SET(LLVMC_INCLUDE_DIR "-I${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/src/"
 
 SET(LLVMC_FLAGS ${LLVMC_FLAGS} ${LLVM_DEFINITIONS} ${LLVMC_INCLUDE_DIR}
 		-fno-inline-functions -fno-use-cxa-atexit -S )
-
-if(NOT DEFINED TEST_CMAKE)
-  SET(TEST_CMAKE FALSE)
-endif()
 
 # For debug use only
 if(${TEST_CMAKE})
