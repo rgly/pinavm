@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.8.8)
 
 project(PinaVM CXX)
+enable_testing()
 
 include(${CMAKE_SOURCE_DIR}/scripts/PinaVMConfig.cmake)
 
@@ -31,6 +32,8 @@ add_subdirectory(external/basic)
 foreach(backend ${BACKENDS})
   add_subdirectory(backends/${backend}Backend/)
 endforeach(backend)
+
+add_subdirectory(systemc-examples)
 
 string(REPLACE ";" " " LLVMC_FLAGS_SPACE "${LLVMC_FLAGS}")
 configure_file(config.sh.in config.sh)
