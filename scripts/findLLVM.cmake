@@ -66,6 +66,7 @@ SET(REQ_LLVM_LIBRARIES ${LLVM_LIBS})
 
 # This script sets LLVMC_FLAGS and LLVM_COMPILER.
 include(${CMAKE_SOURCE_DIR}/scripts/findLLVMC.cmake)
+include(${CMAKE_SOURCE_DIR}/scripts/findLLVMTools.cmake)
 
 
 
