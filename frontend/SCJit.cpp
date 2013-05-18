@@ -141,8 +141,7 @@ Function *SCJit::buildFct(Function * f, FunctionType * FT, Instruction* inst, Va
 	Function *fctToJit;
 
 	std::stringstream ss;
-	ss << "fctToJit-" << this->nbFctToJit++;
-	std::string fctName = std::string("") + ss.str();
+	ss << f->getName().str() << "_fctToJit-" << this->nbFctToJit++;
 	fctToJit = Function::Create(FT, Function::PrivateLinkage, ss.str(), this->mdl);
 	fctToJit->setCallingConv(CallingConv::C);
 	TRACE_4("Building fctToJit : " << fctToJit->getName().str() << " " << fctToJit << "\n");
