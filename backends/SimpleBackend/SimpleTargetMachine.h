@@ -6,7 +6,7 @@
 #include "llvm/DataLayout.h"
 #include "llvm/PassManager.h"
 
-//#include "SimpleBackendNameAllUsedStructsAndMergeFunctions.h"
+#include "SimpleBackendNameAllUsedStructsAndMergeFunctions.h"
 
 namespace llvm {
   

@@ -84,17 +84,17 @@ static bool isInlinableInst(const Instruction & I)
 // variables which are accessed with the & operator.  This causes GCC to
 // generate significantly better code than to emit alloca calls directly.
 //
-static const AllocaInst *isDirectAlloca(const Value * V)
+static const bool isDirectAlloca(const Value * V)
 {
   const AllocaInst *AI = dyn_cast < AllocaInst > (V);
   if (!AI)
     return false;
   if (AI->isArrayAllocation())
-    return 0;	// FIXME: we can also inline fixed size array allocas!
+    return false;	// FIXME: we can also inline fixed size array allocas!
   if (AI->getParent() !=
       &AI->getParent()->getParent()->getEntryBlock())
-    return 0;
-  return AI;
+    return false;
+  return true;
 }
 
 /***************************************************************************
