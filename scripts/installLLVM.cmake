@@ -163,4 +163,4 @@ endif()
 
 # There is another way to implement autoinstall, but we need clang in
 # llvm/tools directory before build. I am not sure how to do that.
-#ExternalProject_Add( LLVM-3.2 URL ${LLVM_URL} URL_MD5 ${LLVM_MD5}
+#ExternalProject_Add( LLVM-${LLVM_RECOMMAND_VERSION} URL ${LLVM_URL} URL_MD5 ${LLVM_MD5}

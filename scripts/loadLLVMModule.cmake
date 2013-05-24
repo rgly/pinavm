@@ -11,9 +11,10 @@ endif()
 LIST(APPEND CMAKE_MODULE_PATH ${LLVM_ROOT}/share/llvm/cmake)
 LIST(APPEND CMAKE_PREFIX_PATH ${LLVM_ROOT}/share/llvm/cmake)
 
-# Not using version check in find_package is that llvm version is 3.2svn,
-# which is different to 3.2 of debian package pool.
-# So checks version later.
+# Not using version check in find_package is that llvm version
+# is followed by "svn" for official release, which is different
+# to the pure number of package from debian package pool. So\
+# checks version later.
 
 # The llvm's cmake module only contained in the LLVM which is build
 # through CMake. Package pool of most linux distributions do not contained

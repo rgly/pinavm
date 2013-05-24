@@ -38,7 +38,7 @@ LIST(APPEND CMAKE_PREFIX_PATH ${LLVM_ROOT}/bin)
 # try to load the CMake module of LLVM.
 include(${CMAKE_SOURCE_DIR}/scripts/loadLLVMModule.cmake)
 
-# Check whether LLVM 3.2 is found.
+# Check whether LLVM package is found.
 if(NOT ${LLVM_FOUND})
   # if CMake module of LLVM is not found, we collect infomation
   # through llvm-config.
