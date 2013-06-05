@@ -5,6 +5,9 @@ enable_testing()
 
 include(${CMAKE_SOURCE_DIR}/scripts/PinaVMConfig.cmake)
 
+# a useful function.
+include(${CMAKE_SOURCE_DIR}/scripts/buildBitcode.cmake)
+
 # Find and set LLVM.
 include(${CMAKE_SOURCE_DIR}/scripts/findLLVM.cmake)
 

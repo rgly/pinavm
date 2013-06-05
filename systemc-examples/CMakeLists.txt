@@ -1,4 +1,3 @@
-SET(LLVM_EXT bc)
 include(buildTest.cmake)
 SET(TEST_BACKENDS promela hello)
 SET(TWETO_BACKENDS tweto)
