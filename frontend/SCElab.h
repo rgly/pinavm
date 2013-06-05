@@ -66,6 +66,7 @@ class SCElab : public ElabMember
   Process* getProcess(void* processAddr);
   Port* getPort(void* portAddr);
   Event* getEvent(void* eventAddr);
+  Channel* getChannel(void* channelAddr);
   Bus* getBus(Channel *chan);
     
     

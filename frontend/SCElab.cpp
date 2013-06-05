@@ -444,6 +444,11 @@ Event *SCElab::getEvent(void *eventAddr)
 	return this->eventsMap.find((sc_core::sc_event *) eventAddr)->second;
 }
 
+Channel *SCElab::getChannel(void* channelAddr)
+{
+	return this->channelsMap.find((sc_core::sc_interface *) channelAddr)->second;
+}
+
 void SCElab::printElab(int sep, std::string prefix)
 {
 	std::vector < IRModule * >::iterator itM;
