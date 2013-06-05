@@ -29,6 +29,9 @@ public:
 	double getTime();
 	time_unit getTimeUnit();
 	llvm::Value* getMissingTime();
+	static inline bool classof(const SCConstruct *scc) {
+		return (scc->getID() == TIMECONSTRUCT );
+	}
 };
 
 #endif

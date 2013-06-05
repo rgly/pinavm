@@ -27,6 +27,9 @@ public:
 	std::string toString();
 	bool isValueDefined();
 	bool isPortDefined();
+	static inline bool classof(const SCConstruct *scc) {
+		return (scc->getID() == WRITECONSTRUCT );
+	}
 };
 
 #endif

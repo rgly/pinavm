@@ -30,7 +30,7 @@ struct SCConstruct {
 	virtual ~SCConstruct(){};
 	virtual std::string toString() = 0;
 	std::string getThreadName();
-	construct_id getID();
+	construct_id getID() const;
 	bool isStaticallyFound();
 };
 

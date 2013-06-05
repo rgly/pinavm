@@ -20,6 +20,9 @@ public:
 	void setNotifiedEvent(Event * e);
 	Event *getNotifiedEvent();
 	std::string toString();
+	static inline bool classof(const SCConstruct *scc) {
+		return (scc->getID() == READCONSTRUCT );
+	}
 };
 
 #endif

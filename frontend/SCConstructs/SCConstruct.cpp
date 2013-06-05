@@ -21,7 +21,7 @@ SCConstruct::getThreadName()
 }
 
 construct_id
-SCConstruct::getID()
+SCConstruct::getID() const
 {
 	return this->id;
 }

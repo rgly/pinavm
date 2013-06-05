@@ -16,6 +16,9 @@ public:
 	llvm::Value* getMissingEvent();
 	Event *getWaitedEvent();
 	std::string toString();
+	static inline bool classof(const SCConstruct *scc) {
+		return (scc->getID() == WAITEVENTCONSTRUCT );
+	}
 };
 
 #endif

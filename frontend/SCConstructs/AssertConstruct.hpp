@@ -22,6 +22,9 @@ public:
 	bool getCond();
 	Value* getMissingCond();
 	std::string toString();
+	static inline bool classof(const SCConstruct *scc) {
+		return (scc->getID() == ASSERTCONSTRUCT );
+	}
 };
 
 #endif
