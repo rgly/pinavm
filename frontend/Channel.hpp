@@ -27,7 +27,7 @@ protected:
 public:
 	Channel(llvm::Type* t, std::string typeName);
 	std::vector<Port*>* getPorts();
-	channel_id getID();
+	channel_id getID() const;
 	llvm::Type* getType();
 	std::string getTypeName();
 	virtual std::string toString() = 0;

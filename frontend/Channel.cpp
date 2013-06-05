@@ -12,7 +12,7 @@ Channel::Channel(llvm::Type* t, std::string typeName)
 }
 
 channel_id
-Channel::getID()
+Channel::getID() const
 {
 	return this->id;
 }
