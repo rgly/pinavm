@@ -148,7 +148,7 @@ Port * SCElab::trySc_Signal(IRModule * mod,
 		TRACE_4("typeName of variable accessed through port : " << variableTypeName << "\n");
 		TRACE_4("type of variable accessed through port : " << itfType << "\n");
 
-		theNewPort = new Port(mod, portName, port);
+		theNewPort = new Port(this, mod, portName, port);
 		std::map < sc_core::sc_interface*, Channel * >::iterator itM;
 		if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
 			ch = new SimpleChannel((Type*) itfType, variableTypeName);
@@ -176,7 +176,7 @@ Port * SCElab::trySc_Clock(IRModule * mod,
 	std::string match = "N7sc_core8sc_clockE";
 	if (itfTypeName.find(match) == 0) {
 
-		theNewPort = new Port(mod, portName, port);
+		theNewPort = new Port(this, mod, portName, port);
 		Channel* ch;
 		std::map < sc_core::sc_interface*, Channel * >::iterator itM;
 		if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
@@ -219,7 +219,7 @@ Port * SCElab::tryBasicTarget(IRModule * mod,
 	
 	if ((itfTypeName.find(match1) == 0) ||
 	    (itfTypeName.find(match2) == 0)) {
-		theNewPort = new Port(mod, portName, port);
+		theNewPort = new Port(this, mod, portName, port);
 
 		std::map < sc_core::sc_interface*, Channel * >::iterator itM;
 		Channel* ch;
@@ -300,7 +300,7 @@ Port * SCElab::tryBasicInitiator(IRModule * mod,
 
 	if ((itfTypeName.find(match1) == 0) ||
 	    (itfTypeName.find(match2) == 0)) {
-		theNewPort = new Port(mod, portName, port);
+		theNewPort = new Port(this, mod, portName, port);
 
 		std::map < sc_core::sc_interface*, Channel * >::iterator itM;
 		BasicChannel* ch;
@@ -574,29 +574,27 @@ SCElab::complete()
 	}
 }
 
-// The Reason I do not get Sensitive List while initializing Ports
+// The Reason I do not access Sensitive List while initializing Ports
 // is that Processes are initialized after Ports, so getting Process
-// List is impossible when construct Port.
-std::vector < Process*>* SCElab::getProcessOfPort(sc_core::sc_port_base* scport, bool IsThread)
+// List is impossible while constructing Ports.
+std::vector < Process*>* SCElab::getSensitive(const sc_core::sc_port_base* scport, bool IsThread) const
 {
-	std::vector<Process*>* static_thread_of_port = new std::vector<Process*>;
-	std::vector<sc_core::sc_bind_ef*> sc_processes  ;
+	std::vector<sc_core::sc_bind_ef*> SC_Procs;
 
 	if (IsThread) {
-		sc_processes = scport->m_bind_info->thread_vec ;
+		SC_Procs = scport->m_bind_info->thread_vec ;
 	} else {
-		sc_processes = scport->m_bind_info->method_vec ;
+		SC_Procs = scport->m_bind_info->method_vec ;
 	}
 
+	std::vector<Process*>* StaticThreadOfPort = new std::vector<Process*>;
 
-        sc_core::sc_process_b* temp_sc_process;
-        Process* temp_process;
-        for (unsigned int i = 0 ; i < sc_processes.size() ; ++i) {
-		temp_sc_process = (sc_processes[i])->handle ;
-		temp_process = this->processMap[ temp_sc_process ] ;
-		static_thread_of_port->push_back(temp_process) ;
+        for (unsigned int i = 0 ; i < SC_Procs.size() ; ++i) {
+		sc_core::sc_process_b* temp_sc_process = SC_Procs[i]->handle ;
+		Process* temp_process =
+				this->processMap.find(temp_sc_process)->second;
+		StaticThreadOfPort->push_back(temp_process) ;
 	}
 
-
-	return static_thread_of_port ;
+	return StaticThreadOfPort ;
 }

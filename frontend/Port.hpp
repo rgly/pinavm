@@ -27,9 +27,11 @@ protected:
 	Type* type;
 
 	sc_core::sc_port_base* sc_port;
+	std::vector<Process*>* sensitivelist;
 
 public:
-	Port(IRModule * module, std::string portName, sc_core::sc_port_base* sc_port_);
+	Port(const SCElab* el, IRModule * module, std::string portName, sc_core::sc_port_base* sc_port_);
+	~Port();
 	IRModule *getModule();
 	std::string getName();
 	void printElab(int sep, std::string prefix);
@@ -40,7 +42,7 @@ public:
 	Channel* getChannel();
 
 	// There are two kinds of SystemC processes, Thread and Method.
-	std::vector<Process*>* getSensitive(SCElab* elab, bool IsThread);
+	std::vector<Process*>* getSensitive(bool IsThread);
 };
 
 #endif

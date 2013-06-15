@@ -86,8 +86,7 @@ class SCElab : public ElabMember
 
   void addProcessAndEvents(sc_core::sc_process_b *theProcess, sc_core::sc_module * mod);
   void complete();
-  std::vector<Process*>* getProcessOfPort(sc_core::sc_port_base* , bool);
-
+  std::vector<Process*>* getSensitive(const sc_core::sc_port_base*, bool) const; 
 
 private:
   Port * trySc_Signal(IRModule * mod,

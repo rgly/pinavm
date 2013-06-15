@@ -4,7 +4,8 @@
 #include "SCElab.h"
 
 
-Port::Port(IRModule * module, std::string portName, sc_core::sc_port_base* sc_port_)
+Port::Port(const SCElab* el, IRModule * module, std::string portName,
+		 sc_core::sc_port_base* sc_port_) : ElabMember(el)
 {
 	this->irModule = module;
 	this->name = portName;
@@ -12,6 +13,11 @@ Port::Port(IRModule * module, std::string portName, sc_core::sc_port_base* sc_po
 	this->channels = new std::vector<Channel*>();
 	this->channelID = UNDEFINED_CHANNEL;
 	this->sc_port = sc_port_ ;
+}
+
+Port::~Port()
+{
+	delete this->sensitivelist;
 }
 
 IRModule *Port::getModule()
@@ -73,7 +79,10 @@ void Port::printElab(int sep, std::string prefix)
 }
 
 
-std::vector<Process*>* Port::getSensitive(SCElab* elab, bool IsThread)
+std::vector<Process*>* Port::getSensitive(bool IsThread)
 {
-		return elab->getProcessOfPort(this->sc_port, IsThread) ;
+	if (! this->sensitivelist)
+		this->sensitivelist = this->getElab()->getSensitive(
+						this->sc_port, IsThread) ;
+	return this->sensitivelist;
 }
