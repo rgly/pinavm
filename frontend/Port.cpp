@@ -18,6 +18,7 @@ Port::Port(const SCElab* el, IRModule * module, std::string portName,
 Port::~Port()
 {
 	delete this->sensitivelist;
+	delete this->channels;
 }
 
 IRModule *Port::getModule()
@@ -55,6 +56,7 @@ Port::addChannel(Channel* ch)
 		ERROR("Cannot add different types of Channel to the same port\n");
 	}
 	this->channels->push_back(ch);
+	ch->addPort(this);
 }
 
 channel_id

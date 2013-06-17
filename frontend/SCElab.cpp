@@ -591,6 +591,8 @@ std::vector < Process*>* SCElab::getSensitive(const sc_core::sc_port_base* scpor
 
         for (unsigned int i = 0 ; i < SC_Procs.size() ; ++i) {
 		sc_core::sc_process_b* temp_sc_process = SC_Procs[i]->handle ;
+		// decide neg edge or pos edge
+		// SC_Procs[i]->event_finder ;
 		Process* temp_process =
 				this->processMap.find(temp_sc_process)->second;
 		StaticThreadOfPort->push_back(temp_process) ;
