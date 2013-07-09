@@ -1,13 +1,13 @@
-#ifndef _ZEROTIMEHANDLER_HPP
-#define _ZEROTIMEHANDLER_HPP
+#ifndef _DELTAWAITHANDLER_HPP
+#define _DELTAWAITHANDLER_HPP
 
-#include "TimeHandler.hpp"
+#include "SCConstructHandler.hpp"
 
 using namespace llvm;
 
-struct ZeroTimeHandler:public TimeHandler {
+struct DeltaWaitHandler:public SCConstructHandler {
       public:
-	ZeroTimeHandler(SCJit * jit):TimeHandler(jit) {}
+	DeltaWaitHandler(SCJit * jit):SCConstructHandler(jit) {}
 
 	SCConstruct *handle(llvm::Function * fct, BasicBlock * bb, Instruction* callInst, Function* calledFunction);
 

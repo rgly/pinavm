@@ -2,17 +2,16 @@
 
 using namespace llvm;
 
-AssertConstruct::AssertConstruct(bool b)
+AssertConstruct::AssertConstruct(bool b) : SCConstruct(ASSERTCONSTRUCT)
 {
 	this->cond = b;
-	this->id = ASSERTCONSTRUCT;
 }
 
-AssertConstruct::AssertConstruct(Value * missingC) : SCConstruct(false)
+AssertConstruct::AssertConstruct(Value * missingC)
+	: SCConstruct(ASSERTCONSTRUCT, false)
 {
 	this->cond = NULL;
 	this->missingCond = missingC;
-	this->id = ASSERTCONSTRUCT;
 }
 
 void
@@ -28,7 +27,7 @@ bool AssertConstruct::getCond()
 
 std::string AssertConstruct::toString()
 {
-	if (this->staticallyFound)
+	if (this->isStaticallyFound())
 		if (this->cond)
 			return "ASSERT(true)";
 		else

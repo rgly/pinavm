@@ -1,15 +1,14 @@
 #include <string>
 
-#include "Event.hpp"
-#include "EventHandler.hpp"
-#include "EventConstruct.hpp"
+#include "EventWaitHandler.hpp"
+#include "EventWaitConstruct.hpp"
 #include "SCJit.hpp"
 #include <llvm/Support/CallSite.h>
 
 
 using namespace llvm;
 
-SCConstruct *EventHandler::handle(Function * fct, BasicBlock * bb, Instruction* callInst, Function* calledFunction)
+SCConstruct *EventWaitHandler::handle(Function * fct, BasicBlock * bb, Instruction* callInst, Function* calledFunction)
 {
 	TRACE_3("Handling call to wait(event)\n");
 
@@ -23,15 +22,15 @@ SCConstruct *EventHandler::handle(Function * fct, BasicBlock * bb, Instruction* 
 	void *eventAddr = this->scjit->jitAddr(fct, callInst, arg);
 	TRACE_4("Address jitted : " << eventAddr << "\n");
 	if (eventAddr == NULL) {
-		return new EventConstruct(arg);
+		return new EventWaitConstruct(arg);
 	} else {
 		Event *e = this->scjit->getElab()->getEvent(eventAddr);
 		TRACE_3("Event associated : " << (void *) e << " (" << e->getEventName() << ") \n");
-		return new EventConstruct(e);
+		return new EventWaitConstruct(e);
 	}
 }
 
-void EventHandler::insertInMap(std::map < Function *, SCConstructHandler * >* scchandlers)
+void EventWaitHandler::insertInMap(std::map < Function *, SCConstructHandler * >* scchandlers)
 {
 	SCConstructHandler::insertInMap(scchandlers, (std::string) "_ZN7sc_core9sc_module4waitERKNS_8sc_eventE");
 }

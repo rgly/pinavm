@@ -2,10 +2,8 @@
 
 using namespace llvm;
 
-RandConstruct::RandConstruct()
-{
-	this->id = RANDCONSTRUCT;
-}
+RandConstruct::RandConstruct() : SCConstruct(RANDCONSTRUCT)
+{}
 
 std::string RandConstruct::toString()
 {

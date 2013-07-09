@@ -1,16 +1,14 @@
 #include "WriteConstruct.hpp"
 
 
-WriteConstruct::WriteConstruct(Port * p)
+WriteConstruct::WriteConstruct(Port * p) : SCConstruct(WRITECONSTRUCT)
 {
-	this->id = WRITECONSTRUCT;
 	this->port = p;
 	this->missingPort = NULL;
 }
 
-WriteConstruct::WriteConstruct(Value * p)
+WriteConstruct::WriteConstruct(Value * p) : SCConstruct(WRITECONSTRUCT, false)
 {
-	this->id = WRITECONSTRUCT;
 	this->missingPort = p;
 	this->port = NULL;
 }
