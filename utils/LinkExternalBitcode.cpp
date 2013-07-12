@@ -27,4 +27,4 @@ Module* LinkExternalBitcode(Module* module, std::string bc)
         std::cerr << "Module Linking Error : "<< err << '\n';
     }
     return module;
-};
+}
