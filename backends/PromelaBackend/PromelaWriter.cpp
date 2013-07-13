@@ -3174,9 +3174,10 @@ PromelaWriter::getEventName(Process* proc, Event* event)
 void
 PromelaWriter::visitSCConstruct(SCConstruct * scc)
 {
-	TimeConstruct* tc;
+	TimeWaitConstruct* tc;
+	DeltaWaitConstruct* dc;
 	NotifyConstruct* notifyC;
-	EventConstruct* eventC;	
+	EventWaitConstruct* eventC;	
 	ReadConstruct* rc;
 	WriteConstruct* wc;
 	AssertConstruct *ac;
@@ -3187,19 +3188,20 @@ PromelaWriter::visitSCConstruct(SCConstruct * scc)
 	SimpleChannel* sc;
 
 	TRACE_4("/***** visitSCConstruct() *****/\n");
-	switch(scc->getID()) {
-	case WAITEVENTCONSTRUCT:
-		eventC = (EventConstruct*) scc;
-		event = eventC->getWaitedEvent();
+	if (isa<EventWaitConstruct>(scc) ) {
+		eventC = dyn_cast<EventWaitConstruct>(scc);
+		event = eventC->getEvent();
 		if (eventC->isStaticallyFound()) {
 			Out << "wait_" << getEventName(currentProcess, event) << "();\n";
 		} else {
 			Out << "/* TODO: wait_e() on event not determined statically  */";
                         /* todo */
 		}
-		break;
-	case NOTIFYCONSTRUCT:
-		notifyC = (NotifyConstruct*) scc;
+	} else if (isa<TimeWaitConstruct>(scc) ) {
+		tc = dyn_cast<TimeWaitConstruct>(scc);
+		Out << "/*TODO*/"<< tc->toString();
+	} else if (isa<NotifyConstruct>(scc)) {
+		notifyC = dyn_cast<NotifyConstruct>(scc);
 		if (notifyC->isStaticallyFound()) {
 			event = notifyC->getNotifiedEvent();
 			Out << "    notify_" << getEventName(NULL, event) << "(" << currentProcess->getPid() << ");\n";
@@ -3207,19 +3209,17 @@ PromelaWriter::visitSCConstruct(SCConstruct * scc)
 			Out << "/* TODO: notify() event not determined statically */";
 			/* todo */
 		}
-		break;
-	case TIMECONSTRUCT:
-		tc = (TimeConstruct*) scc;
-		if (tc->isStaticallyFound()) {
+	} else if (isa<DeltaWaitConstruct>(scc)) {
+		dc = (DeltaWaitConstruct*) scc;
+		if (dc->isStaticallyFound()) {
 			Out << "wait(" << currentProcess->getPid() << ", ";
-			Out << intToString(tc->getTime());
+			Out << intToString(dc->getDelta());
 			Out << ")";
 		} else {
-			Out << "/* Todo: wait() time not determined statically */";
+			Out << "/* Todo: wait() delta not determined statically */";
 			/* todo */
 		}
-		break;
-	case READCONSTRUCT:
+	} else if (isa<ReadConstruct>(scc)) {
 		rc = (ReadConstruct*) scc;
 		port = rc->getPort();
 		TRACE_3("Visit READ\n");
@@ -3234,8 +3234,7 @@ PromelaWriter::visitSCConstruct(SCConstruct * scc)
 			Out << "/* TODO : read() on a non simple channel */";
 			/* todo */
 		}
-		break;
-	case WRITECONSTRUCT:
+	} else if (isa<WriteConstruct>(scc)) {
 		wc = (WriteConstruct*) scc;		
 		port = wc->getPort();
 		channels = port->getChannels();
@@ -3279,19 +3278,16 @@ PromelaWriter::visitSCConstruct(SCConstruct * scc)
 // 		} else {
 			/* todo */
  		}
-		break;
-	case ASSERTCONSTRUCT:
+	} else if (isa<AssertConstruct>(scc)) {
 		ac = (AssertConstruct*) scc;
 		if (ac->isStaticallyFound()) {
 			Out << "assert(" << ac->getCond() <<");";
 		} else {
 			Out << "assert(" << GetValueName(ac->getMissingCond()) << ");";
 		}
-		break;
-	case RANDCONSTRUCT:
+	} else if (isa<RandConstruct>(scc)) {
 		Out << "randnr(nr);";
-		break;
-	default:
+	} else {
 		ErrorMsg << "Construction not managed in Promela backend: " << scc->getID();
 		triggerError(Out);
 	}

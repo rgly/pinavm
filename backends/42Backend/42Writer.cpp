@@ -3369,9 +3369,10 @@ _42Writer::getEventName(Process* proc, Event* event)
 void
 _42Writer::visitSCConstruct(SCConstruct * scc)
 {
-  TimeConstruct* tc;
+  TimeWaitConstruct* tc;
+  DeltaWaitConstruct* dc;
   NotifyConstruct* notifyC;
-  EventConstruct* eventC;	
+  EventWaitConstruct* eventC;	
   ReadConstruct* rc;
   WriteConstruct* wc;
   Event* event;
@@ -3381,10 +3382,9 @@ _42Writer::visitSCConstruct(SCConstruct * scc)
   SimpleChannel* sc;
 
   TRACE_4("/***** visitSCConstruct() *****/\n");
-  switch(scc->getID()) {
-  case WAITEVENTCONSTRUCT:
-    eventC = (EventConstruct*) scc;
-    event = eventC->getWaitedEvent();
+  if (isa<EventWaitConstruct>(scc)) {
+    eventC = (EventWaitConstruct*) scc;
+    event = eventC->getEvent();
     if (eventC->isStaticallyFound()) {
       int lastBuildState=Automat.get_lastBuildState();
       if(lastBuildState==0 && !Automat.get_existNotify() && !Automat.get_existWait()){
@@ -3425,8 +3425,7 @@ _42Writer::visitSCConstruct(SCConstruct * scc)
       Out << "/* TODO: wait_e() on event not determined statically  */";
       /* todo */
     }
-    break;
-  case NOTIFYCONSTRUCT:
+  } else if (isa<NotifyConstruct>(scc)) {
     notifyC = (NotifyConstruct*) scc;
     if (notifyC->isStaticallyFound()) {
       event = notifyC->getNotifiedEvent();
@@ -3436,19 +3435,20 @@ _42Writer::visitSCConstruct(SCConstruct * scc)
       Out << "/* TODO: notify() event not determined statically */";
       /* todo */
     }
-    break;
-  case TIMECONSTRUCT:
-    tc = (TimeConstruct*) scc;
-    if (tc->isStaticallyFound()) {
+  } else if (isa<TimeWaitConstruct>(scc) ) {
+    tc = dyn_cast<TimeWaitConstruct>(scc);
+    Out << "/*TODO*/"<< tc->toString();
+  } else if (isa<DeltaWaitConstruct>(scc)) {
+    dc = (DeltaWaitConstruct*) scc;
+    if (dc->isStaticallyFound()) {
       Out << "wait(" << currentProcess->getPid() << ", ";
-      Out << intToString(tc->getTime());
+      Out << intToString(dc->getDelta());
       Out << ")";
     } else {
       Out << "/* Todo: wait() time not determined statically */";
       /* todo */
     }
-    break;
-  case READCONSTRUCT:
+  } else if (isa<ReadConstruct>(scc)) {
     rc = (ReadConstruct*) scc;
     port = rc->getPort();
 		
@@ -3464,8 +3464,7 @@ _42Writer::visitSCConstruct(SCConstruct * scc)
       Out << "/* TODO : read() on a non simple channel */";
       /* todo */
     }
-    break;
-  case WRITECONSTRUCT:
+  } else if (isa<WriteConstruct>(scc)) {
     wc = (WriteConstruct*) scc;		
     port = wc->getPort();
     channels = port->getChannels();
@@ -3509,8 +3508,7 @@ _42Writer::visitSCConstruct(SCConstruct * scc)
       // 		} else {
       /* todo */
     }
-    break;
-  default:
+  } else {
     ErrorMsg << "Construction not managed in 42 backend: " << scc->getID();
     triggerError(Out);
   }
