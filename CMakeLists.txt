@@ -40,5 +40,4 @@ add_subdirectory(systemc-examples)
 
 string(REPLACE ";" " " LLVMC_FLAGS_SPACE "${LLVMC_FLAGS}")
 configure_file(config.sh.in config.sh)
-configure_file(config.mk.in config.mk)
 
