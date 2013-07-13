@@ -8,8 +8,8 @@ endif()
 # Using include(foo.cmake) searches CMAKE_MODULE_PATH,
 # but find_package(bar) searches CMAKE_PREFIX_PATH
 # so we must append llvm cmake module dir to both variables.
-LIST(APPEND CMAKE_MODULE_PATH ${LLVM_ROOT}/share/llvm/cmake)
-LIST(APPEND CMAKE_PREFIX_PATH ${LLVM_ROOT}/share/llvm/cmake)
+SET(CMAKE_MODULE_PATH ${LLVM_ROOT}/share/llvm/cmake)
+SET(CMAKE_PREFIX_PATH ${LLVM_ROOT}/share/llvm/cmake)
 
 # Not using version check in find_package is that llvm version
 # is followed by "svn" for official release, which is different

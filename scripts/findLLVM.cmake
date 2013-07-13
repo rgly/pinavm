@@ -1,3 +1,5 @@
+include(${CMAKE_SOURCE_DIR}/scripts/installLLVM.cmake)
+
 # find llvm-config. perfers to the one with version suffix, Ex:llvm-config-3.2
 find_program(LLVM_CONFIG_EXE NAMES
       		"llvm-config-${LLVM_RECOMMAND_VERSION}" "llvm-config"
@@ -7,11 +9,11 @@ find_program(LLVM_CONFIG_EXE NAMES
 if(${LLVM_CONFIG_EXE} STREQUAL "LLVM_CONFIG_EXE-NOTFOUND")
   if(${AUTOINSTALL})
     # if AUTOINSTALL is explicitly set to true, then run installLLVM.
-    include(${CMAKE_SOURCE_DIR}/scripts/installLLVM.cmake)
+    autoinstall_llvm()
     # this find_program(llvm-config) should success.
     find_program(LLVM_CONFIG_EXE NAMES
       		"llvm-config-${LLVM_RECOMMAND_VERSION}" "llvm-config"
-		PATHS ${LLVM_ROOT}/bin)
+		HINTS ${LLVM_ROOT}/bin)
   else()
     # on condition that finds no LLVM and user not specify AUTOINSTALL.
     message(FATAL_ERROR "\tfinds no LLVM in your system.\n"
@@ -24,6 +26,25 @@ if(${LLVM_CONFIG_EXE} STREQUAL "LLVM_CONFIG_EXE-NOTFOUND")
 endif()
 
 message(STATUS "find LLVM-Config : ${LLVM_CONFIG_EXE}")
+
+# Check whether the LLVM version meets our requirement.
+if(  (${LLVM_VERSION} MATCHES ${LLVM_RECOMMAND_VERSION} )
+  OR (${LLVM_VERSION} MATCHES ${LLVM_RECOMMAND_VERSION}svn))
+  message(STATUS "LLVM version : ${LLVM_VERSION}")
+else()
+  if(${AUTOINSTALL})
+    # if AUTOINSTALL is explicitly set to true, then run installLLVM.
+    autoinstall_llvm()
+    # this find_program(llvm-config) should success.
+    find_program(LLVM_CONFIG_EXE NAMES
+      		"llvm-config-${LLVM_RECOMMAND_VERSION}" "llvm-config"
+		HINTS ${LLVM_ROOT}/bin)
+  else()
+    message(FATAL_ERROR "LLVM version is recommanded to be : "
+         "${LLVM_RECOMMAND_VERSION}\n"
+         "Your current version is ${LLVM_VERSION}")
+  endif()
+endif()
 
 # In here. LLVM_CONFIG_EXE is found. We can get valid LLVM_ROOT.
 execute_process(COMMAND ${LLVM_CONFIG_EXE} --prefix
@@ -49,13 +70,6 @@ if(NOT ${LLVM_FOUND})
 		"\"cmake /where/pinavm/is -DLLVM_ROOT=/my/llvm/install/dir\"\n"
 		"or make llvm-config visible in $PATH")
   endif()
-endif()
-
-# Check whether the LLVM version meets our requirement.
-# Maybe an ERROR is better than a WARNING message here?
-if( NOT (${LLVM_VERSION} MATCHES ${LLVM_RECOMMAND_VERSION}* ))
-  message(WARNING "LLVM version is recommanded to be ${LLVM_RECOMMAND_VERSION}\n"
-	"Your current version is ${LLVM_VERSION}")
 endif()
 
 # Use settings from LLVM cmake module or llvm-config.

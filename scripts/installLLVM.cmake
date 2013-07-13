@@ -3,47 +3,62 @@
 # is that users may find it takes a long time to finish this cmake
 # script.
 
-if(NOT DEFINED LLVM_RECOMMAND_VERSION)
-  message(FATAL_ERROR "finds no LLVM_RECOMMAND_VERSION")
-endif()
+# NOTE that this script requires tar and make command in your OS.
 
-if(${TEST_CMAKE})
-  # for test purpose, I don't want to waste bandwidth of llvm.org.
-  SET(SITE_URL file://${CMAKE_SOURCE_DIR}/../source-tgz/llvm32)
-else()
-  # normal situation.
-  SET(SITE_URL http://llvm.org/releases/${LLVM_RECOMMAND_VERSION})
-endif()
+MACRO(configure_autoinstall)
+  if(NOT DEFINED LLVM_RECOMMAND_VERSION)
+    message(FATAL_ERROR "finds no LLVM_RECOMMAND_VERSION")
+  endif()
 
-SET(DOWNLOAD_DIR ${CMAKE_BINARY_DIR}/download )
-SET(LLVM_SUFFIX "-${LLVM_RECOMMAND_VERSION}.src")
+  if(${TEST_CMAKE})
+    # for test purpose, I don't want to waste bandwidth of llvm.org.
+    SET(SITE_URL
+       file://${CMAKE_SOURCE_DIR}/../source-tgz/llvm-${LLVM_RECOMMAND_VERSION})
+  else()
+    # normal situation.
+    SET(SITE_URL http://llvm.org/releases/${LLVM_RECOMMAND_VERSION})
+  endif()
 
-# just hard coding them.
-SET(LLVM_NAME llvm)
-SET(LLVM_FILE ${DOWNLOAD_DIR}/llvm${LLVM_SUFFIX}.tar.gz)
-SET(LLVM_SOURCE_DIR ${CMAKE_BINARY_DIR}/llvm-source)
-SET(LLVM_URL ${SITE_URL}/llvm${LLVM_SUFFIX}.tar.gz)
-SET(LLVM_MD5 71610289bbc819e3e15fdd562809a2d7 ) 
+  SET(DOWNLOAD_DIR ${CMAKE_BINARY_DIR}/download )
+  SET(LLVM_SUFFIX "-${LLVM_RECOMMAND_VERSION}.src")
 
-SET(CLANG_NAME clang)
-SET(CLANG_FILE ${DOWNLOAD_DIR}/clang${LLVM_SUFFIX}.tar.gz)
-SET(CLANG_SOURCE_DIR ${LLVM_SOURCE_DIR}/llvm/tools)
-SET(CLANG_URL ${SITE_URL}/clang${LLVM_SUFFIX}.tar.gz)
-SET(CLANG_MD5 3896ef4334df08563b05d0848ba80582)
+  SET(LLVM_NAME llvm)
+  SET(LLVM_SOURCE_DIR ${CMAKE_BINARY_DIR}/llvm-source/${LLVM_NAME})
 
-SET(COMPILER-RT_NAME compiler-rt)
-SET(COMPILER-RT_FILE ${DOWNLOAD_DIR}/compiler-rt${LLVM_SUFFIX}.tar.gz)
-SET(COMPILER-RT_SOURCE_DIR ${LLVM_SOURCE_DIR}/llvm/projects)
-SET(COMPILER-RT_URL ${SITE_URL}/compiler-rt${LLVM_SUFFIX}.tar.gz)
-SET(COMPILER-RT_MD5 a9a30ccd7bbee6f68a3ca3020af0d852)
+  # Clang uses cfe(C frontend) as its file name from version 3.3. In
+  # order to make cmake of llvm automatically find and compile Clang,
+  # a tools/clang directory is still needed.
+  if (${LLVM_RECOMMAND_VERSION} VERSION_LESS "3.3")
+    SET(CLANG_NAME clang)
+  else()
+    SET(CLANG_NAME cfe)
+  endif()
+  SET(CLANG_SOURCE_DIR ${LLVM_SOURCE_DIR}/tools/clang)
 
-Function(check_and_download target_file target_url target_md5)
-  if((${target_file} STREQUAL "") OR 
-     (${target_url} STREQUAL "") OR
-     (${target_md5} STREQUAL "") )
+  SET(COMPILER-RT_NAME compiler-rt)
+  SET(COMPILER-RT_SOURCE_DIR ${LLVM_SOURCE_DIR}/projects/${COMPILER-RT_NAME})
+
+  if (${LLVM_RECOMMAND_VERSION} STREQUAL "3.2")
+    SET(LLVM_MD5 71610289bbc819e3e15fdd562809a2d7) 
+    SET(CLANG_MD5 3896ef4334df08563b05d0848ba80582)
+    SET(COMPILER-RT_MD5 a9a30ccd7bbee6f68a3ca3020af0d852)
+  endif()
+
+  if (${LLVM_RECOMMAND_VERSION} STREQUAL "3.3")
+    SET(LLVM_MD5 40564e1dc390f9844f1711c08b08e391) 
+    SET(CLANG_MD5 8284891e3e311829b8e44ac813d0c9ef)
+    SET(COMPILER-RT_MD5 9c129ce24514467cfe492cf2fed8e2c4)
+  endif()
+endmacro()
+
+FUNCTION(check_and_download target_name target_md5)
+  if("${target_md5}" STREQUAL "" )
     message(FATAL_ERROR "calling undefined variable."
              " there is a bug in installLLVM.cmake")
   endif()
+
+  SET(target_file ${DOWNLOAD_DIR}/${target_name}${LLVM_SUFFIX}.tar.gz)
+  SET(target_url ${SITE_URL}/${target_name}${LLVM_SUFFIX}.tar.gz)
 
   # if file not exists, download it.
   if(NOT EXISTS ${target_file})
@@ -62,99 +77,97 @@ Function(check_and_download target_file target_url target_md5)
   endif()
 endfunction()
 
-function(extract_file target_name target_file target_dir)
-  if((${target_name} STREQUAL "") OR 
-     (${target_file} STREQUAL "") OR
-     (${target_dir} STREQUAL "") )
+FUNCTION(extract_file target_name target_dir)
+  if(("${target_name}" STREQUAL "") OR 
+     ("${target_dir}" STREQUAL "") )
     message(FATAL_ERROR "calling undefined variable."
              " there is a bug in installLLVM.cmake")
   endif()
+
+  SET(target_file ${DOWNLOAD_DIR}/${target_name}${LLVM_SUFFIX}.tar.gz)
 
   # if finds no directory, then create one.
   if(NOT EXISTS ${target_dir})
     FILE(MAKE_DIRECTORY ${target_dir})
   endif()
 
-  # Extract the archive. Note that the tar command is from cmake, so
-  # it is portable.
+  # Extract the archive. Note that CMake-built-in tar does not
+  # support --strip-components.
   if(EXISTS ${target_file})
-    execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf ${target_file} 
+    execute_process(COMMAND tar zxf ${target_file} --strip-components=1 
 			WORKING_DIRECTORY ${target_dir})
   else()
     message(FATAL_ERROR "finds no ${target_file}")
   endif()
 
-  # the source code are in directory likes clang-3.2.src,
-  # but cmake of llvm only knows clang. Rename it.
-  FILE(RENAME ${target_dir}/${target_name}${LLVM_SUFFIX}
-		 ${target_dir}/${target_name})
+
 endfunction()
 
+FUNCTION(install_llvm)
+  SET(llvm_build_dir ${CMAKE_BINARY_DIR}/build-llvm)
+  # Create necessary directories.
+  if (NOT EXISTS ${LLVM_ROOT})
+    FILE(MAKE_DIRECTORY ${LLVM_ROOT})
+  endif()
 
+  if (NOT EXISTS ${llvm_build_dir})
+    FILE(MAKE_DIRECTORY ${llvm_build_dir})
+  endif()
 
+  # This script configures llvm for you.
+  execute_process(COMMAND ${CMAKE_COMMAND} ${LLVM_SOURCE_DIR}
+		  -DCMAKE_INSTALL_PREFIX=${LLVM_ROOT}
+		  WORKING_DIRECTORY ${llvm_build_dir})
 
-# Check whether llvm-config is installed.
-# Especially ${LLVM_ROOT}, because we are going to install llvm on there.
-find_program(llvm-config-temp
-	NAMES "llvm-config-${LLVM_RECOMMAND_VERSION}" "llvm-config"
-	PATHS ${LLVM_ROOT}/bin )
-
-if (NOT (${llvm-config-temp} STREQUAL "llvm-config-temp-NOTFOUND"))
-  message(FATAL_ERROR "The purpose this script is automatically install LLVM,"
-		" It seems you already have LLVM."
-		" This is a bug. Please contact authors.")
-endif()
-
-# download llvm, clang and compiler-rt here.
-check_and_download(${LLVM_FILE} ${LLVM_URL} ${LLVM_MD5})
-check_and_download(${CLANG_FILE} ${CLANG_URL} ${CLANG_MD5})
-check_and_download(${COMPILER-RT_FILE} ${COMPILER-RT_URL} ${COMPILER-RT_MD5})
-
-message(STATUS "finish llvm source download.")
-
-
-# extract the source code.
-extract_file(${LLVM_NAME} ${LLVM_FILE} ${LLVM_SOURCE_DIR})
-extract_file(${CLANG_NAME} ${CLANG_FILE} ${CLANG_SOURCE_DIR})
-extract_file(${COMPILER-RT_NAME} ${COMPILER-RT_FILE} ${COMPILER-RT_SOURCE_DIR})
-
-message(STATUS "finish extraction for the source code.")
-
-# Create necessary directories.
-FILE(MAKE_DIRECTORY ${LLVM_ROOT})
-FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/build-llvm)
-
-# This script configures llvm for you.
-execute_process(COMMAND ${CMAKE_COMMAND} ${LLVM_SOURCE_DIR}/llvm
-		-DCMAKE_INSTALL_PREFIX=${LLVM_ROOT}
-		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/build-llvm)
-
-message(STATUS "finish configure the source code.")
-message(STATUS "Start to build LLVM, it may take tens of minutes."
+  message(STATUS "finish configure the source code.")
+  message(STATUS "Start to build and install LLVM, it may take tens of minutes."
 		" If you worry about whether this script is still running,"
 		" you can use \"top\" to monitor CPU usage.")
 
-# it compiles with 4 threads. In hope of shortening compile time.
-execute_process(COMMAND make -j4
-		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/build-llvm)
+  # it compiles with 4 threads. In hope of shortening compile time.
+  execute_process(COMMAND make -j4
+		  WORKING_DIRECTORY ${llvm_build_dir})
 
-message(STATUS "we are going to install llvm and clang.")
-execute_process(COMMAND make install
-		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/build-llvm)
+  execute_process(COMMAND make install
+		  WORKING_DIRECTORY ${llvm_build_dir})
 
-# check whether llvm-config is installed again.
-find_program(llvm-config-temp
-	NAMES "llvm-config-${LLVM_RECOMMAND_VERSION}" "llvm-config"
-	PATHS ${LLVM_ROOT}/bin)
+  # check whether llvm-config is installed again.
+  find_program(llvm-config-temp
+	  NAMES "llvm-config-${LLVM_RECOMMAND_VERSION}" "llvm-config"
+	  HINTS ${LLVM_ROOT}/bin)
 
-# llvm should exists in user's system.
-# if result is notfound, which means that install script failed, give an error.
-if (${llvm-config-temp} STREQUAL "llvm-config-temp-NOTFOUND")
-  message(FATAL_ERROR "You can run this script if you installed LLVM,"
-		" This is a bug. Please contact developers.")
-else()
-  message(STATUS "Finish installing LLVM.")
-endif()
+  # llvm should exists in user's system.
+  # if result is notfound, which means that install script failed, give an error.
+  if (${llvm-config-temp} STREQUAL "llvm-config-temp-NOTFOUND")
+    message(FATAL_ERROR "You can run this script if you installed LLVM,"
+		  " This is a bug. Please contact developers.")
+  else()
+    message(STATUS "Finished installing LLVM.")
+  endif()
+endfunction()
+
+FUNCTION(autoinstall_llvm)
+  configure_autoinstall()
+
+  # download llvm, clang and compiler-rt here.
+  check_and_download(${LLVM_NAME} ${LLVM_MD5})
+  check_and_download(${CLANG_NAME} ${CLANG_MD5})
+  check_and_download(${COMPILER-RT_NAME} ${COMPILER-RT_MD5})
+
+  message(STATUS "finish llvm source download.")
+
+
+  # extract the source code. keep 2nd arg null means same with 1st arg.
+  extract_file(${LLVM_NAME} ${LLVM_SOURCE_DIR})
+  extract_file(${CLANG_NAME} ${CLANG_SOURCE_DIR})
+  extract_file(${COMPILER-RT_NAME} ${COMPILER-RT_SOURCE_DIR})
+
+  message(STATUS "finish extraction for the source code.")
+
+  # temperary commement out this for test usage.
+  install_llvm()
+endfunction()
+
 
 # Currently we install llvm while cmake time, because we want to 
 # have llvm before configuring pinavm. The following suggestion
