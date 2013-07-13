@@ -5,9 +5,9 @@
 // call launch_xxxxbackend(Frontend*,BackendOption&) if frontend is finished.
 #include "BackendOption.h"
 class Frontend;
-extern void echo_helloworld();
+extern void echo_helloworld(Frontend*);
 void launch_hellobackend(Frontend* fe, BackendOption& option) {
-    echo_helloworld();
+    echo_helloworld(fe);
 }
 
 #endif
