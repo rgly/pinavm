@@ -1,0 +1,41 @@
+Most of time, programmers deal with LLVM instructions while using PinaVM.
+Using IRBuilder is a good approach, but PinaVM offer a handy function to
+allow you writing code in c++ otherwhere, then using it as LLVM assembly
+in your code.
+
+Here is a simple example:
+
+1. Choose a directory to put your code
+__________________________________________________
+    mkdir PinaVM_ROOT/foo_dir
+
+
+
+2. Write your code where
+__________________________________________________
+    vim PinaVM_ROOT/foo_dir/bar.cpp
+
+
+
+3. Write CMakeLists.txt
+__________________________________________________
+    vim PinaVM_ROOT/foo_dir/CMakeLists.txt
+        + FILE(GLOB BAR_SRC *.cpp)
+        + build_llvm_bitcode(baz BAR_SRC) # generate baz.bc while build time.
+        + add_dependencies(your_backend_name baz)
+
+
+
+4. Use code in your backend, there are two ways.
+__________________________________________________
+    1) Link it to a existed LLVM module.
+        #include "LinkExternalBitcode.h"
+        LinkExternalBitcode(LLVM_module, "foo_dir/baz.bc");
+
+    OR
+
+    2) Use it as a new LLVM module
+        #include "llvm/Support/IRReader.h"
+        SMDiagnostic smdiagno;
+        LLVMContext &Context = getGlobalContext();
+        Module* LoadBitcode = ParseIRFile("foo_dir/baz.bc", smdiagno, Context);
