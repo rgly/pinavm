@@ -11,3 +11,39 @@ To create your own Construct:
 
 To include :
     use #include "ALLConstruct.h" , which includes all the constructs.
+
+
+
+The handlers are defined by this inheritance tree :
+
+- SCConstructHandler
+  |- EventWaitHandler
+  |- TimeWaitHandler
+  |- DeltaWaitHandler
+  |- ReadHandler
+  |- WriteHandler
+  |- NotifyHandler 
+  |- RandHandler 
+  '- AssertHandler 
+
+A SystemC construct is the result of the "handle()" method of a
+handler. The representation of SystemC constructs is given by the
+very-similar-to-handlers tree:
+
+- SCConstruct
+  |- WaitConstruct
+  |  |- EventWaitConstruct
+  |  |- TimeWaitConstruct
+  |  '- DeltaWaitConstruct
+  |- NotifyConstruct
+  |- WriteConstruct
+  |- ReadConstruct
+  |- RandConstruct
+  '- AssertConstruct
+
+These constructs use the classes:
+- SCPort
+- SCEvent
+- SCModule
+
+which should be redefined with respect to ELAB.  

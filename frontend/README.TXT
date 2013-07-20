@@ -22,35 +22,6 @@ each function of the given bitcode file.
 
 - SCCFactory mainly associates one Handler to a Function*
 
-The handlers are defined by this inheritance tree :
-
-- SCConstructHandler
-  |- EventHandler
-  |- ReadHandler
-  |- WriteHandler
-  |- NotifyHandler 
-  |- TimeHandler
-     |- ZeroTimeHandler
-     |- DefaultTimeHandler
-
-A SystemC construct is the result of the "handle()" method of a
-handler. The representation of SystemC constructs is given by the
-very-similar-to-handlers tree:
-
-- SCConstruct
-  |- NotifyConstruct
-  |- WriteConstruct
-  |- ReadConstruct
-  |- TimeConstruct
-     |- ZeroTimeConstruct
-     |- DefaultTimeConstruct
-
-These constructs use the classes:
-- SCPort
-- SCEvent
-- SCModule
-
-which should be redefined with respect to ELAB.  
 
 ##############################################
 ################ NOTES #######################
