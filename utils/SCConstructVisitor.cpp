@@ -1,9 +1,20 @@
 #include "SCConstructVisitor.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <map>
+#include <cassert>
 
-struct Process;
 
+llvm::Instruction* SCConstructVisitor::getCurrentInst()
+{
+    assert(this->CurrentInst);
+    return this->CurrentInst;
+}
+
+Process* SCConstructVisitor::getCurrentProc()
+{
+    assert(this->CurrentProc);
+    return this->CurrentProc;
+}
 
 void SCConstructVisitor::visitSCConstruct(SCConstruct* scc)
 {}
@@ -97,12 +108,14 @@ void SCConstructVisitor::runOn(SCCFactory* factory)
     ie = constructs->end();
 
     for(;it != ie; ++it) {
+        this->CurrentInst = it->first;
         std::map<Process*, SCConstruct*>* p2sccMap = &(it->second);
         std::map<Process*, SCConstruct*>::iterator iit, iie;
         iit = p2sccMap->begin();
         iie = p2sccMap->end();
 
         for(;iit != iie; ++iit) {
+            this->CurrentProc = iit->first;
             SCConstruct* scc = iit->second;
             if (!isExcluded(scc))
                 runOn(scc);

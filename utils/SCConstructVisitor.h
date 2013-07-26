@@ -1,7 +1,24 @@
 #include "ALLConstruct.h"
 #include "SCCFactory.hpp"
 
+namespace llvm
+{
+    struct Instruction;
+}
+
+struct Process;
+
 class SCConstructVisitor {
+private:
+    llvm::Instruction* CurrentInst;
+    Process* CurrentProc;
+
+protected:
+    // visitXXX now can access Inst and Process with these getters.
+    // Beware, these function only valid when runOn_Factory is being called.
+    llvm::Instruction* getCurrentInst();
+    Process* getCurrentProc();
+
 public:
     virtual void visitSCConstruct(SCConstruct* scc);
     virtual void visitWait(WaitConstruct* wc);
