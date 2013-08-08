@@ -21,10 +21,14 @@ llvm::Value* TimeWaitConstruct::getMissingTime()
 
 std::string TimeWaitConstruct::toString()
 {
+	// Print WAIT(ZERO_TIME) if time is zero
+	// Others print WAIT(35,NS) for example.
 	std::stringstream ss;
 	ss << "WAIT(";
-	ss << this->getTime().get();
-	ss << ", ";
+	if (! this->getTime().isZero()) {
+		ss << this->getTime().get();
+		ss << ", ";
+	}
 	ss << this->getTime().getUnitStr();
 	ss << ")";
 

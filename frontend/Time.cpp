@@ -6,9 +6,20 @@
 namespace pinavm
 {
 
+Time::Time(double t, TimeUnit u) : TimeNum(t)
+{
+	if (t == 0)
+		this->TU = ZERO;
+	else
+		this->TU = u;
+}
+
 Time::Time(double t, sc_core::sc_time_unit sctime) : TimeNum(t)
 {
-	this->TU = this->sc2pinavm_time_unit(sctime);
+	if (t == 0)
+		this->TU = ZERO;
+	else
+		this->TU = this->sc2pinavm_time_unit(sctime);
 }
 
 double Time::get(TimeUnit tu) const
@@ -25,7 +36,8 @@ std::string Time::getUnitStr() const
 {
 	TimeUnit tu = this->getUnit();
 	switch (tu) {
-		case ZERO: return "ZERO";
+		// Returning merely ZERO is hard to identify it as a time unit. 
+		case ZERO: return "ZERO_TIME";
 		case FS: return "FS";
 		case PS: return "PS";
 		case NS: return "NS";
@@ -36,11 +48,17 @@ std::string Time::getUnitStr() const
 	}
 }
 
+bool Time::isZero() const
+{
+	return (this->getUnit() == ZERO);
+}
+
 double Time::getScale(TimeUnit tu) const
 {
 	const double scale = 0.001;
 	double ret = 1;
 	switch (tu) {
+		case ZERO: ret = 0; break;
 		case FS: ret *= scale;
 		case PS: ret *= scale;
 		case NS: ret *= scale;
@@ -64,6 +82,9 @@ Time Time::adjustUnit() const
 	const double scale = 1000;
 	double t = this->get();
 	TimeUnit u = this->getUnit();
+
+	if (u == ZERO)
+		return *this;
 
 	while (1) {
 		if (t < 1 && u != FS) {

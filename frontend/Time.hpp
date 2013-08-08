@@ -20,7 +20,7 @@ public:
 		SEC
 	};
 
-	Time(double t, TimeUnit u) : TimeNum(t), TU(u) {};
+	Time(double t, TimeUnit u);
 	Time(double t, sc_core::sc_time_unit sctime);
 
 	// get the time according to the given time unit.
@@ -30,8 +30,7 @@ public:
 	TimeUnit getUnit() const {return this->TU;};
 	std::string getUnitStr() const;
 
-	// The unit scale, for example given NS returns 10^-9.
-	double getScale(TimeUnit tu) const;
+	bool isZero() const;
 
 	// For example, Time(52,MS)::convertUnit(US) == Time(52000,US)
 	Time convertUnit(TimeUnit tu) const;
@@ -40,6 +39,9 @@ public:
 	Time adjustUnit() const;
 	
 private:
+	// The unit scale, for example given NS returns 10^-9.
+	double getScale(TimeUnit tu) const;
+
 	TimeUnit sc2pinavm_time_unit(sc_core::sc_time_unit sc_tu) const;
 	TimeUnit lowerUnit(TimeUnit tu) const ;
 	TimeUnit higherUnit(TimeUnit tu) const ;
