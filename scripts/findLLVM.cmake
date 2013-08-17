@@ -22,6 +22,10 @@ if(${LLVM_CONFIG_EXE} STREQUAL "LLVM_CONFIG_EXE-NOTFOUND")
 endif()
 
 message(STATUS "find LLVM-Config : ${LLVM_CONFIG_EXE}")
+execute_process(COMMAND ${LLVM_CONFIG_EXE} --version
+		OUTPUT_VARIABLE LLVM_VERSION
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+
 
 # Check whether the LLVM version meets our requirement.
 if(  (${LLVM_VERSION} MATCHES ${LLVM_RECOMMAND_VERSION} )
