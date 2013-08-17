@@ -131,19 +131,6 @@ FUNCTION(install_llvm)
   execute_process(COMMAND make install
 		  WORKING_DIRECTORY ${llvm_build_dir})
 
-  # check whether llvm-config is installed again.
-  find_program(llvm-config-temp
-	  NAMES "llvm-config-${LLVM_RECOMMAND_VERSION}" "llvm-config"
-	  HINTS ${LLVM_ROOT}/bin)
-
-  # llvm should exists in user's system.
-  # if result is notfound, which means that install script failed, give an error.
-  if (${llvm-config-temp} STREQUAL "llvm-config-temp-NOTFOUND")
-    message(FATAL_ERROR "You can run this script if you installed LLVM,"
-		  " This is a bug. Please contact developers.")
-  else()
-    message(STATUS "Finished installing LLVM.")
-  endif()
 endfunction()
 
 FUNCTION(autoinstall_llvm)
@@ -166,6 +153,22 @@ FUNCTION(autoinstall_llvm)
 
   # temperary commement out this for test usage.
   install_llvm()
+
+  # check whether llvm-config is installed again.
+  find_program(llvm-config-temp
+	  NAMES "llvm-config-${LLVM_RECOMMAND_VERSION}" "llvm-config"
+	  HINTS ${LLVM_ROOT}/bin)
+
+  # llvm should exists in user's system.
+  # if notfound, which means that install script failed, give an error.
+  if (${llvm-config-temp} STREQUAL "llvm-config-temp-NOTFOUND")
+    message(FATAL_ERROR "This is a bug. Please contact developers.")
+  else()
+    message(STATUS "Finished installing LLVM.")
+    # set LLVM_CONFIG_EXE for parent, so that not to find it in parent
+    # process again.
+    set(LLVM_CONFIG_EXE ${llvm-config-temp} PARENT_SCOPE)
+  endif()
 endfunction()
 
 
