@@ -464,7 +464,7 @@ Function *TLMBasicPassImpl::createProcess(Function *oldProc,
     Function *newProc = 
     Function::Create(newProcType, Function::ExternalLinkage, name, this->llvmMod);
     assert(newProc->empty());
-    newProc->addFnAttr(Attributes::InlineHint);
+    newProc->addFnAttr(Attribute::InlineHint);
     
     { // Set name of newfunc arguments and complete args
         Function::arg_iterator nai = newProc->arg_begin();

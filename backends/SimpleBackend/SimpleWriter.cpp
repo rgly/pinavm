@@ -123,14 +123,14 @@ SimpleWriter::printStructReturnPointerFunctionType (formatted_raw_ostream &
       if (PrintedType)
 	FunctionInnards << ", ";
       Type *ArgTy = *I;
-      if (PAL.paramHasAttr (Idx, this->getAttributes(Attributes::ByVal)))
+      if (PAL.paramHasAttr (Idx, this->getAttribute(Attribute::ByVal)))
 	{
 	  assert (isa < PointerType > (ArgTy));
 	  ArgTy = cast < PointerType > (ArgTy)->getElementType ();
 	}
       printType (FunctionInnards, ArgTy,
 		 /*isSigned= */ PAL.paramHasAttr (Idx,
-						  this->getAttributes(Attributes::SExt)), "");
+						  this->getAttribute(Attribute::SExt)), "");
       PrintedType = true;
     }
   if (FTy->isVarArg ())
@@ -145,7 +145,7 @@ SimpleWriter::printStructReturnPointerFunctionType (formatted_raw_ostream &
   FunctionInnards << ')';
   std::string tstr = FunctionInnards.str ();
   printType (Out, RetTy,
-  /*isSigned= */ PAL.paramHasAttr (0, this->getAttributes(Attributes::SExt)),
+  /*isSigned= */ PAL.paramHasAttr (0, this->getAttribute(Attribute::SExt)),
 	     tstr);
 }
 
@@ -286,7 +286,7 @@ raw_ostream &
 	for (FunctionType::param_iterator I = FTy->param_begin (), E = FTy->param_end (); I != E; ++I)
 	  {
 	    Type *ArgTy = *I;
-	    if (PAL.paramHasAttr (Idx, this->getAttributes(Attributes::ByVal)))
+	    if (PAL.paramHasAttr (Idx, this->getAttribute(Attribute::ByVal)))
 	      {
 		assert (isa < PointerType > (ArgTy));
 		ArgTy = cast < PointerType > (ArgTy)->getElementType ();
@@ -294,7 +294,7 @@ raw_ostream &
 	    if (I != FTy->param_begin ())
 	      FunctionInnards << ", ";
 	    printType (FunctionInnards, ArgTy,
-   /*isSigned= */ PAL.paramHasAttr (Idx, this->getAttributes(Attributes::SExt)),
+   /*isSigned= */ PAL.paramHasAttr (Idx, this->getAttribute(Attribute::SExt)),
 			 "");
 	    ++Idx;
 	  }
@@ -311,7 +311,7 @@ raw_ostream &
 	std::string tstr = FunctionInnards.str ();
 	printType (Out, FTy->getReturnType (),
 		   /*isSigned= */ PAL.paramHasAttr (0,
-	 			  this->getAttributes(Attributes::SExt)), tstr);
+	 			  this->getAttribute(Attribute::SExt)), tstr);
 	return Out;
       }
     case Type::StructTyID:
@@ -426,7 +426,7 @@ std::ostream &
 	for (FunctionType::param_iterator I = FTy->param_begin (), E = FTy->param_end (); I != E; ++I)
 	  {
 	    Type *ArgTy = *I;
-	    if (PAL.paramHasAttr (Idx, this->getAttributes(Attributes::ByVal)))
+	    if (PAL.paramHasAttr (Idx, this->getAttribute(Attribute::ByVal)))
 	      {
 		assert (isa < PointerType > (ArgTy));
 		ArgTy = cast < PointerType > (ArgTy)->getElementType ();
@@ -436,7 +436,7 @@ std::ostream &
 	    printType (FunctionInnards, ArgTy,
 		       /*isSigned= */
 		       PAL.paramHasAttr (Idx,
-				 this->getAttributes(Attributes::SExt)), "");
+				 this->getAttribute(Attribute::SExt)), "");
 	    ++Idx;
 	  }
 	if (FTy->isVarArg ())
@@ -452,7 +452,7 @@ std::ostream &
 	std::string tstr = FunctionInnards.str ();
 	printType (Out, FTy->getReturnType (),
 		   /*isSigned= */ PAL.paramHasAttr (0,
-				this->getAttributes(Attributes::SExt)), tstr);
+				this->getAttribute(Attribute::SExt)), tstr);
 	return Out;
       }
     case Type::StructTyID:
@@ -1497,7 +1497,7 @@ SimpleWriter::printFunctionSignature (const Function * F, bool Prototype)
     }
 
   // Loop over the arguments, printing them...
-//      const AttrListPtr &PAL = F->getAttributes();
+//      const AttrListPtr &PAL = F->getAttribute();
   const FunctionType *FT = cast < FunctionType > (F->getFunctionType ());
 
   if (FT->isVarArg ())
@@ -3027,7 +3027,7 @@ SimpleWriter::visitCallInst (CallInst & I)
 
   // If this is a call to a struct-return function, assign to the first
   // parameter instead of passing it to the call.
-  const AttrListPtr & PAL = I.getAttributes ();
+  const AttrListPtr & PAL = I.getAttribute ();
   bool hasByVal = I.hasByValArgument ();
   bool isStructRet = I.hasStructRetAttr ();
   if (isStructRet)
@@ -3101,12 +3101,12 @@ SimpleWriter::visitCallInst (CallInst & I)
 	  printType (Out, FTy->getParamType (ArgNo),
 		     /*isSigned= */
 		     PAL.paramHasAttr (ArgNo + 1,
-					this->getAttributes(Attributes::SExt))
+					this->getAttribute(Attribute::SExt))
 			);
 	  Out << ')';
 	}
       // Check if the argument is expected to be passed by value.
-      if (I.paramHasAttr (ArgNo + 1, Attributes::ByVal))
+      if (I.paramHasAttr (ArgNo + 1, Attribute::ByVal))
 	writeOperandDeref (*AI);
       else
 	writeOperand (*AI);
@@ -3715,10 +3715,10 @@ const char *SimpleWriter::getPassName () const
   return "Simple backend";
 }
 
-Attributes SimpleWriter::getAttributes(Attributes::AttrVal attr)
+Attribute SimpleWriter::getAttribute(Attribute::AttrVal attr)
 {
-  return Attributes::get(getGlobalContext(),
-                         ArrayRef<Attributes::AttrVal>(attr));
+  return Attribute::get(getGlobalContext(),
+                         ArrayRef<Attribute::AttrVal>(attr));
 }
 
 char SimpleWriter::ID = 0;

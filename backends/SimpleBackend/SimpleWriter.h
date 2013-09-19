@@ -260,7 +260,7 @@ public:
 			  std::map<Value*, std::string>* allDepsByValue,
 			  std::map<std::string, Type*>* allDepsByName);
   int getNumField(GetElementPtrInst* inst);
-  Attributes getAttributes(Attributes::AttrVal attr);
+  Attribute getAttribute(Attribute::AttrVal attr);
 
 };
 

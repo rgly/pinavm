@@ -168,7 +168,7 @@ void tweto_specialize__create(Module *Mod, Function *oldfunc,
   std::string name = oldfunc->getName().str()+std::string("_specialized");
   newfunc = Function::Create(newfunc_type, Function::ExternalLinkage, StringRef(name), Mod);
   assert(newfunc->empty());
-  newfunc->addFnAttr(Attributes::InlineHint);
+  newfunc->addFnAttr(Attribute::InlineHint);
 
   { // set name of newfunc arguments and complete args
     Function::arg_iterator nai = newfunc->arg_begin(), oai = oldfunc->arg_begin();
@@ -418,7 +418,7 @@ int specialize_calls(ExecutionEngine *EE, Module *Mod, Function *F) {
               tweto_specialize__create(Mod,oldfun,args_spec,args_spec+n,
                                        already,newfun,ci);
               assert(newfun);
-              // const AttrListPtr &attributes = cs.getAttributes();
+              // const AttrListPtr &attributes = cs.getAttribute();
               if (cs.isInvoke()) {
                 InvokeInst *i = dyn_cast<InvokeInst>(cs.getInstruction());
                 assert(i);
@@ -426,7 +426,7 @@ int specialize_calls(ExecutionEngine *EE, Module *Mod, Function *F) {
                 BasicBlock *bb2 = i->getUnwindDest();
                 InvokeInst *newinvoke =
                   InvokeInst::Create(newfun,bb1,bb2,ArrayRef<Value*>(args_keep,args_keep_end),"",i);
-                // newinvoke->setAttributes(attributes);
+                // newinvoke->setAttribute(attributes);
                 BasicBlock::iterator ii_r(i);
                 ReplaceInstWithValue(i->getParent()->getInstList(),
                                      ii_r, newinvoke);
@@ -434,7 +434,7 @@ int specialize_calls(ExecutionEngine *EE, Module *Mod, Function *F) {
                 CallInst *newcall =
                   CallInst::Create(newfun,ArrayRef<Value*>(args_keep,
                                    args_keep_end),"",cs.getInstruction());
-                // newcall->setAttributes(attributes);
+                // newcall->setAttribute(attributes);
                 BasicBlock::iterator ii_r(cs.getInstruction());
                 ReplaceInstWithValue(cs.getInstruction()->getParent()->getInstList(),
                                      ii_r, newcall);

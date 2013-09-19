@@ -258,7 +258,7 @@ public:
   int getNumField(GetElementPtrInst* inst);
   int getTypeNamesSize();
   void insertTypeName(Type* Ty, std::string TyName);
-  Attributes getAttributes(Attributes::AttrVal attr);
+  Attribute getAttribute(Attribute::AttrVal attr);
 
 
 };
