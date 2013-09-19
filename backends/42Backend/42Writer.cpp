@@ -4218,10 +4218,10 @@ const char *_42Writer::getPassName() const
   return "42 backend";
 }
 
-Attribute _42Writer::getAttribute(Attribute::AttrVal attr)
+Attribute _42Writer::getAttribute(Attribute::AttrKind attr)
 {
   return Attribute::get(getGlobalContext(),
-                         ArrayRef<Attribute::AttrVal>(attr));
+                         ArrayRef<Attribute::AttrKind>(attr));
 }
 
 

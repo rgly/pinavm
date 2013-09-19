@@ -3715,10 +3715,10 @@ const char *SimpleWriter::getPassName () const
   return "Simple backend";
 }
 
-Attribute SimpleWriter::getAttribute(Attribute::AttrVal attr)
+Attribute SimpleWriter::getAttribute(Attribute::AttrKind attr)
 {
   return Attribute::get(getGlobalContext(),
-                         ArrayRef<Attribute::AttrVal>(attr));
+                         ArrayRef<Attribute::AttrKind>(attr));
 }
 
 char SimpleWriter::ID = 0;

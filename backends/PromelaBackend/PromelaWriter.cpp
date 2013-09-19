@@ -4074,10 +4074,10 @@ const char *PromelaWriter::getPassName() const
 	return "Promela backend";
 }
 
-Attribute PromelaWriter::getAttribute(Attribute::AttrVal attr)
+Attribute PromelaWriter::getAttribute(Attribute::AttrKind attr)
 {
 	return Attribute::get(getGlobalContext(),
-                               ArrayRef<Attribute::AttrVal>(attr));
+                               ArrayRef<Attribute::AttrKind>(attr));
 }
 
 char PromelaWriter::ID = 0;
