@@ -35,7 +35,7 @@ __________________________________________________
     OR
 
     2) Use it as a new LLVM module
-        #include "llvm/Support/IRReader.h"
+        #include "llvm/IRReader/IRReader.h"
         SMDiagnostic smdiagno;
         LLVMContext &Context = getGlobalContext();
         Module* LoadBitcode = ParseIRFile("foo_dir/baz.bc", smdiagno, Context);

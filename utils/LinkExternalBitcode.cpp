@@ -3,7 +3,8 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Linker.h"
 #include "llvm/IR/LLVMContext.h"
-#include "llvm/Support/IRReader.h"
+#include "llvm/IRReader/IRReader.h"
+#include "llvm/Support/SourceMgr.h"
 
 #include "GetRootPath.h"
 
@@ -17,7 +18,8 @@ Module* LinkExternalBitcode(Module* module, std::string bc)
     Module* LoadBitcode = ParseIRFile(InputFile, smdiagnostic, Context);
 
     if (!LoadBitcode) {
-        std::cerr << InputFile << " : " << smdiagnostic.getMessage() <<'\n';
+        std::cerr << InputFile << " : " << smdiagnostic.getMessage().str();
+	std::cerr << '\n';
     }
 
     std::string err;

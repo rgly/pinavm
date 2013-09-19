@@ -21,7 +21,8 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/raw_ostream.h"
 //#include "llvm/Support/Process.h"
-#include "llvm/Support/IRReader.h"
+#include "llvm/IRReader/IRReader.h"
+#include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/DynamicLibrary.h"
@@ -177,7 +178,7 @@ int load_and_run_sc_main(std::string & InputFile)
 
 	if (!Mod) {
 		errs() << "error loading program '" << InputFile << "': "
-		       << smdiagnostic.getMessage() << "\n";
+		       << smdiagnostic.getMessage().str() << "\n";
 		exit(1);
 	} else {
 		TRACE_2("bitcode file loaded\n");
