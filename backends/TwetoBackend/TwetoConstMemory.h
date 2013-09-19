@@ -1,7 +1,7 @@
 #ifndef TWETOCONSTMEMORY_HPP
 #define TWETOCONSTMEMORY_HPP
 
-#include <llvm/Module.h>
+#include <llvm/IR/Module.h>
 #include <llvm/ExecutionEngine/GenericValue.h>
 #include <llvm/ExecutionEngine/JIT.h>
 #include <map>

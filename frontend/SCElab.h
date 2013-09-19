@@ -6,7 +6,7 @@
 #include <map>
 #include <vector>
 
-#include "llvm/Module.h"
+#include "llvm/IR/Module.h"
 
 
 #include "ElabMember.hpp"

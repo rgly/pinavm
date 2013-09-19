@@ -1,6 +1,6 @@
 #include <string>
 #include <iostream>
-#include "llvm/Module.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Linker.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Support/IRReader.h"

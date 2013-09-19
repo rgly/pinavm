@@ -7,7 +7,7 @@
 #include "Frontend.hpp"
 
 //#include "llvm/Transforms/Scalar.h"
-#include "llvm/Module.h"
+#include "llvm/IR/Module.h"
 //#include "llvm/Support/PassNameParser.h"
 //#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/DataLayout.h"

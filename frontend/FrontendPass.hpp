@@ -2,7 +2,7 @@
 #define _FRONTENDPASS_HPP
 
 #include "llvm/Pass.h"
-#include "llvm/Module.h"
+#include "llvm/IR/Module.h"
 
 struct Frontend;
 

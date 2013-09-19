@@ -31,7 +31,7 @@
 #include <cerrno>
 
 #include "llvm/ValueSymbolTable.h"
-#include "llvm/Module.h"
+#include "llvm/IR/Module.h"
 
 #include "Frontend.hpp"
 #include "TwetoBackend.h"
