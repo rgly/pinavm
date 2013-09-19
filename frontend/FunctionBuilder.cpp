@@ -1,5 +1,5 @@
 #include "FunctionBuilder.h"
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/LLVMContext.h"
 #include <llvm/Support/CallSite.h>
 #include "llvm/IR/IRBuilder.h"
 

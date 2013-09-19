@@ -9,7 +9,7 @@
  * @copyright : Verimag 2011
  */
 
-#include <llvm/LLVMContext.h>
+#include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Type.h>
 #include <llvm/Bitcode/ReaderWriter.h>
 #include <llvm/CodeGen/LinkAllCodegenComponents.h>

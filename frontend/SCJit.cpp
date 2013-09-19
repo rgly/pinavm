@@ -1,6 +1,6 @@
 #include "SCJit.hpp"
 
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/DataLayout.h"
 //#include "llvm/Analysis/Dominators.h"
 #include "llvm/CallingConv.h"

@@ -24,7 +24,7 @@
 #include "llvm/Target/Mangler.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/Analysis/Verifier.h"
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
 #include <llvm/IR/IRBuilder.h>

@@ -12,7 +12,7 @@
 #include "ClockChannel.hpp"
 #include "BasicChannel.hpp"
 
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/InstrTypes.h"

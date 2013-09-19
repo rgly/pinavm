@@ -5,7 +5,7 @@
 #include <cstdio>
 
 // For JIT
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 //#include "llvm/Bitcode/ReaderWriter.h"
