@@ -16,7 +16,7 @@
 
 #include <llvm/ADT/Statistic.h>
 #include <llvm/Analysis/Verifier.h>
-#include <llvm/DerivedTypes.h>
+#include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/PassManager.h>
 #include <llvm/Support/CallSite.h>

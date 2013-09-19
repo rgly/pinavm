@@ -12,7 +12,7 @@
 
 #include <llvm/IR/Type.h>
 #include <llvm/IR/DataLayout.h>
-#include <llvm/DerivedTypes.h>
+#include <llvm/IR/DerivedTypes.h>
 #include <iostream>
 
 using namespace llvm;
