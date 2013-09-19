@@ -1,6 +1,6 @@
 #include <cxxabi.h>
 
-#include <llvm/Type.h>
+#include <llvm/IR/Type.h>
 
 #include "IRModule.hpp"
 #include "Process.hpp"

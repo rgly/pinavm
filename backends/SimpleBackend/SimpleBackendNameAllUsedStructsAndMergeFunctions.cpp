@@ -1,6 +1,6 @@
 #include "SimpleBackendNameAllUsedStructsAndMergeFunctions.h"
 #include "SimpleWriter.h"
-#include "llvm/TypeFinder.h"
+#include "llvm/IR/TypeFinder.h"
 #include "llvm/ADT/SetVector.h"
 
 #include <cassert>

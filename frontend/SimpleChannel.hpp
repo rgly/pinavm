@@ -5,7 +5,7 @@
 
 #include "Channel.hpp"
 
-#include <llvm/Type.h>
+#include <llvm/IR/Type.h>
 
 
 class SimpleChannel : public Channel

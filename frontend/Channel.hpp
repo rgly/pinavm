@@ -3,7 +3,7 @@
 
 #include <string>
 #include <vector>
-#include <llvm/Type.h>
+#include <llvm/IR/Type.h>
 
 struct Port;
 

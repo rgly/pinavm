@@ -7,7 +7,7 @@
 // For JIT
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
-#include "llvm/Type.h"
+#include "llvm/IR/Type.h"
 //#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/CodeGen/LinkAllCodegenComponents.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"

@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "llvm/Type.h"
+#include "llvm/IR/Type.h"
 
 #include "ElabMember.hpp"
 #include "Channel.hpp"
