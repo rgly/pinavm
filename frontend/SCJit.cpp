@@ -3,7 +3,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/DataLayout.h"
 //#include "llvm/Analysis/Dominators.h"
-#include "llvm/CallingConv.h"
+#include "llvm/IR/CallingConv.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/PassManager.h"
 #include "llvm/IR/IRBuilder.h"

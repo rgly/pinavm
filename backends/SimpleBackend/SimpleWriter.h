@@ -3,7 +3,7 @@
 
 #include "SimpleTargetMachine.h"
 
-#include "llvm/CallingConv.h"
+#include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/IR/Module.h"

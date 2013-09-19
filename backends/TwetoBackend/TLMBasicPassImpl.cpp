@@ -15,7 +15,7 @@
 #include <map>
 
 #include "llvm/IR/GlobalValue.h"
-#include "llvm/CallingConv.h"
+#include "llvm/IR/CallingConv.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/IR/Instructions.h"
