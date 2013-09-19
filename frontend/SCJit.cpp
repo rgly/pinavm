@@ -6,7 +6,7 @@
 #include "llvm/CallingConv.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/PassManager.h"
-#include "llvm/IRBuilder.h"
+#include "llvm/IR/IRBuilder.h"
 
 #include <sstream>
 #include <iostream>

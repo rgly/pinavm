@@ -22,7 +22,7 @@
 #include <llvm/Support/MemoryBuffer.h>
 #include <llvm/Support/PrettyStackTrace.h>
 #include <llvm/Support/raw_ostream.h>
-#include <llvm/IRBuilder.h>
+#include <llvm/IR/IRBuilder.h>
 #include <llvm/Support/FormattedStream.h>
 #include <llvm/PassManager.h>
 #include <llvm/Analysis/Verifier.h>

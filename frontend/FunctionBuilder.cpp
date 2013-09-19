@@ -1,7 +1,7 @@
 #include "FunctionBuilder.h"
 #include "llvm/LLVMContext.h"
 #include <llvm/Support/CallSite.h>
-#include "llvm/IRBuilder.h"
+#include "llvm/IR/IRBuilder.h"
 
 #include <algorithm>
 
