@@ -13,7 +13,7 @@
 #define TLMBASICPASSIMPL_H
 
 #include "llvm/CallingConv.h"
-#include "llvm/Constants.h"
+#include "llvm/IR/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Instructions.h"
