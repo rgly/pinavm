@@ -35,7 +35,7 @@
 #include "llvm/Pass.h"
 #include "llvm/PassManagers.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Function.h"
+#include "llvm/IR/Function.h"
 
 #include "Port.hpp"
 #include "Channel.hpp"

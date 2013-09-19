@@ -14,7 +14,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCObjectFileInfo.h"
-#include "llvm/Function.h"
+#include "llvm/IR/Function.h"
 #include "llvm/ADT/SmallString.h"
 
 #include "Port.hpp"

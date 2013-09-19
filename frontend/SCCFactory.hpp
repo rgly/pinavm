@@ -3,7 +3,7 @@
 
 #include <map>
 
-#include "llvm/Function.h"
+#include "llvm/IR/Function.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/IR/Instruction.h"
 

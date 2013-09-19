@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "llvm/GlobalVariable.h"
-#include "llvm/Function.h"
+#include "llvm/IR/Function.h"
 
 #include "ElabMember.hpp"
 

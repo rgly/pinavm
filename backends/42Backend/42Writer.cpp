@@ -12,7 +12,7 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCObjectFileInfo.h"
-#include "llvm/Function.h"
+#include "llvm/IR/Function.h"
 
 #include "Port.hpp"
 #include "Channel.hpp"
