@@ -1,7 +1,7 @@
 #ifndef _NOTIFYCONSTRUCT_HPP
 #define _NOTIFYCONSTRUCT_HPP
 
-#include "llvm/Value.h"
+#include "llvm/IR/Value.h"
 
 #include "SCConstruct.hpp"
 

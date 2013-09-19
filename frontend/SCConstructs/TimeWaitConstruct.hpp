@@ -1,7 +1,7 @@
 #ifndef _TIMEWAITCONSTRUCT_HPP
 #define _TIMEWAITCONSTRUCT_HPP
 
-#include "llvm/Value.h"
+#include "llvm/IR/Value.h"
 
 #include "WaitConstruct.hpp"
 #include "Time.hpp"

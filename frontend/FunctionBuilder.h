@@ -6,7 +6,7 @@
 
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/Value.h"
+#include "llvm/IR/Value.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 
 #include "config.h"

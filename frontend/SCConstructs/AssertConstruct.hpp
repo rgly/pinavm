@@ -1,7 +1,7 @@
 #ifndef _ASSERTCONSTRUCT_HPP
 #define _ASSERTCONSTRUCT_HPP
 
-#include "llvm/Value.h"
+#include "llvm/IR/Value.h"
 
 #include "SCConstruct.hpp"
 #include "Event.hpp"

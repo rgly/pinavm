@@ -30,7 +30,7 @@
 #include <llvm/Transforms/Scalar.h>
 #include <cerrno>
 
-#include "llvm/ValueSymbolTable.h"
+#include "llvm/IR/ValueSymbolTable.h"
 #include "llvm/IR/Module.h"
 
 #include "Frontend.hpp"

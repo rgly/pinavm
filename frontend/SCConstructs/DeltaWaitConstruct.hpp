@@ -2,7 +2,7 @@
 #define _DELTAWAITCONSTRUCT_HPP
 
 #include "WaitConstruct.hpp"
-#include "llvm/Value.h"
+#include "llvm/IR/Value.h"
 
 
 struct DeltaWaitConstruct:public WaitConstruct {

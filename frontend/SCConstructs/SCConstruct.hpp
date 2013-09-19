@@ -2,7 +2,7 @@
 #define _SCCONSTRUCT_HPP
 
 #include <string>
-#include "llvm/Value.h"
+#include "llvm/IR/Value.h"
 #include "llvm/Support/Casting.h"
 //#include <typeinfo>
 
