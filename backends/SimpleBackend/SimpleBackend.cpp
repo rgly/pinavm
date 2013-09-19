@@ -7,7 +7,7 @@
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Signals.h"
-#include "llvm/DataLayout.h"
+#include "llvm/IR/DataLayout.h"
 
 #include "SimpleBackendNameAllUsedStructsAndMergeFunctions.h"
 #include "Frontend.hpp"

@@ -11,7 +11,7 @@
 #include "TwetoConstMemory.h"
 
 #include <llvm/IR/Type.h>
-#include <llvm/DataLayout.h>
+#include <llvm/IR/DataLayout.h>
 #include <llvm/DerivedTypes.h>
 #include <iostream>
 

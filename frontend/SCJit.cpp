@@ -1,7 +1,7 @@
 #include "SCJit.hpp"
 
 #include "llvm/IR/LLVMContext.h"
-#include "llvm/DataLayout.h"
+#include "llvm/IR/DataLayout.h"
 //#include "llvm/Analysis/Dominators.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/Analysis/Verifier.h"

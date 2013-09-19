@@ -6,7 +6,7 @@
 #include "llvm/Config/config.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Signals.h"
-#include "llvm/DataLayout.h"
+#include "llvm/IR/DataLayout.h"
 
 #include "Frontend.hpp"
 #include "42Writer.h"

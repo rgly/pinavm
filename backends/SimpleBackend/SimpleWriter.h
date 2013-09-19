@@ -23,7 +23,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/DataLayout.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Support/CallSite.h"
