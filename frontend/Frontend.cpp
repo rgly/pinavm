@@ -3,7 +3,6 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/Transforms/Utils/Cloning.h"
-//#include "llvm/Transforms/Utils/BasicInliner.h"
 
 #include "Frontend.hpp"
 

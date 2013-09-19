@@ -8,7 +8,6 @@
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/CodeGen/LinkAllCodegenComponents.h"
 #include "llvm/Config/config.h"
-#include "llvm/LinkAllVMCore.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/FormattedStream.h"
