@@ -4,7 +4,7 @@
 #include <map>
 
 #include "llvm/IR/Function.h"
-#include "llvm/BasicBlock.h"
+#include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Instruction.h"
 
 #include "SCConstructs/SCConstructHandler.hpp"
