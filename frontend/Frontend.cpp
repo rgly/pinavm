@@ -1,7 +1,7 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/Function.h"
 #include "llvm/Module.h"
-#include "llvm/Instructions.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 //#include "llvm/Transforms/Utils/BasicInliner.h"
 

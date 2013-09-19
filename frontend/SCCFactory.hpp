@@ -5,7 +5,7 @@
 
 #include "llvm/Function.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/Instruction.h"
+#include "llvm/IR/Instruction.h"
 
 #include "SCConstructs/SCConstructHandler.hpp"
 

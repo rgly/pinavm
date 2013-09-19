@@ -16,7 +16,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/Instructions.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
 #include "llvm/Intrinsics.h"

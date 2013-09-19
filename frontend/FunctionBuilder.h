@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "llvm/Function.h"
-#include "llvm/Instructions.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/Value.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 

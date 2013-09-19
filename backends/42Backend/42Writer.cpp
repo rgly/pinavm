@@ -6,7 +6,7 @@
 #include "llvm/CallingConv.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/InstrTypes.h"
-#include "llvm/Instructions.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"

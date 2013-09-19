@@ -3,7 +3,7 @@
 #include "SCCFactory.hpp"
 #include "utils.h"
 
-#include "llvm/Instructions.h"
+#include "llvm/IR/Instructions.h"
 
 #include <algorithm>
 #include <map>
