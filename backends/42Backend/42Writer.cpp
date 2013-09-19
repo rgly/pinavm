@@ -3046,7 +3046,7 @@ void _42Writer::lowerIntrinsics(Function & F)
 	    const char *BuiltinName =
 	      "";
 #define GET_GCC_BUILTIN_NAME
-#include "llvm/Intrinsics.gen"
+#include "llvm/IR/Intrinsics.gen"
 #undef GET_GCC_BUILTIN_NAME
 	    // If we handle it, don't lower it.
 	    if (BuiltinName[0])
@@ -3657,7 +3657,7 @@ bool _42Writer::visitBuiltinCall(CallInst & I, Intrinsic::ID ID,
     const char *BuiltinName = "";
     Function *F = I.getCalledFunction();
 #define GET_GCC_BUILTIN_NAME
-#include "llvm/Intrinsics.gen"
+#include "llvm/IR/Intrinsics.gen"
 #undef GET_GCC_BUILTIN_NAME
     assert(BuiltinName[0]
 	   && "Unknown LLVM intrinsic!");
