@@ -2,7 +2,7 @@
 #include <map>
 #include <cstdio>
 
-#include "llvm/GlobalValue.h"
+#include "llvm/IR/GlobalValue.h"
 #include "llvm/CallingConv.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/InstrTypes.h"
