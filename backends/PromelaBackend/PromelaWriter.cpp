@@ -135,7 +135,7 @@ PromelaWriter::PromelaWriter(formatted_raw_ostream &o)
 /// print it as "Struct (*)(...)", for struct return functions.
 void PromelaWriter::
 printStructReturnPointerFunctionType(formatted_raw_ostream & Out,
-				const AttrListPtr & PAL,
+				const AttributeSet & PAL,
 				PointerType * TheTy)
 {
 	FunctionType *FTy = cast < FunctionType > (TheTy->getElementType());
@@ -152,13 +152,12 @@ printStructReturnPointerFunctionType(formatted_raw_ostream & Out,
 		if (PrintedType)
 			FunctionInnards << ", ";
 		Type *ArgTy = *I;
-		if (PAL.paramHasAttr(Idx, this->getAttribute(Attribute::ByVal))) {
+		if (PAL.hasAttribute(Idx, Attribute::ByVal)) {
 			assert(isa < PointerType > (ArgTy));
 			ArgTy =	cast < PointerType > (ArgTy)->getElementType();
 		}
 		printType(FunctionInnards, ArgTy,
-			/*isSigned= */ PAL.paramHasAttr(Idx,
-							this->getAttribute(Attribute::SExt)),
+			/*isSigned= */ PAL.hasAttribute(Idx, Attribute::SExt),
 			"");
 		PrintedType = true;
 	}
@@ -173,8 +172,7 @@ printStructReturnPointerFunctionType(formatted_raw_ostream & Out,
 
 
 	printType(Out, RetTy,
-		/*isSigned= */ PAL.paramHasAttr(0, this->getAttribute(Attribute::SExt)),
-		tstr);
+		/*isSigned= */ PAL.hasAttribute(0, Attribute::SExt), tstr);
 }
 
 raw_ostream &
@@ -282,7 +280,7 @@ raw_ostream &
 PromelaWriter::printType(formatted_raw_ostream & Out,
 			Type * Ty,
 			bool isSigned, const std::string & NameSoFar,
-			bool IgnoreName, const AttrListPtr & PAL)
+			bool IgnoreName, const AttributeSet & PAL)
 {	
  	while (isa<PointerType>(Ty)) {
 		//Out<<"Inside While Pointer \n";
@@ -344,13 +342,13 @@ PromelaWriter::printType(formatted_raw_ostream & Out,
 			     FTy->param_begin(), E = FTy->param_end();
 		     I != E; ++I) {
 			Type *ArgTy = *I;
-			if (PAL.paramHasAttr(Idx, Attribute::ByVal)) {
+			if (PAL.hasAttribute(Idx, Attribute::ByVal)) {
 				assert(isa < PointerType >(ArgTy));
 				ArgTy =	cast < PointerType > (ArgTy)->getElementType();
 			}
 			if (I != FTy->param_begin())
 				FunctionInnards << ", ";
-			printType(FunctionInnards, ArgTy, PAL.paramHasAttr(Idx, Attribute::SExt), "");
+			printType(FunctionInnards, ArgTy, PAL.hasAttribute(Idx, Attribute::SExt), "");
 			++Idx;
 		}
 		if (FTy->isVarArg()) {
@@ -361,7 +359,7 @@ PromelaWriter::printType(formatted_raw_ostream & Out,
 		}
 		FunctionInnards << ')';
 		std::string tstr = FunctionInnards.str();
-		printType(Out, FTy->getReturnType(), PAL.paramHasAttr(0, Attribute::SExt), tstr);
+		printType(Out, FTy->getReturnType(), PAL.hasAttribute(0, Attribute::SExt), tstr);
 		return Out;*/
 		return Out;
 	}
@@ -458,7 +456,7 @@ std::ostream &
 PromelaWriter::printType(std::ostream & Out,
 			Type * Ty,
 			bool isSigned, const std::string & NameSoFar,
-			bool IgnoreName, const AttrListPtr & PAL)
+			bool IgnoreName, const AttributeSet & PAL)
 {
  	while (isa<PointerType>(Ty)) {
  		Ty = cast<PointerType>(Ty)->getElementType();
@@ -512,8 +510,7 @@ PromelaWriter::printType(std::ostream & Out,
 			     FTy->param_begin(), E = FTy->param_end();
 		     I != E; ++I) {
 			Type *ArgTy = *I;
-			if (PAL.
-				paramHasAttr(Idx, this->getAttribute(Attribute::ByVal))) {
+			if (PAL.hasAttribute(Idx, Attribute::ByVal)) {
 				assert(isa < PointerType >
 					(ArgTy));
 				ArgTy =
@@ -524,8 +521,7 @@ PromelaWriter::printType(std::ostream & Out,
 				FunctionInnards << ", ";
 			printType(FunctionInnards, ArgTy,
 				/*isSigned= */
-				PAL.paramHasAttr(Idx,
-						this->getAttribute(Attribute::SExt)), "");
+				PAL.hasAttribute(Idx, Attribute::SExt), "");
 			++Idx;
 		}
 		if (FTy->isVarArg()) {
@@ -537,8 +533,7 @@ PromelaWriter::printType(std::ostream & Out,
 		FunctionInnards << ')';
 		std::string tstr = FunctionInnards.str();
 		printType(Out, FTy->getReturnType(),
-			/*isSigned= */ PAL.paramHasAttr(0,
-							this->getAttribute(Attribute::SExt)),
+			/*isSigned= */ PAL.hasAttribute(0, Attribute::SExt),
 			tstr);
 		return Out;
 	}
@@ -1807,7 +1802,7 @@ void PromelaWriter::printFunctionSignature(const Function * F,
 	}
 	
 	// Loop over the arguments, printing them...
-//	const AttrListPtr &PAL = F->getAttribute();
+//	const AttributeSet &PAL = F->getAttribute();
 	FunctionType *FT = cast<FunctionType>(F->getFunctionType());
 	
 	if (FT->isVarArg()) {
@@ -3033,7 +3028,7 @@ PromelaWriter::printInitSection()
   			{
 				const std::string modName = "mod_" + proc->getModule()->getUniqueName();
 				Out << "    ";
-				printType(Out, proc->getMainFct()->arg_begin()->getType() , false, modName, false, AttrListPtr());
+				printType(Out, proc->getMainFct()->arg_begin()->getType() , false, modName, false, AttributeSet());
 				Out << ";\n";
 			}
 		}
@@ -3339,7 +3334,7 @@ void PromelaWriter::visitCallInst(CallInst & I)
 
 	// If this is a call to a struct-return function, assign to the first
 	// parameter instead of passing it to the call.
-	const AttrListPtr & PAL = I.getAttribute();
+	const AttributeSet & PAL = I.getAttribute();
 // 	bool hasByVal = I.hasByValArgument();
 //  	bool isStructRet = I.hasStructRetAttr();
 // 	if (isStructRet) {
@@ -3405,11 +3400,12 @@ void PromelaWriter::visitCallInst(CallInst & I)
 		if (ArgNo < NumDeclaredParams &&
 			(*AI)->getType() != FTy->getParamType(ArgNo)) {
 			Out << '(';
-			printType(Out, FTy->getParamType(ArgNo),/*isSigned= */ PAL.paramHasAttr(ArgNo + 1, this->getAttribute(Attribute::SExt)));
+			printType(Out, FTy->getParamType(ArgNo),
+		/*isSigned= */ PAL.hasAttribute(ArgNo + 1, Attribute::SExt));
 			Out << ')';
 		}
 		// Check if the argument is expected to be passed by value.
-		if (I.paramHasAttr(ArgNo + 1, Attribute::ByVal))
+		if (I.hasAttribute(ArgNo + 1, Attribute::ByVal))
 			writeOperandDeref(*AI);
 		else
 			writeOperand(*AI);
@@ -4072,12 +4068,6 @@ void PromelaWriter::getAnalysisUsage(AnalysisUsage & AU) const
 const char *PromelaWriter::getPassName() const
 {
 	return "Promela backend";
-}
-
-Attribute PromelaWriter::getAttribute(Attribute::AttrKind attr)
-{
-	return Attribute::get(getGlobalContext(),
-                               ArrayRef<Attribute::AttrKind>(attr));
 }
 
 char PromelaWriter::ID = 0;

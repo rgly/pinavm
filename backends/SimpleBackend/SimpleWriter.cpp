@@ -108,7 +108,7 @@ isDirectAlloca (const Value * V)
 /// print it as "Struct (*)(...)", for struct return functions.
 void
 SimpleWriter::printStructReturnPointerFunctionType (formatted_raw_ostream &
-						    Out, const AttrListPtr & PAL, PointerType * TheTy)
+						    Out, const AttributeSet & PAL, PointerType * TheTy)
 {
   const FunctionType *FTy = cast < FunctionType > (TheTy->getElementType ());
   std::stringstream FunctionInnards;
@@ -123,14 +123,13 @@ SimpleWriter::printStructReturnPointerFunctionType (formatted_raw_ostream &
       if (PrintedType)
 	FunctionInnards << ", ";
       Type *ArgTy = *I;
-      if (PAL.paramHasAttr (Idx, this->getAttribute(Attribute::ByVal)))
+      if (PAL.hasAttribute (Idx, Attribute::ByVal))
 	{
 	  assert (isa < PointerType > (ArgTy));
 	  ArgTy = cast < PointerType > (ArgTy)->getElementType ();
 	}
       printType (FunctionInnards, ArgTy,
-		 /*isSigned= */ PAL.paramHasAttr (Idx,
-						  this->getAttribute(Attribute::SExt)), "");
+		 /*isSigned= */ PAL.hasAttribute (Idx, Attribute::SExt), "");
       PrintedType = true;
     }
   if (FTy->isVarArg ())
@@ -145,8 +144,7 @@ SimpleWriter::printStructReturnPointerFunctionType (formatted_raw_ostream &
   FunctionInnards << ')';
   std::string tstr = FunctionInnards.str ();
   printType (Out, RetTy,
-  /*isSigned= */ PAL.paramHasAttr (0, this->getAttribute(Attribute::SExt)),
-	     tstr);
+  /*isSigned= */ PAL.hasAttribute (0, Attribute::SExt), tstr);
 }
 
 raw_ostream &
@@ -249,7 +247,7 @@ std::ostream &
 raw_ostream &
   SimpleWriter::printType (formatted_raw_ostream & Out,
 			   Type * Ty,
-			   bool isSigned, const std::string & NameSoFar, bool IgnoreName, const AttrListPtr & PAL)
+			   bool isSigned, const std::string & NameSoFar, bool IgnoreName, const AttributeSet & PAL)
 {
   if (Ty->isPrimitiveType () || Ty->isIntegerTy () || isa < VectorType > (Ty))
     {
@@ -286,7 +284,7 @@ raw_ostream &
 	for (FunctionType::param_iterator I = FTy->param_begin (), E = FTy->param_end (); I != E; ++I)
 	  {
 	    Type *ArgTy = *I;
-	    if (PAL.paramHasAttr (Idx, this->getAttribute(Attribute::ByVal)))
+	    if (PAL.hasAttribute (Idx, Attribute::ByVal))
 	      {
 		assert (isa < PointerType > (ArgTy));
 		ArgTy = cast < PointerType > (ArgTy)->getElementType ();
@@ -294,8 +292,7 @@ raw_ostream &
 	    if (I != FTy->param_begin ())
 	      FunctionInnards << ", ";
 	    printType (FunctionInnards, ArgTy,
-   /*isSigned= */ PAL.paramHasAttr (Idx, this->getAttribute(Attribute::SExt)),
-			 "");
+   /*isSigned= */ PAL.hasAttribute (Idx, Attribute::SExt), "");
 	    ++Idx;
 	  }
 	if (FTy->isVarArg ())
@@ -310,8 +307,7 @@ raw_ostream &
 	FunctionInnards << ')';
 	std::string tstr = FunctionInnards.str ();
 	printType (Out, FTy->getReturnType (),
-		   /*isSigned= */ PAL.paramHasAttr (0,
-	 			  this->getAttribute(Attribute::SExt)), tstr);
+		   /*isSigned= */ PAL.hasAttribute (0, Attribute::SExt), tstr);
 	return Out;
       }
     case Type::StructTyID:
@@ -397,7 +393,7 @@ raw_ostream &
 std::ostream &
   SimpleWriter::printType (std::ostream & Out,
 			   Type * Ty,
-			   bool isSigned, const std::string & NameSoFar, bool IgnoreName, const AttrListPtr & PAL)
+			   bool isSigned, const std::string & NameSoFar, bool IgnoreName, const AttributeSet & PAL)
 {
   if (Ty->isPrimitiveType () || Ty->isIntegerTy () || isa < VectorType > (Ty))
     {
@@ -426,7 +422,7 @@ std::ostream &
 	for (FunctionType::param_iterator I = FTy->param_begin (), E = FTy->param_end (); I != E; ++I)
 	  {
 	    Type *ArgTy = *I;
-	    if (PAL.paramHasAttr (Idx, this->getAttribute(Attribute::ByVal)))
+	    if (PAL.hasAttribute (Idx, Attribute::ByVal))
 	      {
 		assert (isa < PointerType > (ArgTy));
 		ArgTy = cast < PointerType > (ArgTy)->getElementType ();
@@ -435,8 +431,7 @@ std::ostream &
 	      FunctionInnards << ", ";
 	    printType (FunctionInnards, ArgTy,
 		       /*isSigned= */
-		       PAL.paramHasAttr (Idx,
-				 this->getAttribute(Attribute::SExt)), "");
+		       PAL.hasAttribute (Idx, Attribute::SExt), "");
 	    ++Idx;
 	  }
 	if (FTy->isVarArg ())
@@ -451,8 +446,7 @@ std::ostream &
 	FunctionInnards << ')';
 	std::string tstr = FunctionInnards.str ();
 	printType (Out, FTy->getReturnType (),
-		   /*isSigned= */ PAL.paramHasAttr (0,
-				this->getAttribute(Attribute::SExt)), tstr);
+		   /*isSigned= */ PAL.hasAttribute (0, Attribute::SExt), tstr);
 	return Out;
       }
     case Type::StructTyID:
@@ -1497,7 +1491,7 @@ SimpleWriter::printFunctionSignature (const Function * F, bool Prototype)
     }
 
   // Loop over the arguments, printing them...
-//      const AttrListPtr &PAL = F->getAttribute();
+//      const AttributeSet &PAL = F->getAttribute();
   const FunctionType *FT = cast < FunctionType > (F->getFunctionType ());
 
   if (FT->isVarArg ())
@@ -3027,7 +3021,7 @@ SimpleWriter::visitCallInst (CallInst & I)
 
   // If this is a call to a struct-return function, assign to the first
   // parameter instead of passing it to the call.
-  const AttrListPtr & PAL = I.getAttribute ();
+  const AttributeSet & PAL = I.getAttribute ();
   bool hasByVal = I.hasByValArgument ();
   bool isStructRet = I.hasStructRetAttr ();
   if (isStructRet)
@@ -3100,13 +3094,11 @@ SimpleWriter::visitCallInst (CallInst & I)
 	  Out << '(';
 	  printType (Out, FTy->getParamType (ArgNo),
 		     /*isSigned= */
-		     PAL.paramHasAttr (ArgNo + 1,
-					this->getAttribute(Attribute::SExt))
-			);
+		     PAL.hasAttribute (ArgNo + 1, Attribute::SExt));
 	  Out << ')';
 	}
       // Check if the argument is expected to be passed by value.
-      if (I.paramHasAttr (ArgNo + 1, Attribute::ByVal))
+      if (I.hasAttribute (ArgNo + 1, Attribute::ByVal))
 	writeOperandDeref (*AI);
       else
 	writeOperand (*AI);
@@ -3713,12 +3705,6 @@ SimpleWriter::getAnalysisUsage (AnalysisUsage & AU) const
 const char *SimpleWriter::getPassName () const
 {
   return "Simple backend";
-}
-
-Attribute SimpleWriter::getAttribute(Attribute::AttrKind attr)
-{
-  return Attribute::get(getGlobalContext(),
-                         ArrayRef<Attribute::AttrKind>(attr));
 }
 
 char SimpleWriter::ID = 0;

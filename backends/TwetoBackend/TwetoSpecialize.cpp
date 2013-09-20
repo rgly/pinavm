@@ -418,7 +418,7 @@ int specialize_calls(ExecutionEngine *EE, Module *Mod, Function *F) {
               tweto_specialize__create(Mod,oldfun,args_spec,args_spec+n,
                                        already,newfun,ci);
               assert(newfun);
-              // const AttrListPtr &attributes = cs.getAttribute();
+              // const AttributeSet &attributes = cs.getAttribute();
               if (cs.isInvoke()) {
                 InvokeInst *i = dyn_cast<InvokeInst>(cs.getInstruction());
                 assert(i);

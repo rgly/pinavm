@@ -105,12 +105,12 @@ public:
 			 bool isSigned = false,
 			 const std::string &VariableName = "",
 			 bool IgnoreName = false,
-			 const AttrListPtr &PAL = AttrListPtr());
+			 const AttributeSet &PAL = AttributeSet());
   std::ostream &printType(std::ostream &Out, Type *Ty, 
 			  bool isSigned = false,
 			  const std::string &VariableName = "",
 			  bool IgnoreName = false,
-			  const AttrListPtr &PAL = AttrListPtr());
+			  const AttributeSet &PAL = AttributeSet());
   raw_ostream &printSimpleType(formatted_raw_ostream &Out,
 			       Type *Ty, 
 			       bool isSigned, 
@@ -120,7 +120,7 @@ public:
 				const std::string &NameSoFar = "");
 
   void printStructReturnPointerFunctionType(formatted_raw_ostream &Out,
-					    const AttrListPtr &PAL,
+					    const AttributeSet &PAL,
 					    PointerType *Ty);
  /* raw_ostream &printInitialValue(formatted_raw_ostream &Out,
 			Type * Ty,
@@ -258,7 +258,6 @@ public:
   int getNumField(GetElementPtrInst* inst);
   int getTypeNamesSize();
   void insertTypeName(Type* Ty, std::string TyName);
-  Attribute getAttribute(Attribute::AttrKind attr);
 
 
 };
