@@ -3098,7 +3098,7 @@ SimpleWriter::visitCallInst (CallInst & I)
 	  Out << ')';
 	}
       // Check if the argument is expected to be passed by value.
-      if (I.hasAttribute (ArgNo + 1, Attribute::ByVal))
+      if (I.paramHasAttr (ArgNo + 1, Attribute::ByVal))
 	writeOperandDeref (*AI);
       else
 	writeOperand (*AI);
