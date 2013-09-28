@@ -3537,7 +3537,7 @@ void _42Writer::visitCallInst(CallInst & I)
 
   // If this is a call to a struct-return function, assign to the first
   // parameter instead of passing it to the call.
-  const AttributeSet & PAL = I.getAttribute();
+  const AttributeSet & PAL = I.getAttributes();
   bool hasByVal = I.hasByValArgument();
   bool isStructRet = I.hasStructRetAttr();
   // 	if (isStructRet) {
