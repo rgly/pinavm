@@ -426,7 +426,7 @@ int specialize_calls(ExecutionEngine *EE, Module *Mod, Function *F) {
                 BasicBlock *bb2 = i->getUnwindDest();
                 InvokeInst *newinvoke =
                   InvokeInst::Create(newfun,bb1,bb2,ArrayRef<Value*>(args_keep,args_keep_end),"",i);
-                // newinvoke->setAttribute(attributes);
+                // newinvoke->setAttributes(attributes);
                 BasicBlock::iterator ii_r(i);
                 ReplaceInstWithValue(i->getParent()->getInstList(),
                                      ii_r, newinvoke);
@@ -434,7 +434,7 @@ int specialize_calls(ExecutionEngine *EE, Module *Mod, Function *F) {
                 CallInst *newcall =
                   CallInst::Create(newfun,ArrayRef<Value*>(args_keep,
                                    args_keep_end),"",cs.getInstruction());
-                // newcall->setAttribute(attributes);
+                // newcall->setAttributes(attributes);
                 BasicBlock::iterator ii_r(cs.getInstruction());
                 ReplaceInstWithValue(cs.getInstruction()->getParent()->getInstList(),
                                      ii_r, newcall);
