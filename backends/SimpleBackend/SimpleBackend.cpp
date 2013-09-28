@@ -14,6 +14,7 @@
 #include "SimpleWriter.h"
 #include "SimpleBackend.h"
 
+#include "OldVersion.h"
 using namespace llvm;
 
 void launch_simplebackend(Frontend * fe,
@@ -54,7 +55,7 @@ void launch_simplebackend(Frontend * fe,
 	Passes.add(createCFGSimplificationPass());	// clean up after lower invoke.
 	Passes.add(new SimpleBackendNameAllUsedStructsAndMergeFunctions());
 	Passes.add(simpleWriter);
-	Passes.add(createGCInfoDeleter());
+	pinavm::addGCInfoDeleter(Passes);
 
 	Passes.run(*llvmMod);
 

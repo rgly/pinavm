@@ -22,6 +22,7 @@
 #include "PromelaWriter.h"
 #include "PromelaBackend.h"
 
+#include "OldVersion.h"
 using namespace llvm;
 
 void launch_promelabackend(Frontend * fe,
@@ -64,7 +65,7 @@ void launch_promelabackend(Frontend * fe,
 	Passes.add(createLowerInvokePass());
 	Passes.add(createCFGSimplificationPass());	// clean up after lower invoke.
 	Passes.add(promelaWriter);
-	Passes.add(createGCInfoDeleter());
+	pinavm::addGCInfoDeleter(Passes);
 
 	Passes.run(*llvmMod);
 

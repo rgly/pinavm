@@ -12,6 +12,7 @@
 #include "42Writer.h"
 #include "42Backend.h"
 
+#include "OldVersion.h"
 using namespace llvm;
 
 void launch_42backend(Frontend * fe,
@@ -52,7 +53,7 @@ void launch_42backend(Frontend * fe,
 	Passes.add(createLowerInvokePass());
 	Passes.add(createCFGSimplificationPass());	// clean up after lower invoke.
 	Passes.add(FortyTwoWriter);
-	Passes.add(createGCInfoDeleter());
+	pinavm::addGCInfoDeleter(Passes);
 
 	Passes.run(*llvmMod);
 

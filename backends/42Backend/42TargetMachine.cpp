@@ -3,6 +3,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Transforms/Scalar.h"
 #include "42Writer.h"
+#include "OldVersion.h"
 
 namespace llvm {
 
@@ -16,6 +17,6 @@ namespace llvm {
 		PM.add(createLowerInvokePass());
 		PM.add(createCFGSimplificationPass());	// clean up after lower invoke.
 		PM.add(new _42Writer(o));
-		PM.add(createGCInfoDeleter());
+		pinavm::addGCInfoDeleter(PM);
 		return false;
 }}

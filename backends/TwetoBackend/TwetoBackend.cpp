@@ -100,7 +100,7 @@ static void tweto_optimize(Frontend * fe, ExecutionEngine *ee,
 	// Control flow graph simplification
 	PM->add(createCFGSimplificationPass()); 
 	// Releases GC metadata
-	PM->add(createGCInfoDeleter()); 
+	pinavm::addGCInfoDeleter(PM);
 	// Combine instructions to form fewer, simple instructions
 	PM->add(createInstructionCombiningPass()); 
 	// Reassociates commutative expressions in an order that is

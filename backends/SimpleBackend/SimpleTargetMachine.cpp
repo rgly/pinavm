@@ -4,6 +4,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "SimpleWriter.h"
 
+#include "OldVersion.h"
 namespace llvm {
 
 	bool SimpleTargetMachine::
@@ -17,6 +18,6 @@ namespace llvm {
 		PM.add(createCFGSimplificationPass());	// clean up after lower invoke.
 		PM.add(new SimpleBackendNameAllUsedStructsAndMergeFunctions());
 		PM.add(new SimpleWriter(o));
-		PM.add(createGCInfoDeleter());
+		pinavm::addGCInfoDeleter(PM);
 		return false;
 }}
