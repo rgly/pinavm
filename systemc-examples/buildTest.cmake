@@ -14,7 +14,7 @@ function(add_pinavm_test f_name f_backend_list f_source_list f_arg_list)
             COMMAND $<TARGET_FILE:pinavm> -b ${temp_backend}
             -o ${CMAKE_CURRENT_BINARY_DIR}/${f_name}.${temp_backend}
             -dis-dbg-msg
-            ${f_name}.${LLVM_EXT} ${${f_arg_list}})
+            ${CMAKE_CURRENT_BINARY_DIR}/${f_name}.${LLVM_EXT} ${${f_arg_list}})
   endforeach(temp_backend)
 endfunction(add_pinavm_test)
 
