@@ -35,7 +35,12 @@
 
 #include "SCElab.h"
 #include "config.h"
-
+namespace {
+	// make this variable to true to ignore unconnected sc_port.
+	// unconnected sc_port still exist, but SCElab would not produce
+	// errors.
+	bool IgnoreNullCh = false;
+}
 
 SCElab::SCElab(Module * llvmModule)
 {
@@ -181,7 +186,7 @@ Port * SCElab::trySc_Clock(IRModule * mod,
 		if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
 			ch = new ClockChannel();
 			this->channelsMap.insert(this->channelsMap.end(), std::pair < sc_core::sc_interface *, Channel * >(itf, ch));
-        } else {
+        	} else {
 			ch = itM->second;
 		}
 		theNewPort->addChannel(ch);
@@ -357,15 +362,18 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 		if (port==NULL) {
 			TRACE_6("TESTING IF PORT = NULL ************************************************************************");
 		}
-		if (itf==NULL) {
-			TRACE_6("TESTING IF Interface is NULL ****************************************************************** ");
-			//TRACE_6(port->getName());
-		}
-//	const char* typeName = typeid(*(pb->m_interface)).name();
-		const char* typeName = typeid(*itf).name();
-//		N7sc_core5sc_inIbEE
 
-		std::string itfTypeName(typeName);
+		std::string itfTypeName;
+		if (IgnoreNullCh) {
+			theNewPort = new Port(this, mod, portName, port);
+			itfTypeName = "NULL_channel";
+		} else {
+			assert(itf && "IF Interface is Null. To disable checks for unconnected ports, use -ignore-null-ch");
+			const char* typeName = typeid(*itf).name();
+			//		N7sc_core5sc_inIbEE
+			itfTypeName = typeName;
+		}
+
 
 		TRACE_4("m_interface of port is: " << itfTypeName 
 			<< " (" << abi::__cxa_demangle(itfTypeName.c_str(), NULL, NULL, NULL) << ")\n");

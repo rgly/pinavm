@@ -73,6 +73,12 @@ Backend("b", cl::desc("Backend to use"),
 static cl::opt < bool >
 PrintElab("print-elab", cl::desc("Print architecture after elaboration"));
 
+// TODO this option is uesd by frontend/SCElab, but I can not find a
+//      easy way to pass options to it.
+//static cl::opt < bool >
+//IgnoreNullCh("ignore-null-ch",
+	//cl::desc("Disable errors for unconnected Ports"));
+
 static cl::opt < bool >
 PrintIR("print-ir",
 	cl::desc("Print Intermediate representation for all processes"));
