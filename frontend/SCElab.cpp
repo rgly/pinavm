@@ -569,9 +569,6 @@ SCElab::addProcessAndEvents(sc_core::sc_process_b *theProcess, sc_core::sc_modul
 void
 SCElab::complete()
 {
-	sc_core::sc_thread_handle thread_p;
-	sc_core::sc_method_handle method_p;
-
 	// MM: why do this here? stopping the execution of the
 	// elaboration after calling end_of_elaboration seems a much
 	// better idea than calling it ourselves.
@@ -595,16 +592,29 @@ SCElab::complete()
 
 	//------- Get processes and events --------
 	sc_core::sc_process_table * processes = sc_core::sc_get_curr_simcontext()->m_process_table;
-	for (thread_p = processes->thread_q_head(); thread_p; thread_p = thread_p->next_exist()) {
+
+	for (sc_core::sc_thread_handle thread_p = processes->thread_q_head();
+				thread_p; thread_p = thread_p->next_exist()) {
+
 		sc_core::sc_process_b * theProcess = thread_p;
 		sc_core::sc_module * mod = (sc_core::sc_module *) thread_p->m_semantics_host_p;
 		addProcessAndEvents(theProcess, mod);
 	}
 
-	for (method_p = processes->method_q_head(); method_p; method_p = method_p->next_exist()) {
+	for (sc_core::sc_method_handle method_p = processes->method_q_head();
+				method_p; method_p = method_p->next_exist()) {
+
 		sc_core::sc_method_process* theP = method_p;
 		sc_core::sc_module * mod = (sc_core::sc_module *) theP->m_semantics_host_p;
 		addProcessAndEvents(theP, mod);
+	}
+
+	for (sc_core::sc_cthread_handle cthread_p = processes->cthread_q_head();
+			cthread_p; cthread_p = cthread_p->next_exist()) {
+
+		sc_core::sc_cthread_process* ctheP = cthread_p;
+		sc_core::sc_module * mod = (sc_core::sc_module *) ctheP->m_semantics_host_p;
+		addProcessAndEvents(ctheP, mod);
 	}
 }
 
