@@ -29,6 +29,7 @@ protected:
 	sc_core::sc_port_base* sc_port;
 	std::vector<Process*>* sensitivelist;
 
+	std::vector<Port*>* parents;
 public:
 	Port(const SCElab* el, IRModule * module, std::string portName, sc_core::sc_port_base* sc_port_);
 	~Port();
@@ -43,6 +44,11 @@ public:
 
 	// There are two kinds of SystemC processes, Thread and Method.
 	std::vector<Process*>* getSensitive(bool IsThread);
+
+	// to keep info for sc_module.port(parent_port) semantic.
+	bool hasParent();
+	std::vector<Port*>* getParentPorts();
+	void addParentPort(Port* port);
 };
 
 #endif

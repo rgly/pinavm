@@ -89,6 +89,8 @@ class SCElab : public ElabMember
   std::vector<Process*>* getSensitive(const sc_core::sc_port_base*, bool) const; 
 
 private:
+  Port * tryParentPort(IRModule * mod, std::string portName,
+			sc_core::sc_port_base * port);
   Port * trySc_Signal(IRModule * mod,
 		      sc_core::sc_interface* itf, std::string &itfTypeName,
 		      sc_core::sc_port_base * port, std::string portName);

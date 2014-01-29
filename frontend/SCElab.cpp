@@ -27,6 +27,7 @@
 #include "sysc/kernel/sc_event.h"
 #include "sysc/communication/sc_port.h"
 #include "sysc/communication/sc_bind_ef.h"
+#include "sysc/communication/sc_bind_elem.h"
 #include "sysc/communication/sc_bind_info.h"
 #include "sysc/kernel/sc_process_handle.h"
 
@@ -337,7 +338,25 @@ Port * SCElab::tryBasicInitiator(IRModule * mod,
 	return theNewPort;
 }
 
+Port *SCElab::tryParentPort(IRModule * mod, std::string portName, sc_core::sc_port_base * port)
+{
+	if (! port->m_bind_info->has_parent)
+		return NULL;
 
+	Port* theNewPort = new Port(this, mod, portName, port);
+
+	std::vector<sc_core::sc_bind_elem*>* bind_ef_vec
+						= &(port->m_bind_info->vec);
+	std::vector<sc_core::sc_bind_elem*>::iterator it = bind_ef_vec->begin();
+	for(; it != bind_ef_vec->end(); ++it) {
+		sc_core::sc_port_base* sc_parent_port = (*it)->parent;
+		assert(sc_parent_port && "Currently not suport a port which binds to both channel and parent ports.");
+		Port* parent_port = this->getPort(sc_parent_port);
+		assert(parent_port && "Parent Port must defined before Child port");
+		theNewPort->addParentPort(parent_port);
+	}
+	return theNewPort;
+}
 
 Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 {
@@ -364,19 +383,26 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 		}
 
 		std::string itfTypeName;
-		if (IgnoreNullCh) {
-			theNewPort = new Port(this, mod, portName, port);
+		if (itf == NULL) {
+			if (port->m_bind_info->has_parent) {
+				theNewPort = tryParentPort(mod, portName, port);
+				assert(theNewPort);
+			} else {
+				assert(IgnoreNullCh && "IF Interface is Null. To disable checks for unconnected ports, use -ignore-null-ch");
+				theNewPort = new Port(this, mod, portName, port);
+			}
 			itfTypeName = "NULL_channel";
 		} else {
-			assert(itf && "IF Interface is Null. To disable checks for unconnected ports, use -ignore-null-ch");
+			assert(itf);
 			const char* typeName = typeid(*itf).name();
 			//		N7sc_core5sc_inIbEE
 			itfTypeName = typeName;
+
+			TRACE_4("m_interface of port is: " << itfTypeName 
+			<< " (" << abi::__cxa_demangle(
+			itfTypeName.c_str(), NULL, NULL, NULL) << ")\n");
 		}
 
-
-		TRACE_4("m_interface of port is: " << itfTypeName 
-			<< " (" << abi::__cxa_demangle(itfTypeName.c_str(), NULL, NULL, NULL) << ")\n");
 
 		/* take the first match */
 		if (theNewPort == NULL)
