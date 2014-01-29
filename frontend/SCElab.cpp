@@ -85,7 +85,8 @@ Process *SCElab::addProcess(IRModule * mod,
 	std::string modType = mod->getModuleType();
 	std::string moduleName = mod->getUniqueName();
 	std::string mainFctName = "_ZN" + modType + utostr(fctName.size()) + fctName + "Ev";
-	std::string processName = moduleName + "_" + mainFctName;
+	std::string processName = std::string(process->name())
+						+ "_" + mainFctName;
 	Function *mainFct = this->llvmMod->getFunction(mainFctName);
 
 //   Function* fct;
