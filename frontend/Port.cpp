@@ -13,6 +13,7 @@ Port::Port(const SCElab* el, IRModule * module, std::string portName,
 	this->channels = new std::vector<Channel*>();
 	this->channelID = UNDEFINED_CHANNEL;
 	this->sc_port = sc_port_ ;
+	this->sensitivelist = NULL;
 }
 
 Port::~Port()
