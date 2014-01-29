@@ -102,9 +102,18 @@ static ExecutionEngine *EE = 0;
 extern "C" void 
 pinavm_callback(sc_core::sc_simcontext* context, const sc_core::sc_time& duration);
 Module *Mod;
+
+
+bool AlreadyCallBack;
 void pinavm_callback(sc_core::sc_simcontext* context, 
                      const sc_core::sc_time& duration)
 {
+	if (AlreadyCallBack)
+		return;
+
+
+	AlreadyCallBack = true;
+
 	TRACE_1("Entering PinaVM (callback), building module\n");
 
 	Frontend *fe = launch_frontend(InputFilename, InlineFcts,Mod);
@@ -241,6 +250,12 @@ int load_and_run_sc_main(std::string & InputFile)
 	EE->runStaticConstructorsDestructors(false);
     
 	TRACE_2("Running elaboration\n");
+
+	// set the alreadyCallBack flag. thus prevent pinavm_callback
+	// from being called multiple times for some testcase which
+	// contains multiple sc_start().
+	AlreadyCallBack = false;
+
 	// Run main.
 	int Result = EE->runFunctionAsMain(EntryFn, InputArgv, NULL);
 
