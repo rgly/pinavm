@@ -14,9 +14,11 @@ if(DEFINED LLVM_ROOT)
 endif()
 
 # find llvm-config. perfers to the one with version suffix, Ex:llvm-config-3.2
-find_program(LLVM_CONFIG_EXE NAMES
-      		"llvm-config-${LLVM_RECOMMAND_VERSION}" "llvm-config"
-		PATHS ${LLVM_ROOT}/bin)
+find_program(LLVM_CONFIG_EXE
+  NAMES "${LLVM_ROOT}/bin/llvm-config-${LLVM_RECOMMAND_VERSION}"
+        "${LLVM_ROOT}/bin/llvm-config"
+        "llvm-config"
+	)
 
 # In case of finds no LLVM, give user a hint to install LLVM
 if(${LLVM_CONFIG_EXE} STREQUAL "LLVM_CONFIG_EXE-NOTFOUND")
