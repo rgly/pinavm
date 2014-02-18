@@ -1,5 +1,6 @@
 #include <sstream>
 #include "systemc.h"
+#include <stdint.h>
 
 using namespace std;
 
