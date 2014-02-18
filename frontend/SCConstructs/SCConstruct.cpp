@@ -2,16 +2,14 @@
 #include "SCConstruct.hpp"
 
 
-SCConstruct::SCConstruct()
+SCConstruct::SCConstruct(construct_id id) : ID(id), staticallyFound(true)
 {
 	this->threadName = "NYI: SCConstruct::threadName";
-	this->staticallyFound = true;
 }
 
-SCConstruct::SCConstruct(bool found)
+SCConstruct::SCConstruct(construct_id id, bool found) : ID(id), staticallyFound(found)
 {
 	this->threadName = "NYI: SCConstruct::threadName";
-	this->staticallyFound = found;
 }
 
 std::string
@@ -21,9 +19,9 @@ SCConstruct::getThreadName()
 }
 
 construct_id
-SCConstruct::getID()
+SCConstruct::getID() const
 {
-	return this->id;
+	return this->ID;
 }
 
 bool

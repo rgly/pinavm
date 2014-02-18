@@ -3,10 +3,9 @@
 
 #include <string>
 #include <vector>
-#include <llvm/Type.h>
+#include <llvm/IR/Type.h>
 
 struct Port;
-
 
 typedef enum {
 	UNDEFINED_CHANNEL,
@@ -26,10 +25,12 @@ protected:
 
 public:
 	Channel(llvm::Type* t, std::string typeName);
+	~Channel();
 	std::vector<Port*>* getPorts();
-	channel_id getID();
+	channel_id getID() const;
 	llvm::Type* getType();
 	std::string getTypeName();
+	void addPort(Port* port);
 	virtual std::string toString() = 0;
 };
 

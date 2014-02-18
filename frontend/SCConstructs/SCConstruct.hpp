@@ -2,13 +2,13 @@
 #define _SCCONSTRUCT_HPP
 
 #include <string>
-#include "llvm/Value.h"
+#include "llvm/IR/Value.h"
+#include "llvm/Support/Casting.h"
 //#include <typeinfo>
 
 
 typedef enum {
-	TIMECONSTRUCT,
-	WAITEVENTCONSTRUCT,
+	WAITCONSTRUCT,
 	NOTIFYCONSTRUCT,
 	READCONSTRUCT,
 	WRITECONSTRUCT,
@@ -17,21 +17,24 @@ typedef enum {
 } construct_id;
 
 struct SCConstruct {
-      protected:
-	std::string constructName;
-	std::string threadName;
-	construct_id id;
-	bool staticallyFound;
-	llvm::Value* dynAddress;
+protected:
+	// keep it protected so that only sub-class can call this.
+	SCConstruct(construct_id);
+	SCConstruct(construct_id, bool found);
 
-      public:
-	SCConstruct();
-	SCConstruct(bool found);
+public:
 	virtual ~SCConstruct(){};
 	virtual std::string toString() = 0;
 	std::string getThreadName();
-	construct_id getID();
+	construct_id getID() const;
 	bool isStaticallyFound();
+
+private:
+	construct_id ID;
+	llvm::Value* dynAddress;
+	bool staticallyFound;
+	std::string threadName;
+	std::string constructName;
 };
 
 #endif

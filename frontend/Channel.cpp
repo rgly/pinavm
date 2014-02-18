@@ -1,6 +1,8 @@
 #include <vector>
+#include <algorithm>
 
 #include "Channel.hpp"
+#include "Port.hpp"
 
 
 Channel::Channel(llvm::Type* t, std::string typeName)
@@ -11,8 +13,13 @@ Channel::Channel(llvm::Type* t, std::string typeName)
 	this->ports = new std::vector<Port*>();
 }
 
+Channel::~Channel()
+{
+	delete ports;
+}
+
 channel_id
-Channel::getID()
+Channel::getID() const
 {
 	return this->id;
 }
@@ -33,4 +40,17 @@ std::vector<Port*>*
 Channel::getPorts()
 {
 	return this->ports;
+}
+
+void
+Channel::addPort(Port* port)
+{
+	bool IsExisted =
+		( std::find(this->ports->begin(), this->ports->end(), port)
+		!= this->ports->end() );
+
+	if (IsExisted)
+		return;
+
+	this->ports->push_back(port);
 }

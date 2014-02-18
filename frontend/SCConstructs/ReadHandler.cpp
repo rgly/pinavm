@@ -2,7 +2,7 @@
 #include "ReadHandler.hpp"
 #include "ReadConstruct.hpp"
 
-#include <llvm/Type.h>
+#include <llvm/IR/Type.h>
 #include <llvm/Support/CallSite.h>
 
 using namespace llvm;

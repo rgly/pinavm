@@ -2,11 +2,11 @@
 #include <map>
 #include <cstdio>
 
-#include "llvm/GlobalValue.h"
-#include "llvm/CallingConv.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/InstrTypes.h"
-#include "llvm/Instructions.h"
+#include "llvm/IR/GlobalValue.h"
+#include "llvm/IR/CallingConv.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/InstrTypes.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
@@ -15,7 +15,7 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCObjectFileInfo.h"
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/ADT/SmallString.h"
 
 #include "Port.hpp"
@@ -90,17 +90,17 @@ static bool isInlinableInst(const Instruction & I)
 // variables which are accessed with the & operator.  This causes GCC to
 // generate significantly better code than to emit alloca calls directly.
 //
-static const AllocaInst *isDirectAlloca(const Value * V)
+static const bool isDirectAlloca(const Value * V)
 {
 	const AllocaInst *AI = dyn_cast < AllocaInst > (V);
 	if (!AI)
 		return false;
 	if (AI->isArrayAllocation())
-		return 0;	// FIXME: we can also inline fixed size array allocas!
+		return false;	// FIXME: we can also inline fixed size array allocas!
 	if (AI->getParent() !=
 		&AI->getParent()->getParent()->getEntryBlock())
-		return 0;
-	return AI;
+		return false;
+	return true;
 }
 
 /***************************************************************************
@@ -135,7 +135,7 @@ PromelaWriter::PromelaWriter(formatted_raw_ostream &o)
 /// print it as "Struct (*)(...)", for struct return functions.
 void PromelaWriter::
 printStructReturnPointerFunctionType(formatted_raw_ostream & Out,
-				const AttrListPtr & PAL,
+				const AttributeSet & PAL,
 				PointerType * TheTy)
 {
 	FunctionType *FTy = cast < FunctionType > (TheTy->getElementType());
@@ -152,13 +152,12 @@ printStructReturnPointerFunctionType(formatted_raw_ostream & Out,
 		if (PrintedType)
 			FunctionInnards << ", ";
 		Type *ArgTy = *I;
-		if (PAL.paramHasAttr(Idx, this->getAttributes(Attributes::ByVal))) {
+		if (PAL.hasAttribute(Idx, Attribute::ByVal)) {
 			assert(isa < PointerType > (ArgTy));
 			ArgTy =	cast < PointerType > (ArgTy)->getElementType();
 		}
 		printType(FunctionInnards, ArgTy,
-			/*isSigned= */ PAL.paramHasAttr(Idx,
-							this->getAttributes(Attributes::SExt)),
+			/*isSigned= */ PAL.hasAttribute(Idx, Attribute::SExt),
 			"");
 		PrintedType = true;
 	}
@@ -173,8 +172,7 @@ printStructReturnPointerFunctionType(formatted_raw_ostream & Out,
 
 
 	printType(Out, RetTy,
-		/*isSigned= */ PAL.paramHasAttr(0, this->getAttributes(Attributes::SExt)),
-		tstr);
+		/*isSigned= */ PAL.hasAttribute(0, Attribute::SExt), tstr);
 }
 
 raw_ostream &
@@ -282,7 +280,7 @@ raw_ostream &
 PromelaWriter::printType(formatted_raw_ostream & Out,
 			Type * Ty,
 			bool isSigned, const std::string & NameSoFar,
-			bool IgnoreName, const AttrListPtr & PAL)
+			bool IgnoreName, const AttributeSet & PAL)
 {	
  	while (isa<PointerType>(Ty)) {
 		//Out<<"Inside While Pointer \n";
@@ -344,13 +342,13 @@ PromelaWriter::printType(formatted_raw_ostream & Out,
 			     FTy->param_begin(), E = FTy->param_end();
 		     I != E; ++I) {
 			Type *ArgTy = *I;
-			if (PAL.paramHasAttr(Idx, Attribute::ByVal)) {
+			if (PAL.hasAttribute(Idx, Attribute::ByVal)) {
 				assert(isa < PointerType >(ArgTy));
 				ArgTy =	cast < PointerType > (ArgTy)->getElementType();
 			}
 			if (I != FTy->param_begin())
 				FunctionInnards << ", ";
-			printType(FunctionInnards, ArgTy, PAL.paramHasAttr(Idx, Attribute::SExt), "");
+			printType(FunctionInnards, ArgTy, PAL.hasAttribute(Idx, Attribute::SExt), "");
 			++Idx;
 		}
 		if (FTy->isVarArg()) {
@@ -361,7 +359,7 @@ PromelaWriter::printType(formatted_raw_ostream & Out,
 		}
 		FunctionInnards << ')';
 		std::string tstr = FunctionInnards.str();
-		printType(Out, FTy->getReturnType(), PAL.paramHasAttr(0, Attribute::SExt), tstr);
+		printType(Out, FTy->getReturnType(), PAL.hasAttribute(0, Attribute::SExt), tstr);
 		return Out;*/
 		return Out;
 	}
@@ -458,7 +456,7 @@ std::ostream &
 PromelaWriter::printType(std::ostream & Out,
 			Type * Ty,
 			bool isSigned, const std::string & NameSoFar,
-			bool IgnoreName, const AttrListPtr & PAL)
+			bool IgnoreName, const AttributeSet & PAL)
 {
  	while (isa<PointerType>(Ty)) {
  		Ty = cast<PointerType>(Ty)->getElementType();
@@ -512,8 +510,7 @@ PromelaWriter::printType(std::ostream & Out,
 			     FTy->param_begin(), E = FTy->param_end();
 		     I != E; ++I) {
 			Type *ArgTy = *I;
-			if (PAL.
-				paramHasAttr(Idx, this->getAttributes(Attributes::ByVal))) {
+			if (PAL.hasAttribute(Idx, Attribute::ByVal)) {
 				assert(isa < PointerType >
 					(ArgTy));
 				ArgTy =
@@ -524,8 +521,7 @@ PromelaWriter::printType(std::ostream & Out,
 				FunctionInnards << ", ";
 			printType(FunctionInnards, ArgTy,
 				/*isSigned= */
-				PAL.paramHasAttr(Idx,
-						this->getAttributes(Attributes::SExt)), "");
+				PAL.hasAttribute(Idx, Attribute::SExt), "");
 			++Idx;
 		}
 		if (FTy->isVarArg()) {
@@ -537,8 +533,7 @@ PromelaWriter::printType(std::ostream & Out,
 		FunctionInnards << ')';
 		std::string tstr = FunctionInnards.str();
 		printType(Out, FTy->getReturnType(),
-			/*isSigned= */ PAL.paramHasAttr(0,
-							this->getAttributes(Attributes::SExt)),
+			/*isSigned= */ PAL.hasAttribute(0, Attribute::SExt),
 			tstr);
 		return Out;
 	}
@@ -1807,7 +1802,7 @@ void PromelaWriter::printFunctionSignature(const Function * F,
 	}
 	
 	// Loop over the arguments, printing them...
-//	const AttrListPtr &PAL = F->getAttributes();
+//	const AttributeSet &PAL = F->getAttribute();
 	FunctionType *FT = cast<FunctionType>(F->getFunctionType());
 	
 	if (FT->isVarArg()) {
@@ -1959,7 +1954,8 @@ void PromelaWriter::printFunction(Function & F, bool inlineFct)
 	for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ++I) {
 		TRACE_7("LETS SEE IF THIS WORKS                   : " << GetValueName(&*I) << "  ->  " );
 			I->dump();
-		if (const AllocaInst * AI = isDirectAlloca(&*I)) {
+		if (isDirectAlloca(&*I)) {
+			const AllocaInst * AI = dyn_cast<AllocaInst>(&*I);
 			Out << "/* local variable */";
 			printType(Out, AI->getAllocatedType(), false, GetValueName(AI));
 			Out << ";\n    ";
@@ -2592,7 +2588,7 @@ void PromelaWriter::lowerIntrinsics(Function & F)
 						const char *BuiltinName =
 							"";
 #define GET_GCC_BUILTIN_NAME
-#include "llvm/Intrinsics.gen"
+#include "llvm/IR/Intrinsics.gen"
 #undef GET_GCC_BUILTIN_NAME
 						// If we handle it, don't lower it.
 						if (BuiltinName[0])
@@ -3032,7 +3028,7 @@ PromelaWriter::printInitSection()
   			{
 				const std::string modName = "mod_" + proc->getModule()->getUniqueName();
 				Out << "    ";
-				printType(Out, proc->getMainFct()->arg_begin()->getType() , false, modName, false, AttrListPtr());
+				printType(Out, proc->getMainFct()->arg_begin()->getType() , false, modName, false, AttributeSet());
 				Out << ";\n";
 			}
 		}
@@ -3173,9 +3169,10 @@ PromelaWriter::getEventName(Process* proc, Event* event)
 void
 PromelaWriter::visitSCConstruct(SCConstruct * scc)
 {
-	TimeConstruct* tc;
+	TimeWaitConstruct* tc;
+	DeltaWaitConstruct* dc;
 	NotifyConstruct* notifyC;
-	EventConstruct* eventC;	
+	EventWaitConstruct* eventC;	
 	ReadConstruct* rc;
 	WriteConstruct* wc;
 	AssertConstruct *ac;
@@ -3186,19 +3183,20 @@ PromelaWriter::visitSCConstruct(SCConstruct * scc)
 	SimpleChannel* sc;
 
 	TRACE_4("/***** visitSCConstruct() *****/\n");
-	switch(scc->getID()) {
-	case WAITEVENTCONSTRUCT:
-		eventC = (EventConstruct*) scc;
-		event = eventC->getWaitedEvent();
+	if (isa<EventWaitConstruct>(scc) ) {
+		eventC = dyn_cast<EventWaitConstruct>(scc);
+		event = eventC->getEvent();
 		if (eventC->isStaticallyFound()) {
 			Out << "wait_" << getEventName(currentProcess, event) << "();\n";
 		} else {
 			Out << "/* TODO: wait_e() on event not determined statically  */";
                         /* todo */
 		}
-		break;
-	case NOTIFYCONSTRUCT:
-		notifyC = (NotifyConstruct*) scc;
+	} else if (isa<TimeWaitConstruct>(scc) ) {
+		tc = dyn_cast<TimeWaitConstruct>(scc);
+		Out << "/*TODO*/"<< tc->toString();
+	} else if (isa<NotifyConstruct>(scc)) {
+		notifyC = dyn_cast<NotifyConstruct>(scc);
 		if (notifyC->isStaticallyFound()) {
 			event = notifyC->getNotifiedEvent();
 			Out << "    notify_" << getEventName(NULL, event) << "(" << currentProcess->getPid() << ");\n";
@@ -3206,19 +3204,17 @@ PromelaWriter::visitSCConstruct(SCConstruct * scc)
 			Out << "/* TODO: notify() event not determined statically */";
 			/* todo */
 		}
-		break;
-	case TIMECONSTRUCT:
-		tc = (TimeConstruct*) scc;
-		if (tc->isStaticallyFound()) {
+	} else if (isa<DeltaWaitConstruct>(scc)) {
+		dc = (DeltaWaitConstruct*) scc;
+		if (dc->isStaticallyFound()) {
 			Out << "wait(" << currentProcess->getPid() << ", ";
-			Out << intToString(tc->getTime());
+			Out << intToString(dc->getDelta());
 			Out << ")";
 		} else {
-			Out << "/* Todo: wait() time not determined statically */";
+			Out << "/* Todo: wait() delta not determined statically */";
 			/* todo */
 		}
-		break;
-	case READCONSTRUCT:
+	} else if (isa<ReadConstruct>(scc)) {
 		rc = (ReadConstruct*) scc;
 		port = rc->getPort();
 		TRACE_3("Visit READ\n");
@@ -3233,8 +3229,7 @@ PromelaWriter::visitSCConstruct(SCConstruct * scc)
 			Out << "/* TODO : read() on a non simple channel */";
 			/* todo */
 		}
-		break;
-	case WRITECONSTRUCT:
+	} else if (isa<WriteConstruct>(scc)) {
 		wc = (WriteConstruct*) scc;		
 		port = wc->getPort();
 		channels = port->getChannels();
@@ -3278,19 +3273,16 @@ PromelaWriter::visitSCConstruct(SCConstruct * scc)
 // 		} else {
 			/* todo */
  		}
-		break;
-	case ASSERTCONSTRUCT:
+	} else if (isa<AssertConstruct>(scc)) {
 		ac = (AssertConstruct*) scc;
 		if (ac->isStaticallyFound()) {
 			Out << "assert(" << ac->getCond() <<");";
 		} else {
 			Out << "assert(" << GetValueName(ac->getMissingCond()) << ");";
 		}
-		break;
-	case RANDCONSTRUCT:
+	} else if (isa<RandConstruct>(scc)) {
 		Out << "randnr(nr);";
-		break;
-	default:
+	} else {
 		ErrorMsg << "Construction not managed in Promela backend: " << scc->getID();
 		triggerError(Out);
 	}
@@ -3342,7 +3334,7 @@ void PromelaWriter::visitCallInst(CallInst & I)
 
 	// If this is a call to a struct-return function, assign to the first
 	// parameter instead of passing it to the call.
-	const AttrListPtr & PAL = I.getAttributes();
+	const AttributeSet & PAL = I.getAttributes();
 // 	bool hasByVal = I.hasByValArgument();
 //  	bool isStructRet = I.hasStructRetAttr();
 // 	if (isStructRet) {
@@ -3408,11 +3400,12 @@ void PromelaWriter::visitCallInst(CallInst & I)
 		if (ArgNo < NumDeclaredParams &&
 			(*AI)->getType() != FTy->getParamType(ArgNo)) {
 			Out << '(';
-			printType(Out, FTy->getParamType(ArgNo),/*isSigned= */ PAL.paramHasAttr(ArgNo + 1, this->getAttributes(Attributes::SExt)));
+			printType(Out, FTy->getParamType(ArgNo),
+		/*isSigned= */ PAL.hasAttribute(ArgNo + 1, Attribute::SExt));
 			Out << ')';
 		}
 		// Check if the argument is expected to be passed by value.
-		if (I.paramHasAttr(ArgNo + 1, Attributes::ByVal))
+		if (I.paramHasAttr(ArgNo + 1, Attribute::ByVal))
 			writeOperandDeref(*AI);
 		else
 			writeOperand(*AI);
@@ -3434,7 +3427,7 @@ bool PromelaWriter::visitBuiltinCall(CallInst & I, Intrinsic::ID ID,
 		const char *BuiltinName = "";
 		Function *F = I.getCalledFunction();
 #define GET_GCC_BUILTIN_NAME
-#include "llvm/Intrinsics.gen"
+#include "llvm/IR/Intrinsics.gen"
 #undef GET_GCC_BUILTIN_NAME
 		assert(BuiltinName[0]
 			&& "Unknown LLVM intrinsic!");
@@ -4075,12 +4068,6 @@ void PromelaWriter::getAnalysisUsage(AnalysisUsage & AU) const
 const char *PromelaWriter::getPassName() const
 {
 	return "Promela backend";
-}
-
-Attributes PromelaWriter::getAttributes(Attributes::AttrVal attr)
-{
-	return Attributes::get(getGlobalContext(),
-                               ArrayRef<Attributes::AttrVal>(attr));
 }
 
 char PromelaWriter::ID = 0;

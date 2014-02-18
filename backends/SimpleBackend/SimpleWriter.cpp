@@ -2,19 +2,19 @@
 #include <map>
 #include <cstdio>
 
-#include "llvm/GlobalValue.h"
-#include "llvm/CallingConv.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/InstrTypes.h"
-#include "llvm/Instructions.h"
+#include "llvm/IR/GlobalValue.h"
+#include "llvm/IR/CallingConv.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/InstrTypes.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCObjectFileInfo.h"
-#include "llvm/Function.h"
+#include "llvm/IR/Function.h"
 #include "llvm/ADT/SmallString.h"
 
 #include "Port.hpp"
@@ -85,17 +85,17 @@ isInlinableInst (const Instruction & I)
 // variables which are accessed with the & operator.  This causes GCC to
 // generate significantly better code than to emit alloca calls directly.
 //
-static const AllocaInst *
+static const bool
 isDirectAlloca (const Value * V)
 {
   const AllocaInst *AI = dyn_cast < AllocaInst > (V);
   if (!AI)
     return false;
   if (AI->isArrayAllocation ())
-    return 0;			// FIXME: we can also inline fixed size array allocas!
+    return false;			// FIXME: we can also inline fixed size array allocas!
   if (AI->getParent () != &AI->getParent ()->getParent ()->getEntryBlock ())
-    return 0;
-  return AI;
+    return false;
+  return true;
 }
 
 
@@ -108,7 +108,7 @@ isDirectAlloca (const Value * V)
 /// print it as "Struct (*)(...)", for struct return functions.
 void
 SimpleWriter::printStructReturnPointerFunctionType (formatted_raw_ostream &
-						    Out, const AttrListPtr & PAL, PointerType * TheTy)
+						    Out, const AttributeSet & PAL, PointerType * TheTy)
 {
   const FunctionType *FTy = cast < FunctionType > (TheTy->getElementType ());
   std::stringstream FunctionInnards;
@@ -123,14 +123,13 @@ SimpleWriter::printStructReturnPointerFunctionType (formatted_raw_ostream &
       if (PrintedType)
 	FunctionInnards << ", ";
       Type *ArgTy = *I;
-      if (PAL.paramHasAttr (Idx, this->getAttributes(Attributes::ByVal)))
+      if (PAL.hasAttribute (Idx, Attribute::ByVal))
 	{
 	  assert (isa < PointerType > (ArgTy));
 	  ArgTy = cast < PointerType > (ArgTy)->getElementType ();
 	}
       printType (FunctionInnards, ArgTy,
-		 /*isSigned= */ PAL.paramHasAttr (Idx,
-						  this->getAttributes(Attributes::SExt)), "");
+		 /*isSigned= */ PAL.hasAttribute (Idx, Attribute::SExt), "");
       PrintedType = true;
     }
   if (FTy->isVarArg ())
@@ -145,8 +144,7 @@ SimpleWriter::printStructReturnPointerFunctionType (formatted_raw_ostream &
   FunctionInnards << ')';
   std::string tstr = FunctionInnards.str ();
   printType (Out, RetTy,
-  /*isSigned= */ PAL.paramHasAttr (0, this->getAttributes(Attributes::SExt)),
-	     tstr);
+  /*isSigned= */ PAL.hasAttribute (0, Attribute::SExt), tstr);
 }
 
 raw_ostream &
@@ -249,7 +247,7 @@ std::ostream &
 raw_ostream &
   SimpleWriter::printType (formatted_raw_ostream & Out,
 			   Type * Ty,
-			   bool isSigned, const std::string & NameSoFar, bool IgnoreName, const AttrListPtr & PAL)
+			   bool isSigned, const std::string & NameSoFar, bool IgnoreName, const AttributeSet & PAL)
 {
   if (Ty->isPrimitiveType () || Ty->isIntegerTy () || isa < VectorType > (Ty))
     {
@@ -286,7 +284,7 @@ raw_ostream &
 	for (FunctionType::param_iterator I = FTy->param_begin (), E = FTy->param_end (); I != E; ++I)
 	  {
 	    Type *ArgTy = *I;
-	    if (PAL.paramHasAttr (Idx, this->getAttributes(Attributes::ByVal)))
+	    if (PAL.hasAttribute (Idx, Attribute::ByVal))
 	      {
 		assert (isa < PointerType > (ArgTy));
 		ArgTy = cast < PointerType > (ArgTy)->getElementType ();
@@ -294,8 +292,7 @@ raw_ostream &
 	    if (I != FTy->param_begin ())
 	      FunctionInnards << ", ";
 	    printType (FunctionInnards, ArgTy,
-   /*isSigned= */ PAL.paramHasAttr (Idx, this->getAttributes(Attributes::SExt)),
-			 "");
+   /*isSigned= */ PAL.hasAttribute (Idx, Attribute::SExt), "");
 	    ++Idx;
 	  }
 	if (FTy->isVarArg ())
@@ -310,8 +307,7 @@ raw_ostream &
 	FunctionInnards << ')';
 	std::string tstr = FunctionInnards.str ();
 	printType (Out, FTy->getReturnType (),
-		   /*isSigned= */ PAL.paramHasAttr (0,
-	 			  this->getAttributes(Attributes::SExt)), tstr);
+		   /*isSigned= */ PAL.hasAttribute (0, Attribute::SExt), tstr);
 	return Out;
       }
     case Type::StructTyID:
@@ -397,7 +393,7 @@ raw_ostream &
 std::ostream &
   SimpleWriter::printType (std::ostream & Out,
 			   Type * Ty,
-			   bool isSigned, const std::string & NameSoFar, bool IgnoreName, const AttrListPtr & PAL)
+			   bool isSigned, const std::string & NameSoFar, bool IgnoreName, const AttributeSet & PAL)
 {
   if (Ty->isPrimitiveType () || Ty->isIntegerTy () || isa < VectorType > (Ty))
     {
@@ -426,7 +422,7 @@ std::ostream &
 	for (FunctionType::param_iterator I = FTy->param_begin (), E = FTy->param_end (); I != E; ++I)
 	  {
 	    Type *ArgTy = *I;
-	    if (PAL.paramHasAttr (Idx, this->getAttributes(Attributes::ByVal)))
+	    if (PAL.hasAttribute (Idx, Attribute::ByVal))
 	      {
 		assert (isa < PointerType > (ArgTy));
 		ArgTy = cast < PointerType > (ArgTy)->getElementType ();
@@ -435,8 +431,7 @@ std::ostream &
 	      FunctionInnards << ", ";
 	    printType (FunctionInnards, ArgTy,
 		       /*isSigned= */
-		       PAL.paramHasAttr (Idx,
-				 this->getAttributes(Attributes::SExt)), "");
+		       PAL.hasAttribute (Idx, Attribute::SExt), "");
 	    ++Idx;
 	  }
 	if (FTy->isVarArg ())
@@ -451,8 +446,7 @@ std::ostream &
 	FunctionInnards << ')';
 	std::string tstr = FunctionInnards.str ();
 	printType (Out, FTy->getReturnType (),
-		   /*isSigned= */ PAL.paramHasAttr (0,
-				this->getAttributes(Attributes::SExt)), tstr);
+		   /*isSigned= */ PAL.hasAttribute (0, Attribute::SExt), tstr);
 	return Out;
       }
     case Type::StructTyID:
@@ -1497,7 +1491,7 @@ SimpleWriter::printFunctionSignature (const Function * F, bool Prototype)
     }
 
   // Loop over the arguments, printing them...
-//      const AttrListPtr &PAL = F->getAttributes();
+//      const AttributeSet &PAL = F->getAttribute();
   const FunctionType *FT = cast < FunctionType > (F->getFunctionType ());
 
   if (FT->isVarArg ())
@@ -1900,8 +1894,9 @@ SimpleWriter::printFunction (Function & F)
 	  Out << "var ";
 	}
 
-      if (const AllocaInst * AI = isDirectAlloca (&*I))
+      if (isDirectAlloca (&*I))
 	{
+	  const AllocaInst * AI = dyn_cast < AllocaInst > (&*I);
 	  if (printedVar)
 	    Out << ",\n      ";
 	  printType (Out, AI->getAllocatedType (), false, GetValueName (AI));
@@ -2570,7 +2565,7 @@ SimpleWriter::lowerIntrinsics (Function & F)
 	      // builtin, we handle it.
 	      const char *BuiltinName = "";
 #define GET_GCC_BUILTIN_NAME
-#include "llvm/Intrinsics.gen"
+#include "llvm/IR/Intrinsics.gen"
 #undef GET_GCC_BUILTIN_NAME
 	      // If we handle it, don't lower it.
 	      if (BuiltinName[0])
@@ -2871,9 +2866,10 @@ SimpleWriter::printProcesses ()
 void
 SimpleWriter::visitSCConstruct (SCConstruct * scc)
 {
-  TimeConstruct *tc;
+  TimeWaitConstruct *tc;
+  DeltaWaitConstruct *dc;
   NotifyConstruct *notifyC;
-  EventConstruct *eventC;
+  EventWaitConstruct *eventC;
   ReadConstruct *rc;
   WriteConstruct *wc;
   Event *event;
@@ -2883,11 +2879,9 @@ SimpleWriter::visitSCConstruct (SCConstruct * scc)
   SimpleChannel *sc;
 
   TRACE_4 ("/***** visitSCConstruct() *****/\n");
-  switch (scc->getID ())
-    {
-    case WAITEVENTCONSTRUCT:
-      eventC = (EventConstruct *) scc;
-      event = eventC->getWaitedEvent ();
+  if (isa<EventWaitConstruct>(scc)) {
+      eventC = (EventWaitConstruct *) scc;
+      event = eventC->getEvent ();
       if (eventC->isStaticallyFound ())
 	{
 	  Out << "wait_e(pnumber, ";
@@ -2898,8 +2892,10 @@ SimpleWriter::visitSCConstruct (SCConstruct * scc)
 	{
 	  /* todo */
 	}
-      break;
-    case NOTIFYCONSTRUCT:
+  } else if (isa<TimeWaitConstruct>(scc) ) {
+    tc = dyn_cast<TimeWaitConstruct>(scc);
+    Out << "/*TODO*/"<< tc->toString();
+  } else if (isa<NotifyConstruct>(scc)) {
       notifyC = (NotifyConstruct *) scc;
       if (notifyC->isStaticallyFound ())
 	{
@@ -2912,21 +2908,19 @@ SimpleWriter::visitSCConstruct (SCConstruct * scc)
 	{
 	  /* todo */
 	}
-      break;
-    case TIMECONSTRUCT:
-      tc = (TimeConstruct *) scc;
-      if (tc->isStaticallyFound ())
+  } else if (isa<DeltaWaitConstruct>(scc)) {
+      dc = (DeltaWaitConstruct *) scc;
+      if (dc->isStaticallyFound ())
 	{
 	  Out << "wait(pnumber, ";
-	  Out << intToString (tc->getTime ());
+	  Out << intToString (dc->getDelta());
 	  Out << ")";
 	}
       else
 	{
 	  /* todo */
 	}
-      break;
-    case READCONSTRUCT:
+  } else if (isa<ReadConstruct>(scc)) {
       rc = (ReadConstruct *) scc;
       port = rc->getPort ();
 
@@ -2947,8 +2941,7 @@ SimpleWriter::visitSCConstruct (SCConstruct * scc)
 	{
 	  /* todo */
 	}
-      break;
-    case WRITECONSTRUCT:
+  } else if (isa<WriteConstruct>(scc)) {
       wc = (WriteConstruct *) scc;
       port = wc->getPort ();
       channels = port->getChannels ();
@@ -2992,11 +2985,10 @@ SimpleWriter::visitSCConstruct (SCConstruct * scc)
 //              } else {
       /* todo */
 //              }
-      break;
-    default:
+  } else {
       ErrorMsg << "Construction not managed in Simple backend: " << scc->getID ();
       triggerError (Out);
-    }
+  }
 }
 
 void
@@ -3029,7 +3021,7 @@ SimpleWriter::visitCallInst (CallInst & I)
 
   // If this is a call to a struct-return function, assign to the first
   // parameter instead of passing it to the call.
-  const AttrListPtr & PAL = I.getAttributes ();
+  const AttributeSet & PAL = I.getAttributes ();
   bool hasByVal = I.hasByValArgument ();
   bool isStructRet = I.hasStructRetAttr ();
   if (isStructRet)
@@ -3102,13 +3094,11 @@ SimpleWriter::visitCallInst (CallInst & I)
 	  Out << '(';
 	  printType (Out, FTy->getParamType (ArgNo),
 		     /*isSigned= */
-		     PAL.paramHasAttr (ArgNo + 1,
-					this->getAttributes(Attributes::SExt))
-			);
+		     PAL.hasAttribute (ArgNo + 1, Attribute::SExt));
 	  Out << ')';
 	}
       // Check if the argument is expected to be passed by value.
-      if (I.paramHasAttr (ArgNo + 1, Attributes::ByVal))
+      if (I.paramHasAttr (ArgNo + 1, Attribute::ByVal))
 	writeOperandDeref (*AI);
       else
 	writeOperand (*AI);
@@ -3133,7 +3123,7 @@ bool SimpleWriter::visitBuiltinCall (CallInst & I, Intrinsic::ID ID, bool & Wrot
 	Function *
 	  F = I.getCalledFunction ();
 #define GET_GCC_BUILTIN_NAME
-#include "llvm/Intrinsics.gen"
+#include "llvm/IR/Intrinsics.gen"
 #undef GET_GCC_BUILTIN_NAME
 	assert (BuiltinName[0] && "Unknown LLVM intrinsic!");
 
@@ -3715,12 +3705,6 @@ SimpleWriter::getAnalysisUsage (AnalysisUsage & AU) const
 const char *SimpleWriter::getPassName () const
 {
   return "Simple backend";
-}
-
-Attributes SimpleWriter::getAttributes(Attributes::AttrVal attr)
-{
-  return Attributes::get(getGlobalContext(),
-                         ArrayRef<Attributes::AttrVal>(attr));
 }
 
 char SimpleWriter::ID = 0;

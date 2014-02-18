@@ -122,8 +122,8 @@ class sc_cthread_process : public sc_thread_process {
     virtual const char* kind() const
         { return "sc_cthread_process"; }
 
-  protected:
     sc_cthread_handle next_exist();
+  protected:
     void set_next_exist( sc_cthread_handle next_p );
 
 private:

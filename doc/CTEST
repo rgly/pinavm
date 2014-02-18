@@ -1,0 +1,50 @@
+______________________________________________________________________
+          Running Tests
+______________________________________________________________________
+
+Running tests is easy with merely "ctest" command in build
+directory. The drawback is that PinaVM generate the testing
+llvm bitcode during build time, though I think the build
+time is still short.
+(on i5-2400 3.1gHz with "time make -j4", real:2m19s, user:8m3s)
+
+The test name scheme is NAME_BACKEND, like RAM_promala, RAM_hello
+or elab_port_bool_promela. Although most of time, NAME is
+recommanded to be the same as directory name.
+
+To run all tests with 4 jobs:
+"ctest -j4"
+
+To run tests for certain backend like promela:
+"ctest -R promela"
+(Here we use regular expression to filter test names.)
+
+To find out the command for certain test:
+"ctest -R RAM_hello -V | grep '\-b' "
+(I use RAM_hello in this case)
+
+______________________________________________________________________
+          Adding Tests
+______________________________________________________________________
+
+Currently PinaVM uses CTest to manage all the tests, if you want
+to add a new test. Follow those steps:
+1. Create a folder under systemc-examples.
+2. Put your test code written in SystemC in the folder.
+3. Create CMakeLists.txt in the folder.
+4. Call add_pinavm_test(name backend_list src_list arg_list).
+5. run cmake again.
+
+
+Here is a simple example of CMakeLists.txt
+
+   # testcase with hello backend and promela backend.
+   SET(BACKENDS_LIST hello promela)
+   # collects all the cpp file in this directory
+   FILE(GLOB TEST_SRC *.cpp)
+   SET(TEST_ARGS -times 30)
+   # use directory name as test name
+   getLastDirectory(TEST_NAME ${CMAKE_CURRENT_SOURCE_DIR})
+   # then your tests are named as DirName_hello and DirName_promella
+   add_pinavm_test(${TEST_NAME} BACKENDS_LIST TEST_SRC TEST_ARGS)
+

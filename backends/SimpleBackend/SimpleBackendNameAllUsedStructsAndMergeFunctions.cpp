@@ -1,7 +1,62 @@
-/*
 #include "SimpleBackendNameAllUsedStructsAndMergeFunctions.h"
 #include "SimpleWriter.h"
+#include "llvm/IR/TypeFinder.h"
+#include "llvm/ADT/SetVector.h"
 
+#include <cassert>
+
+namespace {
+bool isContained(SetVector < Type *> * UT, Type * type)
+{
+	SetVector < Type *>::iterator UTI =
+			std::find(UT->begin(), UT->end(), type);
+	if (UTI == UT->end())
+		return false;
+	else
+		return true;
+}
+
+// Simply remove named StructType from used type set. If an unused
+// StructType has name, remove the name of the StructType.
+SetVector < Type *> * removeNamedStructFromSet(
+			SetVector < Type *> * UT, Module & M)
+{
+	TypeFinder TF;
+	// Search for Named StructType over module.
+	TF.run(M, true);
+	std::vector < StructType *>::iterator it, eit;
+	for ( it = TF.begin(), eit = TF.end(); it != eit; ++it) {
+		Type* named_type = *it;
+
+		if (isContained(UT, named_type) ) {
+			UT->remove(named_type);
+		} else {
+			StructType* st = dyn_cast<StructType>(named_type);
+			// delete the name if the type is not used.
+			st->setName("");
+		}
+	}
+	return UT;
+
+}
+
+bool nameUsedStruct(SetVector < Type *> * UT )
+{
+	bool Changed = false;
+	unsigned RenameCounter = 0;
+	SetVector < Type * >::const_iterator I, E;
+	for (I = UT->begin(), E = UT->end(); I != E; ++I)
+		if (isa < StructType > (*I) ) {
+			StructType* st = dyn_cast<StructType>(*I);
+			assert(! st->hasName());
+			st->setName("unnamed" + utostr(RenameCounter));
+			++RenameCounter;
+			Changed = true;
+		}
+
+	return Changed;
+}
+} // end of unamed namespace.
 void
 SimpleBackendNameAllUsedStructsAndMergeFunctions::
 getAnalysisUsage(AnalysisUsage & AU) const
@@ -9,56 +64,23 @@ getAnalysisUsage(AnalysisUsage & AU) const
 	AU.addRequired < FindUsedTypes > ();
 }
 
+
 /// This method inserts names for any unnamed structure types that are used by
-/// the program, and removes names from structure types that are not used by the
-/// program.
+/// the program, 
 ///
 bool SimpleBackendNameAllUsedStructsAndMergeFunctions::
 runOnModule(Module & M)
 {
 	// Get a set of types that are used by the program...
-	std::set < const Type *>UT =
-	    getAnalysis < FindUsedTypes > ().getTypes();
+	SetVector < Type *>UT = getAnalysis < FindUsedTypes > ().getTypes();
+	SetVector < Type *> *UTP = &UT;
 
-	// Loop over the module symbol table, removing types from UT that are
-	// already named, and removing names for types that are not used.
-	//
-	TypeSymbolTable & TST = M.getTypeSymbolTable();
-	for (TypeSymbolTable::iterator TI = TST.begin(), TE = TST.end();
-	     TI != TE;) {
-		TypeSymbolTable::iterator I = TI++;
+	UTP = removeNamedStructFromSet(UTP, M);
 
-		// If this isn't a struct or array type, remove it from our set of types
-		// to name. This simplifies emission later.
-		if (!isa < StructType > (I->second)
-		    && !isa < OpaqueType > (I->second)
-		    && !isa < ArrayType > (I->second)) {
-			TST.remove(I);
-		} else {
-			// If this is not used, remove it from the symbol table.
-			std::set < const Type *>::iterator UTI =
-			    UT.find(I->second);
-			if (UTI == UT.end())
-				TST.remove(I);
-			else
-				UT.erase(UTI);	// Only keep one name for this type.
-		}
-	}
-
-	// UT now contains types that are not named.  Loop over it, naming
+	// UTP now contains types that are not named.  Loop over it, naming
 	// structure types.
 	//
-	bool Changed = false;
-	unsigned RenameCounter = 0;
-	for (std::set < const Type * >::const_iterator I = UT.begin(), E =
-	     UT.end(); I != E; ++I)
-		if (isa < StructType > (*I) || isa < ArrayType > (*I)) {
-			while (M.
-			       addTypeName("unnamed" +
-					   utostr(RenameCounter), *I))
-				++RenameCounter;
-			Changed = true;
-		}
+	bool Changed = nameUsedStruct(UTP);
 
 	// Loop over all external functions and globals.  If we have two with
 	// identical names, merge them.
@@ -117,4 +139,3 @@ const char *SimpleBackendNameAllUsedStructsAndMergeFunctions::getPassName() cons
 }
 
 char SimpleBackendNameAllUsedStructsAndMergeFunctions::ID = 0;
-*/

@@ -1,5 +1,5 @@
 #include "llvm/Pass.h"
-#include "llvm/Module.h"
+#include "llvm/IR/Module.h"
 
 #include "Frontend.hpp"
 #include "FrontendPass.hpp"

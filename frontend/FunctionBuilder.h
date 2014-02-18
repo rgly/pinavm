@@ -4,9 +4,9 @@
 #include <string>
 #include <vector>
 
-#include "llvm/Function.h"
-#include "llvm/Instructions.h"
-#include "llvm/Value.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Value.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 
 #include "config.h"
@@ -31,7 +31,7 @@ class FunctionBuilder {
   Instruction* targetInst;
 
   bool mark(Value* arg);
-  int markUsefulInstructions();
+  bool markUsefulInstructions();
   void cloneBlocks ();
   std::vector<Instruction*>* predecessors;
 
@@ -40,6 +40,18 @@ class FunctionBuilder {
   ~FunctionBuilder();
   Function* buildFct();
   bool isBeforeTargetInst(Value* v);
+
+ private:
+  std::vector<Instruction*>* fillPredecessors(Function* origFct,
+		Instruction* targetInst);
+  void cloneEachInst(BasicBlock* origbb, BasicBlock* NewBB);
+  void cloneArguments(Function* origFct, Function* fctToJit);
+  BasicBlock* fillClonedBBWithMarkedInst();
+  void remapOperands();
+  void CreateReturn(BasicBlock* lastBlock);
+
+  bool isMarked(Instruction*);
+  bool isMarked(BasicBlock*);
 };
 
 #endif

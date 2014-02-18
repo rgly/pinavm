@@ -5,9 +5,9 @@
 #include <cstdio>
 
 // For JIT
-#include "llvm/LLVMContext.h"
-#include "llvm/Module.h"
-#include "llvm/Type.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Type.h"
 //#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/CodeGen/LinkAllCodegenComponents.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
@@ -21,7 +21,8 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/raw_ostream.h"
 //#include "llvm/Support/Process.h"
-#include "llvm/Support/IRReader.h"
+#include "llvm/IRReader/IRReader.h"
+#include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/DynamicLibrary.h"
@@ -72,6 +73,12 @@ Backend("b", cl::desc("Backend to use"),
 static cl::opt < bool >
 PrintElab("print-elab", cl::desc("Print architecture after elaboration"));
 
+// TODO this option is uesd by frontend/SCElab, but I can not find a
+//      easy way to pass options to it.
+//static cl::opt < bool >
+//IgnoreNullCh("ignore-null-ch",
+	//cl::desc("Disable errors for unconnected Ports"));
+
 static cl::opt < bool >
 PrintIR("print-ir",
 	cl::desc("Print Intermediate representation for all processes"));
@@ -95,9 +102,18 @@ static ExecutionEngine *EE = 0;
 extern "C" void 
 pinavm_callback(sc_core::sc_simcontext* context, const sc_core::sc_time& duration);
 Module *Mod;
+
+
+bool AlreadyCallBack;
 void pinavm_callback(sc_core::sc_simcontext* context, 
                      const sc_core::sc_time& duration)
 {
+	if (AlreadyCallBack)
+		return;
+
+
+	AlreadyCallBack = true;
+
 	TRACE_1("Entering PinaVM (callback), building module\n");
 
 	Frontend *fe = launch_frontend(InputFilename, InlineFcts,Mod);
@@ -177,7 +193,7 @@ int load_and_run_sc_main(std::string & InputFile)
 
 	if (!Mod) {
 		errs() << "error loading program '" << InputFile << "': "
-		       << smdiagnostic.getMessage() << "\n";
+		       << smdiagnostic.getMessage().str() << "\n";
 		exit(1);
 	} else {
 		TRACE_2("bitcode file loaded\n");
@@ -234,6 +250,12 @@ int load_and_run_sc_main(std::string & InputFile)
 	EE->runStaticConstructorsDestructors(false);
     
 	TRACE_2("Running elaboration\n");
+
+	// set the alreadyCallBack flag. thus prevent pinavm_callback
+	// from being called multiple times for some testcase which
+	// contains multiple sc_start().
+	AlreadyCallBack = false;
+
 	// Run main.
 	int Result = EE->runFunctionAsMain(EntryFn, InputArgv, NULL);
 

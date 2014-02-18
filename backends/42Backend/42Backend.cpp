@@ -1,35 +1,18 @@
-//#include "llvm/Support/raw_ostream.h"
-#include "llvm/LLVMContext.h"
-#include "llvm/Module.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Pass.h"
-//#include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/Verifier.h"
-//#include "llvm/Bitcode/ReaderWriter.h"
-//#include "llvm/CodeGen/LinkAllAsmWriterComponents.h"
-//#include "llvm/CodeGen/LinkAllCodegenComponents.h"
-//#include "llvm/CodeGen/ObjectCodeEmitter.h"
 #include "llvm/Config/config.h"
-//#include "llvm/LinkAllVMCore.h"
-//#include "llvm/Support/CommandLine.h"
-//#include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/FormattedStream.h"
-//#include "llvm/Support/ManagedStatic.h"
-//#include "llvm/Support/MemoryBuffer.h"
-//#include "llvm/Support/PrettyStackTrace.h"
-//#include "llvm/System/Host.h"
 #include "llvm/Support/Signals.h"
-//#include "llvm/Target/SubtargetFeature.h"
-#include "llvm/DataLayout.h"
-//#include "llvm/Target/TargetMachine.h"
-//#include "llvm/Target/TargetRegistry.h"
-//#include "llvm/Target/TargetSelect.h"
-//#include "llvm/Transforms/Scalar.h"
+#include "llvm/IR/DataLayout.h"
 
 #include "Frontend.hpp"
 #include "42Writer.h"
 #include "42Backend.h"
 
+#include "OldVersion.h"
 using namespace llvm;
 
 void launch_42backend(Frontend * fe,
@@ -69,9 +52,8 @@ void launch_42backend(Frontend * fe,
 	Passes.add(createGCLoweringPass());
 	Passes.add(createLowerInvokePass());
 	Passes.add(createCFGSimplificationPass());	// clean up after lower invoke.
-//	Passes.add(new 42BackendNameAllUsedStructsAndMergeFunctions());
 	Passes.add(FortyTwoWriter);
-	Passes.add(createGCInfoDeleter());
+	pinavm::addGCInfoDeleter(Passes);
 
 	Passes.run(*llvmMod);
 

@@ -7,10 +7,10 @@
 #include "Frontend.hpp"
 
 //#include "llvm/Transforms/Scalar.h"
-#include "llvm/Module.h"
+#include "llvm/IR/Module.h"
 //#include "llvm/Support/PassNameParser.h"
 //#include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/DataLayout.h"
+#include "llvm/IR/DataLayout.h"
 //#include "llvm/Target/TargetMachine.h"
 //#include "llvm/Target/TargetSelect.h"
 //#include "llvm/Support/ManagedStatic.h"

@@ -14,6 +14,9 @@ public:
         double getStartTime(){return this->start_time;} ;
         double getDutyCycle(){return this->duty_cycle ;} ;
         bool getPosedgeFirst(){return this->posedge_first;};
+	static inline bool classof(const Channel *ch) {
+		return (ch->getID() == CLOCK_CHANNEL);
+	}
 private:
         // the duration of one clock cycle.
         double period ;

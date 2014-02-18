@@ -27,13 +27,14 @@ ________________________________________________________________________
     LLVM is a collection of compiler libraries. The source code of
     PinaVM relies on LLVM.
     
-    PinaVM only accepts llvm version 3.2.
+    Please check LLVM_RECOMMAND_VERSION in scripts/PinaVMConfig.cmake
     
     The easiest way to install LLVM is via package manager. You can
-    try to find the package named "llvm-3.2" and install it. If there
-    is no llvm-3.2 in your distribution release. Downloading source from
-    llvm.org and build it is another way. If you are lazy to install,
-    PinaVM can automatically download, build and install LLVM for you.
+    try to find the package named "llvm-x.y" and install it. where x.y
+    denotes the LLVM version. If there is no LLVM package in your
+    distribution release. Downloading source code from llvm.org and
+    build it is another solution. If you are lazy doing them, PinaVM
+    can automatically download, build and install LLVM for you.
 
     Autoinstall script of PinaVM is executed while configuration. With
     -DAUTOINSTALL=TRUE, PinaVM will install both LLVM and Clang for you
@@ -48,8 +49,10 @@ ________________________________________________________________________
     PinaVM needs a compiler which can generate llvm assembly, so
     that PinaVM can JIT the generated assembly to collect information
     of systemc.
+
+    The Clang version is suggested to be the same with LLVM, then
+    Clang can generate the bitcode which PinaVM can parse.
    
-    Pianvm only accepts clang version 3.2.
 
 
 ________________________________________________________________________
@@ -62,8 +65,8 @@ ________________________________________________________________________
     gcc. dragonegg is a replacement of clang. Compilation of dragonegg
     is harder than clang, so there is no autoinstall script to help.
    
-    Pianvm only accepts dragonegg version 3.2.
-
+    The Dragonegg version is suggested to be the same with LLVM, then
+    Dragonegg can generate the bitcode which PinaVM can parse.
 
 
 
@@ -88,20 +91,20 @@ ________________________________________________________________________
   to install llvm via autoinstall.
 
 -DAUTOINSTALL=TRUE
-  This option denotes whether cmake automatically install llvm for
+  This option denotes whether cmake automatically install LLVM for
   you, by default it is false. You can also set -DLLVM_ROOT=/where/llvm
   to specify the path where llvm will be installed to. llvm is installed
   to ./lib/llvm-3.2 if LLVM_ROOT is blank.
 
 -DDRAGONEGG_GCC=g++-4.x
   Dragonegg is a gcc plugin, so cmake script must know you gcc version
-  corresponding to your dragonegg. If you set this option, cmake script
-  will finding the g++ and dragonegg. if finds nothing. clang will
+  corresponding to your dragonegg. By setting this option, cmake script
+  will find the g++ and dragonegg. If nothing found, clang will
   substitute dragonegg and g++.  
 
 -DCMAKE_BUILD_TYPE=None,Debug,Release
   Users can choose build type by assigning this parameter.  By default
-  it is None. The debug level is set to -g3 if Debug is chosen.
+  it is None. Debug level is set to -g3 if Debug is chosen.
 
 -DTEST_CMAKE=TRUE
   CAUTION : You should not use it unless you know what cmake script

@@ -3,4 +3,4 @@
 std::string GetRootPath()
 {
 return ROOT(@CMAKE_BINARY_DIR@) ;
-};
+}

@@ -3,17 +3,17 @@
 
 #include "SimpleTargetMachine.h"
 
-#include "llvm/CallingConv.h"
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Module.h"
-#include "llvm/Instructions.h"
+#include "llvm/IR/CallingConv.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
-#include "llvm/TypeFinder.h"
-#include "llvm/Intrinsics.h"
-#include "llvm/IntrinsicInst.h"
-#include "llvm/InlineAsm.h"
+#include "llvm/IR/TypeFinder.h"
+#include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/InlineAsm.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/ConstantsScanner.h"
@@ -23,7 +23,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/DataLayout.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Support/CallSite.h"
@@ -31,10 +31,9 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
-#include "llvm/Support/InstVisitor.h"
+#include "llvm/InstVisitor.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/Support/MathExtras.h"
-//#include "llvm/System/Host.h"
 #include "llvm/Config/config.h"
 
 #include <map>
@@ -120,12 +119,12 @@ public:
 			 bool isSigned = false,
 			 const std::string &VariableName = "",
 			 bool IgnoreName = false,
-			 const AttrListPtr &PAL = AttrListPtr());
+			 const AttributeSet &PAL = AttributeSet());
   std::ostream &printType(std::ostream &Out, Type *Ty, 
 			  bool isSigned = false,
 			  const std::string &VariableName = "",
 			  bool IgnoreName = false,
-			  const AttrListPtr &PAL = AttrListPtr());
+			  const AttributeSet &PAL = AttributeSet());
   raw_ostream &printSimpleType(formatted_raw_ostream &Out,
 			       Type *Ty, 
 			       bool isSigned, 
@@ -135,7 +134,7 @@ public:
 				const std::string &NameSoFar = "");
 
   void printStructReturnPointerFunctionType(formatted_raw_ostream &Out,
-					    const AttrListPtr &PAL,
+					    const AttributeSet &PAL,
 					    PointerType *Ty);
 
   /// writeOperandDeref - Print the result of dereferencing the specified
@@ -261,7 +260,6 @@ public:
 			  std::map<Value*, std::string>* allDepsByValue,
 			  std::map<std::string, Type*>* allDepsByName);
   int getNumField(GetElementPtrInst* inst);
-  Attributes getAttributes(Attributes::AttrVal attr);
 
 };
 

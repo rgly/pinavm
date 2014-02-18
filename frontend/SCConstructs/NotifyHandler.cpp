@@ -3,6 +3,7 @@
 #include "NotifyConstruct.hpp"
 #include "Event.hpp"
 #include <llvm/Support/CallSite.h>
+#include <cassert>
 
 using namespace llvm;
 
@@ -23,6 +24,7 @@ SCConstruct *NotifyHandler::handle(Function * fct, BasicBlock * bb, Instruction*
 	if (eventAddr == NULL)
 		return new NotifyConstruct((Value*)NULL);
 	Event *e = this->scjit->getElab()->getEvent(eventAddr);
+	assert(e);
 	TRACE_3("Event notified : " << (void *) e << " (" << e->getEventName() << ") \n");
 	return new NotifyConstruct(e);
 

@@ -14,20 +14,19 @@
 #include <fstream>
 #include <map>
 
-#include "llvm/GlobalValue.h"
-#include "llvm/CallingConv.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/InstrTypes.h"
-#include "llvm/Instructions.h"
+#include "llvm/IR/GlobalValue.h"
+#include "llvm/IR/CallingConv.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/Analysis/Verifier.h"
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
-#include <llvm/IRBuilder.h>
+#include <llvm/IR/IRBuilder.h>
 #include <llvm/Support/InstIterator.h>
 #include <llvm/Transforms/Utils/Cloning.h>
 #include "llvm/Analysis/LoopPass.h"
@@ -35,7 +34,7 @@
 #include "llvm/Pass.h"
 #include "llvm/PassManagers.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Function.h"
+#include "llvm/IR/Function.h"
 
 #include "Port.hpp"
 #include "Channel.hpp"
@@ -103,7 +102,7 @@ bool TLMBasicPassImpl::runOnModule(Module &M) {
     this->llvmMod = &M;
 
     this->llvmMod = LinkExternalBitcode(this->llvmMod,
-         "backends/TwetoBackend/tweto_call_method.ll");
+         "backends/TwetoBackend/runtime_lib/tweto_call_method.bc");
     
     // Retrieve the method that does all the vtable calculations
     // in order to call the actual 'write' method (see replaceCallsInProcess)
@@ -465,7 +464,7 @@ Function *TLMBasicPassImpl::createProcess(Function *oldProc,
     Function *newProc = 
     Function::Create(newProcType, Function::ExternalLinkage, name, this->llvmMod);
     assert(newProc->empty());
-    newProc->addFnAttr(Attributes::InlineHint);
+    newProc->addFnAttr(Attribute::InlineHint);
     
     { // Set name of newfunc arguments and complete args
         Function::arg_iterator nai = newProc->arg_begin();

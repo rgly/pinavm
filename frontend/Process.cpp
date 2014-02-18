@@ -3,7 +3,7 @@
 #include "SCCFactory.hpp"
 #include "utils.h"
 
-#include "llvm/Instructions.h"
+#include "llvm/IR/Instructions.h"
 
 #include <algorithm>
 #include <map>
@@ -67,7 +67,7 @@ void Process::printElab(int sep, std::string prefix)
 {
 	std::vector < Event * >::iterator itE;
 	this->printPrefix(sep, prefix);
-	TRACE(" process : " << this << "\n");
+	TRACE(" process : " << this->getName() << " (" << this << ")"<< "\n");
 	for (itE = this->events.begin(); itE < this->events.end(); itE++) {
 		Event *e = *itE;
 		e->printElab(sep + 3, prefix);

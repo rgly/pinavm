@@ -16,16 +16,16 @@
 
 #include <llvm/ADT/Statistic.h>
 #include <llvm/Analysis/Verifier.h>
-#include <llvm/DerivedTypes.h>
-#include <llvm/LLVMContext.h>
+#include <llvm/IR/DerivedTypes.h>
+#include <llvm/IR/LLVMContext.h>
 #include <llvm/PassManager.h>
 #include <llvm/Support/CallSite.h>
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/FormattedStream.h>
-#include <llvm/IRBuilder.h>
+#include <llvm/IR/IRBuilder.h>
 #include <llvm/Support/InstIterator.h>
 #include <llvm/Support/raw_ostream.h>
-#include <llvm/DataLayout.h>
+#include <llvm/IR/DataLayout.h>
 #include <llvm/Transforms/IPO.h>
 #include <llvm/Transforms/Scalar.h>
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
@@ -168,7 +168,7 @@ void tweto_specialize__create(Module *Mod, Function *oldfunc,
   std::string name = oldfunc->getName().str()+std::string("_specialized");
   newfunc = Function::Create(newfunc_type, Function::ExternalLinkage, StringRef(name), Mod);
   assert(newfunc->empty());
-  newfunc->addFnAttr(Attributes::InlineHint);
+  newfunc->addFnAttr(Attribute::InlineHint);
 
   { // set name of newfunc arguments and complete args
     Function::arg_iterator nai = newfunc->arg_begin(), oai = oldfunc->arg_begin();
@@ -418,7 +418,7 @@ int specialize_calls(ExecutionEngine *EE, Module *Mod, Function *F) {
               tweto_specialize__create(Mod,oldfun,args_spec,args_spec+n,
                                        already,newfun,ci);
               assert(newfun);
-              // const AttrListPtr &attributes = cs.getAttributes();
+              // const AttributeSet &attributes = cs.getAttribute();
               if (cs.isInvoke()) {
                 InvokeInst *i = dyn_cast<InvokeInst>(cs.getInstruction());
                 assert(i);

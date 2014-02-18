@@ -4,6 +4,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "PromelaWriter.h"
 
+#include "OldVersion.h"
 namespace llvm {
 
 	bool PromelaTargetMachine::
@@ -17,9 +18,7 @@ namespace llvm {
 //		PM.add(createLowerAllocationsPass(true));
 		PM.add(createLowerInvokePass());
 		PM.add(createCFGSimplificationPass());	// clean up after lower invoke.
-//		PM.add(new
-//		       PromelaBackendNameAllUsedStructsAndMergeFunctions());
 		PM.add(new PromelaWriter(o));
-		PM.add(createGCInfoDeleter());
+		pinavm::addGCInfoDeleter(PM);
 		return false;
 }}

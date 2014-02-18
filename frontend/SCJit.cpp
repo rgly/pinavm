@@ -1,12 +1,12 @@
 #include "SCJit.hpp"
 
-#include "llvm/LLVMContext.h"
-#include "llvm/DataLayout.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/DataLayout.h"
 //#include "llvm/Analysis/Dominators.h"
-#include "llvm/CallingConv.h"
+#include "llvm/IR/CallingConv.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/PassManager.h"
-#include "llvm/IRBuilder.h"
+#include "llvm/IR/IRBuilder.h"
 
 #include <sstream>
 #include <iostream>
@@ -141,8 +141,7 @@ Function *SCJit::buildFct(Function * f, FunctionType * FT, Instruction* inst, Va
 	Function *fctToJit;
 
 	std::stringstream ss;
-	ss << "fctToJit-" << this->nbFctToJit++;
-	std::string fctName = std::string("") + ss.str();
+	ss << f->getName().str() << "_fctToJit-" << this->nbFctToJit++;
 	fctToJit = Function::Create(FT, Function::PrivateLinkage, ss.str(), this->mdl);
 	fctToJit->setCallingConv(CallingConv::C);
 	TRACE_4("Building fctToJit : " << fctToJit->getName().str() << " " << fctToJit << "\n");

@@ -1,7 +1,7 @@
 #ifndef TWETOSPECIALIZE_HPP
 #define TWETOSPECIALIZE_HPP
 
-#include <llvm/Module.h>
+#include <llvm/IR/Module.h>
 #include <llvm/ExecutionEngine/JIT.h>
 
 llvm::Function *tweto_specialize(llvm::ExecutionEngine*, llvm::Module*, llvm::Function*,

@@ -3,10 +3,9 @@
 
 
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/DataLayout.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/PassManager.h"
 
-//#include "42BackendNameAllUsedStructsAndMergeFunctions.h"
 
 namespace llvm {
   

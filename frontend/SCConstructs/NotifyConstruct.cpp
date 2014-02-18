@@ -1,19 +1,19 @@
 #include "NotifyConstruct.hpp"
 #include "Event.hpp"
+#include <cassert>
 
 using namespace llvm;
 
-NotifyConstruct::NotifyConstruct(Event * e)
+NotifyConstruct::NotifyConstruct(Event * e) : SCConstruct(NOTIFYCONSTRUCT)
 {
 	this->event = e;
-	this->id = NOTIFYCONSTRUCT;
 }
 
-NotifyConstruct::NotifyConstruct(Value * missingE) : SCConstruct(false)
+NotifyConstruct::NotifyConstruct(Value * missingE)
+	: SCConstruct(NOTIFYCONSTRUCT, false)
 {
 	this->event = NULL;
 	this->missingEvent = missingE;
-	this->id = NOTIFYCONSTRUCT;
 }
 
 void
@@ -29,8 +29,10 @@ Event *NotifyConstruct::getNotifiedEvent()
 
 std::string NotifyConstruct::toString()
 {
-	if (this->staticallyFound)
-		return "NOTIFY(" + this->event->getEventName() + ")";
-	else
+	if (this->isStaticallyFound()) {
+		Event* e = this->getNotifiedEvent();
+		assert(e);
+		return "NOTIFY(" + e->getEventName() + ")";
+	} else
 		return "NOTIFY(dynamic content)";
 }

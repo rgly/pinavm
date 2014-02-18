@@ -6,11 +6,11 @@
 SCCFactory::SCCFactory(SCJit * scjit)
 {
 	/****** Time stuffff *******/
-	(new ZeroTimeHandler(scjit))->insertInMap(&this->scchandlers);
-	(new DefaultTimeHandler(scjit))->insertInMap(&this->scchandlers);
+	(new DeltaWaitHandler(scjit))->insertInMap(&this->scchandlers);
+	(new TimeWaitHandler(scjit))->insertInMap(&this->scchandlers);
 
 	/****** Events stuff ******/
-	(new EventHandler(scjit))->insertInMap(&this->scchandlers);
+	(new EventWaitHandler(scjit))->insertInMap(&this->scchandlers);
 	(new NotifyHandler(scjit))->insertInMap(&this->scchandlers);
 
 	/***** Ports stuff ******/

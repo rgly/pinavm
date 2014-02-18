@@ -1,6 +1,6 @@
 #include <cxxabi.h>
 
-#include <llvm/Type.h>
+#include <llvm/IR/Type.h>
 
 #include "IRModule.hpp"
 #include "Process.hpp"
@@ -12,10 +12,9 @@
 #include "ClockChannel.hpp"
 #include "BasicChannel.hpp"
 
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Assembly/Writer.h"
-#include "llvm/InstrTypes.h"
 
 
 #include "sysc/kernel/sc_process_table.h"
@@ -28,6 +27,7 @@
 #include "sysc/kernel/sc_event.h"
 #include "sysc/communication/sc_port.h"
 #include "sysc/communication/sc_bind_ef.h"
+#include "sysc/communication/sc_bind_elem.h"
 #include "sysc/communication/sc_bind_info.h"
 #include "sysc/kernel/sc_process_handle.h"
 
@@ -36,7 +36,12 @@
 
 #include "SCElab.h"
 #include "config.h"
-
+namespace {
+	// make this variable to true to ignore unconnected sc_port.
+	// unconnected sc_port still exist, but SCElab would not produce
+	// errors.
+	bool IgnoreNullCh = false;
+}
 
 SCElab::SCElab(Module * llvmModule)
 {
@@ -80,7 +85,8 @@ Process *SCElab::addProcess(IRModule * mod,
 	std::string modType = mod->getModuleType();
 	std::string moduleName = mod->getUniqueName();
 	std::string mainFctName = "_ZN" + modType + utostr(fctName.size()) + fctName + "Ev";
-	std::string processName = moduleName + "_" + mainFctName;
+	std::string processName = std::string(process->name())
+						+ "_" + mainFctName;
 	Function *mainFct = this->llvmMod->getFunction(mainFctName);
 
 //   Function* fct;
@@ -148,7 +154,7 @@ Port * SCElab::trySc_Signal(IRModule * mod,
 		TRACE_4("typeName of variable accessed through port : " << variableTypeName << "\n");
 		TRACE_4("type of variable accessed through port : " << itfType << "\n");
 
-		theNewPort = new Port(mod, portName, port);
+		theNewPort = new Port(this, mod, portName, port);
 		std::map < sc_core::sc_interface*, Channel * >::iterator itM;
 		if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
 			ch = new SimpleChannel((Type*) itfType, variableTypeName);
@@ -176,13 +182,13 @@ Port * SCElab::trySc_Clock(IRModule * mod,
 	std::string match = "N7sc_core8sc_clockE";
 	if (itfTypeName.find(match) == 0) {
 
-		theNewPort = new Port(mod, portName, port);
+		theNewPort = new Port(this, mod, portName, port);
 		Channel* ch;
 		std::map < sc_core::sc_interface*, Channel * >::iterator itM;
 		if ((itM = this->channelsMap.find(itf)) == this->channelsMap.end()) {
 			ch = new ClockChannel();
 			this->channelsMap.insert(this->channelsMap.end(), std::pair < sc_core::sc_interface *, Channel * >(itf, ch));
-        } else {
+        	} else {
 			ch = itM->second;
 		}
 		theNewPort->addChannel(ch);
@@ -219,7 +225,7 @@ Port * SCElab::tryBasicTarget(IRModule * mod,
 	
 	if ((itfTypeName.find(match1) == 0) ||
 	    (itfTypeName.find(match2) == 0)) {
-		theNewPort = new Port(mod, portName, port);
+		theNewPort = new Port(this, mod, portName, port);
 
 		std::map < sc_core::sc_interface*, Channel * >::iterator itM;
 		Channel* ch;
@@ -300,7 +306,7 @@ Port * SCElab::tryBasicInitiator(IRModule * mod,
 
 	if ((itfTypeName.find(match1) == 0) ||
 	    (itfTypeName.find(match2) == 0)) {
-		theNewPort = new Port(mod, portName, port);
+		theNewPort = new Port(this, mod, portName, port);
 
 		std::map < sc_core::sc_interface*, Channel * >::iterator itM;
 		BasicChannel* ch;
@@ -333,7 +339,25 @@ Port * SCElab::tryBasicInitiator(IRModule * mod,
 	return theNewPort;
 }
 
+Port *SCElab::tryParentPort(IRModule * mod, std::string portName, sc_core::sc_port_base * port)
+{
+	if (! port->m_bind_info->has_parent)
+		return NULL;
 
+	Port* theNewPort = new Port(this, mod, portName, port);
+
+	std::vector<sc_core::sc_bind_elem*>* bind_ef_vec
+						= &(port->m_bind_info->vec);
+	std::vector<sc_core::sc_bind_elem*>::iterator it = bind_ef_vec->begin();
+	for(; it != bind_ef_vec->end(); ++it) {
+		sc_core::sc_port_base* sc_parent_port = (*it)->parent;
+		assert(sc_parent_port && "Currently not suport a port which binds to both channel and parent ports.");
+		Port* parent_port = this->getPort(sc_parent_port);
+		assert(parent_port && "Parent Port must defined before Child port");
+		theNewPort->addParentPort(parent_port);
+	}
+	return theNewPort;
+}
 
 Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 {
@@ -358,18 +382,28 @@ Port *SCElab::addPort(IRModule * mod, sc_core::sc_port_base * port)
 		if (port==NULL) {
 			TRACE_6("TESTING IF PORT = NULL ************************************************************************");
 		}
-		if (itf==NULL) {
-			TRACE_6("TESTING IF Interface is NULL ****************************************************************** ");
-			//TRACE_6(port->getName());
+
+		std::string itfTypeName;
+		if (itf == NULL) {
+			if (port->m_bind_info->has_parent) {
+				theNewPort = tryParentPort(mod, portName, port);
+				assert(theNewPort);
+			} else {
+				assert(IgnoreNullCh && "IF Interface is Null. To disable checks for unconnected ports, use -ignore-null-ch");
+				theNewPort = new Port(this, mod, portName, port);
+			}
+			itfTypeName = "NULL_channel";
+		} else {
+			assert(itf);
+			const char* typeName = typeid(*itf).name();
+			//		N7sc_core5sc_inIbEE
+			itfTypeName = typeName;
+
+			TRACE_4("m_interface of port is: " << itfTypeName 
+			<< " (" << abi::__cxa_demangle(
+			itfTypeName.c_str(), NULL, NULL, NULL) << ")\n");
 		}
-//	const char* typeName = typeid(*(pb->m_interface)).name();
-		const char* typeName = typeid(*itf).name();
-//		N7sc_core5sc_inIbEE
 
-		std::string itfTypeName(typeName);
-
-		TRACE_4("m_interface of port is: " << itfTypeName 
-			<< " (" << abi::__cxa_demangle(itfTypeName.c_str(), NULL, NULL, NULL) << ")\n");
 
 		/* take the first match */
 		if (theNewPort == NULL)
@@ -442,6 +476,11 @@ Port *SCElab::getPort(void *portAddr)
 Event *SCElab::getEvent(void *eventAddr)
 {
 	return this->eventsMap.find((sc_core::sc_event *) eventAddr)->second;
+}
+
+Channel *SCElab::getChannel(void* channelAddr)
+{
+	return this->channelsMap.find((sc_core::sc_interface *) channelAddr)->second;
 }
 
 void SCElab::printElab(int sep, std::string prefix)
@@ -530,9 +569,6 @@ SCElab::addProcessAndEvents(sc_core::sc_process_b *theProcess, sc_core::sc_modul
 void
 SCElab::complete()
 {
-	sc_core::sc_thread_handle thread_p;
-	sc_core::sc_method_handle method_p;
-
 	// MM: why do this here? stopping the execution of the
 	// elaboration after calling end_of_elaboration seems a much
 	// better idea than calling it ourselves.
@@ -556,42 +592,55 @@ SCElab::complete()
 
 	//------- Get processes and events --------
 	sc_core::sc_process_table * processes = sc_core::sc_get_curr_simcontext()->m_process_table;
-	for (thread_p = processes->thread_q_head(); thread_p; thread_p = thread_p->next_exist()) {
+
+	for (sc_core::sc_thread_handle thread_p = processes->thread_q_head();
+				thread_p; thread_p = thread_p->next_exist()) {
+
 		sc_core::sc_process_b * theProcess = thread_p;
 		sc_core::sc_module * mod = (sc_core::sc_module *) thread_p->m_semantics_host_p;
 		addProcessAndEvents(theProcess, mod);
 	}
 
-	for (method_p = processes->method_q_head(); method_p; method_p = method_p->next_exist()) {
+	for (sc_core::sc_method_handle method_p = processes->method_q_head();
+				method_p; method_p = method_p->next_exist()) {
+
 		sc_core::sc_method_process* theP = method_p;
 		sc_core::sc_module * mod = (sc_core::sc_module *) theP->m_semantics_host_p;
 		addProcessAndEvents(theP, mod);
 	}
+
+	for (sc_core::sc_cthread_handle cthread_p = processes->cthread_q_head();
+			cthread_p; cthread_p = cthread_p->next_exist()) {
+
+		sc_core::sc_cthread_process* ctheP = cthread_p;
+		sc_core::sc_module * mod = (sc_core::sc_module *) ctheP->m_semantics_host_p;
+		addProcessAndEvents(ctheP, mod);
+	}
 }
 
-// The Reason I do not get Sensitive List while initializing Ports
+// The Reason I do not access Sensitive List while initializing Ports
 // is that Processes are initialized after Ports, so getting Process
-// List is impossible when construct Port.
-std::vector < Process*>* SCElab::getProcessOfPort(sc_core::sc_port_base* scport, bool IsThread)
+// List is impossible while constructing Ports.
+std::vector < Process*>* SCElab::getSensitive(const sc_core::sc_port_base* scport, bool IsThread) const
 {
-	std::vector<Process*>* static_thread_of_port = new std::vector<Process*>;
-	std::vector<sc_core::sc_bind_ef*> sc_processes  ;
+	std::vector<sc_core::sc_bind_ef*> SC_Procs;
 
 	if (IsThread) {
-		sc_processes = scport->m_bind_info->thread_vec ;
+		SC_Procs = scport->m_bind_info->thread_vec ;
 	} else {
-		sc_processes = scport->m_bind_info->method_vec ;
+		SC_Procs = scport->m_bind_info->method_vec ;
 	}
 
+	std::vector<Process*>* StaticThreadOfPort = new std::vector<Process*>;
 
-        sc_core::sc_process_b* temp_sc_process;
-        Process* temp_process;
-        for (unsigned int i = 0 ; i < sc_processes.size() ; ++i) {
-		temp_sc_process = (sc_processes[i])->handle ;
-		temp_process = this->processMap[ temp_sc_process ] ;
-		static_thread_of_port->push_back(temp_process) ;
+        for (unsigned int i = 0 ; i < SC_Procs.size() ; ++i) {
+		sc_core::sc_process_b* temp_sc_process = SC_Procs[i]->handle ;
+		// decide neg edge or pos edge
+		// SC_Procs[i]->event_finder ;
+		Process* temp_process =
+				this->processMap.find(temp_sc_process)->second;
+		StaticThreadOfPort->push_back(temp_process) ;
 	}
 
-
-	return static_thread_of_port ;
+	return StaticThreadOfPort ;
 }

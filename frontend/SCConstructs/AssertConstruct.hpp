@@ -1,7 +1,7 @@
 #ifndef _ASSERTCONSTRUCT_HPP
 #define _ASSERTCONSTRUCT_HPP
 
-#include "llvm/Value.h"
+#include "llvm/IR/Value.h"
 
 #include "SCConstruct.hpp"
 #include "Event.hpp"
@@ -22,6 +22,9 @@ public:
 	bool getCond();
 	Value* getMissingCond();
 	std::string toString();
+	static inline bool classof(const SCConstruct *scc) {
+		return (scc->getID() == ASSERTCONSTRUCT );
+	}
 };
 
 #endif

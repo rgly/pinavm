@@ -9,20 +9,20 @@
  * @copyright : Verimag 2011
  */
 
-#include <llvm/LLVMContext.h>
-#include <llvm/Type.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Type.h>
 #include <llvm/Bitcode/ReaderWriter.h>
 #include <llvm/CodeGen/LinkAllCodegenComponents.h>
 #include <llvm/ExecutionEngine/GenericValue.h>
 #include <llvm/ExecutionEngine/JIT.h>
 #include <llvm/ExecutionEngine/JITEventListener.h>
-#include <llvm/DataLayout.h>
+#include <llvm/IR/DataLayout.h>
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/ManagedStatic.h>
 #include <llvm/Support/MemoryBuffer.h>
 #include <llvm/Support/PrettyStackTrace.h>
 #include <llvm/Support/raw_ostream.h>
-#include <llvm/IRBuilder.h>
+#include <llvm/IR/IRBuilder.h>
 #include <llvm/Support/FormattedStream.h>
 #include <llvm/PassManager.h>
 #include <llvm/Analysis/Verifier.h>
@@ -30,8 +30,8 @@
 #include <llvm/Transforms/Scalar.h>
 #include <cerrno>
 
-#include "llvm/ValueSymbolTable.h"
-#include "llvm/Module.h"
+#include "llvm/IR/ValueSymbolTable.h"
+#include "llvm/IR/Module.h"
 
 #include "Frontend.hpp"
 #include "TwetoBackend.h"
@@ -100,7 +100,7 @@ static void tweto_optimize(Frontend * fe, ExecutionEngine *ee,
 	// Control flow graph simplification
 	PM->add(createCFGSimplificationPass()); 
 	// Releases GC metadata
-	PM->add(createGCInfoDeleter()); 
+	pinavm::addGCInfoDeleter(PM);
 	// Combine instructions to form fewer, simple instructions
 	PM->add(createInstructionCombiningPass()); 
 	// Reassociates commutative expressions in an order that is

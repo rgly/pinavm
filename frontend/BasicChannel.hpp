@@ -11,6 +11,9 @@ public:
 	std::string toString();
 	
 	const std::string getChannelName() const {return m_channelName;}
+	static inline bool classof(const Channel *ch) {
+		return (ch->getID() == BASIC_CHANNEL);
+	}
 private:
 	const std::string m_channelName;
 };

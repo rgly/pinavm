@@ -1,7 +1,7 @@
 #ifndef _NOTIFYCONSTRUCT_HPP
 #define _NOTIFYCONSTRUCT_HPP
 
-#include "llvm/Value.h"
+#include "llvm/IR/Value.h"
 
 #include "SCConstruct.hpp"
 
@@ -20,6 +20,9 @@ public:
 	void setNotifiedEvent(Event * e);
 	Event *getNotifiedEvent();
 	std::string toString();
+	static inline bool classof(const SCConstruct *scc) {
+		return (scc->getID() == NOTIFYCONSTRUCT );
+	}
 };
 
 #endif

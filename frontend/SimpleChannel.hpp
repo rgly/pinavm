@@ -5,7 +5,7 @@
 
 #include "Channel.hpp"
 
-#include <llvm/Type.h>
+#include <llvm/IR/Type.h>
 
 
 class SimpleChannel : public Channel
@@ -16,6 +16,9 @@ public:
 	SimpleChannel(llvm::Type* globalVariableType, std::string globalVarTypeName);
 	std::string getGlobalVariableName();
 	std::string toString();
+	static inline bool classof(const Channel *ch) {
+		return (ch->getID() == SIMPLE_CHANNEL);
+	}
 };
 
 #endif

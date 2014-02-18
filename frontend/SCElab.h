@@ -6,7 +6,7 @@
 #include <map>
 #include <vector>
 
-#include "llvm/Module.h"
+#include "llvm/IR/Module.h"
 
 
 #include "ElabMember.hpp"
@@ -66,6 +66,7 @@ class SCElab : public ElabMember
   Process* getProcess(void* processAddr);
   Port* getPort(void* portAddr);
   Event* getEvent(void* eventAddr);
+  Channel* getChannel(void* channelAddr);
   Bus* getBus(Channel *chan);
     
     
@@ -85,10 +86,11 @@ class SCElab : public ElabMember
 
   void addProcessAndEvents(sc_core::sc_process_b *theProcess, sc_core::sc_module * mod);
   void complete();
-  std::vector<Process*>* getProcessOfPort(sc_core::sc_port_base* , bool);
-
+  std::vector<Process*>* getSensitive(const sc_core::sc_port_base*, bool) const; 
 
 private:
+  Port * tryParentPort(IRModule * mod, std::string portName,
+			sc_core::sc_port_base * port);
   Port * trySc_Signal(IRModule * mod,
 		      sc_core::sc_interface* itf, std::string &itfTypeName,
 		      sc_core::sc_port_base * port, std::string portName);
