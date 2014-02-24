@@ -112,6 +112,6 @@ FOREACH(qt_obj "md/${QTMDS}.s" qt.c md/null.c )
   SET(SYSTEMC_OBJS ${SYSTEMC_OBJS} ${temp_qt_obj}   )
 ENDFOREACH(qt_obj)
 
-add_library(systemc_lib OBJECT ${SYSTEMC_OBJS})
+add_library(systemc_lib SHARED ${SYSTEMC_OBJS})
 
 

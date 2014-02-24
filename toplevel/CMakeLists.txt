@@ -24,7 +24,7 @@ Include_Directories(${CMAKE_SOURCE_DIR}/frontend ${CMAKE_BINARY_DIR}/toplevel)
 #  Include_Directories(${CMAKE_SOURCE_DIR}/backends/${backend}Backend)
 #endforeach(backend)
 
-Add_Executable(pinavm ${TOP_SRC} $<TARGET_OBJECTS:systemc_lib>
+Add_Executable(pinavm ${TOP_SRC} ${systemc_lib}
 		${CMAKE_BINARY_DIR}/toplevel/launch_backends.cpp)
 
 # ======================== Link Backends ==============================
@@ -37,8 +37,8 @@ foreach(backend ${backends_lib})
   target_link_libraries(pinavm ${backend})
 endforeach(backend)
 
-# ====================== Link frontend & llvm ==========================
-target_link_libraries(pinavm frontend utils tlm-basic)
+# =================== Link frontend, llvm and SystemC ===================
+target_link_libraries(pinavm frontend utils tlm-basic systemc_lib)
 # Link to LLVM libraries, pthread and dl
 target_link_libraries(pinavm ${REQ_LLVM_LIBRARIES})
 
