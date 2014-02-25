@@ -6,6 +6,7 @@ SET(LLVM_EXT bc)
 
 function(build_llvm_bitcode f_target_name f_src_list)
   set(f_target_file ${CMAKE_CURRENT_BINARY_DIR}/${f_target_name}.${LLVM_EXT})
+  set(f_compiled_target_file ${CMAKE_CURRENT_BINARY_DIR}/${f_target_name}.exe)
 
   # for each .cpp file, LLVMC would generate .s file in binary dir.
   foreach(f_temp_src ${${f_src_list}})
@@ -28,6 +29,12 @@ function(build_llvm_bitcode f_target_name f_src_list)
     COMMAND ${LLVM_LINK} ${f_objects} -o ${f_target_file} 
     VERBATIM)
 
+  add_custom_command(OUTPUT ${f_compiled_target_file} DEPENDS ${f_target_file}
+    COMMAND ${LLVM_COMPILER} ${f_target_file}
+    -o ${f_compiled_target_file} -L ${CMAKE_BINARY_DIR}
+    -L ${CMAKE_BINARY_DIR}/external/basic -ltlm-basic -lsystemc_lib VERBATIM)
+
   add_custom_target(${f_target_name} DEPENDS ${f_target_file})
+  add_custom_target(${f_target_name}.exe DEPENDS ${f_compiled_target_file})
 endfunction(build_llvm_bitcode)
 
