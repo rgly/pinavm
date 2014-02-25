@@ -585,8 +585,8 @@ void
 sc_port_b<IF>::add_interface( sc_interface* interface_ )
 {
 	//printf("Interface : %s\n", typeid(*interface_).name());
-//    IF* iface = DCAST<IF*>( interface_ );
-    IF* iface = RCAST<IF*>( interface_ );
+    IF* iface = DCAST<IF*>( interface_ );
+//    IF* iface = RCAST<IF*>( interface_ );
 //    IF* iface = CAST<IF*>( interface_ );
 
     //printf("done\n");
