@@ -18,7 +18,6 @@ T RendezVous<T>::get()
       
    if (!put_ok)
    {
-	   cout << "attent put_event d'adresse " << (void*) (&put_event) << endl;
 #ifdef VERBOSE
       cout << "  get() : Attente de put()..." << endl;
 #endif
@@ -33,7 +32,6 @@ T RendezVous<T>::get()
 #ifdef VERBOSE
       cout << "  get() : Notification..." << endl;
 #endif
-	   cout << "get_event d'adresse " << (void*) (&get_event) << endl;
    get_event.notify();
    
    return retour;
@@ -48,17 +46,13 @@ void RendezVous<T>::put(const T & val)
 #ifdef VERBOSE
    cout << "  put() : Notification..." << endl;
 #endif
-	   cout << "put_event d'adresse " << (void*) (&put_event) << endl;
    put_event.notify();
-
-   cout << "AAARGH" << endl;
    
    if (!get_ok)
    {
 #ifdef VERBOSE
       cout << "  put() : Attente de get()..." << endl;
 #endif
-	   cout << "attend get_event d'adresse " << (void*) (&get_event) << endl;
       wait(get_event);
    }
    

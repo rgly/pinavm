@@ -12,7 +12,6 @@
 
 #include "basic.h"
 #include "bus.h"
-#include <signal.h>
 
 
 using namespace std;
@@ -21,7 +20,7 @@ using namespace sc_core;
 struct initiator : sc_module {
         basic::initiator_socket<initiator> socket;
         void thread(void) {
-		raise(5);
+            
             basic::addr_t addr = 4;
             basic::addr_t valc = 4;
             for (basic::data_t val = 1; val <= 10; val++) {
