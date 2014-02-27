@@ -9,7 +9,7 @@ ________________________________________________________________________
 
  -- GCC (http://gcc.gnu.org/)
    _____________________________________________________________________
-    Gcc is a open-source compiler, You need gcc to compile PinaVM.
+    GCC is a open-source compiler, You need gcc to compile PinaVM.
     Make sure your gcc version isn't listed here:
     http://llvm.org/docs/GettingStarted.html#brokengcc
 
@@ -17,8 +17,8 @@ ________________________________________________________________________
 
  -- CMake (http://www.cmake.org/)
    _____________________________________________________________________
-    Cmake is a cross-platform open-source build system.
-    PinaVM requires cmake version newer than 2.8.8.
+    CMake is a cross-platform open-source build system.
+    PinaVM requires CMake version 2.8.8 or newer.
 
 
 
@@ -27,7 +27,8 @@ ________________________________________________________________________
     LLVM is a collection of compiler libraries. The source code of
     PinaVM relies on LLVM.
     
-    Please check LLVM_RECOMMAND_VERSION in scripts/PinaVMConfig.cmake
+    Use of the LLVM version mentioned in the LLVM_RECOMMAND_VERSION
+    variable of scripts/PinaVMConfig.cmake is mandatory.
     
     The easiest way to install LLVM is via package manager. You can
     try to find the package named "llvm-x.y" and install it. where x.y
@@ -48,7 +49,7 @@ ________________________________________________________________________
     Clang is a C/C++ compiler based on LLVM.
     PinaVM needs a compiler which can generate llvm assembly, so
     that PinaVM can JIT the generated assembly to collect information
-    of systemc.
+    of SystemC.
 
     The Clang version is suggested to be the same with LLVM, then
     Clang can generate the bitcode which PinaVM can parse.

@@ -1,30 +1,31 @@
 
 
-This file introduces how to use PinaVM binary and the available options.
+This file documents usage of the PinaVM binary.
+Type 'pinavm -help' to see the list of all available options.
 
 ________________________________________________________________________
     Using PinaVM
 ________________________________________________________________________
 
-By default the pinavm binary is in toplevel directory.
-Note that arguments for pinavm **MUST** list before input file.
+By default the pinavm binary is in the toplevel directory.
+Note that arguments for pinavm **MUST** be provided before the input file.
 A pinavm command should look like :
 
-  pinavm -b BACKEND -o OUTPUT_FILE USER_CODE USER_CODE_ARG
+  pinavm -b BACKEND -o OUTPUT_FILE USER_CODE USER_CODE_ARGS
 
 
 Pinavm is a frontend. Users should select a BACKEND to do further processing.
 
-USER_CODE should be a llvm bitcode or assembly compiled from clang or
-g++ with dragonegg. There should be .ll or .bc suffix with the USER_CODE.
+USER_CODE should be a llvm bitcode or assembly file output by clang or
+g++ with DragonEgg. These kinds of files usually have .ll or .bc suffix.
 
-USER_CODE_ARG is arguments used by USER_CODE. I hope users using pinavm
-just like using /bin/sh. For example, if you want the main.bc executing
-with argc=3, argv={main.exe, -arg1, -arg2}.
+USER_CODE_ARGS are the arguments used by USER_CODE. For example, if you
+want to execute main.bc with argc=3 and argv={"main.exe","-arg1","-arg2"}
+you just have to type
 
   pinavm -b promela -o output main.bc -arg1 -arg2
 
-Note that if user commands "pinavm -b promela main.bc -o output",
+Note that if user types "pinavm -b promela main.bc -o output",
 then pinavm receives "-b promela" and main.bc runs with "-o output".
 
 ________________________________________________________________________
@@ -32,13 +33,13 @@ ________________________________________________________________________
 ________________________________________________________________________
 
 To compile a SystemC source code, you need to include the built-in
-systemc library so that the compiler can find the right headers. 
+SystemC library so that the compiler can find the right headers. 
 
 Pinavm provides handy environment variables. you can export
 $LLVM_PATH, $LLVM_COMPILER and $LLVMC_FLAGS to shell by:
   source config.sh
 
 $LLVM_PATH is the LLVM binary directory. If you want to compile a
-single systemc source file, using :
+single SystemC source file, using :
   $LLVM_COMPILER $LLVMC_FLAGS -o OUTFILE SRCFILE
 

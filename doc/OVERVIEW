@@ -6,8 +6,8 @@ ________________________________________________________________________
     Overview
 ________________________________________________________________________
 
-PinaVM is a systemc frontend which loads a systemc executable(in llvm
-bitcode or llvm assembly) and extract systemc information from the
+PinaVM is a SystemC frontend which loads a SystemC executable (in llvm
+bitcode or llvm assembly) and extracts SystemC information from the
 loaded code. 
 
 For more details, please refer to :
