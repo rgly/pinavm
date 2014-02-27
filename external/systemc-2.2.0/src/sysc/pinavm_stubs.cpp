@@ -13,8 +13,9 @@ extern "C" WEAK void pinavm_callback (sc_core::sc_simcontext* sc, const sc_core:
 	sc->simulate (d);
 }
 
-extern "C" WEAK void tweto_optimize_process (void)
+extern "C" WEAK void* tweto_optimize_process (void)
 {
+	return 0;
 }
 
 void WEAK tweto_mark_const (void const* x, unsigned long y)
