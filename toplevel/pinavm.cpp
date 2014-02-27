@@ -17,6 +17,9 @@
 
 using namespace std;
 
+// if weak symbols are activated, a dummy sc_main is already present in the
+// internal SystemC library
+#ifdef NO_WEAK_SYMBOLS
 // Defined this way somewhere in systemc.h.
 extern "C" int sc_main(int argc, char **argv);
 
@@ -25,6 +28,7 @@ int sc_main(int argc, char **argv) {
 	std::cout << "This function is only usefull at link time, but should never be called\n"  ;
 	abort();
 }
+#endif
 
 int main(int argc, char **argv) {
 	// Move exception handle here,
