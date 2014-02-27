@@ -10,7 +10,6 @@ SET(SYSTEMC_SOURCE_DIR "${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/src/sysc" )
 # Object list is hardcoded. It's the only way to have the list of
 # objects reliably before the first compilation.
 SET(SYSTEMC_CPP_SRC
-	         pinavm_stubs
 	         tracing/sc_wif_trace
 	         tracing/sc_trace
 	         tracing/sc_vcd_trace
@@ -89,7 +88,9 @@ SET(SYSTEMC_CPP_SRC
 	         kernel/sc_process
 	         kernel/sc_event
 	         kernel/sc_time
-	         kernel/sc_cor_qt )
+	         kernel/sc_cor_qt
+	         pinavm_stubs
+		 )
 
 
 # Extending ${SYSTEMC_CPP_SRC} to full file names like

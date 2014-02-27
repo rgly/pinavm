@@ -6,6 +6,7 @@
 #define WEAK __attribute__((weak))
 
 #include "systemc"
+#include <assert.h>
 
 extern "C" WEAK void pinavm_callback (sc_core::sc_simcontext* sc, const sc_core::sc_time& d)
 {
@@ -20,14 +21,21 @@ void WEAK tweto_mark_const (void const* x, unsigned long y)
 {
 }
 
-/*extern "C"*/ int launch_systemc (int, char**);
+// C++ linkage function
+int launch_systemc (int, char**);
 
 extern "C" WEAK int main (int argc, char* argv[])
 {
 	launch_systemc (argc, argv);
 }
 
-bool disable_debug_msg;
+// necessary to run lli with LD_PRELOAD of the internal SystemC lib
+extern "C" WEAK int sc_main (int, char**)
+{
+	assert (0);
+}
+
+bool WEAK disable_debug_msg;
 
 #endif
 
