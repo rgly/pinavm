@@ -29,7 +29,8 @@ function(build_llvm_bitcode f_target_name f_src_list)
     COMMAND ${LLVM_LINK} ${f_objects} -o ${f_target_file} 
     VERBATIM)
 
-  add_custom_command(OUTPUT ${f_compiled_target_file} DEPENDS ${f_target_file}
+  add_custom_command(OUTPUT ${f_compiled_target_file}
+    DEPENDS ${f_target_file} systemc_lib tlm-basic
     COMMAND ${LLVM_COMPILER} ${f_target_file}
     -o ${f_compiled_target_file} -L ${CMAKE_BINARY_DIR}
     -L ${CMAKE_BINARY_DIR}/external/basic -ltlm-basic -lsystemc_lib VERBATIM)

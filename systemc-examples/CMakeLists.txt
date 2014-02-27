@@ -7,7 +7,6 @@ SET(TWETO_BACKENDS tweto)
 add_custom_target(gen_test_source)
 add_custom_target(gen_test_internal)
 add_dependencies(pinavm gen_test_source)
-add_dependencies(systemc_lib gen_test_internal)
 
 # collect all the directory containing CMakeLists.txt
 FILE(GLOB TEST_DIR */CMakeLists.txt)
