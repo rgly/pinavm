@@ -56,9 +56,8 @@ struct SCJit {
 		fillArgsType(f, (std::vector <Type * >*) &argsType);
 
 		Type* ret_arg_ty = arg->getType();
-		if (isa<PointerType>(ret_arg_ty)) {
-			ret_arg_ty = dyn_cast<PointerType>(ret_arg_ty)->getElementType();
-		}
+		// don't automatically dereference pointers since it could
+		// be specialized to void*
 		FunctionType *FT = FunctionType::get(ret_arg_ty, ArrayRef<Type *>(argsType), false);
 		
 		fctToJit = buildFct(f, FT, inst, arg);

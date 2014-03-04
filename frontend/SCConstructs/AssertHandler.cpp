@@ -13,7 +13,7 @@ SCConstruct *AssertHandler::handle(Function * fct, BasicBlock * bb, Instruction*
 	TRACE_5("callInst = "); callInst->dump();
 	TRACE_5("arg = "); arg->dump();
 	bool errb;
-	bool cond = this->scjit->jitBool(fct, callInst, arg, &errb);
+	bool cond = this->scjit->jitType<bool>(fct, callInst, arg, &errb);
 	if (errb) {
 		TRACE_4("Cannot statically find argument of assert(...)\n");
 		// MM: TODO: NULL should be the actual value.

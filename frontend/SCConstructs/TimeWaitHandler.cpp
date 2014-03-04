@@ -22,7 +22,7 @@ SCConstruct *TimeWaitHandler::handle(Function * fct, BasicBlock * bb, Instructio
 
 
 	if (arg->getType()->isFloatingPointTy()) {
-		double time_waited = this->scjit->jitDouble(fct, callInst, arg, &errb);
+		double time_waited = this->scjit->jitType<double>(fct, callInst, arg, &errb);
 		// MM: TODO: check errb.
 		TRACE_3("Double time waited: " << time_waited << "\n");
 

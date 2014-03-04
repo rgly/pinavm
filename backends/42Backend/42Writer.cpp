@@ -3592,7 +3592,7 @@ void _42Writer::visitCallInst(CallInst & I)
     Function* pf = pI->getParent()->getParent();
     if (cf->getArgumentList().size() != 0) {
       Value* arg = pI->getOperand(1);
-      void* mod = this->scjit->jitAddr(pf, pI, arg);
+      void* mod = this->scjit->jitType<void*>(pf, pI, arg, NULL);
       TRACE_4("################# Module jitted : " << mod << "\n");
       TRACE_4("################# IRModule associated : " << this->elab->getIRModule(mod) << "\n");
     }

@@ -266,20 +266,21 @@ void TLMBasicPassImpl::replaceCallsInProcess(sc_core::sc_module *initiatorMod,
                     scjit->setCurrentProcess(irProc);                    
                     bool jitErr = false;
                     info->addrArg = cs.getArgument(1);
-                    int value = 
-                    scjit->jitInt(procf, info->oldcall, info->addrArg, &jitErr);
+		    /* write arguments are passed by ref */
+		    basic::addr_t* pvalue = 
+                    scjit->jitType<basic::addr_t*>(procf, info->oldcall, info->addrArg, &jitErr);
                     if(jitErr) {
                         std::cout << "       cannot get the address value!" 
                           << std::endl;
                     } else {
-                    oss.str("");  oss << std::hex << value;
+                    oss.str("");  oss << std::hex << *pvalue;
                     MSG("0x"+oss.str()+"\n");
-                    basic::addr_t a = static_cast<basic::addr_t>(value);            
+                    basic::addr_t a = *pvalue;            
                     
                     // Checking address alignment
-                    if(value % sizeof(basic::data_t)) {
+                    if(a % sizeof(basic::data_t)) {
                         std::cerr << "  unaligned write : " <<
-                        std::hex << value << std::endl;
+                        std::hex << a << std::endl;
                         abort();
                     }
 

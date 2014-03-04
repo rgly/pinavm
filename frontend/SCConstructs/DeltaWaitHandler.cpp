@@ -20,7 +20,7 @@ SCConstruct *DeltaWaitHandler::handle(Function * fct, BasicBlock * bb, Instructi
 	Value *arg = CallSite(callInst).getArgument(1);
 
 	if (arg->getType()->isIntegerTy()) {
-		int time_waited = this->scjit->jitInt(fct, callInst, arg, &errb);
+		int time_waited = this->scjit->jitType<int>(fct, callInst, arg, &errb);
 		// MM: TODO: check errb.
 		TRACE_3("Int delta waited: " << time_waited << "\n");
 		return new DeltaWaitConstruct(time_waited);

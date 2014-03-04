@@ -30,7 +30,7 @@ SCConstruct *BasicHandler::handle(Function * fct, BasicBlock * bb, Instruction* 
 	Value *value = CallSite(callInst).getArgument(1);
 	Port *po = NULL;
 
-	void *portAddr = this->scjit->jitAddr(fct, callInst, arg);
+	void *portAddr = this->scjit->jitType<void*>(fct, callInst, arg, NULL);
 
 	TRACE_4("Address jitted : " << portAddr << "\n");
 	if (portAddr == NULL)

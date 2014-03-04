@@ -3321,7 +3321,7 @@ void PromelaWriter::visitCallInst(CallInst & I)
 	if (! I.getCalledFunction()) {
 		Value* arg = I.getOperand(1);
 		Function * cf = currentFunction;
-		void* fctAddr = this->scjit->jitAddr(cf, &I, arg);
+		void* fctAddr = this->scjit->jitType<void*>(cf, &I, arg, NULL);
 		const GlobalValue* gv = this->scjit->getEngine()->getGlobalValueAtAddress(fctAddr);
 		TRACE_4("################# Function jitted : " << fctAddr << "\n");
 		TRACE_4("################# GlobalValue corresponding : " << gv << "\n");
@@ -3373,7 +3373,7 @@ void PromelaWriter::visitCallInst(CallInst & I)
 		Function* pf = pI->getParent()->getParent();
 		if (cf->getArgumentList().size() != 0) {
 			Value* arg = pI->getOperand(1);
-			void* mod = this->scjit->jitAddr(pf, pI, arg);
+			void* mod = this->scjit->jitType<void*>(pf, pI, arg, NULL);
 			TRACE_4("################# Module jitted : " << mod << "\n");
 			TRACE_4("################# IRModule associated : " << this->elab->getIRModule(mod) << "\n");
 		}

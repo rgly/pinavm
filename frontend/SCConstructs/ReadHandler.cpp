@@ -14,7 +14,7 @@ SCConstruct *ReadHandler::handle(Function * fct, BasicBlock * bb, Instruction * 
 	TRACE_3("Handling call to read()\n");
 	// Analyzing "arg.read()"
 	Value *arg = CallSite(callInst).getArgument(0);
-	void *portAddr = this->scjit->jitAddr(fct, callInst, arg);
+	void *portAddr = this->scjit->jitType<void*>(fct, callInst, arg, NULL);
 	if (portAddr == NULL)
 		return new ReadConstruct(NULL, callInst);
 
