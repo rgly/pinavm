@@ -63,7 +63,8 @@ struct SCJit {
 		
 		fctToJit = buildFct(f, FT, inst, arg);
 		if (fctToJit == NULL) {
-			*errb = true;
+			if (errb)
+				*errb = true;
 			return (RetTy) 0;
 		}
 
