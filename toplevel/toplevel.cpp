@@ -13,7 +13,7 @@
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/ExecutionEngine/Interpreter.h"
-#include "llvm/ExecutionEngine/JIT.h"
+#include "llvm/ExecutionEngine/MCJIT.h"
 #include "llvm/ExecutionEngine/JITEventListener.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -183,6 +183,8 @@ int load_and_run_sc_main(std::string & InputFile)
 	// If we have a native target, initialize it to ensure it is linked in and
 	// usable by the JIT.
 	InitializeNativeTarget();
+	// necessary for MCJIT
+	InitializeNativeTargetAsmPrinter();InitializeNativeTargetAsmParser();
 
 	// So that JIT-ed code can call pinavm_callback.
 	//sys::DynamicLibrary::AddSymbol("pinavm_callback", (void *)pinavm_callback);
@@ -202,6 +204,7 @@ int load_and_run_sc_main(std::string & InputFile)
 	EngineBuilder builder(Mod);
 	builder.setErrorStr(&ErrorMsg);
 	builder.setEngineKind(EngineKind::JIT);
+	builder.setUseMCJIT(true);
 
 	builder.setOptLevel(CodeGenOpt::None);
 	EE = builder.create();
