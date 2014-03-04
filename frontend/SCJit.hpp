@@ -8,6 +8,11 @@
 
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 
+#ifdef __GNUC__
+#define DEPRECATED __attribute__((deprecated))
+#else
+#define DEPRECATED
+#endif
 
 using namespace llvm;
 
@@ -29,10 +34,14 @@ struct SCJit {
 	void setCurrentProcess(Process * process);
 	Process *getCurrentProcess();
 	void fillArgsType(Function * f, std::vector <Type * >*argsType);
-	void *jitAddr(Function * f, Instruction* inst, Value * arg);
-	int jitInt(Function * f, Instruction* inst, Value * arg, bool* errb);
-	double jitDouble(Function * f, Instruction* inst, Value * arg, bool* errb);
-	bool jitBool(Function * f, Instruction* inst, Value * arg, bool* errb);
+	void *jitAddr(Function * f, Instruction* inst, Value * arg)
+		DEPRECATED;
+	int jitInt(Function * f, Instruction* inst, Value * arg, bool* errb)
+		DEPRECATED;
+	double jitDouble(Function * f, Instruction* inst, Value * arg, bool* errb)
+		DEPRECATED;
+	bool jitBool(Function * f, Instruction* inst, Value * arg, bool* errb)
+		DEPRECATED;
 	Function *buildFct(Function * f, FunctionType * FT, Instruction* inst, Value * arg);
 	Module *getModule();
 	ExecutionEngine* getEngine();
