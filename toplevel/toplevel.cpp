@@ -248,12 +248,14 @@ int load_and_run_sc_main(std::string & InputFile)
 	// Reset errno to zero on entry to main.
 	errno = 0;
 
+	TRACE_2("Running elaboration\n");
+
+	// finalize the original version of the program
+	EE->finalizeObject();
 
 	// Run static constructors.
 	EE->runStaticConstructorsDestructors(false);
     
-	TRACE_2("Running elaboration\n");
-
 	// set the alreadyCallBack flag. thus prevent pinavm_callback
 	// from being called multiple times for some testcase which
 	// contains multiple sc_start().
