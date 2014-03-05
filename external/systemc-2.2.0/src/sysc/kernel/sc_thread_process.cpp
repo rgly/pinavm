@@ -63,22 +63,6 @@
 #include "sysc/kernel/sc_simcontext_int.h"
 #include "sysc/kernel/sc_module.h"
 
-// Tweto patch
-#define TWETO
-
-// Tweto patch
-#ifdef TWETO
-namespace sc_core {
-    class sc_process_host;
-    typedef void (sc_process_host::*SC_ENTRY_FUNC)();
-    typedef void (*SC_ENTRY_FUNC_OPT)();
-}
-extern "C" sc_core::SC_ENTRY_FUNC_OPT 
-tweto_optimize_process(sc_core::SC_ENTRY_FUNC fct, sc_core::sc_process_host *arg);
-#endif
-
-
-
 namespace sc_core {
 
 //------------------------------------------------------------------------------
@@ -175,12 +159,6 @@ void sc_thread_process::kill_process()
 //------------------------------------------------------------------------------
 void sc_thread_process::prepare_for_simulation()
 {
-    // tweto patch
-    /*#ifdef TWETO
-    assert(m_semantics_p==NULL);
-    m_semantics_p = tweto_optimize_process(m_semantics_method_p, m_semantics_host_p);
-    #endif*/
-    
     m_cor_p = simcontext()->cor_pkg()->create( m_stack_size,
                          sc_thread_cor_fn, this );
     m_cor_p->stack_protect( true );

@@ -668,15 +668,6 @@ sc_simcontext::prepare_to_simulate()
 
     // PREPARE ALL (C)THREAD PROCESSES FOR SIMULATION:
 
-    // Tweto patch
-    #ifdef TWETO
-    for ( method_p = m_process_table->method_q_head();
-         method_p; method_p = method_p->next_exist() )
-    {
-        method_p->prepare_for_simulation();
-    }
-    #endif
-    
     for ( thread_p = m_process_table->thread_q_head(); 
 	  thread_p; thread_p = thread_p->next_exist() )
     {
