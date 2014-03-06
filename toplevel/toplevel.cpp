@@ -285,12 +285,6 @@ int load_and_run_sc_main(std::string & InputFile)
 
 int toplevel_main(int argc, char **argv)
 {
-//	llvm_shutdown_obj X;	// Call llvm_shutdown() on exit.
-
-	// If we have a native target, initialize it to ensure it is linked in and
-	// usable by the JIT.
-	InitializeNativeTarget();
-
 	cl::ParseCommandLineOptions(argc, argv, "llvm .bc -> .bc modular optimizer and analysis printer\n");
 
 	if (DisableDbgMsg.getValue()) {
@@ -302,7 +296,6 @@ int toplevel_main(int argc, char **argv)
 	sys::PrintStackTraceOnErrorSignal();
 
 	TRACE_1("Loading and running bitcode file\n");
-	// load_bc_and_run_sc_main(argc, argv, environ);
 	load_and_run_sc_main(InputFilename);
 
 	TRACE_1("Shutdown...\n");
