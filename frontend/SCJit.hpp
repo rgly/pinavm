@@ -32,8 +32,8 @@ struct SCJit {
 	Module *getModule();
 	ExecutionEngine* getEngine();
 
-	template<class RetTy>
-	RetTy jitType(Function * f, Instruction* inst, Value * arg, bool* errb) {
+	template<class RetTy, bool deref>
+	RetTy jitAnyType(Function * f, Instruction* inst, Value * arg, bool* errb) {
 		Function *fctToJit;
 		const std::vector <Type *>argsType;
 		
@@ -42,8 +42,9 @@ struct SCJit {
 		fillArgsType(f, (std::vector <Type * >*) &argsType);
 
 		Type* ret_arg_ty = arg->getType();
-		// don't automatically dereference pointers since it could
-		// be specialized to void*
+		if (deref && isa<PointerType>(ret_arg_ty)) {
+			ret_arg_ty = dyn_cast<PointerType>(ret_arg_ty)->getElementType();
+		}
 		FunctionType *FT = FunctionType::get(ret_arg_ty, ArrayRef<Type *>(argsType), false);
 		
 		fctToJit = buildFct(f, FT, inst, arg);
@@ -65,6 +66,16 @@ struct SCJit {
 		fctToJit->eraseFromParent();
 		
 		return res;
+	}
+
+	template<class RetTy>
+	RetTy jitType(Function * f, Instruction* inst, Value * arg, bool* errb) {
+		return jitAnyType<RetTy, false> (f, inst, arg, errb);
+	}
+
+	template<class RetTy>
+	RetTy jitPointedType(Function * f, Instruction* inst, Value * arg, bool* errb) {
+		return jitAnyType<RetTy, true> (f, inst, arg, errb);
 	}
 	
 };

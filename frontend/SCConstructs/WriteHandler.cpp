@@ -41,46 +41,46 @@ SCConstruct *WriteHandler::handle(Function * fct, BasicBlock * bb, Instruction* 
 		TRACE_4("Attempting to retrieve value of write(), type is : " << chTypeName << "\n");
 		if (chTypeName == "N5sc_dt7sc_uintILi8") {
 			TRACE_4("handling  uint\n");
-			sc_dt::sc_uint<8>* pintValue = this->scjit->jitType<sc_dt::sc_uint<8>* >(fct, callInst, value, &errb);
+			sc_dt::sc_uint<8> intValue = this->scjit->jitPointedType<sc_dt::sc_uint<8> >(fct, callInst, value, &errb);
 			if (errb) {
 				ret->setMissingValue(value);
 				TRACE_3("~~~~~~~~~~~~> OK : setMissingValue on uint\n");
 			} else {
 				TRACE_4("got result !! \n");				
-				sprintf(buffer, "%d", pintValue->to_int());
+				sprintf(buffer, "%d", intValue.to_int());
 				ret->setValue(buffer);
 				TRACE_5("Value written is (sc_uint): " << buffer << "\n");
 			}
 		} else if (valueType->isIntegerTy()) {
 			if (((IntegerType*) valueType)->getBitWidth() == 1) {
-				bool* pboolValue = this->scjit->jitType<bool*>(fct, callInst, value, &errb);
+				bool boolValue = this->scjit->jitPointedType<bool>(fct, callInst, value, &errb);
 				if (errb)
 					ret->setMissingValue(value);
 				else {
-					TRACE_5("Value written is (bool): " << *pboolValue << "\n");
-					if (*pboolValue) {
+					TRACE_5("Value written is (bool): " << boolValue << "\n");
+					if (boolValue) {
 						ret->setValue("true");
 					} else {
 						ret->setValue("false");				
 					}
 				}
 			} else {
-				int* pintValue = this->scjit->jitType<int*>(fct, callInst, value, &errb);
+				int intValue = this->scjit->jitPointedType<int>(fct, callInst, value, &errb);
 				if (errb)
 					ret->setMissingValue(value);
 				else {
-					TRACE_5("Value written is (int): " << *pintValue << "\n");
-					sprintf(buffer, "%d", *pintValue);
+					TRACE_5("Value written is (int): " << intValue << "\n");
+					sprintf(buffer, "%d", intValue);
 					ret->setValue(buffer);
 				}
 			}
 		} else if(valueType->getTypeID() == Type::DoubleTyID) {
-			double* pdoubleValue = this->scjit->jitType<double*>(fct, callInst, value, &errb);
+			double doubleValue = this->scjit->jitPointedType<double>(fct, callInst, value, &errb);
 			if (errb)
 				ret->setMissingValue(value);
 			else {
-				TRACE_5("Value written is (double): " << pdoubleValue << "\n");
-				sprintf(buffer, "%f", pdoubleValue);
+				TRACE_5("Value written is (double): " << doubleValue << "\n");
+				sprintf(buffer, "%f", doubleValue);
 				ret->setValue(buffer);
 			}
 		} else if (valueType->getTypeID() == Type::PointerTyID) {
