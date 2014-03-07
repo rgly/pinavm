@@ -14,7 +14,7 @@ namespace sc_core {
 } 
 
 struct Frontend;
-extern void launch_twetobackend(Frontend * fe, ExecutionEngine *ee, 
+extern void launch_twetobackend(Frontend * fe, 
                                 sc_core::sc_simcontext* simcontext, 
                                 const sc_core::sc_time& simduration, 
                                 bool optimize, bool disableMsg);
@@ -22,13 +22,13 @@ extern void launch_twetobackend(Frontend * fe, ExecutionEngine *ee,
 void launch_twetobackend(Frontend * fe,
 			BackendOption& option)
 {
-    launch_twetobackend(fe, option.EE, option.context, *(option.duration), true, option.DisableOptDbgMsg);
+    launch_twetobackend(fe, option.context, *(option.duration), true, option.DisableOptDbgMsg);
 };
 
 void launch_runbackend(Frontend * fe,
 			BackendOption& option)
 {
-    launch_twetobackend(fe, option.EE, option.context, *(option.duration), false, option.DisableOptDbgMsg);
+    launch_twetobackend(fe, option.context, *(option.duration), false, option.DisableOptDbgMsg);
 };
  
 extern "C" sc_core::SC_ENTRY_FUNC_OPT

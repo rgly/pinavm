@@ -28,6 +28,7 @@
 #include <llvm/Analysis/Verifier.h>
 #include <llvm/Transforms/IPO.h>
 #include <llvm/Transforms/Scalar.h>
+#include <llvm/ADT/StringExtras.h>
 #include <cerrno>
 
 #include "llvm/IR/ValueSymbolTable.h"
@@ -38,11 +39,16 @@
 #include "TwetoSpecialize.h"
 #include "TwetoConstMemory.h"
 #include <systemc>
+#include "sysc/kernel/sc_process_table.h"
+#include "sysc/kernel/sc_simcontext.h"
+#include "sysc/kernel/sc_thread_process.h"
+#include "sysc/kernel/sc_module_registry.h"
+#include "sysc/kernel/sc_module.h"
+#include "sysc/kernel/sc_process.h"
 
 #include "TLMBasicPass.h"
 
 using namespace llvm;
-
 
 /*namespace {
     cl::opt<bool>
@@ -70,22 +76,20 @@ static std::vector<IntFctPair> addr2function;
  * tweto_optimize
  *
  */
-static void tweto_optimize(Frontend * fe, ExecutionEngine *ee, 
+static void tweto_optimize(Frontend * fe,
                          sc_core::sc_simcontext* simcontext, 
                          const sc_core::sc_time& simduration,
                          bool disableMsg)
 {
 	
 	llvmMod = fe->getLLVMModule();
-    LLVMContext &Context = getGlobalContext();
+	LLVMContext &Context = getGlobalContext();
     
-    // Set the execution engine
-    EE = ee;
-    // Initialize the builder
-    IRB = new IRBuilder<>(Context);    
-    
-    // Build up all of the passes that we want to do to the module.
-    TD = new DataLayout(llvmMod);
+	// Initialize the builder
+	IRB = new IRBuilder<>(Context);    
+
+	// Build up all of the passes that we want to do to the module.
+	TD = new DataLayout(llvmMod);
 	PM = new PassManager();
 	// Defines target properties related to datatype  
 	// size/offset/alignment information
@@ -106,17 +110,18 @@ static void tweto_optimize(Frontend * fe, ExecutionEngine *ee,
 	// Reassociates commutative expressions in an order that is
 	// designed to promote better constant propagation, GCSE, LICM, PRE...
 	PM->add(createInstructionCombiningPass());
-	/*PM->add(createReassociatePass());
-	PM->add(createGVNPass());*/
-    PM->add(new TLMBasicPass(fe, ee, disableMsg));
+	//PM->add(createReassociatePass());
+	//PM->add(createGVNPass());*/
+	//AARGH
+	PM->add(new TLMBasicPass(fe, NULL, disableMsg));
     
 	// Execute all of the passes scheduled for execution
 	PM->run(*llvmMod);
     
-    // Sort the addresses-to-functions map
-    std::sort(addr2function.begin(),addr2function.end());
-    // Print specialized functions
-    tweto_print_all_specialized_if_asked();
+	// Sort the addresses-to-functions map
+	std::sort(addr2function.begin(),addr2function.end());
+	// Print specialized functions
+	tweto_print_all_specialized_if_asked();
     
 }
 
@@ -125,27 +130,95 @@ static void tweto_optimize(Frontend * fe, ExecutionEngine *ee,
  * launch_twetobackend
  *
  */
-void launch_twetobackend(Frontend * fe, ExecutionEngine *ee, 
+void launch_twetobackend(Frontend * fe, 
                          sc_core::sc_simcontext* simcontext, 
                          const sc_core::sc_time& simduration,
                          bool optimize, bool disablePrintMsg)
 {
-    if (optimize) {
-        optimizeProcess = true;
-        tweto_optimize(fe, ee, simcontext, simduration, disablePrintMsg);
-    } else {
-        optimizeProcess = false;
-    }
+	// optimize the llvm ir (if run with -b tweto)
+	if (optimize) {
+		optimizeProcess = true;
+		tweto_optimize(fe, simcontext, simduration, disablePrintMsg);
+	} else {
+		optimizeProcess = false;
+	}
+
+	// Rebuild another execution engine
+	llvmMod = fe->getLLVMModule();
+	EngineBuilder builder(llvmMod);
+	std::string ErrorMsg;
+	builder.setErrorStr(&ErrorMsg);
+	builder.setEngineKind(EngineKind::JIT);
+	builder.setUseMCJIT(true);
+	builder.setOptLevel(CodeGenOpt::None);
+	ExecutionEngine* ee = builder.create();
+	if (!ee) {
+		if (!ErrorMsg.empty())
+			errs() << "error creating 2nd EE: " << ErrorMsg << "\n";
+		else
+			errs() << "unknown error creating 2nd EE!\n";
+		exit(1);
+	}
+
+	// update function pointers in SystemC thread/method lists
+	// for each module
+	std::vector < sc_core::sc_module * >modules =
+		sc_core::sc_get_curr_simcontext()->get_module_registry()->m_module_vec;
+	std::vector < sc_core::sc_module * >::iterator modIt;
+	for (modIt = modules.begin(); modIt < modules.end(); ++modIt) {
+	sc_core::sc_module * initiatorMod = *modIt;
+		sc_core::sc_process_table * processes = 
+			initiatorMod->sc_get_curr_simcontext()->m_process_table;
+
+		// for each SC_THREAD in the module
+		sc_core::sc_thread_handle thread_p;
+		for (thread_p = processes->thread_q_head(); 
+		     thread_p; thread_p = thread_p->next_exist()) {
+			sc_core::sc_process_b *proc = thread_p;
+			std::string fctName = proc->func_process;
+			std::string modType = typeid(*initiatorMod).name();
+			std::string mainFctName =
+				"_ZN" + modType + utostr(fctName.size()) + fctName + "Ev";
+			Function *procf = llvmMod->getFunction(mainFctName);
+			if (procf==NULL)
+				break;
+			void *funPtr = ee->getPointerToFunction(procf); 
+			sc_core::SC_ENTRY_FUNC_OPT scfun = 
+			reinterpret_cast<sc_core::SC_ENTRY_FUNC_OPT>(funPtr);
+			proc->m_semantics_p = scfun;
+		}
+
+		// for each SC_METHOD in the module
+		sc_core::sc_method_handle method_p;
+		for (method_p = processes->method_q_head(); 
+		     method_p; method_p = method_p->next_exist()) {
+			sc_core::sc_process_b *proc = method_p;
+			std::string fctName = proc->func_process;
+			std::string modType = typeid(*initiatorMod).name();
+			std::string mainFctName =
+				"_ZN" + modType + utostr(fctName.size()) + fctName + "Ev";
+			Function *procf = llvmMod->getFunction(mainFctName);
+			if (procf==NULL)
+				break;
+			void *funPtr = ee->getPointerToFunction(procf); 
+			sc_core::SC_ENTRY_FUNC_OPT scfun = 
+			reinterpret_cast<sc_core::SC_ENTRY_FUNC_OPT>(funPtr);
+			proc->m_semantics_p = scfun;
+		}
+	}
+
+	// prepare the 2nd exec engine to run
+	ee->finalizeObject();
 
 	/**
 	 * Launching simulation
 	 */    
-    if(!disablePrintMsg) {
-        std::cout << "########### Launching simulation ############\n"; 
-        std::cout.flush();
-    }
-    assert(simcontext);
-    simcontext->simulate(simduration);
+	if(!disablePrintMsg) {
+		std::cout << "########### Launching simulation ############\n"; 
+		std::cout.flush();
+	}
+	assert(simcontext);
+	simcontext->simulate(simduration);
 }
 
 

@@ -66,7 +66,6 @@ const std::string wFunName = "_ZN5basic21initiator_socket_baseILb0EE5writeERKjji
 const std::string rFunName = "_ZN5basic21initiator_socket_baseXXXXXXXXXXXXXXXXXX";
 int proc_counter = 0;
 
-
 // =============================================================================
 // TLMBasicPassImpl 
 // 
@@ -171,9 +170,8 @@ bool TLMBasicPassImpl::runOnModule(Module &M) {
 // 
 // Optimize all process that use write or read functions
 // =============================================================================
-void TLMBasicPassImpl::optimize(sc_core::sc_module *initiatorMod) {
-    
-    std::ostringstream oss;
+void TLMBasicPassImpl::optimize(sc_core::sc_module *initiatorMod)
+{    
     // Looking for calls in process
     std::vector<std::string> doneThreads;
     std::vector<std::string> doneMethods;
@@ -208,7 +206,6 @@ void TLMBasicPassImpl::optimize(sc_core::sc_module *initiatorMod) {
             replaceCallsInProcess(initiatorMod, proc);
         }
     }
-    
 }
 
 
@@ -216,7 +213,7 @@ void TLMBasicPassImpl::optimize(sc_core::sc_module *initiatorMod) {
 // replaceCallsInProcess
 // 
 // Replace indirect calls to write() or read() by direct calls 
-// in the given process.
+// in the given process, only in the bitcode.
 // =============================================================================
 void TLMBasicPassImpl::replaceCallsInProcess(sc_core::sc_module *initiatorMod,
                                          sc_core::sc_process_b *proc) {
@@ -230,13 +227,8 @@ void TLMBasicPassImpl::replaceCallsInProcess(sc_core::sc_module *initiatorMod,
     if (oldProcf==NULL)
         return;
     
-    // We do not modifie the original function
-    // Instead, we create a clone.
-    Function *procf = createProcess(oldProcf, initiatorMod);
-    void *funPtr = this->engine->getPointerToFunction(procf); 
-    sc_core::SC_ENTRY_FUNC_OPT scfun = 
-    reinterpret_cast<sc_core::SC_ENTRY_FUNC_OPT>(funPtr);
-    proc->m_semantics_p = scfun;
+    // directly modify the former function
+    Function *procf = oldProcf;
     std::string procfName = procf->getName();
     MSG("      Replace in the process's function : "+procfName+"\n");
     
@@ -365,10 +357,9 @@ void TLMBasicPassImpl::replaceCallsInProcess(sc_core::sc_module *initiatorMod,
     // Run preloaded passes on the function to propagate constants
     funPassManager->run(*procf);
     // After
-    //procf->dump();        
+    // procf->dump();        
     // Check if the function is corrupt
     verifyFunction(*procf);
-    this->engine->recompileAndRelinkFunction(procf);
 }
 
 

@@ -135,7 +135,6 @@ void pinavm_callback(sc_core::sc_simcontext* context,
     option.EventsAsBool = EventsAsBool;
     option.RelativeClocks = RelativeClocks;
     option.Bug = Bug;
-    option.EE = EE;
     option.context = context;
     option.duration = &duration;
     option.DisableMsg = DisableDbgMsg;
@@ -205,8 +204,8 @@ int load_and_run_sc_main(std::string & InputFile)
 	builder.setErrorStr(&ErrorMsg);
 	builder.setEngineKind(EngineKind::JIT);
 	builder.setUseMCJIT(true);
-
 	builder.setOptLevel(CodeGenOpt::None);
+
 	EE = builder.create();
 	if (!EE) {
 		if (!ErrorMsg.empty())
