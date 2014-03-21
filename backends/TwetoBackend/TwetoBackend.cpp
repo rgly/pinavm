@@ -46,7 +46,7 @@
 #include "sysc/kernel/sc_module.h"
 #include "sysc/kernel/sc_process.h"
 
-#include "TLMBasicPass.h"
+#include "TwetoPass.h"
 
 using namespace llvm;
 
@@ -113,7 +113,7 @@ static void tweto_optimize(Frontend * fe,
 	//PM->add(createReassociatePass());
 	//PM->add(createGVNPass());*/
 	//AARGH
-	PM->add(new TLMBasicPass(fe, NULL, disableMsg));
+	PM->add(new TwetoPass(fe, NULL, disableMsg));
     
 	// Execute all of the passes scheduled for execution
 	PM->run(*llvmMod);
@@ -161,50 +161,35 @@ void launch_twetobackend(Frontend * fe,
 	}
 
 	// update function pointers in SystemC thread/method lists
-	// for each module
-	std::vector < sc_core::sc_module * >modules =
-		sc_core::sc_get_curr_simcontext()->get_module_registry()->m_module_vec;
-	std::vector < sc_core::sc_module * >::iterator modIt;
-	for (modIt = modules.begin(); modIt < modules.end(); ++modIt) {
-	sc_core::sc_module * initiatorMod = *modIt;
-		sc_core::sc_process_table * processes = 
-			initiatorMod->sc_get_curr_simcontext()->m_process_table;
+	sc_core::sc_process_table * processes = 
+		sc_core::sc_get_curr_simcontext()->m_process_table;
 
-		// for each SC_THREAD in the module
-		sc_core::sc_thread_handle thread_p;
-		for (thread_p = processes->thread_q_head(); 
-		     thread_p; thread_p = thread_p->next_exist()) {
-			sc_core::sc_process_b *proc = thread_p;
-			std::string fctName = proc->func_process;
-			std::string modType = typeid(*initiatorMod).name();
-			std::string mainFctName =
-				"_ZN" + modType + utostr(fctName.size()) + fctName + "Ev";
-			Function *procf = llvmMod->getFunction(mainFctName);
-			if (procf==NULL)
-				break;
-			void *funPtr = ee->getPointerToFunction(procf); 
-			sc_core::SC_ENTRY_FUNC_OPT scfun = 
-			reinterpret_cast<sc_core::SC_ENTRY_FUNC_OPT>(funPtr);
-			proc->m_semantics_p = scfun;
-		}
+	// for each SC_THREAD
+	sc_core::sc_thread_handle thread_p;
+	for (thread_p = processes->thread_q_head(); 
+	     thread_p; thread_p = thread_p->next_exist()) {
+		sc_core::sc_process_b *proc = thread_p;
+		Function *procf = proc->m_bc_semantics_p;
+		if (procf==NULL)
+			break;
+		void *funPtr = ee->getPointerToFunction(procf); 
+		sc_core::SC_ENTRY_FUNC_OPT scfun = 
+		reinterpret_cast<sc_core::SC_ENTRY_FUNC_OPT>(funPtr);
+		proc->m_semantics_p = scfun;
+	}
 
-		// for each SC_METHOD in the module
-		sc_core::sc_method_handle method_p;
-		for (method_p = processes->method_q_head(); 
-		     method_p; method_p = method_p->next_exist()) {
-			sc_core::sc_process_b *proc = method_p;
-			std::string fctName = proc->func_process;
-			std::string modType = typeid(*initiatorMod).name();
-			std::string mainFctName =
-				"_ZN" + modType + utostr(fctName.size()) + fctName + "Ev";
-			Function *procf = llvmMod->getFunction(mainFctName);
-			if (procf==NULL)
-				break;
-			void *funPtr = ee->getPointerToFunction(procf); 
-			sc_core::SC_ENTRY_FUNC_OPT scfun = 
-			reinterpret_cast<sc_core::SC_ENTRY_FUNC_OPT>(funPtr);
-			proc->m_semantics_p = scfun;
-		}
+	// for each SC_METHOD
+	sc_core::sc_method_handle method_p;
+	for (method_p = processes->method_q_head(); 
+	     method_p; method_p = method_p->next_exist()) {
+		sc_core::sc_process_b *proc = method_p;
+		Function *procf = proc->m_bc_semantics_p;
+		if (procf==NULL)
+			break;
+		void *funPtr = ee->getPointerToFunction(procf); 
+		sc_core::SC_ENTRY_FUNC_OPT scfun = 
+		reinterpret_cast<sc_core::SC_ENTRY_FUNC_OPT>(funPtr);
+		proc->m_semantics_p = scfun;
 	}
 
 	// prepare the 2nd exec engine to run

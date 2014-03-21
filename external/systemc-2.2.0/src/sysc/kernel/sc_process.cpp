@@ -280,6 +280,7 @@ sc_process_b::sc_process_b( const char* name_p, bool free_host,
 #ifdef TWETO    
 #ifdef SC_USE_MEMBER_FUNC_PTR
     m_semantics_p ( NULL ),
+    m_bc_semantics_p ( NULL ),
 #endif
 #endif
     m_term_event_p(0),

@@ -84,6 +84,10 @@
 // Tweto patch
 #define TWETO
 
+#ifdef TWETO
+namespace llvm { class Function; };
+#endif
+
 namespace sc_core {
 
 // Forward declarations:
@@ -384,6 +388,7 @@ class sc_process_b : public sc_object {
 #ifdef SC_USE_MEMBER_FUNC_PTR
     typedef void (*SC_ENTRY_FUNC_OPT)();
     SC_ENTRY_FUNC_OPT m_semantics_p; // Method merged with host for semantics.
+    ::llvm::Function* m_bc_semantics_p;
 #endif
     protected:
 #endif
