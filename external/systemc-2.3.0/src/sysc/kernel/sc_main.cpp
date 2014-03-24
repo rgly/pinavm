@@ -29,7 +29,7 @@
 #include "sysc/kernel/sc_externs.h"
 
 int
-main( int argc, char* argv[] )
+launch_systemc( int argc, char* argv[] )
 {
 	return sc_core::sc_elab_and_sim( argc, argv );
 }
