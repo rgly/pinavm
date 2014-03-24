@@ -47,6 +47,7 @@
 #include "sysc/kernel/sc_ver.h"
 #include "sysc/kernel/sc_boost.h"
 #include "sysc/kernel/sc_spawn.h"
+#include "sysc/kernel/sc_process_table.h"
 #include "sysc/communication/sc_port.h"
 #include "sysc/communication/sc_export.h"
 #include "sysc/communication/sc_prim_channel.h"
@@ -78,36 +79,6 @@
 namespace sc_core {
 
 sc_stop_mode stop_mode = SC_STOP_FINISH_DELTA;
-
-// ----------------------------------------------------------------------------
-//  CLASS : sc_process_table
-//
-//  Container class that keeps track of all method processes,
-//  (c)thread processes.
-// ----------------------------------------------------------------------------
-
-class sc_process_table
-{
-  public:
-
-    sc_process_table();
-    ~sc_process_table();
-    void push_front( sc_method_handle );
-    void push_front( sc_thread_handle );
-    sc_method_handle method_q_head();
-    sc_method_handle remove( sc_method_handle );
-    sc_thread_handle thread_q_head();
-    sc_thread_handle remove( sc_thread_handle );
-
-
-  private:
-
-    sc_method_handle  m_method_q;  // Queue of existing method processes.
-    sc_thread_handle  m_thread_q;  // Queue of existing thread processes.
-};
-
-
-// IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
 
 sc_process_table::sc_process_table() : m_method_q(0), m_thread_q(0)
 {}
@@ -156,14 +127,12 @@ sc_process_table::~sc_process_table()
 #endif // 0
 }
 
-inline
 sc_method_handle 
 sc_process_table::method_q_head()
 {
     return m_method_q;
 }
 
-inline
 void
 sc_process_table::push_front( sc_method_handle handle_ )
 {
@@ -171,7 +140,6 @@ sc_process_table::push_front( sc_method_handle handle_ )
     m_method_q = handle_;
 }
 
-inline
 void
 sc_process_table::push_front( sc_thread_handle handle_ )
 {
@@ -221,7 +189,6 @@ sc_process_table::remove( sc_thread_handle handle_ )
     return 0;
 }
 
-inline
 sc_thread_handle 
 sc_process_table::thread_q_head()
 {
