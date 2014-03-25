@@ -36,22 +36,6 @@
 
 namespace sc_core {
 
-// ----------------------------------------------------------------------------
-//  STRUCT : sc_bind_elem
-// ----------------------------------------------------------------------------
-
-struct sc_bind_elem
-{
-    // constructors
-    sc_bind_elem();
-    explicit sc_bind_elem( sc_interface* interface_ );
-    explicit sc_bind_elem( sc_port_base* parent_ );
-
-    sc_interface* iface;
-    sc_port_base* parent;
-};
-
-
 // IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
 
 // constructors
@@ -71,24 +55,6 @@ sc_bind_elem::sc_bind_elem( sc_port_base* parent_ )
   parent( parent_ )
 {}
 
-
-// ----------------------------------------------------------------------------
-//  STRUCT : sc_bind_ef
-// ----------------------------------------------------------------------------
-
-struct sc_bind_ef
-{
-    // constructor
-    sc_bind_ef( sc_process_b* , sc_event_finder* );
-
-    // destructor
-    ~sc_bind_ef();
-
-    sc_process_b* handle;
-    sc_event_finder* event_finder;
-};
-
-
 // IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
 
 // constructor
@@ -105,37 +71,6 @@ sc_bind_ef::sc_bind_ef( sc_process_b* handle_,
 sc_bind_ef::~sc_bind_ef()
 {
 }
-
-
-// ----------------------------------------------------------------------------
-//  STRUCT : sc_bind_info
-// ----------------------------------------------------------------------------
-
-struct sc_bind_info
-{
-    // constructor
-    explicit sc_bind_info( int max_size_, 
-	sc_port_policy policy_=SC_ONE_OR_MORE_BOUND );
-
-    // destructor
-    ~sc_bind_info();
-
-    int            max_size() const;
-    sc_port_policy policy() const; 
-    int            size() const;
-
-    int                        m_max_size;
-    sc_port_policy             m_policy;
-    std::vector<sc_bind_elem*> vec;
-    bool                       has_parent;
-    int                        last_add;
-    bool                       is_leaf;
-    bool                       complete;
-
-    std::vector<sc_bind_ef*>   thread_vec;
-    std::vector<sc_bind_ef*>   method_vec;
-};
-
 
 // IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
 
