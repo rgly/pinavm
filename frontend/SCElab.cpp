@@ -26,9 +26,6 @@
 #include "sysc/kernel/sc_process.h"
 #include "sysc/kernel/sc_event.h"
 #include "sysc/communication/sc_port.h"
-#include "sysc/communication/sc_bind_ef.h"
-#include "sysc/communication/sc_bind_elem.h"
-#include "sysc/communication/sc_bind_info.h"
 #include "sysc/kernel/sc_process_handle.h"
 
 #include "basic.h"
@@ -609,6 +606,8 @@ SCElab::complete()
 		addProcessAndEvents(theP, mod);
 	}
 
+	// no chtreads in sysc-2.3.0 sc_process_table
+#if 0
 	for (sc_core::sc_cthread_handle cthread_p = processes->cthread_q_head();
 			cthread_p; cthread_p = cthread_p->next_exist()) {
 
@@ -616,6 +615,7 @@ SCElab::complete()
 		sc_core::sc_module * mod = (sc_core::sc_module *) ctheP->m_semantics_host_p;
 		addProcessAndEvents(ctheP, mod);
 	}
+#endif
 }
 
 // The Reason I do not access Sensitive List while initializing Ports
