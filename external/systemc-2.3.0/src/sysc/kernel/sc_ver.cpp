@@ -40,7 +40,8 @@ const char copyright[] = SC_COPYRIGHT;
 static
 const char systemc_version[] =
     "             SystemC " SC_VERSION
-    " --- " __DATE__ " " __TIME__;
+    " --- " __DATE__ " " __TIME__ "\n"
+    " --- PATCHED FOR PinaVM --- ";
 
 const unsigned int sc_version_major = SC_VERSION_MAJOR;
 const unsigned int sc_version_minor = SC_VERSION_MINOR;

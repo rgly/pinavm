@@ -48,7 +48,7 @@ extern const std::string  sc_version_string;
 extern const std::string  sc_copyright_string;
 
 #define SYSTEMC_2_3_0
-#define SC_API_VERSION_STRING sc_api_version_2_3_0
+#define SC_API_VERSION_STRING sc_api_version_2_3_0tweto1
 
 #define SYSTEMC_VERSION       20120701
 #define SC_VERSION_ORIGINATOR "ASI"
