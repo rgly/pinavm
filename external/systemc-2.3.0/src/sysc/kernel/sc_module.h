@@ -303,7 +303,7 @@ private:
     sc_module( const sc_module& );
     const sc_module& operator = ( const sc_module& );
 
-private:
+public:
 
     bool                        m_end_module_called;
     std::vector<sc_port_base*>* m_port_vec;

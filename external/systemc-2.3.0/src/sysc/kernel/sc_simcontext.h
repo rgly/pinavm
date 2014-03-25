@@ -330,7 +330,10 @@ private:
 
     sc_name_gen*                m_name_gen;
 
+public:
     sc_process_table*           m_process_table;
+
+private:
     sc_curr_proc_info           m_curr_proc_info;
     sc_object*                  m_current_writer;
     bool                        m_write_check;

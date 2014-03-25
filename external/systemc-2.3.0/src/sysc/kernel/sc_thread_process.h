@@ -126,7 +126,9 @@ class sc_thread_process : public sc_process_b {
         sc_descendant_inclusion_info descendants = SC_NO_DESCENDANTS );
     virtual void kill_process(
         sc_descendant_inclusion_info descendants = SC_NO_DESCENDANTS );
+  public:
     sc_thread_handle next_exist();
+  protected:
     sc_thread_handle next_runnable();
     virtual void prepare_for_simulation();
     virtual void resume_process( 
