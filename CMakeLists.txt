@@ -20,9 +20,8 @@ macro(needs_no_rtti FILE)
 endmacro()
 
 # subdirectories
-include_directories(${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/src)
+include_directories(${CMAKE_SOURCE_DIR}/external/systemc-2.3.0/src)
 include_directories(${CMAKE_SOURCE_DIR}/external/basic/)
-include_directories(${CMAKE_SOURCE_DIR}/external/TLM-2009-07-15/include/tlm)
 include_directories(${CMAKE_SOURCE_DIR}/utils)
 
 include(${CMAKE_SOURCE_DIR}/scripts/systemc.cmake)

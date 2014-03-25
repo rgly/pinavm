@@ -33,7 +33,7 @@ function(build_llvm_bitcode f_target_name f_src_list)
     DEPENDS ${f_target_file} systemc_lib tlm-basic
     COMMAND ${LLVM_COMPILER} ${f_target_file}
     -o ${f_compiled_target_file} -L ${CMAKE_BINARY_DIR}
-    -L ${CMAKE_BINARY_DIR}/external/basic -ltlm-basic -lsystemc_lib VERBATIM)
+    -L ${CMAKE_BINARY_DIR}/external/basic -ltlm-basic -lsystemc_lib -lpthread VERBATIM)
 
   add_custom_target(${f_target_name} DEPENDS ${f_target_file})
   add_custom_target(${f_target_name}.exe DEPENDS ${f_compiled_target_file})

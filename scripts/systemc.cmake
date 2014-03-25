@@ -1,5 +1,5 @@
 
-SET(SYSTEMC_SOURCE_DIR "${CMAKE_SOURCE_DIR}/external/systemc-2.2.0/src/sysc" )
+SET(SYSTEMC_SOURCE_DIR "${CMAKE_SOURCE_DIR}/external/systemc-2.3.0/src/sysc" )
 
 # We can't just link against libsystemc.a, since linking against a
 # static library would take only the usefull symbols. pinavm doesn't
@@ -89,6 +89,7 @@ SET(SYSTEMC_CPP_SRC
 	         kernel/sc_event
 	         kernel/sc_time
 	         kernel/sc_cor_qt
+		 kernel/sc_except
 	         pinavm_stubs
 		 )
 
