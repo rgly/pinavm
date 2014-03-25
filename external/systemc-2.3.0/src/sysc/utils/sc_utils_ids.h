@@ -58,6 +58,8 @@ SC_DEFINE_MESSAGE(SC_ID_VECTOR_BIND_EMPTY_,
 SC_DEFINE_MESSAGE(SC_ID_VECTOR_NONOBJECT_ELEMENTS_,
                   808, "sc_vector::get_elements called for element type "
                        "not derived from sc_object" )
+SC_DEFINE_MESSAGE(SC_ID_ASSERT_NOT_VERIFIED_,
+                  842, "Assertion not verified")
 
 /*****************************************************************************
 
