@@ -56,7 +56,7 @@ int sc_main( int argc, char* argv[] )
 //   MYTOP.myFctP();
 //   MYTOP.myFctQ();
 	//    i = 5;
-	sc_start(-1);
+	sc_start();
 	//    j = handleI(i);
 	return 0;
 }

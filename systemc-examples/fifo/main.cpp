@@ -176,6 +176,6 @@ int sc_main (int argc , char *argv[])
     size = 100000;
 
   top top1("Top1", size);
-  sc_start(-1);
+  sc_start();
   return 0;
 }

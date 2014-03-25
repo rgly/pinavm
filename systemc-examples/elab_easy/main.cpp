@@ -23,7 +23,7 @@ public:
 	
 	bool notified;
 	bool isHead;
-    SC_HAS_PROCESS(Component)
+    SC_HAS_PROCESS(Component);
 
     Component(sc_module_name name) {
     //  SC_CTOR(Component)	{
