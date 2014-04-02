@@ -40,6 +40,8 @@ extern bool launch_backends(Frontend*, std::string backend, BackendOption&);
 #include <ctime>
 #include <sys/time.h>
 
+#include <sysc/pinavm/permalloc.h>
+
 // get a -load option.
 //#include "llvm/Support/PluginLoader.h"
 
@@ -259,6 +261,10 @@ int load_and_run_sc_main(std::string & InputFile)
 	// from being called multiple times for some testcase which
 	// contains multiple sc_start().
 	AlreadyCallBack = false;
+
+	// FIXME: support variable size cap (currently 1MB)
+	// initialize the custom permalloc allocator
+	permalloc::init (0x100000);
 
 	// Run main.
 	int Result = EE->runFunctionAsMain(EntryFn, InputArgv, NULL);
