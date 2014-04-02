@@ -55,6 +55,7 @@
 //#include "bus.h"
 
 #include "Frontend.hpp"
+#include "TwetoBackend.h"
 
 struct SCConstruct;
 struct SCCFactory;
@@ -74,7 +75,7 @@ namespace sc_core {
 	class sc_process_host;
 	class sc_time;
 	class sc_simcontext;
-
+	
 	typedef void (sc_process_host::*SC_ENTRY_FUNC)();
 	typedef void (*SC_ENTRY_FUNC_OPT)();
 }
@@ -96,6 +97,7 @@ class TwetoPassImpl {
 	Function *basicWriteFun;
 	Frontend *fe;
 	ExecutionEngine *engine;
+	enum tweto_opt_level optlevel;
 	bool disableMsg;
 	bool is64Bit;
 	SCElab *elab;
@@ -104,7 +106,7 @@ class TwetoPassImpl {
 
       public:
 	TwetoPassImpl(Frontend * fe, ExecutionEngine * ee,
-		      bool disableMsg);
+		      enum tweto_opt_level optimize, bool disableMsg);
 	bool runOnModule(Module & M);
 
       private:

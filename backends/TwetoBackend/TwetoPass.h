@@ -13,6 +13,8 @@
 #define TLMBASICPASS_H
 
 #include "llvm/Pass.h"
+// for enum tweto_opt_level
+#include "TwetoBackend.h"
 
 struct Frontend;
 namespace llvm {
@@ -49,7 +51,7 @@ class TwetoPass:public llvm::ModulePass {
       public:
 	static char ID;
 	TwetoPass(Frontend * fe, llvm::ExecutionEngine * ee,
-		  bool disableMsg);
+		  enum tweto_opt_level optimize, bool disableMsg);
 	~TwetoPass();
 	bool runOnModule(llvm::Module & M);
 };

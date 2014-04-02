@@ -1,6 +1,6 @@
 
 # =================== Configure launch_backends.cpp ==========================
-foreach(backend ${BACKENDS} Run) # Run is a special backend by Tweto
+foreach(backend ${BACKENDS} Run Static) # Run and Static are special backends by Tweto
   string(TOLOWER "${backend}" lbackend)
   list(APPEND PRINT_BACKEND_INCLUDE "EXTERN_F(${lbackend})")
   list(APPEND PRINT_BACKEND_LAUNCH "LAUNCHBACKEND(${backend},${lbackend})")

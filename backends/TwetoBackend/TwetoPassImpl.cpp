@@ -55,6 +55,7 @@
 #include "sysc/kernel/sc_module.h"
 #include "sysc/kernel/sc_process.h"
 #include "sysc/communication/sc_port.h"
+#include "sysc/pinavm/permalloc.h"
 
 #include "basic.h"
 #include "bus.h"
@@ -71,12 +72,13 @@ int proc_counter = 0;
 // 
 // =============================================================================
 TwetoPassImpl::TwetoPassImpl(Frontend * fe, ExecutionEngine * ee,
-			     bool disableMsg)
+			     enum tweto_opt_level optimize, bool disableMsg)
 {
 	this->callOptCounter = 0;
 	this->rwCallsCounter = 0;
 	this->fe = fe;
 	this->engine = ee;
+	this->optlevel = optimize;
 	this->disableMsg = disableMsg;
 	this->elab = fe->getElab();
 	// Checking machine's data size
@@ -253,11 +255,6 @@ Function *TwetoPassImpl::andOOPIsGone(Function * oldProc,
 		intType = Type::getInt32Ty(context);
 	}
 
-	// Retrieve a pointer to the initiator module 
-	ConstantInt *initiatorModVal = ConstantInt::getSigned(intType,
-							      reinterpret_cast
-							      < intptr_t >
-							      (initiatorMod));
 	FunctionType *funType = oldProc->getFunctionType();
 	Type *type = funType->getParamType(0);
 
@@ -280,7 +277,27 @@ Function *TwetoPassImpl::andOOPIsGone(Function * oldProc,
 	BasicBlock *bb = BasicBlock::Create(context, "entry", newProc);
 	IRBuilder <> *irb = new IRBuilder <> (context);
 	irb->SetInsertPoint(bb);
-	Value* thisAddr = irb->CreateIntToPtr(initiatorModVal, type, "this_ptr");
+
+	Value* thisAddr;
+
+	if (optlevel == staticopt) {
+		// Retrieve a pointer to the initiator module 
+		assert (permalloc::is_from (initiatorMod));
+		ptrdiff_t this_offset = permalloc::get_offset (initiatorMod);
+		ConstantInt *offset = ConstantInt::getSigned(intType, this_offset);
+		GlobalVariable* sbase = new GlobalVariable (*this->llvmMod,
+				irb->getInt8PtrTy(), false,
+				GlobalValue::ExternalLinkage, NULL, "stack_base",
+				0, GlobalVariable::NotThreadLocal, 0, true);
+		Value* sbase_val = irb->CreateLoad (sbase);
+		Value* pi8thisAddr = irb->CreateGEP
+			(sbase_val, std::vector<Value*>(1,offset));
+		thisAddr = irb->CreateBitCast (pi8thisAddr, type);
+	} else {
+		ConstantInt *initiatorModVal = ConstantInt::getSigned(intType,
+			      reinterpret_cast<intptr_t> (initiatorMod));
+		thisAddr = irb->CreateIntToPtr(initiatorModVal, type, "this_ptr");
+	}
 	CallInst *ci = irb->CreateCall(oldProc,
 				       ArrayRef < Value * >(std::vector<Value*>(1,thisAddr)));
 	//bb->getInstList().insert(ci, thisAddr);
@@ -300,7 +317,7 @@ Function *TwetoPassImpl::andOOPIsGone(Function * oldProc,
 		verifyFunction(*newProc);
 	}
 
-	//newProc->dump();
+	newProc->dump();
 	return newProc;
 }
 

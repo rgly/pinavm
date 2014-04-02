@@ -10,10 +10,10 @@ char TwetoPass::ID = 0;
 
 using namespace llvm;
 
-TwetoPass::TwetoPass(Frontend * fe, ExecutionEngine * ee, bool disableMsg):ModulePass
-    (ID)
+TwetoPass::TwetoPass(Frontend * fe, ExecutionEngine * ee,
+                     enum tweto_opt_level optimize, bool disableMsg):ModulePass(ID)
 {
-	impl = new TwetoPassImpl(fe, ee, disableMsg);
+	impl = new TwetoPassImpl(fe, ee, optimize, disableMsg);
 }
 
 TwetoPass::~TwetoPass()

@@ -10,31 +10,25 @@ namespace sc_core {
     
     typedef void (sc_process_host::*SC_ENTRY_FUNC)();
     typedef void (*SC_ENTRY_FUNC_OPT)();
-    
+
 } 
+
+enum tweto_opt_level {
+	noopt,
+	dynopt,
+	staticopt,
+};
 
 struct Frontend;
 extern void launch_twetobackend(Frontend * fe, 
                                 sc_core::sc_simcontext* simcontext, 
                                 const sc_core::sc_time& simduration, 
-                                bool optimize, bool disableMsg);
+                                enum tweto_opt_level optimize, bool disableMsg);
 
-void launch_twetobackend(Frontend * fe,
-			BackendOption& option)
-{
-    launch_twetobackend(fe, option.context, *(option.duration), true, option.DisableOptDbgMsg);
-};
-
-void launch_runbackend(Frontend * fe,
-			BackendOption& option)
-{
-    launch_twetobackend(fe, option.context, *(option.duration), false, option.DisableOptDbgMsg);
-};
- 
 extern "C" sc_core::SC_ENTRY_FUNC_OPT
 tweto_optimize_process(sc_core::SC_ENTRY_FUNC fct, sc_core::sc_process_host *arg);
 
 extern void tweto_mark_const(const void *ptr_to_cst, size_t size);
 
-
 #endif
+

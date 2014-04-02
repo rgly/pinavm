@@ -29,6 +29,7 @@
 #include <llvm/Transforms/IPO.h>
 #include <llvm/Transforms/Scalar.h>
 #include <llvm/ADT/StringExtras.h>
+#include <llvm/Bitcode/BitstreamWriter.h>
 #include <cerrno>
 
 #include "llvm/IR/ValueSymbolTable.h"
@@ -45,8 +46,10 @@
 #include "sysc/kernel/sc_module_registry.h"
 #include "sysc/kernel/sc_module.h"
 #include "sysc/kernel/sc_process.h"
+#include "sysc/pinavm/permalloc.h"
 
 #include "TwetoPass.h"
+#include "MethodRelinker.h"
 
 using namespace llvm;
 
@@ -79,6 +82,7 @@ static std::vector<IntFctPair> addr2function;
 static void tweto_optimize(Frontend * fe,
                          sc_core::sc_simcontext* simcontext, 
                          const sc_core::sc_time& simduration,
+			 enum tweto_opt_level optlevel,
                          bool disableMsg)
 {
 	
@@ -113,7 +117,7 @@ static void tweto_optimize(Frontend * fe,
 	//PM->add(createReassociatePass());
 	//PM->add(createGVNPass());*/
 	//AARGH
-	PM->add(new TwetoPass(fe, NULL, disableMsg));
+	PM->add(new TwetoPass(fe, NULL, optlevel, disableMsg));
     
 	// Execute all of the passes scheduled for execution
 	PM->run(*llvmMod);
@@ -125,6 +129,23 @@ static void tweto_optimize(Frontend * fe,
     
 }
 
+void launch_twetobackend(Frontend * fe,
+			BackendOption& option)
+{
+    launch_twetobackend(fe, option.context, *(option.duration), dynopt, option.DisableOptDbgMsg);
+};
+
+void launch_runbackend(Frontend * fe,
+			BackendOption& option)
+{
+    launch_twetobackend(fe, option.context, *(option.duration), noopt, option.DisableOptDbgMsg);
+};
+ 
+void launch_staticbackend(Frontend * fe,
+			BackendOption& option)
+{
+    launch_twetobackend(fe, option.context, *(option.duration), staticopt, option.DisableOptDbgMsg);
+};
     
 /**
  * launch_twetobackend
@@ -133,14 +154,11 @@ static void tweto_optimize(Frontend * fe,
 void launch_twetobackend(Frontend * fe, 
                          sc_core::sc_simcontext* simcontext, 
                          const sc_core::sc_time& simduration,
-                         bool optimize, bool disablePrintMsg)
+                         enum tweto_opt_level optimize, bool disablePrintMsg)
 {
 	// optimize the llvm ir (if run with -b tweto)
-	if (optimize) {
-		optimizeProcess = true;
-		tweto_optimize(fe, simcontext, simduration, disablePrintMsg);
-	} else {
-		optimizeProcess = false;
+	if (optimize > noopt) {
+		tweto_optimize(fe, simcontext, simduration, optimize, disablePrintMsg);
 	}
 
 	// Rebuild another execution engine
@@ -160,40 +178,27 @@ void launch_twetobackend(Frontend * fe,
 		exit(1);
 	}
 
-	// update function pointers in SystemC thread/method lists
-	sc_core::sc_process_table * processes = 
-		sc_core::sc_get_curr_simcontext()->m_process_table;
-
-	// for each SC_THREAD
-	sc_core::sc_thread_handle thread_p;
-	for (thread_p = processes->thread_q_head(); 
-	     thread_p; thread_p = thread_p->next_exist()) {
-		sc_core::sc_process_b *proc = thread_p;
-		Function *procf = proc->m_bc_semantics_p;
-		if (procf==NULL)
-			break;
-		void *funPtr = ee->getPointerToFunction(procf); 
-		sc_core::SC_ENTRY_FUNC_OPT scfun = 
-		reinterpret_cast<sc_core::SC_ENTRY_FUNC_OPT>(funPtr);
-		proc->m_semantics_p = scfun;
-	}
-
-	// for each SC_METHOD
-	sc_core::sc_method_handle method_p;
-	for (method_p = processes->method_q_head(); 
-	     method_p; method_p = method_p->next_exist()) {
-		sc_core::sc_process_b *proc = method_p;
-		Function *procf = proc->m_bc_semantics_p;
-		if (procf==NULL)
-			break;
-		void *funPtr = ee->getPointerToFunction(procf); 
-		sc_core::SC_ENTRY_FUNC_OPT scfun = 
-		reinterpret_cast<sc_core::SC_ENTRY_FUNC_OPT>(funPtr);
-		proc->m_semantics_p = scfun;
-	}
-
 	// prepare the 2nd exec engine to run
 	ee->finalizeObject();
+
+	switch (optimize) {
+		case staticopt:
+			StaticMethodRelinker (fe->getLLVMModule(), ee).relinkEverything();
+			break;
+		case dynopt:
+			MethodRelinker (ee).relinkEverything();
+			break;
+		default:
+			break;
+	}
+
+	// output resulting module if optimizing statically
+	if (optimize == staticopt) {
+		std::string errorinfo;
+		llvm::raw_fd_ostream llfd ("output.bc", errorinfo, None);
+		WriteBitcodeToFile (fe->getLLVMModule(), llfd);
+	}
+
 
 	/**
 	 * Launching simulation

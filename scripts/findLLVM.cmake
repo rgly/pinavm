@@ -74,7 +74,8 @@ endif()
 include_directories( ${LLVM_INCLUDE_DIRS} )
 link_directories( ${LLVM_LIBRARY_DIRS} )
 add_definitions( ${LLVM_DEFINITIONS} )
-SET(REQ_LLVM_LIBRARIES ${LLVM_LIBS})
+# probably some llvm-config work to do...
+SET(REQ_LLVM_LIBRARIES ${LLVM_LIBS};curses;LLVMBitWriter)
 
 # This script sets LLVMC_FLAGS and LLVM_COMPILER.
 include(${CMAKE_SOURCE_DIR}/scripts/findLLVMC.cmake)
