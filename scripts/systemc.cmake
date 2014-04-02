@@ -90,7 +90,8 @@ SET(SYSTEMC_CPP_SRC
 	         kernel/sc_time
 	         kernel/sc_cor_qt
 		 kernel/sc_except
-	         pinavm_stubs
+	         pinavm/stubs
+		 pinavm/permalloc
 		 )
 
 

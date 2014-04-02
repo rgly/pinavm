@@ -8,8 +8,13 @@
 #include "systemc"
 #include <assert.h>
 
+extern "C" WEAK void relink_processes (void)
+{
+}
+
 extern "C" WEAK void pinavm_callback (sc_core::sc_simcontext* sc, const sc_core::sc_time& d)
 {
+	relink_processes ();
 	sc->simulate (d);
 }
 
