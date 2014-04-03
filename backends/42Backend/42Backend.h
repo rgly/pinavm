@@ -14,5 +14,5 @@ void launch_42backend(Frontend * fe,
 {
     launch_42backend(fe, option.OutputFilename,
         option.EventsAsBool, option.RelativeClocks, option.Bug);
-};
+}
 #endif

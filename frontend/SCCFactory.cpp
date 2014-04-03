@@ -54,7 +54,6 @@ std::map <Instruction *, std::map<Process*, SCConstruct *> >* SCCFactory::getCon
 bool
 SCCFactory::handle(Process* proc, llvm::Function * fct, BasicBlock * bb, Instruction* callInst, Function* calledFunction)
 {
-	Function *calledFct;
 	SCConstructHandler *scch;
 
 	std::map < Function *, SCConstructHandler * >::iterator it;

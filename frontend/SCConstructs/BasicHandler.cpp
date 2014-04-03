@@ -27,7 +27,7 @@ SCConstruct *BasicHandler::handle(Function * fct, BasicBlock * bb, Instruction* 
 	WriteConstruct* ret;
 	// Analyzing "arg.write(value)"
 	Value *arg = CallSite(callInst).getArgument(0);
-	Value *value = CallSite(callInst).getArgument(1);
+	//Value *value = CallSite(callInst).getArgument(1);
 	Port *po = NULL;
 
 	void *portAddr = this->scjit->jitType<void*>(fct, callInst, arg, NULL);

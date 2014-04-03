@@ -26,21 +26,6 @@ namespace llvm {
 }
 class TwetoPassImpl;
 
-// Handy structure that keeps the 
-// informations for a possible call creation
-class CallInfo {
-	// Target module info 
-	llvm::ConstantInt * targetModVal;
-	const llvm::Type * targetType;
-	// Argument info
-	 llvm::Value * dataArg;
-	 llvm::Value * addrArg;
-	// Call info
-	 llvm::Instruction * oldcall;
-	 llvm::Instruction * newcall;
-};
-
-
 // SystemC uses lots of rtti features. Since LLVM library is no-rtti by default,
 // we should seperate ModulePass from SystemC library. Or it will results link 
 // errors.

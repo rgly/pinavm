@@ -10,7 +10,7 @@ AssertConstruct::AssertConstruct(bool b) : SCConstruct(ASSERTCONSTRUCT)
 AssertConstruct::AssertConstruct(Value * missingC)
 	: SCConstruct(ASSERTCONSTRUCT, false)
 {
-	this->cond = NULL;
+	this->cond = false;
 	this->missingCond = missingC;
 }
 

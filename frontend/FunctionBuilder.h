@@ -24,7 +24,6 @@ class FunctionBuilder {
   ValueToValueMapTy ValueMap;
 
 
-  Process* proc;
   Function* origFct;
   Function* fctToJit;
   Value* res;

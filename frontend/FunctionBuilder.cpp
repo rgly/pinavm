@@ -201,6 +201,7 @@ std::vector<Instruction*>* FunctionBuilder::fillPredecessors(Function* origFct,
 				return ret;
 		}
 	}
+	return NULL;
 }
 
 void FunctionBuilder::cloneEachInst(BasicBlock* origbb, BasicBlock* NewBB) {

@@ -63,12 +63,10 @@ using namespace llvm;
                    cl::init(false));
 }*/
 
-static ExecutionEngine *EE = 0;
 static IRBuilder<> *IRB = 0; 
 static DataLayout *TD = NULL;
 static Module *llvmMod = 0;
 static PassManager *PM = NULL;
-static bool optimizeProcess = true;
 typedef std::pair<intptr_t, const Function *> IntFctPair;
 static std::vector<IntFctPair> addr2function;
 GlobalVariable* sbase;
@@ -113,19 +111,19 @@ void launch_twetobackend(Frontend * fe,
 			BackendOption& option)
 {
     launch_twetobackend(fe, option.context, *(option.duration), dynopt, option.DisableOptDbgMsg);
-};
+}
 
 void launch_runbackend(Frontend * fe,
 			BackendOption& option)
 {
     launch_twetobackend(fe, option.context, *(option.duration), noopt, option.DisableOptDbgMsg);
-};
+}
  
 void launch_staticbackend(Frontend * fe,
 			BackendOption& option)
 {
     launch_twetobackend(fe, option.context, *(option.duration), staticopt, option.DisableOptDbgMsg);
-};
+}
     
 /**
  * launch_twetobackend

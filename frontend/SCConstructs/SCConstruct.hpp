@@ -31,7 +31,6 @@ public:
 
 private:
 	construct_id ID;
-	llvm::Value* dynAddress;
 	bool staticallyFound;
 	std::string threadName;
 	std::string constructName;

@@ -12,7 +12,7 @@ namespace sc_core {
 enum tweto_opt_level {
 	noopt,
 	dynopt,
-	staticopt,
+	staticopt
 };
 
 class Frontend;

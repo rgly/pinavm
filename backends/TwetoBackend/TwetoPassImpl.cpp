@@ -57,9 +57,6 @@
 #include "sysc/communication/sc_port.h"
 #include "sysc/pinavm/permalloc.h"
 
-#include "basic.h"
-#include "bus.h"
-
 #include "TwetoPassImpl.h"
 
 int proc_counter = 0;

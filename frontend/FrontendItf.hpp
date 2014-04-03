@@ -27,9 +27,6 @@
 
 Frontend *launch_frontend(std::string InputFilename, bool inlineFcts,Module *Mod)
 {
-	//Module *Mod;
-	LLVMContext & Context = getGlobalContext();
-
 	std::string ErrorMessage;
 
 	/*if (MemoryBuffer * Buffer

@@ -81,7 +81,6 @@ void Port::printElab(int sep, std::string prefix)
 	TRACE("Port : " << this->getName() << " (\"" << (void*) this << "\"), bounded to :\n");
 
 	const int additional_space = sep + 20;
-	const int additional_space2 = sep + 10;
 
 	std::string str;
 	if (this->hasParent()) {
