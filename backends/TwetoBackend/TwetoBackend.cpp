@@ -162,6 +162,86 @@ void launch_twetobackend(Frontend * fe,
 	switch (optimize) {
 		case staticopt:
 			StaticMethodRelinker (fe->getLLVMModule(), ee).relinkEverything();
+			// build main() function
+			{
+				LLVMContext& c = llvmMod->getContext();
+				// size to be allocated in gv
+				// TODO: allow user to modify it
+				size_t memsize = 0x100000;
+				// ext void permalloc::placement_init(void*,size_t)
+				std::vector<Type*> permargs;
+				permargs.push_back
+					(Type::getInt8Ty(c)->getPointerTo());
+				permargs.push_back
+					(Type::getIntNTy(c,CHAR_BIT*sizeof(void*)));
+				FunctionType* permtype = FunctionType::get
+					(Type::getVoidTy(c), permargs, false);
+				Function* perminit = Function::Create
+					(permtype, GlobalValue::ExternalLinkage,
+					 "_ZN9permalloc14placement_initEPvm",
+					 llvmMod);
+				// ext void launch_systemc (int, char**)
+				std::vector<Type*> mainargs;
+				// assumes ilp32, lp64 or llp64
+				mainargs.push_back (Type::getInt32Ty(c));
+				mainargs.push_back (
+						Type::getInt8Ty(c)->getPointerTo()
+						                  ->getPointerTo());
+				FunctionType* maintype = FunctionType::get
+					(Type::getInt32Ty(c), mainargs, false);
+				Function* launch_systemc = Function::Create
+					(maintype, GlobalValue::ExternalLinkage,
+					 "_Z14launch_systemciPPc", llvmMod);
+				// char array[memsize]
+				ArrayType* memtype = ArrayType::get
+					(Type::getInt8Ty(c), memsize);
+				GlobalVariable* memgv = new GlobalVariable
+					(*llvmMod, memtype, false,
+					 GlobalValue::ExternalLinkage,
+					 0, "array");
+				// allocate the array
+				ConstantAggregateZero* memcaz =
+					ConstantAggregateZero::get (memtype);
+				memgv->setInitializer (memcaz);
+				// define main (int, char**)
+				Function* mainfunc = Function::Create
+					(maintype, Function::ExternalLinkage,
+					 "main", llvmMod);
+				BasicBlock* bb = BasicBlock::Create
+					(c, "entry", mainfunc);
+				IRBuilder<> irb (c);
+				irb.SetInsertPoint (bb);
+				// call permalloc::placement_init
+				std::vector<Value*> piargs;
+				ConstantInt* zero = ConstantInt::get
+					(c, APInt (64, StringRef("0"), 10));
+				std::vector<Constant*> memindices(2, zero);
+				Constant* memptr = ConstantExpr::getGetElementPtr
+					(memgv, memindices);
+				piargs.push_back (memptr);
+				piargs.push_back (ConstantInt::get
+						(c,
+						 APInt (CHAR_BIT*sizeof(void*),
+							StringRef("100000"),
+						 	16)));
+				CallInst* picall = irb.CreateCall (perminit,piargs);
+				// picall returns void
+				(void) picall;
+				// call launch_systemc
+				std::vector<Value*> lscargs;
+				{
+					// retrieve main() arguments
+					Function::arg_iterator args =
+						mainfunc->arg_begin();
+					Value* i32_argc = args++;
+					Value* ppi8_argv = args++;
+					lscargs.push_back (i32_argc);
+					lscargs.push_back (ppi8_argv);
+				}
+				CallInst* lsccall = irb.CreateCall
+					(launch_systemc, lscargs);
+				irb.CreateRet(lsccall);
+			}
 			break;
 		case dynopt:
 			MethodRelinker (ee).relinkEverything();
