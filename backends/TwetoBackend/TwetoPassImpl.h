@@ -9,8 +9,8 @@
  * @copyright : Verimag 2011
  */
 
-#ifndef TLMBASICPASSIMPL_H
-#define TLMBASICPASSIMPL_H
+#ifndef TWETOBASICPASSIMPL_H
+#define TWETOBASICPASSIMPL_H
 
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Constants.h"
@@ -84,9 +84,6 @@ namespace sc_core {
 namespace basic {
 	typedef uint32_t addr_t;
 }
-extern "C" llvm::Function *
-tweto_optimize_process(sc_core::SC_ENTRY_FUNC fct,
-		       sc_core::sc_process_host * arg);
 
 //============================================================================
 class TwetoPassImpl {

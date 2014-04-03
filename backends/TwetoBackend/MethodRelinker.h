@@ -3,6 +3,7 @@
 
 #include <systemc>
 #include <llvm/IR/Module.h>
+#include <llvm/IR/IRBuilder.h>
 #include <llvm/ExecutionEngine/MCJIT.h>
 
 class MethodRelinker {
@@ -16,6 +17,7 @@ class MethodRelinker {
 		}
 		virtual void relinkFunction (void (**dst)(void), llvm::Function *f);
 		void relinkEverything (void);
+		virtual void finalize (void);
 	protected:
 		llvm::ExecutionEngine* ee;
 		sc_core::sc_simcontext* simc;
@@ -24,13 +26,16 @@ class MethodRelinker {
 class StaticMethodRelinker: public MethodRelinker {
 	public:
 		StaticMethodRelinker (llvm::Module* m, llvm::ExecutionEngine* ee,
-				sc_core::sc_simcontext* simc = 0)
-			:MethodRelinker (ee, simc), mod (m) {
-		}
-		// override
+				sc_core::sc_simcontext* simc = 0);
+		// overrides
 		virtual void relinkFunction (void (**dst)(void), llvm::Function *f);
+		virtual void finalize (void);
 	protected:
 		llvm::Module* mod;
+		llvm::Function* relinkFunc;
+		llvm::IRBuilder <>* irb;
+		llvm::IntegerType *intPtrType;
+		llvm::LLVMContext& context;
 };
 
 #endif

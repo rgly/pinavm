@@ -73,6 +73,7 @@ static PassManager *PM = NULL;
 static bool optimizeProcess = true;
 typedef std::pair<intptr_t, const Function *> IntFctPair;
 static std::vector<IntFctPair> addr2function;
+GlobalVariable* sbase;
 
 
 /**
@@ -116,9 +117,14 @@ static void tweto_optimize(Frontend * fe,
 	PM->add(createInstructionCombiningPass());
 	//PM->add(createReassociatePass());
 	//PM->add(createGVNPass());*/
-	//AARGH
 	PM->add(new TwetoPass(fe, NULL, optlevel, disableMsg));
     
+	// initialize the llvm global stack_base variable
+	sbase = new GlobalVariable (*llvmMod,
+			IRB->getInt8PtrTy(), false,
+			GlobalValue::ExternalLinkage, NULL, "stack_base",
+			0, GlobalVariable::NotThreadLocal, 0, true);
+
 	// Execute all of the passes scheduled for execution
 	PM->run(*llvmMod);
     

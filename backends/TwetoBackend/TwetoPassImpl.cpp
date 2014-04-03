@@ -65,6 +65,8 @@
 
 int proc_counter = 0;
 
+extern GlobalVariable* sbase;
+
 // =============================================================================
 // TwetoPassImpl 
 // 
@@ -285,10 +287,6 @@ Function *TwetoPassImpl::andOOPIsGone(Function * oldProc,
 		assert (permalloc::is_from (initiatorMod));
 		ptrdiff_t this_offset = permalloc::get_offset (initiatorMod);
 		ConstantInt *offset = ConstantInt::getSigned(intType, this_offset);
-		GlobalVariable* sbase = new GlobalVariable (*this->llvmMod,
-				irb->getInt8PtrTy(), false,
-				GlobalValue::ExternalLinkage, NULL, "stack_base",
-				0, GlobalVariable::NotThreadLocal, 0, true);
 		Value* sbase_val = irb->CreateLoad (sbase);
 		Value* pi8thisAddr = irb->CreateGEP
 			(sbase_val, std::vector<Value*>(1,offset));
