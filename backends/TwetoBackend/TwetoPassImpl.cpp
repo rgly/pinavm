@@ -61,7 +61,6 @@
 #include "bus.h"
 
 #include "TwetoPassImpl.h"
-#include "LoopChecker.h"
 
 int proc_counter = 0;
 

@@ -9,8 +9,8 @@
  * @copyright : Verimag 2011
  */
 
-#ifndef TWETOBASICPASSIMPL_H
-#define TWETOBASICPASSIMPL_H
+#ifndef TWETOPASSIMPL_H
+#define TWETOPASSIMPL_H
 
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Constants.h"
@@ -75,9 +75,6 @@ namespace sc_core {
 	class sc_process_host;
 	class sc_time;
 	class sc_simcontext;
-	
-	typedef void (sc_process_host::*SC_ENTRY_FUNC)();
-	typedef void (*SC_ENTRY_FUNC_OPT)();
 }
 // if external/basic/basic.h is included, it links to systemc.h to
 // TwetoPass.cpp. Results rtti & no-rtti conflict. So make a copy here.
