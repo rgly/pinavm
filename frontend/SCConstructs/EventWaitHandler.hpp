@@ -5,7 +5,7 @@
 
 using namespace llvm;
 
-struct EventWaitHandler:public SCConstructHandler {
+class EventWaitHandler:public SCConstructHandler {
       public:
 	EventWaitHandler(SCJit * jit):SCConstructHandler(jit) { }
 	SCConstruct *handle(Function * fct, BasicBlock * bb, Instruction* callInst, Function* calledFunction);

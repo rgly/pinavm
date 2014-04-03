@@ -10,7 +10,7 @@
 
 using namespace llvm;
 
-struct SCJit {
+class SCJit {
       private:
 	Module * mdl;
 	SCElab *elab;

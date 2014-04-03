@@ -3,7 +3,7 @@
 
 using namespace llvm;
 
-struct Field {
+class Field {
       private:
 	string moduleName, className, fieldName;
 

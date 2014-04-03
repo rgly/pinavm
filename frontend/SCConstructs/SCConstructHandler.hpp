@@ -10,8 +10,8 @@
 
 using namespace llvm;
 
-struct SCJit;
-struct SCConstruct;
+class SCJit;
+class SCConstruct;
 
 class SCConstructHandler {
       protected:

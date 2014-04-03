@@ -10,12 +10,12 @@
 #include "ElabMember.hpp"
 
 
-struct IRModule;
-struct Event;
-struct Port;
-struct SCCFactory;
+class IRModule;
+class Event;
+class Port;
+class SCCFactory;
 
-struct Process:public ElabMember {
+class Process:public ElabMember {
 protected:
     std::string processName;
     IRModule *module;

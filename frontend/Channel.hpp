@@ -5,7 +5,7 @@
 #include <vector>
 #include <llvm/IR/Type.h>
 
-struct Port;
+class Port;
 
 typedef enum {
 	UNDEFINED_CHANNEL,

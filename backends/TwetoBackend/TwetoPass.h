@@ -16,18 +16,19 @@
 // for enum tweto_opt_level
 #include "TwetoBackend.h"
 
-struct Frontend;
+class Frontend;
 namespace llvm {
-	struct ExecutionEngine;
-	struct ConstantInt;
-	struct Type;
-	struct Value;
-	struct Instruction;
-} struct TwetoPassImpl;
+	class ExecutionEngine;
+	class ConstantInt;
+	class Type;
+	class Value;
+	class Instruction;
+}
+class TwetoPassImpl;
 
 // Handy structure that keeps the 
 // informations for a possible call creation
-struct CallInfo {
+class CallInfo {
 	// Target module info 
 	llvm::ConstantInt * targetModVal;
 	const llvm::Type * targetType;

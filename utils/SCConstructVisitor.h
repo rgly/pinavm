@@ -3,10 +3,10 @@
 
 namespace llvm
 {
-    struct Instruction;
+    class Instruction;
 }
 
-struct Process;
+class Process;
 
 class SCConstructVisitor {
 private:

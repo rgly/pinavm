@@ -15,7 +15,7 @@ enum tweto_opt_level {
 	staticopt,
 };
 
-struct Frontend;
+class Frontend;
 extern void launch_twetobackend(Frontend * fe, 
                                 sc_core::sc_simcontext* simcontext, 
                                 const sc_core::sc_time& simduration, 

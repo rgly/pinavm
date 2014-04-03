@@ -12,8 +12,8 @@
 
 using namespace llvm;
 
-struct SCConstruct;
-struct IRModule;
+class SCConstruct;
+class IRModule;
 
 static int nbProcesses = 0;
 

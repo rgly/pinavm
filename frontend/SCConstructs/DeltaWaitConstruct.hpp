@@ -5,7 +5,7 @@
 #include "llvm/IR/Value.h"
 
 
-struct DeltaWaitConstruct:public WaitConstruct {
+class DeltaWaitConstruct:public WaitConstruct {
 private:
 	llvm::Value* missingDelta;
 	int Delta;

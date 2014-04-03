@@ -46,9 +46,9 @@
 
 #include "Frontend.hpp"
 
-struct SCConstruct;
-struct SCCFactory;
-struct SCElab;
+class SCConstruct;
+class SCCFactory;
+class SCElab;
 
 using namespace llvm;
 

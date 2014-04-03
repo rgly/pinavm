@@ -15,12 +15,14 @@ using namespace llvm;
 typedef enum{Initial,Intermediate,Final} StateStatus;
 //typedef enum{Wait,Notify,Undefined} FirstSCConstruct;
 
-struct transition{
+class transition{
+public:
   int    numStateSink;
   string transitionLab;
 };
 
-struct state{
+class state{
+public:
   StateStatus  Status;  
   int  numState;
   vector<transition> *pointerListTransition;

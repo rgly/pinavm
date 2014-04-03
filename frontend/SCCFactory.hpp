@@ -10,9 +10,9 @@
 #include "SCConstructs/SCConstructHandler.hpp"
 
 
-struct Process;
+class Process;
 
-struct SCCFactory {
+class SCCFactory {
 
       private:
 	std::map < Function *, SCConstructHandler * >scchandlers;

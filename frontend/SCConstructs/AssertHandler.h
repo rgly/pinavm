@@ -5,7 +5,7 @@
 
 using namespace llvm;
 
-struct AssertHandler:public SCConstructHandler {
+class AssertHandler:public SCConstructHandler {
       public:
 	AssertHandler(SCJit * jit):SCConstructHandler(jit) {}
 	SCConstruct *handle(Function * fct, BasicBlock * bb, Instruction* callInst, Function * calledFunction);

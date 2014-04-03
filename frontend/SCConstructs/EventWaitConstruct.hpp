@@ -4,7 +4,7 @@
 #include "WaitConstruct.hpp"
 #include "Event.hpp"
 
-struct EventWaitConstruct:public WaitConstruct {
+class EventWaitConstruct:public WaitConstruct {
 private:
 	Event * event;
 	llvm::Value * missingEvent;

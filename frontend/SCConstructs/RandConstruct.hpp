@@ -5,7 +5,7 @@
 
 using namespace llvm;
 
-struct RandConstruct:public SCConstruct {
+class RandConstruct:public SCConstruct {
 
 public:
 	RandConstruct();

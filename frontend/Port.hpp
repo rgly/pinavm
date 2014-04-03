@@ -12,12 +12,14 @@
 
 using namespace llvm;
 
-namespace sc_core{struct sc_port_base;}
-struct SCElab;
-struct Process;
-struct IRModule;
+namespace sc_core {
+	class sc_port_base;
+}
+class SCElab;
+class Process;
+class IRModule;
 
-struct Port: public ElabMember {
+class Port: public ElabMember {
 protected:
 	IRModule * irModule;
 	std::string name;

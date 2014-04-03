@@ -11,7 +11,7 @@
 
 #include "config.h"
 
-struct Process;
+class Process;
 
 using namespace llvm;
 

@@ -6,7 +6,7 @@
 
 using namespace llvm;
 
-struct WriteConstruct: public SCConstruct {
+class WriteConstruct: public SCConstruct {
 
 protected:
 	Port * port;

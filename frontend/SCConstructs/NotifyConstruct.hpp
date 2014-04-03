@@ -7,9 +7,9 @@
 
 using namespace llvm;
 
-struct Event;
+class Event;
 
-struct NotifyConstruct:public SCConstruct {
+class NotifyConstruct:public SCConstruct {
 
 protected:
 	Event * event;

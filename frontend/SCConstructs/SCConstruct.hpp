@@ -16,7 +16,7 @@ typedef enum {
 	ASSERTCONSTRUCT
 } construct_id;
 
-struct SCConstruct {
+class SCConstruct {
 protected:
 	// keep it protected so that only sub-class can call this.
 	SCConstruct(construct_id);

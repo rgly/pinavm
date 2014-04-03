@@ -2,7 +2,7 @@
 #define _SIMPLEBACKEND_H
 
 #include "BackendOption.h"
-struct Frontend;
+class Frontend;
 
 extern void launch_simplebackend(Frontend * fe,
 			std::string OutputFilename,

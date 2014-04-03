@@ -57,21 +57,21 @@
 #include "Frontend.hpp"
 #include "TwetoBackend.h"
 
-struct SCConstruct;
-struct SCCFactory;
-struct SCElab;
-struct Process;
-struct Event;
-struct SCJit;
-struct Channel;
-struct Port;
+class SCConstruct;
+class SCCFactory;
+class SCElab;
+class Process;
+class Event;
+class SCJit;
+class Channel;
+class Port;
 
 
 using namespace llvm;
 
 namespace sc_core {
-	struct sc_module;
-	struct sc_process_b;
+	class sc_module;
+	class sc_process_b;
 	class sc_process_host;
 	class sc_time;
 	class sc_simcontext;

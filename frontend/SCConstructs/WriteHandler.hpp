@@ -4,11 +4,11 @@
 
 #include "SCConstructHandler.hpp"
 
-struct SCJit;
+class SCJit;
 
 using namespace llvm;
 
-struct WriteHandler:public SCConstructHandler {
+class WriteHandler:public SCConstructHandler {
       public:
 	WriteHandler(SCJit * jit):SCConstructHandler(jit) {}
 

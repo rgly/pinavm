@@ -6,7 +6,7 @@
 #include "WaitConstruct.hpp"
 #include "Time.hpp"
 
-struct TimeWaitConstruct:public WaitConstruct{
+class TimeWaitConstruct:public WaitConstruct{
 private:
 	pinavm::Time time;
 	llvm::Value* missingTime;

@@ -2,7 +2,7 @@
 #define _ELABMEMBER_HPP
 
 #include <string>
-struct SCElab;
+class SCElab;
 
 class ElabMember {
 protected:

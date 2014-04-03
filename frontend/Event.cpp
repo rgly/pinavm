@@ -1,7 +1,7 @@
 #include "Event.hpp"
 #include "config.h"
 
-struct Process;
+class Process;
 
 static int numberOfEvents = 1;
 

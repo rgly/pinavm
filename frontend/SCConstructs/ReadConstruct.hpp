@@ -2,11 +2,11 @@
 #define _READCONSTRUCT_HPP
 
 #include "SCConstruct.hpp"
-struct Port;
+class Port;
 
 using namespace llvm;
 
-struct ReadConstruct:public SCConstruct {
+class ReadConstruct:public SCConstruct {
 protected:
 	Port * port;
 	Value* callInstruction;

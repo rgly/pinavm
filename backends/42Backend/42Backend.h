@@ -2,7 +2,7 @@
 #define _42BACKEND_H
 
 #include "BackendOption.h"
-struct Frontend;
+class Frontend;
 
 extern void launch_42backend(Frontend * fe,
 			std::string OutputFilename,

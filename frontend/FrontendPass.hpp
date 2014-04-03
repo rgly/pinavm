@@ -4,7 +4,7 @@
 #include "llvm/Pass.h"
 #include "llvm/IR/Module.h"
 
-struct Frontend;
+class Frontend;
 
 using namespace llvm;
 

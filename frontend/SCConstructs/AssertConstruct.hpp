@@ -8,9 +8,9 @@
 
 using namespace llvm;
 
-struct Event;
+class Event;
 
-struct AssertConstruct:public SCConstruct {
+class AssertConstruct:public SCConstruct {
 
 protected:
 	bool cond;

@@ -5,7 +5,7 @@
 
 using namespace llvm;
 
-struct DeltaWaitHandler:public SCConstructHandler {
+class DeltaWaitHandler:public SCConstructHandler {
       public:
 	DeltaWaitHandler(SCJit * jit):SCConstructHandler(jit) {}
 

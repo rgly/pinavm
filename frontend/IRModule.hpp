@@ -11,11 +11,11 @@
 
 using namespace llvm;
 
-struct Port;
-struct Event;
-struct Process;
+class Port;
+class Event;
+class Process;
 
-struct IRModule:public ElabMember {
+class IRModule:public ElabMember {
 private:
   std::string name;
   std::string typeName;

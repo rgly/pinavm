@@ -12,20 +12,20 @@
 #include "ElabMember.hpp"
 
 // PinaVM frondend classes.
-struct SCCFactory;
-struct IRModule;
-struct Process;
-struct Port;
-struct Event;
-struct Channel;
+class SCCFactory;
+class IRModule;
+class Process;
+class Port;
+class Event;
+class Channel;
 struct Bus;
 
 namespace sc_core {
-  struct sc_module;
-  struct sc_process_b;
-  struct sc_port_base;
-  struct sc_event;
-  struct sc_interface;
+  class sc_module;
+  class sc_process_b;
+  class sc_port_base;
+  class sc_event;
+  class sc_interface;
 }
 
 

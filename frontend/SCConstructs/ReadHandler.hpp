@@ -6,9 +6,9 @@
 
 using namespace llvm;
 
-struct SCJit;
+class SCJit;
 
-struct ReadHandler:public SCConstructHandler {
+class ReadHandler:public SCConstructHandler {
       public:
 	ReadHandler(SCJit * jit):SCConstructHandler(jit) {
 	};

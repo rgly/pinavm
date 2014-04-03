@@ -7,9 +7,9 @@
 #include "ElabMember.hpp"
 
 
-struct Process;
+class Process;
 
-struct Event:public ElabMember {
+class Event:public ElabMember {
 protected:
   std::string eventName;
   std::vector<Process*> processes;

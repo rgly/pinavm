@@ -47,12 +47,12 @@
 
 #include "42AutomatonContract.h"
 
-struct SCConstruct;
-struct SCCFactory;
-struct SCElab;
-struct Process;
-struct Event;
-struct SCJit;
+class SCConstruct;
+class SCCFactory;
+class SCElab;
+class Process;
+class Event;
+class SCJit;
 
 using namespace llvm;
 

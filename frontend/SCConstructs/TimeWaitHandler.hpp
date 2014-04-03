@@ -3,11 +3,11 @@
 
 #include "SCConstructHandler.hpp"
 
-struct SCJit;
+class SCJit;
 
 using namespace llvm;
 
-struct TimeWaitHandler:public SCConstructHandler {
+class TimeWaitHandler:public SCConstructHandler {
       public:
 	TimeWaitHandler(SCJit * jit):SCConstructHandler(jit) {}
 

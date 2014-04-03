@@ -6,7 +6,7 @@
 
 using namespace llvm;
 
-struct RandHandler:public SCConstructHandler {
+class RandHandler:public SCConstructHandler {
       public:
 	RandHandler():SCConstructHandler() {}
 	SCConstruct *handle(Function * fct, BasicBlock * bb, Instruction* callInst, Function * calledFunction);

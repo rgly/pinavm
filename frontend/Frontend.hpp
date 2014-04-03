@@ -7,10 +7,10 @@
 
 using namespace llvm;
 
-struct SCElab;
-struct SCCFactory;
-struct SCJit;
-struct Process;
+class SCElab;
+class SCCFactory;
+class SCJit;
+class Process;
 
 extern int launch_systemc(int argc, char *argv[]);
 
