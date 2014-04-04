@@ -250,23 +250,20 @@ void launch_twetobackend(Frontend * fe,
 			break;
 	}
 
-	// output resulting module if optimizing statically
 	if (optimize == staticopt) {
+		// output resulting module if optimizing statically
 		std::string errorinfo;
 		llvm::raw_fd_ostream llfd ("output.bc", errorinfo, None);
 		WriteBitcodeToFile (fe->getLLVMModule(), llfd);
+	} else {
+		// otherwise, launch simulation
+		if(!disablePrintMsg) {
+			std::cout << "########### Launching simulation ############\n"; 
+			std::cout.flush();
+		}
+		assert(simcontext);
+		simcontext->simulate(simduration);
 	}
-
-
-	/**
-	 * Launching simulation
-	 */    
-	if(!disablePrintMsg) {
-		std::cout << "########### Launching simulation ############\n"; 
-		std::cout.flush();
-	}
-	assert(simcontext);
-	simcontext->simulate(simduration);
 }
 
 /**

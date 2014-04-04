@@ -245,6 +245,12 @@ Function *TwetoPassImpl::andOOPIsGone(Function * oldProc,
 	if (!oldProc)
 		return NULL;
 
+	// can't statically optimize if the address of the module isn't predictible
+	// TODO: also handle already-static variables, which also have
+	// fixed $pc-relative addresses
+	if (staticopt == optlevel && !permalloc::is_from (initiatorMod))
+		return NULL;
+
 	LLVMContext & context = getGlobalContext();
 	IntegerType *intType;
 	if (this->is64Bit) {
@@ -279,8 +285,6 @@ Function *TwetoPassImpl::andOOPIsGone(Function * oldProc,
 	Value* thisAddr;
 
 	if (optlevel == staticopt) {
-		// Retrieve a pointer to the initiator module 
-		assert (permalloc::is_from (initiatorMod));
 		ptrdiff_t this_offset = permalloc::get_offset (initiatorMod);
 		ConstantInt *offset = ConstantInt::getSigned(intType, this_offset);
 		Value* sbase_val = irb->CreateLoad (sbase);
