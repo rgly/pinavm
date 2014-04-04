@@ -7,6 +7,8 @@ SET(LLVM_EXT bc)
 function(build_llvm_bitcode f_target_name f_src_list)
   set(f_target_file ${CMAKE_CURRENT_BINARY_DIR}/${f_target_name}.${LLVM_EXT})
   set(f_compiled_target_file ${CMAKE_CURRENT_BINARY_DIR}/${f_target_name}.exe)
+  set(f_staticopt_bc_target_file ${CMAKE_CURRENT_BINARY_DIR}/output.bc)
+  set(f_staticopt_target_file ${CMAKE_CURRENT_BINARY_DIR}/${f_target_name}.opt)
 
   # for each .cpp file, LLVMC would generate .s file in binary dir.
   foreach(f_temp_src ${${f_src_list}})
@@ -35,7 +37,18 @@ function(build_llvm_bitcode f_target_name f_src_list)
     -o ${f_compiled_target_file} -L ${CMAKE_BINARY_DIR}
     -L ${CMAKE_BINARY_DIR}/external/basic -ltlm-basic -lsystemc_lib -lpthread VERBATIM)
 
+  add_custom_command(OUTPUT ${f_staticopt_bc_target_file}
+    DEPENDS ${f_target_file} pinavm
+    COMMAND $<TARGET_FILE:pinavm> -b static -dis-dbg-msg ${f_target_file} VERBATIM)
+
+  add_custom_command(OUTPUT ${f_staticopt_target_file}
+    DEPENDS ${f_staticopt_bc_target_file} systemc_lib tlm-basic
+    COMMAND ${LLVM_COMPILER} ${f_staticopt_bc_target_file}
+    -o ${f_staticopt_target_file} -lsystemc_lib -ltlm-basic -L ${CMAKE_BINARY_DIR}
+    -L ${CMAKE_BINARY_DIR}/external/basic -lpthread VERBATIM)
+
   add_custom_target(${f_target_name} DEPENDS ${f_target_file})
   add_custom_target(${f_target_name}.exe DEPENDS ${f_compiled_target_file})
+  add_custom_target(${f_target_name}.opt DEPENDS ${f_staticopt_target_file})
 endfunction(build_llvm_bitcode)
 

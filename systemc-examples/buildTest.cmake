@@ -8,6 +8,7 @@ function(add_pinavm_test f_name f_backend_list f_source_list f_arg_list)
     build_llvm_bitcode(${f_name} ${f_source_list})
     add_dependencies(gen_test_source ${f_name})
     add_dependencies(gen_test_internal ${f_name}.exe)
+    add_dependencies(gen_test_opt ${f_name}.opt)
   endif()
 
   foreach(temp_backend ${${f_backend_list}})

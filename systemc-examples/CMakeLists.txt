@@ -6,6 +6,7 @@ SET(TWETO_BACKENDS tweto)
 # target so that we can generate all input files with "make gen_test_source"
 add_custom_target(gen_test_source)
 add_custom_target(gen_test_internal)
+add_custom_target(gen_test_opt)
 add_dependencies(pinavm gen_test_source)
 
 # collect all the directory containing CMakeLists.txt
