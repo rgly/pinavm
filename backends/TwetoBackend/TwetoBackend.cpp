@@ -63,12 +63,7 @@ using namespace llvm;
                    cl::init(false));
 }*/
 
-static IRBuilder<> *IRB = 0; 
-static DataLayout *TD = NULL;
 static Module *llvmMod = 0;
-static PassManager *PM = NULL;
-typedef std::pair<intptr_t, const Function *> IntFctPair;
-static std::vector<IntFctPair> addr2function;
 GlobalVariable* sbase;
 
 
@@ -86,12 +81,9 @@ static void tweto_optimize(Frontend * fe,
 	llvmMod = fe->getLLVMModule();
 	LLVMContext &Context = getGlobalContext();
     
-	// Initialize the builder
-	IRB = new IRBuilder<>(Context);    
-
 	// Build up all of the passes that we want to do to the module.
-	TD = new DataLayout(llvmMod);
-	PM = new PassManager();
+	DataLayout* TD = new DataLayout(llvmMod);
+	PassManager* PM = new PassManager();
 	// Defines target properties related to datatype  
 	// size/offset/alignment information
 	PM->add(TD); 
@@ -99,12 +91,14 @@ static void tweto_optimize(Frontend * fe,
     
 	// initialize the llvm global stack_base variable
 	sbase = new GlobalVariable (*llvmMod,
-			IRB->getInt8PtrTy(), false,
+			Type::getInt8PtrTy(Context), false,
 			GlobalValue::ExternalLinkage, NULL, "stack_base",
 			0, GlobalVariable::NotThreadLocal, 0, true);
 
 	// Execute all of the passes scheduled for execution
 	PM->run(*llvmMod);
+	delete PM;
+	delete TD;
 }
 
 void launch_twetobackend(Frontend * fe,
