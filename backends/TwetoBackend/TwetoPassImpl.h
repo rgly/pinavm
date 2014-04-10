@@ -42,6 +42,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Config/config.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include "llvm/IR/IRBuilder.h"
 
 #include <map>
 #include <vector>
@@ -73,11 +74,28 @@ namespace sc_core {
 	class sc_time;
 	class sc_simcontext;
 }
+
 // if external/basic/basic.h is included, it links to systemc.h to
 // TwetoPass.cpp. Results rtti & no-rtti conflict. So make a copy here.
 namespace basic {
 	typedef uint32_t addr_t;
+	class target_module_base;
 }
+
+// Handy structure that keeps the 
+// informations for a possible call creation
+struct CallInfo {
+	// Target module info 
+	// the value is an integer, but ConstantInt would require upcasts
+	basic::target_module_base *targetMod;
+	const llvm::Type *targetType;
+	// Argument info
+	llvm::Value *dataArg;
+	llvm::Value *addrArg;
+	// Call info
+	llvm::Instruction *oldcall;
+	llvm::Instruction *newcall;
+};
 
 //============================================================================
 class TwetoPassImpl {
@@ -90,10 +108,10 @@ class TwetoPassImpl {
 	ExecutionEngine *engine;
 	enum tweto_opt_level optlevel;
 	bool disableMsg;
-	bool is64Bit;
 	SCElab *elab;
 	FunctionPassManager *funPassManager;
 	Module *llvmMod;
+	Type *intptrType;
 
       public:
 	TwetoPassImpl(Frontend * fe, ExecutionEngine * ee,
@@ -102,14 +120,11 @@ class TwetoPassImpl {
 
       private:
 	void optimize(sc_core::sc_module * initiatorMod);
-	void replaceCallsInProcess(sc_core::sc_module * initiatorMod,
-				   sc_core::sc_process_b * proc);
-	sc_core::sc_module * getTargetModule(sc_core::sc_module *
-					     initiatorMod,
-					     basic::addr_t a);
+	void inlineBasicIO(sc_core::sc_module*, llvm::Function*);
 	Function* andOOPIsGone(Function * oldProc,
 			       sc_core::sc_module * initiatorMod);
 	Function* findFunction(sc_core::sc_module*, sc_core::sc_process_b*);
+	Value* createRelocatablePointer (Type*, void*, IRBuilder<>*);
 	void MSG(std::string msg);
 
 };

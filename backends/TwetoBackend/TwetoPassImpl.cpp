@@ -61,6 +61,11 @@
 
 int proc_counter = 0;
 
+extern const std::string wFunName =
+    "_ZN5basic21initiator_socket_baseILb0EE5writeERKjji";
+extern const std::string rFunName =
+    "_ZN5basic21initiator_socket_baseILb0EE4readERKjRji";
+
 extern GlobalVariable* sbase;
 
 // =============================================================================
@@ -79,12 +84,13 @@ TwetoPassImpl::TwetoPassImpl(Frontend * fe, ExecutionEngine * ee,
 	this->optlevel = optimize;
 	this->disableMsg = disableMsg;
 	this->elab = fe->getElab();
+	LLVMContext& c = getGlobalContext();
 	// Checking machine's data size
 	int n = sizeof(void *);
 	if (n == 8)
-		this->is64Bit = true;
+		this->intptrType = Type::getInt64Ty(c);
 	else			// n = 4
-		this->is64Bit = false;
+		this->intptrType = Type::getInt32Ty(c);
 }
 
 
@@ -103,7 +109,6 @@ bool TwetoPassImpl::runOnModule(Module & M)
 	this->llvmMod = LinkExternalBitcode(this->llvmMod,
 					    "backends/TwetoBackend/runtime_lib/tweto_call_method.bc");
 
-#if 0
 	// Retrieve the method that does all the vtable calculations
 	// in order to call the actual 'write' method (see replaceCallsInProcess)
 	this->writeFun =
@@ -125,7 +130,6 @@ bool TwetoPassImpl::runOnModule(Module & M)
 	}
 
 	writeFun->dump();
-#endif
 
 	// Initialize function passes
 	DataLayout *target = new DataLayout(this->llvmMod);
@@ -172,46 +176,32 @@ bool TwetoPassImpl::runOnModule(Module & M)
 void TwetoPassImpl::optimize(sc_core::sc_module * initiatorMod)
 {
 	// Looking for calls in process
-	std::vector < std::string > doneThreads;
-	std::vector < std::string > doneMethods;
-	std::vector < std::string >::iterator it;
-	std::string fctName;
 	sc_core::sc_process_table * processes =
 	    initiatorMod->sc_get_curr_simcontext()->m_process_table;
 	sc_core::sc_thread_handle thread_p;
 	for (thread_p = processes->thread_q_head();
 	     thread_p; thread_p = thread_p->next_exist()) {
 		sc_core::sc_process_b * proc = thread_p;
-		// Test if the thread's function has already 
-		// been optimized for this target
-		fctName = proc->func_process;
-		it = find(doneThreads.begin(), doneThreads.end(), fctName);
-		if (it == doneThreads.end()) {
-			doneThreads.push_back(fctName);
-			Function* f = findFunction (initiatorMod, proc);
-			if (!f)
-				continue;
-			Function* f2 = andOOPIsGone (f, initiatorMod);
-			proc->m_bc_semantics_p = f2;
-		}
+		if (proc->m_semantics_host_p != initiatorMod)
+			continue;
+		Function* f = findFunction (initiatorMod, proc);
+		if (!f)
+			continue;
+		Function* f2 = andOOPIsGone (f, initiatorMod);
+		proc->m_bc_semantics_p = f2;
 	}
 	sc_core::sc_method_handle method_p;
 	for (method_p = processes->method_q_head();
 	     method_p; method_p = method_p->next_exist()) {
 		//sc_core::sc_method_process *proc = method_p;
 		sc_core::sc_process_b * proc = method_p;
-		// Test if the method's function has already 
-		// been optimized for this target
-		fctName = proc->func_process;
-		it = find(doneMethods.begin(), doneMethods.end(), fctName);
-		if (it == doneMethods.end()) {
-			doneMethods.push_back(fctName);
-			Function* f = findFunction (initiatorMod, proc);
-			if (!f)
-				continue;
-			Function* f2 = andOOPIsGone (f, initiatorMod);
-			proc->m_bc_semantics_p = f2;
-		}
+		if (proc->m_semantics_host_p != initiatorMod)
+			continue;
+		Function* f = findFunction (initiatorMod, proc);
+		if (!f)
+			continue;
+		Function* f2 = andOOPIsGone (f, initiatorMod);
+		proc->m_bc_semantics_p = f2;
 	}
 }
 
@@ -226,6 +216,24 @@ Function* TwetoPassImpl::findFunction (sc_core::sc_module* initiatorMod,
 	// Gets the function by its name (dlsym equivalent)
 	Function *f = this->llvmMod->getFunction(mainFctName);
 	return f;
+}
+
+Value* TwetoPassImpl::createRelocatablePointer
+	(Type* type, void* initiatorMod, IRBuilder<>* irb)
+{
+	if (optlevel == staticopt) {
+		assert (permalloc::is_from (initiatorMod));
+		ptrdiff_t this_offset = permalloc::get_offset (initiatorMod);
+		Constant *offset = ConstantInt::getSigned(intptrType, this_offset);
+		Value* sbase_val = irb->CreateLoad (sbase);
+		Value* pi8thisAddr = irb->CreateGEP
+			(sbase_val, std::vector<Value*>(1,offset));
+		return irb->CreateBitCast (pi8thisAddr, type);
+	} else {
+		Constant *initiatorModVal = ConstantInt::getSigned(intptrType,
+			      reinterpret_cast<intptr_t> (initiatorMod));
+		return irb->CreateIntToPtr(initiatorModVal, type, "this_ptr");
+	}
 }
 
 // =============================================================================
@@ -252,12 +260,6 @@ Function *TwetoPassImpl::andOOPIsGone(Function * oldProc,
 		return NULL;
 
 	LLVMContext & context = getGlobalContext();
-	IntegerType *intType;
-	if (this->is64Bit) {
-		intType = Type::getInt64Ty(context);
-	} else {
-		intType = Type::getInt32Ty(context);
-	}
 
 	FunctionType *funType = oldProc->getFunctionType();
 	Type *type = funType->getParamType(0);
@@ -282,20 +284,8 @@ Function *TwetoPassImpl::andOOPIsGone(Function * oldProc,
 	IRBuilder <> *irb = new IRBuilder <> (context);
 	irb->SetInsertPoint(bb);
 
-	Value* thisAddr;
+	Value* thisAddr = createRelocatablePointer (type, initiatorMod, irb);
 
-	if (optlevel == staticopt) {
-		ptrdiff_t this_offset = permalloc::get_offset (initiatorMod);
-		ConstantInt *offset = ConstantInt::getSigned(intType, this_offset);
-		Value* sbase_val = irb->CreateLoad (sbase);
-		Value* pi8thisAddr = irb->CreateGEP
-			(sbase_val, std::vector<Value*>(1,offset));
-		thisAddr = irb->CreateBitCast (pi8thisAddr, type);
-	} else {
-		ConstantInt *initiatorModVal = ConstantInt::getSigned(intType,
-			      reinterpret_cast<intptr_t> (initiatorMod));
-		thisAddr = irb->CreateIntToPtr(initiatorModVal, type, "this_ptr");
-	}
 	CallInst *ci = irb->CreateCall(oldProc,
 				       ArrayRef < Value * >(std::vector<Value*>(1,thisAddr)));
 	//bb->getInstList().insert(ci, thisAddr);
@@ -314,6 +304,9 @@ Function *TwetoPassImpl::andOOPIsGone(Function * oldProc,
 		assert(success);
 		verifyFunction(*newProc);
 	}
+
+	// further optimize the function
+	inlineBasicIO (initiatorMod, newProc);
 
 	newProc->dump();
 	return newProc;

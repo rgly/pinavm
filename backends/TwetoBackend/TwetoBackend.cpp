@@ -98,7 +98,6 @@ static void tweto_optimize(Frontend * fe,
 	// Execute all of the passes scheduled for execution
 	PM->run(*llvmMod);
 	delete PM;
-	delete TD;
 }
 
 void launch_twetobackend(Frontend * fe,
