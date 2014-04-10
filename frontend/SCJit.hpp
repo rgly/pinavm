@@ -25,6 +25,7 @@ class SCJit {
 	void doFinalization();
 	void elaborate();
 	SCElab *getElab();
+	// deprecated: these get/set functions are useless except as memory
 	void setCurrentProcess(Process * process);
 	Process *getCurrentProcess();
 	void fillArgsType(Function * f, std::vector <Type * >*argsType);
@@ -57,8 +58,11 @@ class SCJit {
 		RetTy (*fct) (sc_core::sc_module *) =
 			(RetTy (*)(sc_core::sc_module *)) ee->getPointerToFunction(fctToJit);
 		
-		IRModule* mod = this->getCurrentProcess()->getModule();
-		TRACE_4("********************* SC MODULE : " << mod << "\n");
+		IRModule* mod = NULL;
+		if (this->getCurrentProcess()) {
+			mod = this->getCurrentProcess()->getModule();
+			TRACE_4("********************* SC MODULE : " << mod << "\n");
+		}
 		RetTy res = fct(this->elab->getSCModule(mod));
 		
 		fctToJit->dropAllReferences();

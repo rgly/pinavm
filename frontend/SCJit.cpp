@@ -70,13 +70,17 @@ void SCJit::elaborate()
 
 void SCJit::setCurrentProcess(Process * process)
 {
+	this->currentProcess = process;
+	if (!process)
+		return;
 	TRACE_4("#################### SET Process : " << process << "\n");
 	TRACE_4("#################### Associated module : " << process->getModule() << "\n");
-	this->currentProcess = process;
 }
 
 Process *SCJit::getCurrentProcess()
 {
+	if (!this->currentProcess)
+		return NULL;
 	TRACE_4("#################### GET current process : " << this->currentProcess << "\n");
 	TRACE_4("#################### Associated module : " << this->currentProcess->getModule() << "\n");
 	return this->currentProcess;
@@ -186,6 +190,11 @@ Function *SCJit::buildFct(Function * f, FunctionType * FT, Instruction* inst, Va
 
 void SCJit::fillArgsType(Function * f, std::vector <Type * >*argsType)
 {
+	// if f is a SC_ENTRY_FUNC_OPT, there is no arg
+	// but calling it with a superfluous arg is no problem
+	// (in x86 and amd64 cc at least)
+	if (f->getArgumentList().empty())
+		return;
 	Type *t = f->getArgumentList().front().getType();
 	argsType->push_back(t);
 }
