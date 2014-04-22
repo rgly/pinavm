@@ -12,6 +12,7 @@
 
 #include "basic.h"
 #include "bus.h"
+#include <sysc/pinavm/permalloc.h>
 
 
 using namespace std;
@@ -56,23 +57,23 @@ int sc_main (int argc, char ** argv) {
          */
 
 
-    target b("Bob");
-    Bus router("Router");
+    target* b = permalloc::obj<target>("Bob");
+    Bus* router = permalloc::obj<Bus>("Router");
 
     /* Bob is mapped at addresses [0, 100[, i.e. ... */
-    router.map(b.socket, 0, 100);
+    router->map(b->socket, 0, 100);
 
     std::vector< initiator* > m_vec;
     std::stringstream name;
     for (int i = 1; i <= 100; i++) {
         name << "Alice_" << i; 
-        initiator *current = new initiator(name.str().c_str());
+        initiator *current = permalloc::obj<initiator>(name.str().c_str());
         m_vec.push_back(current);
-        current->socket.bind(router.target);
+        current->socket.bind(router->target);
         name.str("");
     }
     
-    router.initiator.bind(b.socket);
+    router->initiator.bind(b->socket);
 
     /* and start simulation */
     sc_start();
