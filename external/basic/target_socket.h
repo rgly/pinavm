@@ -11,10 +11,10 @@ namespace basic {
    public:
       target_module_base();
       virtual void dummy();
-      virtual tlm::tlm_response_status write(const basic::addr_t &a,
+      virtual tlm::tlm_response_status write(basic::addr_t a,
 					     const basic::data_t &d) = 0;
       
-      virtual tlm::tlm_response_status read (const basic::addr_t &a,
+      virtual tlm::tlm_response_status read (basic::addr_t a,
 					     /* */ basic::data_t &d) = 0;
    };
 

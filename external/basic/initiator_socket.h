@@ -36,10 +36,10 @@ namespace basic {
          }
       }
 
-      tlm::tlm_response_status read(const addr_t& addr, data_t& data, int port = 0) {
+      tlm::tlm_response_status read(addr_t addr, data_t& data, int port = 0) {
          
           // Testing the bypass
-          BASIC_TRACE_DEBUG("[!] CALL THE INITIATOR'S READ FUNCTION [!]\n");
+          //BASIC_TRACE_DEBUG("[!] CALL THE INITIATOR'S READ FUNCTION [!]\n");
           
           tlm::tlm_generic_payload* trans;
           // allocate the payload
@@ -69,10 +69,10 @@ namespace basic {
          return trans->get_response_status();
       }
 
-      tlm::tlm_response_status write(const addr_t& addr, data_t data, int port = 0) {
+      tlm::tlm_response_status write(addr_t addr, data_t data, int port = 0) {
          
           // Testing the bypass
-          BASIC_TRACE_DEBUG("[!] CALL THE INITIATOR'S WRITE FUNCTION [!]\n");
+          //BASIC_TRACE_DEBUG("[!] CALL THE INITIATOR'S WRITE FUNCTION [!]\n");
           
           tlm::tlm_generic_payload* trans;
 

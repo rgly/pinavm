@@ -35,13 +35,13 @@ struct initiator : sc_module {
 class target : public basic::target_module_base {
 public:
 
-    tlm::tlm_response_status write(const basic::addr_t &a,
+    tlm::tlm_response_status write(basic::addr_t a,
                                    const basic::data_t &d) {
         cout << "j'ai reçu : " << d << endl;
         return tlm::TLM_OK_RESPONSE;
     }
     
-    tlm::tlm_response_status read (const basic::addr_t &a,
+    tlm::tlm_response_status read (basic::addr_t a,
                                    /* */ basic::data_t &d) {
         SC_REPORT_ERROR("TLM", "non implémenté");
         abort();

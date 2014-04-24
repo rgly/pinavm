@@ -66,11 +66,11 @@ void Bus::print_addr_map() {
 }
 
 tlm::tlm_response_status
-Bus::read(const basic::addr_t &a, /* */ basic::data_t& d)
+Bus::read(basic::addr_t a, /* */ basic::data_t& d)
 {
     
     // Testing the bypass
-    BASIC_TRACE_DEBUG("[!] CALL THE BUS'S READ FUNCTION [!]\n");    
+    //BASIC_TRACE_DEBUG("[!] CALL THE BUS'S READ FUNCTION [!]\n");    
 	if(a % sizeof(basic::data_t)) {
 		SC_REPORT_ERROR(name(),
 				"unaligned read");
@@ -98,11 +98,11 @@ Bus::read(const basic::addr_t &a, /* */ basic::data_t& d)
 
 
 tlm::tlm_response_status
-Bus::write(const basic::addr_t &a, const basic::data_t &d)
+Bus::write(basic::addr_t a, const basic::data_t &d)
 {
     
     // Testing the bypass
-    BASIC_TRACE_DEBUG("[!] CALL THE BUS'S WRITE FUNCTION [!]\n");
+    //BASIC_TRACE_DEBUG("[!] CALL THE BUS'S WRITE FUNCTION [!]\n");
     
 	if(a % sizeof(basic::data_t)) {
 		SC_REPORT_ERROR(name(),
@@ -130,7 +130,7 @@ Bus::write(const basic::addr_t &a, const basic::data_t &d)
 }
 
 bool 
-Bus::checkAdressRange(const basic::addr_t &a) {
+Bus::checkAdressRange(basic::addr_t a) {
     addr_map_t::iterator it = addr_map.find(addr_range(a, a));
     if(it==addr_map.end()) {
         return true; // not in range
@@ -142,7 +142,7 @@ Bus::checkAdressRange(const basic::addr_t &a) {
 
 bool
 Bus::checkAdressConcordance(basic::compatible_socket *target, 
-                            const basic::addr_t &a) {
+                            basic::addr_t a) {
     
     addr_range range = addr_range(a, a);    
     

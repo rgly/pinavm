@@ -17,15 +17,15 @@ SC_MODULE(Bus), basic::target_module_base,
 	Bus(sc_core::sc_module_name name);
 
 	tlm::tlm_response_status
-		read(const basic::addr_t &a, /* */ basic::data_t& d);
+		read(basic::addr_t a, /* */ basic::data_t& d);
 
 	tlm::tlm_response_status
-		write(const basic::addr_t &a, const basic::data_t &d);
+		write(basic::addr_t a, const basic::data_t &d);
 
 	void map(basic::compatible_socket& port, basic::addr_t start_addr, basic::addr_t size);
-    bool checkAdressRange(const basic::addr_t &a);
+    bool checkAdressRange(basic::addr_t a);
     bool checkAdressConcordance(basic::compatible_socket *target, 
-                                const basic::addr_t &a);
+                                basic::addr_t a);
         
 private:
 
