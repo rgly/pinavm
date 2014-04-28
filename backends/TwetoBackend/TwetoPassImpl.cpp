@@ -62,9 +62,9 @@
 int proc_counter = 0;
 
 extern const std::string wFunName =
-    "_ZN5basic21initiator_socket_baseILb0EE5writeERKjji";
+    "_ZN5basic21initiator_socket_baseILb0EE5writeEjji";
 extern const std::string rFunName =
-    "_ZN5basic21initiator_socket_baseILb0EE4readERKjRji";
+    "_ZN5basic21initiator_socket_baseILb0EE4readEjRji";
 
 extern GlobalVariable* sbase;
 
