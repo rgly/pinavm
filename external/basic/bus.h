@@ -52,7 +52,7 @@ private:
 	addr_map_t addr_map;
 
 public:
-	basic::compatible_socket* getUniqueTarget(basic::addr_t min, basic::addr_t max);
+	basic::compatible_socket* getUniqueTarget(basic::addr_t min, basic::addr_t max, basic::addr_t* offset);
 
 };
 

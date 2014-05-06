@@ -61,7 +61,7 @@ int sc_main (int argc, char ** argv) {
         Bus* router = permalloc::obj<Bus>("Router");
 
         /* Bob is mapped at addresses [0, 100[, i.e. ... */
-        router->map(b->socket, 0, 100);
+        router->map(b->socket, 4, 100);
 
         /* connect components to the bus */
         a->socket.bind(router->target);

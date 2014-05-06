@@ -97,6 +97,9 @@ struct CallInfo {
 	// Call info
 	llvm::Instruction *oldcall;
 	llvm::Instruction *newcall;
+	// Nature of the memory op
+	basic::addr_t offset;
+	bool isWrite;
 };
 
 //============================================================================

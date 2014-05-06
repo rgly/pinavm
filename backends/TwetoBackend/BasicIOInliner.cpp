@@ -67,7 +67,8 @@ extern const std::string wFunName;
 extern const std::string rFunName;
 
 static sc_core::sc_module* getTargetModule(sc_core::sc_module* initiatorMod,
-                                           basic::addr_t min, basic::addr_t max);
+                                           basic::addr_t min, basic::addr_t max,
+					   basic::addr_t* offset);
 
 // =============================================================================
 // inlineBasicIO
@@ -124,7 +125,7 @@ void TwetoPassImpl::inlineBasicIO(sc_core::sc_module* initiatorMod,
 
 			// Retreive the target module using the address
 			sc_core::sc_module* targetMod =
-			    getTargetModule(initiatorMod, min, max);
+			    getTargetModule(initiatorMod, min, max, &info->offset);
 
 			// can't optimize if the target component isn't predictible
 			if (!targetMod)
@@ -138,6 +139,7 @@ void TwetoPassImpl::inlineBasicIO(sc_core::sc_module* initiatorMod,
 			info->targetMod =
 			     dynamic_cast<basic::target_module_base*>(targetMod);
 			info->dataArg = cs.getArgument(2);
+			info->isWrite = true;
 			work->push_back(info);
 		} else
 			// === Read ===
@@ -166,8 +168,12 @@ void TwetoPassImpl::inlineBasicIO(sc_core::sc_module* initiatorMod,
 		Value* modPtr = createRelocatablePointer
 			(writeFunType->getParamType(0), i->targetMod, &irb);
 
+		// Compute the relative address in the target socket's POV
+		Value* addr = irb.CreateSub (i->addrArg, ConstantInt::getSigned
+				(Type::getInt32Ty(context), i->offset));
+
 		// Create the new call
-		Value *args[] = { modPtr, i->addrArg, i->dataArg };
+		Value *args[] = { modPtr, addr, i->dataArg };
 		i->newcall =
 		    CallInst::Create(this->writeFun,
 				     ArrayRef < Value * >(args, 3));
@@ -207,7 +213,8 @@ void TwetoPassImpl::inlineBasicIO(sc_core::sc_module* initiatorMod,
 // connected to the same bus.
 // =============================================================================
 static sc_core::sc_module* getTargetModule(sc_core::sc_module* initiatorMod,
-                                           basic::addr_t min, basic::addr_t max)
+                                           basic::addr_t min, basic::addr_t max,
+					   basic::addr_t* offset)
 {
 
 	std::vector < sc_core::sc_port_base * >*ports =
@@ -230,7 +237,7 @@ static sc_core::sc_module* getTargetModule(sc_core::sc_module* initiatorMod,
 		if (!b)
 			continue;
 		basic::compatible_socket * target =
-			b->getUniqueTarget(min, max);
+			b->getUniqueTarget(min, max, offset);
 		if (!target)
 			continue;
 

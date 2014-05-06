@@ -166,13 +166,15 @@ Bus::addr_range::isContainedIn (Bus::addr_range b)
 }
 
 basic::compatible_socket*
-Bus::getUniqueTarget(basic::addr_t min, basic::addr_t max)
+Bus::getUniqueTarget(basic::addr_t min, basic::addr_t max, basic::addr_t* offset)
 {
 	addr_range r(min, max);
 	for (port_map_t::iterator it = port_map.begin(); it != port_map.end(); ++it) {
 		addr_range cur = it->second;
 		basic::compatible_socket* s = it->first;
 		if (r.isContainedIn (cur)) {
+			if (offset)
+				*offset = cur.begin;
 			return s;
 		}
 	}
