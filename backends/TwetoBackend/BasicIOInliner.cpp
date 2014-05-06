@@ -67,7 +67,7 @@ extern const std::string wFunName;
 extern const std::string rFunName;
 
 static sc_core::sc_module* getTargetModule(sc_core::sc_module* initiatorMod,
-                                           basic::addr_t a);
+                                           basic::addr_t min, basic::addr_t max);
 
 // =============================================================================
 // inlineBasicIO
@@ -113,25 +113,22 @@ void TwetoPassImpl::inlineBasicIO(sc_core::sc_module* initiatorMod,
 			llvm::SCEV const *se_value = se->getSCEV (info->addrArg);
 			llvm::ConstantRange value_range = se->getUnsignedRange
 				(se_value);
-			if (!(value_range.isSingleElement()))
-				continue;
-			basic::addr_t value = value_range.getSingleElement()
-				->getLimitedValue(~(static_cast<basic::addr_t>(0)));
+			basic::addr_t const admax = ~(static_cast<basic::addr_t>(0));
+			basic::addr_t min = value_range.getUnsignedMin()
+						.getLimitedValue(admax),
+			              max = value_range.getUnsignedMax()
+						.getLimitedValue(admax);
 			oss.str("");
-			oss << std::hex << value;
+			oss << std::hex << min << " to 0x" << max;
 			MSG("0x" + oss.str() + "\n");
-			basic::addr_t a = value;
 
-			// Checking address alignment
-			if (a % sizeof(basic::data_t)) {
-				std::cerr <<
-				    "  unaligned write : "
-				    << std::hex << a << std::endl;
-				abort();
-			}
 			// Retreive the target module using the address
 			sc_core::sc_module* targetMod =
-			    getTargetModule(initiatorMod, a);
+			    getTargetModule(initiatorMod, min, max);
+
+			// can't optimize if the target component isn't predictible
+			if (!targetMod)
+				continue;
 
 			// Save informations to build a new call later
 			FunctionType *writeFunType =
@@ -202,7 +199,6 @@ void TwetoPassImpl::inlineBasicIO(sc_core::sc_module* initiatorMod,
 	verifyFunction(*procf);
 }
 
-
 // =============================================================================
 // getTargetModule
 // 
@@ -211,7 +207,7 @@ void TwetoPassImpl::inlineBasicIO(sc_core::sc_module* initiatorMod,
 // connected to the same bus.
 // =============================================================================
 static sc_core::sc_module* getTargetModule(sc_core::sc_module* initiatorMod,
-                                           basic::addr_t a)
+                                           basic::addr_t min, basic::addr_t max)
 {
 
 	std::vector < sc_core::sc_port_base * >*ports =
@@ -233,26 +229,19 @@ static sc_core::sc_module* getTargetModule(sc_core::sc_module* initiatorMod,
 		Bus *b = dynamic_cast < Bus * >(tsb->get_parent_object());
 		if (!b)
 			continue;
-		for (int i = 0; i < b->initiator.size(); ++i) {
-			basic::compatible_socket * target =
-			    dynamic_cast <
-			    basic::compatible_socket * >(b->initiator[i]);
-			if (!target)
-				continue;
-			bool concordErr =
-			    b->checkAdressConcordance(target, a);
-			if (!concordErr)
-				continue;
+		basic::compatible_socket * target =
+			b->getUniqueTarget(min, max);
+		if (!target)
+			continue;
 
-			std::string targetName = target->name();
-			//MSG(" = "+initiatorName+" -> "+targetName+"\n");
+		std::string targetName = target->name();
+		//MSG(" = "+initiatorName+" -> "+targetName+"\n");
 
-			sc_core::sc_object * o = target->get_parent();
-			sc_core::sc_module *
-			    targetMod =
-			    dynamic_cast < sc_core::sc_module * >(o);
-			return targetMod;
-		}
+		sc_core::sc_object * o = target->get_parent();
+		sc_core::sc_module * targetMod =
+		    dynamic_cast < sc_core::sc_module * >(o);
+		return targetMod;
 	}
 	return NULL;
 }
+

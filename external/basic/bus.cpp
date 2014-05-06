@@ -159,3 +159,23 @@ Bus::checkAdressConcordance(basic::compatible_socket *target,
     return false;
 }
 
+bool
+Bus::addr_range::isContainedIn (Bus::addr_range b)
+{
+	return ((begin >= b.begin) && (end <= b.end));
+}
+
+basic::compatible_socket*
+Bus::getUniqueTarget(basic::addr_t min, basic::addr_t max)
+{
+	addr_range r(min, max);
+	for (port_map_t::iterator it = port_map.begin(); it != port_map.end(); ++it) {
+		addr_range cur = it->second;
+		basic::compatible_socket* s = it->first;
+		if (r.isContainedIn (cur)) {
+			return s;
+		}
+	}
+	return NULL;
+}
+

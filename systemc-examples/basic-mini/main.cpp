@@ -22,11 +22,8 @@ struct initiator : sc_module {
         basic::initiator_socket<initiator> socket;
         void thread(void) {
             
-            basic::addr_t addr = 4;
-            basic::addr_t valc = 4;
-            for (basic::data_t val = 1; val <= 10; val++) {
-                val++; 
-                socket.write(addr, val);
+            for (basic::addr_t addr = 4; addr <= 30; addr+=4) {
+                socket.write(addr, 42);
             }
             
         }
@@ -39,7 +36,7 @@ struct target : sc_module, basic::target_module_base {
         basic::target_socket<target> socket;
         tlm::tlm_response_status write(basic::addr_t a,
                                        const basic::data_t &d) {
-                cout << "j'ai reçu : " << d << endl;
+                cout << "j'ai reçu : " << d << " à l'adresse " << a << endl;
                 return tlm::TLM_OK_RESPONSE;
         }
         tlm::tlm_response_status read(basic::addr_t a,

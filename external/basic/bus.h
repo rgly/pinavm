@@ -42,6 +42,7 @@ private:
 		bool operator<(const addr_range& ar) const {
 			return(end < ar.begin);
 		}
+		bool isContainedIn (addr_range b);
 	};
 
 	typedef std::multimap<basic::compatible_socket*, addr_range> port_map_t;
@@ -49,6 +50,10 @@ private:
 
 	typedef std::map<addr_range, int> addr_map_t;
 	addr_map_t addr_map;
+
+public:
+	basic::compatible_socket* getUniqueTarget(basic::addr_t min, basic::addr_t max);
+
 };
 
 #endif
