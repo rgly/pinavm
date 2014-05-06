@@ -87,6 +87,7 @@ static void tweto_optimize(Frontend * fe,
 	// Defines target properties related to datatype  
 	// size/offset/alignment information
 	PM->add(TD); 
+	PM->add(createPromoteMemoryToRegisterPass());
 	PM->add(new TwetoPass(fe, NULL, optlevel, disableMsg));
     
 	// initialize the llvm global stack_base variable

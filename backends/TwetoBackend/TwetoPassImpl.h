@@ -28,6 +28,7 @@
 #include "llvm/Analysis/FindUsedTypes.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
+#include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/Transforms/Scalar.h"
@@ -63,6 +64,7 @@ class Event;
 class SCJit;
 class Channel;
 class Port;
+class TwetoPass;
 
 
 using namespace llvm;
@@ -99,6 +101,7 @@ struct CallInfo {
 
 //============================================================================
 class TwetoPassImpl {
+	friend class TwetoPass;
       private:
 	int callOptCounter;
 	int rwCallsCounter;
@@ -110,13 +113,16 @@ class TwetoPassImpl {
 	bool disableMsg;
 	SCElab *elab;
 	FunctionPassManager *funPassManager;
+	ScalarEvolution* se;
 	Module *llvmMod;
 	Type *intptrType;
+	TwetoPass* parent;
 
       public:
 	TwetoPassImpl(Frontend * fe, ExecutionEngine * ee,
 		      enum tweto_opt_level optimize, bool disableMsg);
 	bool runOnModule(Module & M);
+	void getAnalysisUsage (llvm::AnalysisUsage& AU);
 
       private:
 	void optimize(sc_core::sc_module * initiatorMod);

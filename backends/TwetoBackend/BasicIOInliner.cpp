@@ -25,6 +25,7 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Analysis/Verifier.h"
+#include "llvm/Analysis/ScalarEvolution.h"
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/Support/InstIterator.h>
@@ -59,6 +60,7 @@
 #include "basic.h"
 #include "bus.h"
 
+#include "TwetoPass.h"
 #include "TwetoPassImpl.h"
 
 extern const std::string wFunName;
@@ -84,6 +86,12 @@ void TwetoPassImpl::inlineBasicIO(sc_core::sc_module* initiatorMod,
 	std::ostringstream oss;
 	std::vector < CallInfo * >*work = new std::vector < CallInfo * >;
 
+	if (procf->isDeclaration())
+		return;
+
+	// do value analysis on the function
+	se = &parent->getAnalysis<ScalarEvolution>(*procf);
+
 	inst_iterator ii;
 	for (ii = inst_begin(procf); ii != inst_end(procf); ii++) {
 		Instruction & i = *ii;
@@ -101,22 +109,14 @@ void TwetoPassImpl::inlineBasicIO(sc_core::sc_module* initiatorMod,
 			CallInfo *info = new CallInfo();
 			info->oldcall = dyn_cast<CallInst>(cs.getInstruction());
 			MSG("       Checking adress : ");
-			// Retrieve the adress argument by executing 
-			// the appropriated piece of code
-			SCJit *scjit = new SCJit(this->llvmMod, this->elab);
-			// the function is self-sufficient
-			scjit->setCurrentProcess (NULL);
-			bool jitErr = false;
 			info->addrArg = cs.getArgument(1);
-			/* write arguments are passed by ref */
-			basic::addr_t value = scjit->jitPointedType<basic::addr_t>
-			    	(procf, info->oldcall, info->addrArg, &jitErr);
-			if (jitErr) {
-				std::cout <<
-				    "       cannot get the address value!"
-				    << std::endl;
+			llvm::SCEV const *se_value = se->getSCEV (info->addrArg);
+			llvm::ConstantRange value_range = se->getUnsignedRange
+				(se_value);
+			if (!(value_range.isSingleElement()))
 				continue;
-			}
+			basic::addr_t value = value_range.getSingleElement()
+				->getLimitedValue(~(static_cast<basic::addr_t>(0)));
 			oss.str("");
 			oss << std::hex << value;
 			MSG("0x" + oss.str() + "\n");
@@ -169,11 +169,8 @@ void TwetoPassImpl::inlineBasicIO(sc_core::sc_module* initiatorMod,
 		Value* modPtr = createRelocatablePointer
 			(writeFunType->getParamType(0), i->targetMod, &irb);
 
-		// Get a the address value
-		LoadInst *addr = new LoadInst(i->addrArg, "", i->oldcall);
-
 		// Create the new call
-		Value *args[] = { modPtr, addr, i->dataArg };
+		Value *args[] = { modPtr, i->addrArg, i->dataArg };
 		i->newcall =
 		    CallInst::Create(this->writeFun,
 				     ArrayRef < Value * >(args, 3));

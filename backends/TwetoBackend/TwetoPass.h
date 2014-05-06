@@ -40,6 +40,7 @@ class TwetoPass:public llvm::ModulePass {
 		  enum tweto_opt_level optimize, bool disableMsg);
 	~TwetoPass();
 	bool runOnModule(llvm::Module & M);
+	virtual void getAnalysisUsage (llvm::AnalysisUsage& AU) const;
 };
 
 
