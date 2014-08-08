@@ -2,7 +2,8 @@ SET(LLVM_RECOMMAND_VERSION 3.3)
 SET(BACKENDS Tweto 42 Promela Simple Hello)
 
 # the llvm libraries which PinaVM need.
-SET(NEED_LLVM_LIB mcjit native jit interpreter nativecodegen linker irreader)
+SET(NEED_LLVM_LIB mcjit native bitwriter jit interpreter
+		nativecodegen linker irreader)
 
 SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -Wall -W -Wno-unused-parameter
 	-Wwrite-strings -pedantic -Wno-long-long)
