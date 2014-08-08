@@ -4,6 +4,7 @@ include(${CMAKE_SOURCE_DIR}/scripts/installLLVM.cmake)
 find_program(LLVM_CONFIG_EXE
   NAMES "${LLVM_ROOT}/bin/llvm-config-${LLVM_RECOMMAND_VERSION}"
         "${LLVM_ROOT}/bin/llvm-config"
+        "llvm-config-${LLVM_RECOMMAND_VERSION}"
         "llvm-config"
 	)
 
