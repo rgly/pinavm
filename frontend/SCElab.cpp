@@ -14,7 +14,6 @@
 
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/Assembly/Writer.h"
 
 
 #include "sysc/kernel/sc_process_table.h"
