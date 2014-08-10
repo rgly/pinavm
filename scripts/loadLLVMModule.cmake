@@ -22,5 +22,5 @@ SET(CMAKE_PREFIX_PATH ${LLVM_ROOT}/share/llvm/cmake)
 find_package(LLVM QUIET)
 
 if(${LLVM_FOUND})
-  llvm_map_components_to_libraries(LLVM_LIBS ${NEED_LLVM_LIB})
+  llvm_map_components_to_libnames(LLVM_LIBS ${NEED_LLVM_LIB})
 endif()
