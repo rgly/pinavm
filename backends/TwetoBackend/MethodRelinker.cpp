@@ -4,7 +4,7 @@
 #include "sysc/kernel/sc_process_table.h"
 #include "sysc/kernel/sc_process.h"
 #include "sysc/pinavm/permalloc.h"
-#include <llvm/Analysis/Verifier.h>
+#include <llvm/IR/Verifier.h>
 
 using namespace llvm;
 using namespace sc_core;

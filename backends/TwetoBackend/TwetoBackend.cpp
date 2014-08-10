@@ -25,7 +25,7 @@
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/Support/FormattedStream.h>
 #include <llvm/PassManager.h>
-#include <llvm/Analysis/Verifier.h>
+#include <llvm/IR/Verifier.h>
 #include <llvm/Transforms/IPO.h>
 #include <llvm/Transforms/Scalar.h>
 #include <llvm/ADT/StringExtras.h>

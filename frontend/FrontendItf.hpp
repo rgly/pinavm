@@ -20,7 +20,7 @@
 //#include "llvm/Support/PassNameParser.h"
 //#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/Analysis/Verifier.h"
+#include "llvm/IR/Verifier.h"
 #include "llvm/Transforms/Scalar.h"
 
 #include "config.h"
