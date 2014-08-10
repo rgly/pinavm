@@ -24,7 +24,7 @@
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/IR/DataLayout.h"
-#include "llvm/Support/CallSite.h"
+#include "llvm/IR/CallSite.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"

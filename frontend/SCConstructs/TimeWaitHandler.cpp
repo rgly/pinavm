@@ -1,7 +1,7 @@
 #include "SCJit.hpp"
 #include "TimeWaitConstruct.hpp"
 #include "TimeWaitHandler.hpp"
-#include <llvm/Support/CallSite.h>
+#include <llvm/IR/CallSite.h>
 #include "Time.hpp"
 
 

@@ -3,7 +3,7 @@
 #include "ReadConstruct.hpp"
 
 #include <llvm/IR/Type.h>
-#include <llvm/Support/CallSite.h>
+#include <llvm/IR/CallSite.h>
 
 using namespace llvm;
 

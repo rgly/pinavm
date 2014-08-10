@@ -13,7 +13,7 @@
 
 #include "BasicHandler.h"
 
-#include <llvm/Support/CallSite.h>
+#include <llvm/IR/CallSite.h>
 
 #include "SCJit.hpp"
 #include "Port.hpp"

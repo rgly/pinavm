@@ -5,7 +5,7 @@
 #include "WriteConstruct.hpp"
 
 #include "sysc/datatypes/int/sc_uint.h"
-#include <llvm/Support/CallSite.h>
+#include <llvm/IR/CallSite.h>
 
 using namespace llvm;
 

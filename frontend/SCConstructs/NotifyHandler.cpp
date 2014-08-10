@@ -2,7 +2,7 @@
 #include "NotifyHandler.hpp"
 #include "NotifyConstruct.hpp"
 #include "Event.hpp"
-#include <llvm/Support/CallSite.h>
+#include <llvm/IR/CallSite.h>
 #include <cassert>
 
 using namespace llvm;

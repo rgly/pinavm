@@ -1,7 +1,7 @@
 #include "SCJit.hpp"
 #include "DeltaWaitConstruct.hpp"
 #include "DeltaWaitHandler.hpp"
-#include <llvm/Support/CallSite.h>
+#include <llvm/IR/CallSite.h>
 
 using namespace llvm;
 
