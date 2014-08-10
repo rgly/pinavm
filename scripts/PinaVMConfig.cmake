@@ -1,4 +1,4 @@
-SET(LLVM_RECOMMAND_VERSION 3.3)
+SET(LLVM_RECOMMAND_VERSION 3.5)
 SET(BACKENDS Tweto 42 Promela Simple Hello)
 
 # the llvm libraries which PinaVM need.
