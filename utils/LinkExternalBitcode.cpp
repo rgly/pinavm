@@ -1,7 +1,7 @@
 #include <string>
 #include <iostream>
 #include "llvm/IR/Module.h"
-#include "llvm/Linker.h"
+#include "llvm/Linker/Linker.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/Support/SourceMgr.h"
