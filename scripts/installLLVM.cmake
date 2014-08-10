@@ -5,6 +5,11 @@
 
 # NOTE that this script requires tar and make command in your OS.
 
+
+# sets the md5 checksum for certain version.
+include(${CMAKE_SOURCE_DIR}/scripts/LLVM_MD5.cmake)
+
+
 MACRO(configure_autoinstall)
   if(NOT DEFINED LLVM_RECOMMAND_VERSION)
     message(FATAL_ERROR "finds no LLVM_RECOMMAND_VERSION")
@@ -13,52 +18,69 @@ MACRO(configure_autoinstall)
   if(${TEST_CMAKE})
     # for test purpose, I don't want to waste bandwidth of llvm.org.
     SET(SITE_URL
-       file://${CMAKE_SOURCE_DIR}/../source-tgz/llvm-${LLVM_RECOMMAND_VERSION})
+       file://${CMAKE_SOURCE_DIR}/../source-tgz)
   else()
     # normal situation.
-    SET(SITE_URL http://llvm.org/releases/${LLVM_RECOMMAND_VERSION})
+    SET(SITE_URL http://llvm.org/releases)
   endif()
 
-  SET(DOWNLOAD_DIR ${CMAKE_BINARY_DIR}/download )
-  SET(LLVM_SUFFIX "-${LLVM_RECOMMAND_VERSION}.src")
+  SET(DOWNLOAD_DIR ${CMAKE_BINARY_DIR}/download)
 
-  SET(LLVM_NAME llvm)
-  SET(LLVM_SOURCE_DIR ${CMAKE_BINARY_DIR}/llvm-source/${LLVM_NAME})
+  # force to use newest patch version
+  if (${LLVM_RECOMMAND_VERSION} STREQUAL "3.4")
+    SET(LLVM_PATCH_VERSION "3.4.2")
+  else()
+    SET(LLVM_PATCH_VERSION ${LLVM_RECOMMAND_VERSION})
+  endif()
+
+  SET(URL_SUFFIX src.tar.gz)
+
+  # set LLVM path names
+  SET(LLVM_NAME         llvm-${LLVM_PATCH_VERSION}.${URL_SUFFIX})
+  SET(LLVM_URL          ${SITE_URL}/${LLVM_PATCH_VERSION}/${LLVM_NAME})
+  SET(LLVM_FILE         ${DOWNLOAD_DIR}/${LLVM_NAME})
+  SET(LLVM_SOURCE_DIR   ${CMAKE_BINARY_DIR}/llvm-source/llvm)
+  SET(LLVM_MD5          ${LLVM_MD5_${LLVM_PATCH_VERSION}})
 
   # Clang uses cfe(C frontend) as its file name from version 3.3. In
   # order to make cmake of llvm automatically find and compile Clang,
   # a tools/clang directory is still needed.
   if (${LLVM_RECOMMAND_VERSION} VERSION_LESS "3.3")
-    SET(CLANG_NAME clang)
+    SET(CLANG_NAME_SHORT clang)
   else()
-    SET(CLANG_NAME cfe)
+    SET(CLANG_NAME_SHORT cfe)
   endif()
+  SET(CLANG_NAME       ${CLANG_NAME_SHORT}-${LLVM_PATCH_VERSION}.${URL_SUFFIX})
+  SET(CLANG_URL        ${SITE_URL}/${LLVM_PATCH_VERSION}/${CLANG_NAME})
+  SET(CLANG_FILE       ${DOWNLOAD_DIR}/${CLANG_NAME})
   SET(CLANG_SOURCE_DIR ${LLVM_SOURCE_DIR}/tools/clang)
+  SET(CLANG_MD5        ${CLANG_MD5_${LLVM_PATCH_VERSION}})
 
-  SET(COMPILER-RT_NAME compiler-rt)
-  SET(COMPILER-RT_SOURCE_DIR ${LLVM_SOURCE_DIR}/projects/${COMPILER-RT_NAME})
+  # set compiler-rt path names
+  SET(COMPILER-RT_NAME compiler-rt-${LLVM_RECOMMAND_VERSION}.${URL_SUFFIX})
+  SET(COMPILER-RT_URL ${SITE_URL}/${LLVM_RECOMMAND_VERSION}/${COMPILER-RT_NAME})
+  SET(COMPILER-RT_FILE       ${DOWNLOAD_DIR}/${COMPILER-RT_NAME})
+  SET(COMPILER-RT_SOURCE_DIR ${LLVM_SOURCE_DIR}/projects/compiler-rt)
+  SET(COMPILER-RT_MD5        ${COMPILER-RT_MD5_${LLVM_RECOMMAND_VERSION}})
 
-  if (${LLVM_RECOMMAND_VERSION} STREQUAL "3.2")
-    SET(LLVM_MD5 71610289bbc819e3e15fdd562809a2d7) 
-    SET(CLANG_MD5 3896ef4334df08563b05d0848ba80582)
-    SET(COMPILER-RT_MD5 a9a30ccd7bbee6f68a3ca3020af0d852)
-  endif()
 
-  if (${LLVM_RECOMMAND_VERSION} STREQUAL "3.3")
-    SET(LLVM_MD5 40564e1dc390f9844f1711c08b08e391) 
-    SET(CLANG_MD5 8284891e3e311829b8e44ac813d0c9ef)
-    SET(COMPILER-RT_MD5 9c129ce24514467cfe492cf2fed8e2c4)
-  endif()
-endmacro()
-
-FUNCTION(check_and_download target_name target_md5)
-  if("${target_md5}" STREQUAL "" )
-    message(FATAL_ERROR "calling undefined variable."
+  # assertion ofr md5
+  if (("${LLVM_MD5}" STREQUAL "") OR
+      ("${CLANG_MD5}" STREQUAL "") OR
+      ("${COMPILER-RT_MD5}" STREQUAL ""))
+    message(FATAL_ERROR "Undefined MD5 for your LLVM versions."
              " there is a bug in installLLVM.cmake")
   endif()
 
-  SET(target_file ${DOWNLOAD_DIR}/${target_name}${LLVM_SUFFIX}.tar.gz)
-  SET(target_url ${SITE_URL}/${target_name}${LLVM_SUFFIX}.tar.gz)
+endmacro()
+
+FUNCTION(check_and_download target_url target_file target_md5)
+  if(("${target_md5}" STREQUAL "" ) OR
+     ("${target_url}" STREQUAL "" ) OR
+     ("${target_file}" STREQUAL ""))
+    message(FATAL_ERROR "calling undefined variable."
+             " there is a bug in installLLVM.cmake")
+  endif()
 
   # if file not exists, download it.
   if(NOT EXISTS ${target_file})
@@ -77,14 +99,13 @@ FUNCTION(check_and_download target_name target_md5)
   endif()
 endfunction()
 
-FUNCTION(extract_file target_name target_dir)
-  if(("${target_name}" STREQUAL "") OR 
-     ("${target_dir}" STREQUAL "") )
+FUNCTION(extract_file target_file target_dir)
+  if(("${target_file}" STREQUAL "") OR 
+     ("${target_dir}" STREQUAL ""))
     message(FATAL_ERROR "calling undefined variable."
              " there is a bug in installLLVM.cmake")
   endif()
 
-  SET(target_file ${DOWNLOAD_DIR}/${target_name}${LLVM_SUFFIX}.tar.gz)
 
   # if finds no directory, then create one.
   if(NOT EXISTS ${target_dir})
@@ -137,17 +158,17 @@ FUNCTION(autoinstall_llvm)
   configure_autoinstall()
 
   # download llvm, clang and compiler-rt here.
-  check_and_download(${LLVM_NAME} ${LLVM_MD5})
-  check_and_download(${CLANG_NAME} ${CLANG_MD5})
-  check_and_download(${COMPILER-RT_NAME} ${COMPILER-RT_MD5})
+  check_and_download(${LLVM_URL} ${LLVM_FILE} ${LLVM_MD5})
+  check_and_download(${CLANG_URL} ${CLANG_FILE} ${CLANG_MD5})
+  check_and_download(${COMPILER-RT_URL} ${COMPILER-RT_FILE} ${COMPILER-RT_MD5})
 
   message(STATUS "finish llvm source download.")
 
 
   # extract the source code. keep 2nd arg null means same with 1st arg.
-  extract_file(${LLVM_NAME} ${LLVM_SOURCE_DIR})
-  extract_file(${CLANG_NAME} ${CLANG_SOURCE_DIR})
-  extract_file(${COMPILER-RT_NAME} ${COMPILER-RT_SOURCE_DIR})
+  extract_file(${LLVM_FILE} ${LLVM_SOURCE_DIR})
+  extract_file(${CLANG_FILE} ${CLANG_SOURCE_DIR})
+  extract_file(${COMPILER-RT_FILE} ${COMPILER-RT_SOURCE_DIR})
 
   message(STATUS "finish extraction for the source code.")
 
