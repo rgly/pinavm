@@ -39,7 +39,7 @@
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/IR/GetElementPtrTypeIterator.h"
 #include "llvm/IR/InstVisitor.h"
-#include "llvm/Target/Mangler.h"
+#include "llvm/IR/Mangler.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Config/config.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
