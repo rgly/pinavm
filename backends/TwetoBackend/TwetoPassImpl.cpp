@@ -133,8 +133,9 @@ bool TwetoPassImpl::runOnModule(Module & M)
 
 	// Initialize function passes
 	DataLayout *target = new DataLayout(this->llvmMod);
+	DataLayoutPass *dlpass = new DataLayoutPass(*target);
 	funPassManager = new FunctionPassManager(this->llvmMod);
-	funPassManager->add(target);
+	funPassManager->add(dlpass);
 	funPassManager->add(createIndVarSimplifyPass());
 	funPassManager->add(createLoopUnrollPass());
 	funPassManager->add(createInstructionCombiningPass());

@@ -44,9 +44,10 @@ Frontend *launch_frontend(std::string InputFilename, bool inlineFcts,Module *Mod
 
 	// Add an appropriate DataLayout instance for this module...
 	DataLayout *dl = new DataLayout(Mod);
+	DataLayoutPass *dl_pass = new DataLayoutPass(*dl);
 // 	Passes.add(createLoopSimplifyPass());
 // 	Passes.add(createLoopUnrollPass());
-	Passes.add(dl);
+	Passes.add(dl_pass);
 
 	// Check that the module is well formed on completion of optimization
 	FunctionPass *vp = createVerifierPass();

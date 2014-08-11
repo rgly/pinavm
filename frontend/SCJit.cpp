@@ -167,8 +167,9 @@ Function *SCJit::buildFct(Function * f, FunctionType * FT, Instruction* inst, Va
 	// Set up the optimizer pipeline.  Start with registering info about how the
 	// target lays out data structures.
 	DataLayout *dl = new DataLayout(*this->ee->getDataLayout());
+	DataLayoutPass* dlpass = new DataLayoutPass(*dl);
 
-	FPM.add(dl);
+	FPM.add(dlpass);
 	// Promote allocas to registers.
 	//   FPM.add(createPromoteMemoryToRegisterPass());
 	//    MemoryDependenceAnalysis* mda = new MemoryDependenceAnalysis();

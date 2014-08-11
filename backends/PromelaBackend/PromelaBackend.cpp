@@ -58,7 +58,12 @@ void launch_promelabackend(Frontend * fe,
 
 	ModulePass *promelaWriter = new PromelaWriter(fe, *Out, useBoolInsteadOfInts, relativeClocks, bug);
 
-	Passes.add(new DataLayout(llvmMod));
+	// To compatiable with legacy passmanager. DataLayout is not
+	// a pass anymore.
+	DataLayout* dl = new DataLayout(llvmMod);
+	DataLayoutPass* dlpass = new DataLayoutPass(*dl);
+
+	Passes.add(dlpass);
 	Passes.add(createVerifierPass());
 	Passes.add(createGCLoweringPass());
 // MM: useless since free instruction became a normal function call.

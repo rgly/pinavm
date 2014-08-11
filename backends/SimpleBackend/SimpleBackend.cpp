@@ -48,7 +48,12 @@ void launch_simplebackend(Frontend * fe,
 
 	ModulePass *simpleWriter = new SimpleWriter(fe, *Out, useBoolInsteadOfInts, relativeClocks);
 
-	Passes.add(new DataLayout(llvmMod));
+	// To compatiable with legacy passmanager. DataLayout is not
+	// a pass anymore.
+	DataLayout* dl = new DataLayout(llvmMod);
+	DataLayoutPass* dlpass = new DataLayoutPass(*dl);
+
+	Passes.add(dlpass);
 	Passes.add(createVerifierPass());
 	Passes.add(createGCLoweringPass());
 	Passes.add(createLowerInvokePass());

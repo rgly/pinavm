@@ -86,7 +86,12 @@ static void tweto_optimize(Frontend * fe,
 	PassManager* PM = new PassManager();
 	// Defines target properties related to datatype  
 	// size/offset/alignment information
-	PM->add(TD); 
+
+	// To compatiable with legacy passmanager. DataLayout is not
+	// a pass anymore.
+	DataLayoutPass* dlpass = new DataLayoutPass(*TD);
+
+	PM->add(dlpass);
 	PM->add(createPromoteMemoryToRegisterPass());
 	PM->add(new TwetoPass(fe, NULL, optlevel, disableMsg));
     
