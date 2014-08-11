@@ -73,12 +73,12 @@ isInlinableInst (const Instruction & I)
   // Must not be used in inline asm, extractelement, or shufflevector.
   if (I.hasOneUse ())
     {
-      const Instruction & User = cast < Instruction > (*I.use_back ());
+      const Instruction & User = cast < Instruction > (*I.user_back ());
       if (isInlineAsm (User) || isa < ExtractElementInst > (User) || isa < ShuffleVectorInst > (User))
 	return false;
     }
   // Only inline instruction it if it's use is in the same BB as the inst.
-  return I.getParent () == cast < Instruction > (I.use_back ())->getParent ();
+  return I.getParent () == cast < Instruction > (I.user_back ())->getParent ();
 }
 
 // isDirectAlloca - Define fixed sized allocas in the entry block as direct
