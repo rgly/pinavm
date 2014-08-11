@@ -17,7 +17,6 @@
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/ADT/SmallString.h"
-
 #include "Port.hpp"
 #include "Channel.hpp"
 #include "SimpleChannel.hpp"

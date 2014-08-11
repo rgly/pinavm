@@ -3,7 +3,6 @@
 #include "llvm/PassManager.h"
 #include "llvm/Pass.h"
 #include "llvm/IR/Verifier.h"
-#include "llvm/Config/config.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/IR/DataLayout.h"

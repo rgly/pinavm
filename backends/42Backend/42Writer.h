@@ -33,7 +33,6 @@
 #include "llvm/IR/InstVisitor.h"
 #include "llvm/IR/Mangler.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Config/config.h"
 
 #include <map>
 #include <vector>
