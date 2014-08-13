@@ -39,7 +39,7 @@ void launch_42backend(Frontend * fe,
 
 		// Make sure that the Output file gets unlinked from the disk if we get a
 		// SIGINT
-		sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+		sys::RemoveFileOnSignal(OutputFilename);
 	}
 	// Build up all of the passes that we want to do to the module.
 	PassManager Passes;
