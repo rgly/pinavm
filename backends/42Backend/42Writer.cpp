@@ -4168,8 +4168,7 @@ bool _42Writer::runOnModule(Module & M)
   const MCObjectFileInfo *mcObjectFileInfo = new MCObjectFileInfo();
   MCContext* MCC = new MCContext(TAsm, mcRegisterInfo, mcObjectFileInfo);
 
-  //  Mang = new Mangler(*TAsm);
-  Mang = new Mangler(*MCC, *TD);
+  Mang = new Mangler(TD);
 
 // MM: doesn't exist anymore. Not sure what to put instead.
 //  Mang->markCharUnacceptable('.');
