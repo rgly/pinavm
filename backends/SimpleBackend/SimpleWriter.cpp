@@ -85,7 +85,7 @@ isInlinableInst (const Instruction & I)
 // variables which are accessed with the & operator.  This causes GCC to
 // generate significantly better code than to emit alloca calls directly.
 //
-static const bool
+static bool
 isDirectAlloca (const Value * V)
 {
   const AllocaInst *AI = dyn_cast < AllocaInst > (V);
