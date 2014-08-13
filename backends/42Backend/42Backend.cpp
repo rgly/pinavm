@@ -29,7 +29,7 @@ void launch_42backend(Frontend * fe,
 	if (OutputFilename != "-") {
 
 		std::string error;
-		raw_fd_ostream *FDOut = new raw_fd_ostream(OutputFilename.c_str(), error);
+		raw_fd_ostream *FDOut = new raw_fd_ostream(OutputFilename.c_str(), error, sys::fs::F_None);
 		if (!error.empty()) {
 			errs() << error << '\n';
 			delete FDOut;

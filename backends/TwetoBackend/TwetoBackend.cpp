@@ -34,6 +34,7 @@
 
 #include "llvm/IR/ValueSymbolTable.h"
 #include "llvm/IR/Module.h"
+#include "llvm/Support/FileSystem.h"
 
 #include "Frontend.hpp"
 #include "TwetoBackend.h"
@@ -252,7 +253,8 @@ void launch_twetobackend(Frontend * fe,
 	if (optimize == staticopt) {
 		// output resulting module if optimizing statically
 		std::string errorinfo;
-		llvm::raw_fd_ostream llfd ("output.bc", errorinfo, None);
+		llvm::raw_fd_ostream llfd ("output.bc", errorinfo,
+						sys::fs::F_None);
 		WriteBitcodeToFile (fe->getLLVMModule(), llfd);
 	} else {
 		// otherwise, launch simulation
