@@ -179,7 +179,7 @@ PromelaWriter::printSimpleType(formatted_raw_ostream & Out,
 			Type * Ty, bool isSigned,
 			const std::string & NameSoFar)
 {
-	assert((Ty->isPrimitiveType() || Ty->isIntegerTy()
+	assert((Ty->isX86_MMXTy() || Ty->isFloatingPointTy() || Ty->isIntegerTy()
 			|| isa < VectorType > (Ty))
 		&& "Invalid type for printSimpleType");
 
@@ -227,7 +227,7 @@ PromelaWriter::printSimpleType(std::ostream & Out, Type * Ty,
 			bool isSigned,
 			const std::string & NameSoFar)
 {
-	assert((Ty->isPrimitiveType() || Ty->isIntegerTy()
+	assert((Ty->isX86_MMXTy() || Ty->isFloatingPointTy() || Ty->isIntegerTy()
 			|| isa < VectorType > (Ty))
 		&& "Invalid type for printSimpleType");
 
@@ -286,7 +286,7 @@ PromelaWriter::printType(formatted_raw_ostream & Out,
  		Ty = cast<PointerType>(Ty)->getElementType();
  	}	
 
-	if (Ty->isPrimitiveType() || Ty->isIntegerTy() || isa < VectorType > (Ty)) {
+	if (Ty->isX86_MMXTy() || Ty->isFloatingPointTy() || Ty->isIntegerTy() || isa < VectorType > (Ty)) {
 		if (Ty->isIntegerTy())
 			TRACE_5("WHY AM I NOT HERE AS YET ------------------------------->************"<<NameSoFar);
 		//Out<<"Inside simple type \n";
@@ -461,7 +461,7 @@ PromelaWriter::printType(std::ostream & Out,
  		Ty = cast<PointerType>(Ty)->getElementType();
  	}	
 
-	if (Ty->isPrimitiveType() || Ty->isIntegerTy()
+	if (Ty->isX86_MMXTy() || Ty->isFloatingPointTy() || Ty->isIntegerTy()
 		|| isa < VectorType > (Ty)) {
 		printSimpleType(Out, Ty, isSigned, NameSoFar);
 		return Out;
@@ -623,7 +623,7 @@ PromelaWriter::printType(std::ostream & Out,
 			Type * Ty,
 			bool isSigned, const std::string & NameSoFar)
 {
-assert((Ty->isPrimitiveType() || Ty->isIntegerTy()
+assert((Ty->isX86_MMXTy() || Ty->isFloatingPointTy() || Ty->isIntegerTy()
 			|| isa < VectorType > (Ty))
 		&& "Invalid type for printInitialValue");
 
@@ -1747,7 +1747,7 @@ bool PromelaWriter::fillContainedStructs(Type * Ty, bool fill)
 	std::string Name = TypeNames[Ty];
 //	TRACE_5("FillContainedStruct:" << Name << "\n");
 	// Don't walk through pointers.
-	if (isa < PointerType > (Ty) || Ty->isPrimitiveType() || Ty->isIntegerTy()) {
+	if (isa < PointerType > (Ty) || Ty->isX86_MMXTy() || Ty->isFloatingPointTy() || Ty->isIntegerTy()) {
 //		TRACE_5(" -> return false\n");
 		return false;
 	}
@@ -1890,7 +1890,7 @@ PromelaWriter::isSystemCType(Type* ty)
  		ty = cast<PointerType>(ty)->getElementType();
  	}
 
-	if (ty->isPrimitiveType() || ty->isIntegerTy()) {
+	if (ty->isX86_MMXTy() || ty->isFloatingPointTy() || ty->isIntegerTy()) {
 		return false;
 	}
 

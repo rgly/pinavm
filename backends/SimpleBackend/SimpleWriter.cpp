@@ -151,7 +151,7 @@ raw_ostream &
   SimpleWriter::printSimpleType (formatted_raw_ostream & Out,
 				 Type * Ty, bool isSigned, const std::string & NameSoFar)
 {
-  assert ((Ty->isPrimitiveType () || Ty->isIntegerTy ()
+  assert ((Ty->isX86_MMXTy () || Ty->isFloatingPointTy () || Ty->isIntegerTy ()
 	   || isa < VectorType > (Ty)) && "Invalid type for printSimpleType");
 
   if (NameSoFar != "")
@@ -198,7 +198,7 @@ raw_ostream &
 std::ostream &
   SimpleWriter::printSimpleType (std::ostream & Out, Type * Ty, bool isSigned, const std::string & NameSoFar)
 {
-  assert ((Ty->isPrimitiveType () || Ty->isIntegerTy ()
+  assert ((Ty->isX86_MMXTy () || Ty->isFloatingPointTy () || Ty->isIntegerTy ()
 	   || isa < VectorType > (Ty)) && "Invalid type for printSimpleType");
 
   if (NameSoFar != "")
@@ -249,7 +249,7 @@ raw_ostream &
 			   Type * Ty,
 			   bool isSigned, const std::string & NameSoFar, bool IgnoreName, const AttributeSet & PAL)
 {
-  if (Ty->isPrimitiveType () || Ty->isIntegerTy () || isa < VectorType > (Ty))
+  if (Ty->isX86_MMXTy () || Ty->isFloatingPointTy () || Ty->isIntegerTy () || isa < VectorType > (Ty))
     {
       printSimpleType (Out, Ty, isSigned, NameSoFar);
       return Out;
@@ -395,7 +395,7 @@ std::ostream &
 			   Type * Ty,
 			   bool isSigned, const std::string & NameSoFar, bool IgnoreName, const AttributeSet & PAL)
 {
-  if (Ty->isPrimitiveType () || Ty->isIntegerTy () || isa < VectorType > (Ty))
+  if (Ty->isX86_MMXTy () || Ty->isFloatingPointTy () || Ty->isIntegerTy () || isa < VectorType > (Ty))
     {
       printSimpleType (Out, Ty, isSigned, NameSoFar);
       return Out;

@@ -171,7 +171,7 @@ _42Writer::printSimpleType(formatted_raw_ostream & Out,
 			   Type * Ty, bool isSigned,
 			   const std::string & NameSoFar)
 {
-  assert((Ty->isPrimitiveType() || Ty->isIntegerTy()
+  assert((Ty->isX86_MMXTy() || Ty->isFloatingPointTy() || Ty->isIntegerTy()
 	  || isa < VectorType > (Ty))
 	 && "Invalid type for printSimpleType");
 
@@ -218,7 +218,7 @@ _42Writer::printSimpleType(std::ostream & Out, Type * Ty,
 			   bool isSigned,
 			   const std::string & NameSoFar)
 {
-  assert((Ty->isPrimitiveType() || Ty->isIntegerTy()
+  assert((Ty->isX86_MMXTy() || Ty->isFloatingPointTy() || Ty->isIntegerTy()
 	  || isa < VectorType > (Ty))
 	 && "Invalid type for printSimpleType");
 
@@ -272,7 +272,7 @@ _42Writer::printType(formatted_raw_ostream & Out,
 		     bool isSigned, const std::string & NameSoFar,
 		     bool IgnoreName, const AttributeSet & PAL)
 {
-  if (Ty->isPrimitiveType() || Ty->isIntegerTy() || isa < VectorType > (Ty)) {
+  if (Ty->isX86_MMXTy() || Ty->isFloatingPointTy() || Ty->isIntegerTy() || isa < VectorType > (Ty)) {
     printSimpleType(Out, Ty, isSigned, NameSoFar);
     return Out;
   }
@@ -413,7 +413,7 @@ _42Writer::printType(std::ostream & Out,
 		     bool isSigned, const std::string & NameSoFar,
 		     bool IgnoreName, const AttributeSet & PAL)
 {
-  if (Ty->isPrimitiveType() || Ty->isIntegerTy()
+  if (Ty->isX86_MMXTy() || Ty->isFloatingPointTy() || Ty->isIntegerTy()
       || isa < VectorType > (Ty)) {
     printSimpleType(Out, Ty, isSigned, NameSoFar);
     return Out;
@@ -2078,7 +2078,7 @@ bool _42Writer::fillContainedStructs(Type * Ty, std::set <Type * >* StructPrinte
   bool isEmpty = true;
 
   // Don't walk through pointers.
-  if (isa < PointerType > (Ty) || Ty->isPrimitiveType() || Ty->isIntegerTy())
+  if (isa < PointerType > (Ty) || Ty->isX86_MMXTy() || Ty->isFloatingPointTy() || Ty->isIntegerTy())
     return false;
 	
   // Print all contained types first.
@@ -2198,7 +2198,7 @@ _42Writer::isSystemCStruct(StructType* ty)
 bool
 _42Writer::isSystemCType(Type* ty)
 {
-  if (ty->isPrimitiveType() || ty->isIntegerTy())
+  if (ty->isX86_MMXTy() || ty->isFloatingPointTy() || ty->isIntegerTy())
     return false;
 
   return true;
