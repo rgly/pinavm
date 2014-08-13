@@ -32,7 +32,7 @@
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Pass.h"
-#include "llvm/PassManagers.h"
+#include "llvm/PassManager.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/IR/Function.h"
 
