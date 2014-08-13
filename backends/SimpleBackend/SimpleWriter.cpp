@@ -2574,7 +2574,7 @@ SimpleWriter::lowerIntrinsics (Function & F)
 	      // All other intrinsic calls we must lower.
 	      Instruction *Before = 0;
 	      if (CI != &BB->front ())
-		Before = prior (BasicBlock::iterator (CI));
+		Before = std::prev (BasicBlock::iterator (CI));
 
 	      IL->LowerIntrinsicCall (CI);
 	      if (Before)

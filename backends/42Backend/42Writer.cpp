@@ -3050,7 +3050,7 @@ void _42Writer::lowerIntrinsics(Function & F)
 	    Instruction *Before = 0;
 	    if (CI != &BB->front())
 	      Before =
-		prior
+		std::prev
 		(BasicBlock::
 		 iterator(CI));
 
