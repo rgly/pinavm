@@ -3945,7 +3945,7 @@ bool PromelaWriter::runOnModule(Module & M)
 	TAsm = new MCAsmInfo();
 	const MCRegisterInfo *mcRegisterInfo = new MCRegisterInfo();
 	const MCObjectFileInfo *mcObjectFileInfo = new MCObjectFileInfo();
-	MCContext* mcc = new MCContext(*TAsm, *mcRegisterInfo, mcObjectFileInfo);
+	MCContext* mcc = new MCContext(TAsm, mcRegisterInfo, mcObjectFileInfo);
 	Mang = new Mangler(*mcc, *TD);
 
 // MM: doesn't exist anymore. Not sure what to put instead.

@@ -3614,7 +3614,7 @@ bool SimpleWriter::runOnModule (Module & M)
   TAsm = new MCAsmInfo ();
   const MCRegisterInfo *mcRegisterInfo = new MCRegisterInfo();
   const MCObjectFileInfo *mcObjectFileInfo = new MCObjectFileInfo();
-  MCContext* mcc = new MCContext(*TAsm, *mcRegisterInfo, mcObjectFileInfo);
+  MCContext* mcc = new MCContext(TAsm, mcRegisterInfo, mcObjectFileInfo);
   Mang = new Mangler(*mcc, *TD);
 
   // Keep track of which functions are static ctors/dtors so they can have

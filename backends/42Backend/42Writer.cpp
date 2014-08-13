@@ -4166,7 +4166,7 @@ bool _42Writer::runOnModule(Module & M)
   TAsm = new MCAsmInfo();
   const MCRegisterInfo *mcRegisterInfo = new MCRegisterInfo();
   const MCObjectFileInfo *mcObjectFileInfo = new MCObjectFileInfo();
-  MCContext* MCC = new MCContext(*TAsm, *mcRegisterInfo, mcObjectFileInfo);
+  MCContext* MCC = new MCContext(TAsm, mcRegisterInfo, mcObjectFileInfo);
 
   //  Mang = new Mangler(*TAsm);
   Mang = new Mangler(*MCC, *TD);
