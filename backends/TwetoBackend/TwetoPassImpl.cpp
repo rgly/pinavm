@@ -27,7 +27,7 @@
 #include "llvm/IR/Verifier.h"
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
 #include <llvm/IR/IRBuilder.h>
-#include <llvm/Support/InstIterator.h>
+#include <llvm/IR/InstIterator.h>
 #include <llvm/Transforms/Utils/Cloning.h>
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/LoopInfo.h"
