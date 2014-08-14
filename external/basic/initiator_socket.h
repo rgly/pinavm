@@ -16,7 +16,7 @@ namespace basic {
       public tlm::tlm_initiator_socket<CHAR_BIT * sizeof(data_t),
 				       tlm::tlm_base_protocol_types,
 				       MULTIPORT?0:1>,
-      private tlm::tlm_bw_transport_if<tlm::tlm_base_protocol_types>
+      protected tlm::tlm_bw_transport_if<tlm::tlm_base_protocol_types>
    {
       typedef tlm::tlm_initiator_socket<CHAR_BIT * sizeof(data_t),
 	     tlm::tlm_base_protocol_types, MULTIPORT?0:1> base_type;
