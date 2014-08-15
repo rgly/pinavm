@@ -455,28 +455,47 @@ Event *SCElab::addEvent(Process * process, sc_core::sc_event * event)
 
 IRModule *SCElab::getIRModule(void *moduleAddr)
 {
-	return this->modulesMap.find((sc_core::sc_module *) moduleAddr)->
-	    second;
+	auto temp_Addr = static_cast<sc_core::sc_module*>(moduleAddr);
+	assert(temp_Addr);
+	auto it = this->modulesMap.find(temp_Addr);
+	assert(it != this->modulesMap.end() && "finds no ModuleAddr in SCElab");
+	return it->second;
 }
 
 Process *SCElab::getProcess(void *processAddr)
 {
-	return this->processMap.find((sc_core::sc_process_b *) processAddr)->second;
+	auto temp_Addr = static_cast<sc_core::sc_process_b*>(processAddr);
+	assert(temp_Addr);
+	auto it = this->processMap.find(temp_Addr);
+	assert(it != this->processMap.end() && "finds no ProcAddr in SCElab");
+	return it->second;
 }
 
 Port *SCElab::getPort(void *portAddr)
 {
-	return this->portsMap.find((sc_core::sc_port_base *) portAddr)->second;
+	auto temp_Addr = static_cast<sc_core::sc_port_base*>(portAddr);
+	assert(temp_Addr);
+	auto it = this->portsMap.find(temp_Addr);
+	assert(it != this->portsMap.end() && "finds no PortAddr in SCElab");
+	return it->second;
 }
 
 Event *SCElab::getEvent(void *eventAddr)
 {
-	return this->eventsMap.find((sc_core::sc_event *) eventAddr)->second;
+	auto temp_Addr = static_cast<sc_core::sc_event*>(eventAddr);
+	assert(temp_Addr);
+	auto it = this->eventsMap.find(temp_Addr);
+	assert(it != this->eventsMap.end() && "finds no EventAddr in SCElab");
+	return it->second;
 }
 
 Channel *SCElab::getChannel(void* channelAddr)
 {
-	return this->channelsMap.find((sc_core::sc_interface *) channelAddr)->second;
+	auto temp_Addr = static_cast<sc_core::sc_interface*>(channelAddr);
+	assert(temp_Addr);
+	auto it = this->channelsMap.find(temp_Addr);
+	assert(it != this->channelsMap.end() && "finds no ChanAddr in SCElab");
+	return it->second;
 }
 
 void SCElab::printElab(int sep, std::string prefix)
@@ -528,12 +547,18 @@ SCElab::getChannels()
 
 sc_core::sc_module * SCElab::getSCModule(IRModule * irmod)
 {
-	return this->ir2scModules.find(irmod)->second;
+	assert(irmod);
+	auto it = this->ir2scModules.find(irmod);
+	assert(it != this->ir2scModules.end());
+	return it->second;
 }
 
 Bus *SCElab::getBus(Channel *chan) 
 {
-    return this->busMap.find(chan)->second;
+	assert(chan);
+	auto it = this->busMap.find(chan);
+	assert(it != this->busMap.end());
+	return it->second;
 }
 
 void SCElab::addGlobalVariable(GlobalValue * globalVar)
