@@ -1,4 +1,8 @@
 *.o
+*.bc
+*.ll
+*.exe
+*.out
 *.gch
 config.mk
 config.sh

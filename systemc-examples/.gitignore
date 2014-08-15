@@ -1,7 +1,3 @@
-# LLVM bitcode files
-*.bc
-*.ll
-
 # SPIN generated files
 pan.[b,c,h,m,t]
 pan
@@ -15,7 +11,6 @@ pan
 Spin_Results
 
 # native compilation
-*.o
 a.out
 *.simu
 
