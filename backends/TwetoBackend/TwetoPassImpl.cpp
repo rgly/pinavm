@@ -68,6 +68,11 @@ extern const std::string rFunName =
 
 extern GlobalVariable* sbase;
 
+namespace {
+	const std::string ExternalBitCodePath(
+		"backends/TwetoBackend/runtime_lib/tweto_call_method.bc");
+}
+
 // =============================================================================
 // TwetoPassImpl 
 // 
@@ -106,8 +111,7 @@ bool TwetoPassImpl::runOnModule(Module & M)
 	MSG("\n============== Tweto Pass =============\n");
 	this->llvmMod = &M;
 
-	this->llvmMod = LinkExternalBitcode(this->llvmMod,
-					    "backends/TwetoBackend/runtime_lib/tweto_call_method.bc");
+	LinkExternalBitcode(this->llvmMod, ExternalBitCodePath);
 
 	// Retrieve the method that does all the vtable calculations
 	// in order to call the actual 'write' method (see replaceCallsInProcess)

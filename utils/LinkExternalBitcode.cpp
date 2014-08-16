@@ -10,7 +10,8 @@
 
 using namespace llvm;
 
-Module* LinkExternalBitcode(Module* module, std::string bc)
+
+Module* loadExternalBitcode(std::string bc)
 {
     LLVMContext &Context = getGlobalContext();
     SMDiagnostic smdiagnostic;
@@ -22,11 +23,17 @@ Module* LinkExternalBitcode(Module* module, std::string bc)
 	std::cerr << '\n';
     }
 
+    return LoadBitcode;
+}
+
+void LinkExternalBitcode(Module* module, std::string bc)
+{
+    Module* LoadBitcode = loadExternalBitcode(bc);
+
     std::string err;
     bool result = Linker::LinkModules(module, LoadBitcode,
                          Linker::DestroySource, &err);
     if (result) {
         std::cerr << "Module Linking Error : "<< err << '\n';
     }
-    return module;
 }

@@ -2,5 +2,6 @@
 namespace llvm {
 	class Module;
 }
-extern llvm::Module* LinkExternalBitcode(llvm::Module*, std::string);
+extern llvm::Module* loadExternalBitcode(std::string);
+extern void LinkExternalBitcode(llvm::Module*, std::string);
 
