@@ -1,0 +1,38 @@
+This document introduce a bug of FunctionBuilder, Bypass the bug by
+optimizing bitcode with mem2reg.
+
+
+Code 1 is the LLVM 3.5 bitcode example for a SystemC process. Code 2 is the
+bitcode atfer frontend/FunctionBuilder. Obviously, FunctionBuilder would not
+collect StoreInst, so that "this.addr" is someting random.
+
+======== Code 1 ===============================================================
+
+define linkonce_odr void @_ZN9COMPONENT7processEv(%struct.COMPONENT* %this) #3 align 2 {
+entry:
+  %this.addr = alloca %struct.COMPONENT*, align 8
+  store %struct.COMPONENT* %this, %struct.COMPONENT** %this.addr, align 8
+  %this1 = load %struct.COMPONENT** %this.addr
+  %data = getelementptr inbounds %struct.COMPONENT* %this1, i32 0, i32 1
+  %call = call dereferenceable(1) i8* @_ZNK7sc_core5sc_inIbE4readEv(%"class.sc_core::sc_in"* %data)
+  %0 = load i8* %call
+  %tobool = trunc i8 %0 to i1
+  %dr = getelementptr inbounds %struct.COMPONENT* %this1, i32 0, i32 2
+  %frombool = zext i1 %tobool to i8
+  store i8 %frombool, i8* %dr, align 1
+  ret void
+}
+
+===============================================================================
+
+======== Code 2 ===============================================================
+
+define private %"class.sc_core::sc_in"* @_ZN9COMPONENT7processEv_fctToJit-0(%struct.COMPONENT*) {
+entry:
+  %this.addr = alloca %struct.COMPONENT*, align 8
+  %this1 = load %struct.COMPONENT** %this.addr
+  %data = getelementptr inbounds %struct.COMPONENT* %this1, i32 0, i32 1
+  ret %"class.sc_core::sc_in"* %data
+}
+
+

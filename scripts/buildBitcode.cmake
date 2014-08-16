@@ -5,6 +5,9 @@
 SET(LLVM_EXT bc)
 
 function(build_llvm_bitcode f_target_name f_src_list)
+  set(f_target_unopt_file
+             ${CMAKE_CURRENT_BINARY_DIR}/${f_target_name}.unopt.${LLVM_EXT})
+
   set(f_target_file ${CMAKE_CURRENT_BINARY_DIR}/${f_target_name}.${LLVM_EXT})
   set(f_compiled_target_file ${CMAKE_CURRENT_BINARY_DIR}/${f_target_name}.exe)
   set(f_staticopt_bc_target_file ${CMAKE_CURRENT_BINARY_DIR}/output.bc)
@@ -27,8 +30,12 @@ function(build_llvm_bitcode f_target_name f_src_list)
   endforeach(f_temp_src)
 
 
-  add_custom_command(OUTPUT ${f_target_file} DEPENDS ${f_objects}
-    COMMAND ${LLVM_LINK} ${f_objects} -o ${f_target_file} 
+  add_custom_command(OUTPUT ${f_target_unopt_file} DEPENDS ${f_objects}
+    COMMAND ${LLVM_LINK} ${f_objects} -o ${f_target_unopt_file} 
+    VERBATIM)
+
+  add_custom_command(OUTPUT ${f_target_file} DEPENDS ${f_target_unopt_file}
+    COMMAND ${LLVM_OPT} -mem2reg -o ${f_target_file} ${f_target_unopt_file} 
     VERBATIM)
 
   add_custom_command(OUTPUT ${f_compiled_target_file}
