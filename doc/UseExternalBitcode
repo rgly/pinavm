@@ -29,13 +29,14 @@ __________________________________________________
 4. Use code in your backend, there are two ways.
 __________________________________________________
     1) Link it to a existed LLVM module.
-        #include "LinkExternalBitcode.h"
-        LinkExternalBitcode(LLVM_module, "foo_dir/baz.bc");
+
+        | #include "LinkExternalBitcode.h"
+        | LinkExternalBitcode(LLVM_module, "foo_dir/baz.bc");
 
     OR
 
     2) Use it as a new LLVM module
-        #include "llvm/IRReader/IRReader.h"
-        SMDiagnostic smdiagno;
-        LLVMContext &Context = getGlobalContext();
-        Module* LoadBitcode = ParseIRFile("foo_dir/baz.bc", smdiagno, Context);
+
+        | #include "LinkExternalBitcode.h"
+        | Module* LoadBitcode =
+        |            LoadExternalBitcode(LLVM_module, "foo_dir/baz.bc");
