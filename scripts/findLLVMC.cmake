@@ -77,4 +77,4 @@ SET(LLVMC_INCLUDE_DIR "-I${CMAKE_SOURCE_DIR}/external/systemc-2.3.0/src/"
  #        assemble it):
 
 LIST(APPEND LLVMC_FLAGS ${LLVM_DEFINITIONS} ${LLVMC_INCLUDE_DIR}
-	-fno-inline-functions -fno-use-cxa-atexit -S )
+	-std=c++0x -fno-inline-functions -fno-use-cxa-atexit -S )
