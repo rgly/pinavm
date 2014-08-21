@@ -545,6 +545,12 @@ SCElab::getChannels()
 	return &this->channels;
 }
 
+std::vector < IRModule* >*
+SCElab::getIRModules()
+{
+	return &this->modules;
+}
+
 sc_core::sc_module * SCElab::getSCModule(IRModule * irmod)
 {
 	assert(irmod);

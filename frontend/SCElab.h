@@ -80,6 +80,7 @@ class SCElab : public ElabMember
   std::vector<Port*>* getPorts();
   std::vector<Channel*>* getChannels();
   std::vector<Event*>* getEvents();
+  std::vector<IRModule*>* getIRModules();
 
   void addGlobalVariable(GlobalValue *globalVar);
   std::vector < GlobalValue * >* getGlobalVariables();
