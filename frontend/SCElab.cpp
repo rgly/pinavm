@@ -107,22 +107,22 @@ Port * SCElab::trySc_Signal(IRModule * mod,
                             std::string portName         ) {
 	Port * theNewPort = NULL;
 	Channel* ch;
-	std::string match = "N7sc_core9sc_signalI";
+	const std::string MatchBegin = "N7sc_core9sc_signalI";
+	const std::string MatchEnd = "LNS_16sc_writer_policyE";
 	char temp[10];
 	std::string variableTypeName("");
 
+	if (itfTypeName.find(MatchBegin) == 0) {
 
-	if (itfTypeName.find(match) == 0) {
-
-		size_t found = itfTypeName.find_first_of("E");
+		size_t found = itfTypeName.find(MatchEnd);
 		sprintf(temp, "%d", (int) found);
 		TRACE_4("Found : " << temp << "\n");
-		sprintf(temp, "%d", (int) match.size());
+		sprintf(temp, "%d", (int) MatchBegin.size());
 		TRACE_4("match size : " << temp << "\n");
-		size_t typeLength = found - match.size();
+		size_t typeLength = found - MatchBegin.size();
 		sprintf(temp, "%d", (int) typeLength);
 		TRACE_4("typeLength : " << temp << "\n");
-		variableTypeName = itfTypeName.substr(match.size(), typeLength);
+		variableTypeName = itfTypeName.substr(MatchBegin.size(), typeLength);
 		TRACE_4("variableTypeName : " << variableTypeName << "\n");
 
 		const Type* itfType = NULL;
