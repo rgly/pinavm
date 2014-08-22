@@ -123,6 +123,7 @@ Port * SCElab::trySc_Signal(IRModule * mod,
 		sprintf(temp, "%d", (int) typeLength);
 		TRACE_4("typeLength : " << temp << "\n");
 		variableTypeName = itfTypeName.substr(match.size(), typeLength);
+		TRACE_4("variableTypeName : " << variableTypeName << "\n");
 
 		const Type* itfType = NULL;
 		if (variableTypeName == "b") {
