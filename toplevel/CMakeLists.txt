@@ -38,7 +38,7 @@ foreach(backend ${backends_lib})
 endforeach(backend)
 
 # =================== Link frontend, llvm and SystemC ===================
-target_link_libraries(pinavm frontend utils tlm-basic systemc_lib)
+target_link_libraries(pinavm frontend utils tlm-basic systemc_lib curses)
 # Link to LLVM libraries, pthread and dl
 target_link_libraries(pinavm ${REQ_LLVM_LIBRARIES})
 
