@@ -229,9 +229,11 @@ void FunctionBuilder::cloneEachInst(BasicBlock* origbb, BasicBlock* NewBB) {
 
 	/********* Put arguments in the ValueMap *********/
 void FunctionBuilder::cloneArguments(Function* origFct, Function* fctToJit) {
+	assert(fctToJit->arg_size() <= origFct->arg_size());
+
 	Function::arg_iterator origIt = origFct->arg_begin();
 	Function::arg_iterator argIt = fctToJit->arg_begin();
-	while (origIt != origFct->arg_end()) {
+	while (argIt != fctToJit->arg_end()) {
 		this->ValueMap[origIt] = argIt;
 		++origIt;
 		++argIt;
