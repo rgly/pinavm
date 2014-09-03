@@ -11,22 +11,19 @@ By default the pinavm binary is in the toplevel directory.
 Note that arguments for pinavm **MUST** be provided before the input file.
 A pinavm command should look like :
 
-  pinavm -b BACKEND -o OUTPUT_FILE USER_CODE USER_CODE_ARGS
+  pinavm -b <BACKEND> -o <OUTPUT_FILE> <USER_CODE> <USER_CODE_ARGS>
 
 
-Pinavm is a frontend. Users should select a BACKEND to do further processing.
+Pinavm is a frontend. Users should select a <BACKEND> to do further processing.
 
-USER_CODE should be a llvm bitcode or assembly file output by clang or
+<USER_CODE> should be a llvm bitcode or assembly file output by clang or
 g++ with DragonEgg. These kinds of files usually have .ll or .bc suffix.
 
-USER_CODE_ARGS are the arguments used by USER_CODE. For example, if you
+<USER_CODE_ARGS> are the arguments used by <USER_CODE>. For example, if you
 want to execute main.bc with argc=3 and argv={"main.exe","-arg1","-arg2"}
 you just have to type
 
   pinavm -b promela -o output main.bc -arg1 -arg2
-
-Note that if user types "pinavm -b promela main.bc -o output",
-then pinavm receives "-b promela" and main.bc runs with "-o output".
 
 ________________________________________________________________________
     Compile SystemC code into LLVM assembly
