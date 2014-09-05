@@ -84,8 +84,7 @@ MACRO(configure_autoinstall)
     message(FATAL_ERROR "Undefined MD5 for your LLVM versions."
              " there is a bug in installLLVM.cmake")
   endif()
-
-endmacro()
+ENDMACRO()
 
 FUNCTION(check_and_download target_url target_file target_md5)
   if(("${target_md5}" STREQUAL "" ) OR
@@ -110,7 +109,7 @@ FUNCTION(check_and_download target_url target_file target_md5)
            EXPECTED_MD5 ${target_md5})
     endif()
   endif()
-endfunction()
+ENDFUNCTION()
 
 FUNCTION(extract_file target_file target_dir)
   if(("${target_file}" STREQUAL "") OR 
@@ -134,8 +133,7 @@ FUNCTION(extract_file target_file target_dir)
     message(FATAL_ERROR "finds no ${target_file}")
   endif()
 
-
-endfunction()
+ENDFUNCTION()
 
 FUNCTION(install_llvm)
   SET(llvm_build_dir ${CMAKE_BINARY_DIR}/build-llvm)
@@ -166,8 +164,7 @@ FUNCTION(install_llvm)
 
   execute_process(COMMAND make install
 		  WORKING_DIRECTORY ${llvm_build_dir})
-
-endfunction()
+ENDFUNCTION()
 
 FUNCTION(autoinstall_llvm)
   configure_processor_count()
@@ -206,7 +203,7 @@ FUNCTION(autoinstall_llvm)
     # process again.
     set(LLVM_CONFIG_EXE ${llvm-config-temp} PARENT_SCOPE)
   endif()
-endfunction()
+ENDFUNCTION()
 
 
 # Currently we install llvm while cmake time, because we want to 
