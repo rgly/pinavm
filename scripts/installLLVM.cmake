@@ -8,6 +8,19 @@
 
 # sets the md5 checksum for certain version.
 include(${CMAKE_SOURCE_DIR}/scripts/LLVM_MD5.cmake)
+MACRO(configure_processor_count)
+  # offer ProcessCount variable
+  include(ProcessorCount)
+  ProcessorCount(PROCESSOR_COUNT)
+  if(NOT DEFINED PROCESSOR_COUNT)
+      message(FATAL_ERROR "No PROCESSOR_COUNT defined")
+  endif()
+  if(PROCESSOR_COUNT EQUAL 0)
+      message(FATAL_ERROR "PROCESSOR_COUNT = 0")
+  endif()
+ENDMACRO()
+
+
 
 
 MACRO(configure_autoinstall)
@@ -145,8 +158,10 @@ FUNCTION(install_llvm)
 		" If you worry about whether this script is still running,"
 		" you can use \"top\" to monitor CPU usage.")
 
-  # it compiles with 4 threads. In hope of shortening compile time.
-  execute_process(COMMAND make -j4
+  # Create job number according to the processor count. In hope of
+  # shortening build time.
+  message(STATUS "start : make -j${PROCESSOR_COUNT}")
+  execute_process(COMMAND make -j${PROCESSOR_COUNT}
 		  WORKING_DIRECTORY ${llvm_build_dir})
 
   execute_process(COMMAND make install
@@ -155,6 +170,7 @@ FUNCTION(install_llvm)
 endfunction()
 
 FUNCTION(autoinstall_llvm)
+  configure_processor_count()
   configure_autoinstall()
 
   # download llvm, clang and compiler-rt here.
