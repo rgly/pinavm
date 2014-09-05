@@ -6,8 +6,6 @@
 # NOTE that this script requires tar and make command in your OS.
 
 
-# sets the md5 checksum for certain version.
-include(${CMAKE_SOURCE_DIR}/scripts/LLVM_MD5.cmake)
 MACRO(configure_processor_count)
   # offer ProcessCount variable
   include(ProcessorCount)
@@ -22,31 +20,51 @@ ENDMACRO()
 
 
 
+MACRO(find_tar_xz)
+  find_program(TAR_EXE NAMES tar)
+  if(${TAR_EXE} STREQUAL "TAR_EXE-NOTFOUND")
+    message(FATAL_ERROR "find no tar")
+  endif()
+
+  execute_process(COMMAND ${TAR_EXE} --version
+		OUTPUT_VARIABLE TAR_VERSION
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+  set(version_pattern "[0-9]*\\.[0-9]*\\.[0-9]*")
+  string(REGEX MATCH ${version_pattern} TAR_VERSION "${TAR_VERSION}")
+
+  # tar version newer than 1.22 has support to xz compression
+  if(${TAR_VERSION} VERSION_LESS 1.22)
+    message(FATAL_ERROR "tar version not less than 1.22 : ${TAR_VERSION}")
+  else()
+    message(STATUS "tar version : ${TAR_VERSION}")
+  endif()
+
+  find_program(XZ_EXE NAMES xz)
+  if(${XZ_EXE} STREQUAL "XZ_EXE-NOTFOUND")
+    message(FATAL_ERROR "find no xz")
+  endif()
+ENDMACRO()
 
 MACRO(configure_autoinstall)
+  # sets the md5 checksum for certain version.
+  include(${CMAKE_SOURCE_DIR}/scripts/LLVM_MD5.cmake)
+  decide_patch_version()
+
   if(NOT DEFINED LLVM_RECOMMAND_VERSION)
     message(FATAL_ERROR "finds no LLVM_RECOMMAND_VERSION")
   endif()
 
   if(${TEST_CMAKE})
     # for test purpose, I don't want to waste bandwidth of llvm.org.
-    SET(SITE_URL
-       file://${CMAKE_SOURCE_DIR}/../source-tgz)
+    SET(SITE_URL file://${CMAKE_SOURCE_DIR}/../source-tgz)
   else()
     # normal situation.
     SET(SITE_URL http://llvm.org/releases)
   endif()
 
   SET(DOWNLOAD_DIR ${CMAKE_BINARY_DIR}/download)
-
-  # force to use newest patch version
-  if (${LLVM_RECOMMAND_VERSION} STREQUAL "3.4")
-    SET(LLVM_PATCH_VERSION "3.4.2")
-  else()
-    SET(LLVM_PATCH_VERSION ${LLVM_RECOMMAND_VERSION})
-  endif()
-
-  SET(URL_SUFFIX src.tar.gz)
+  SET(URL_SUFFIX src.tar.xz)
 
   # set LLVM path names
   SET(LLVM_NAME         llvm-${LLVM_PATCH_VERSION}.${URL_SUFFIX})
@@ -63,18 +81,19 @@ MACRO(configure_autoinstall)
   else()
     SET(CLANG_NAME_SHORT cfe)
   endif()
-  SET(CLANG_NAME       ${CLANG_NAME_SHORT}-${LLVM_PATCH_VERSION}.${URL_SUFFIX})
-  SET(CLANG_URL        ${SITE_URL}/${LLVM_PATCH_VERSION}/${CLANG_NAME})
+
+  SET(CLANG_NAME       ${CLANG_NAME_SHORT}-${CLANG_PATCH_VERSION}.${URL_SUFFIX})
+  SET(CLANG_URL        ${SITE_URL}/${CLANG_PATCH_VERSION}/${CLANG_NAME})
   SET(CLANG_FILE       ${DOWNLOAD_DIR}/${CLANG_NAME})
   SET(CLANG_SOURCE_DIR ${LLVM_SOURCE_DIR}/tools/clang)
-  SET(CLANG_MD5        ${CLANG_MD5_${LLVM_PATCH_VERSION}})
+  SET(CLANG_MD5        ${CLANG_MD5_${CLANG_PATCH_VERSION}})
 
   # set compiler-rt path names
-  SET(COMPILER-RT_NAME compiler-rt-${LLVM_RECOMMAND_VERSION}.${URL_SUFFIX})
-  SET(COMPILER-RT_URL ${SITE_URL}/${LLVM_RECOMMAND_VERSION}/${COMPILER-RT_NAME})
+  SET(COMPILER-RT_NAME compiler-rt-${RT_PATCH_VERSION}.${URL_SUFFIX})
+  SET(COMPILER-RT_URL ${SITE_URL}/${RT_PATCH_VERSION}/${COMPILER-RT_NAME})
   SET(COMPILER-RT_FILE       ${DOWNLOAD_DIR}/${COMPILER-RT_NAME})
   SET(COMPILER-RT_SOURCE_DIR ${LLVM_SOURCE_DIR}/projects/compiler-rt)
-  SET(COMPILER-RT_MD5        ${COMPILER-RT_MD5_${LLVM_RECOMMAND_VERSION}})
+  SET(COMPILER-RT_MD5        ${COMPILER-RT_MD5_${RT_PATCH_VERSION}})
 
 
   # assertion ofr md5
@@ -127,7 +146,8 @@ FUNCTION(extract_file target_file target_dir)
   # Extract the archive. Note that CMake-built-in tar does not
   # support --strip-components.
   if(EXISTS ${target_file})
-    execute_process(COMMAND tar zxf ${target_file} --strip-components=1 
+    execute_process(COMMAND ${TAR_EXE} -x --xz -f ${target_file}
+			--strip-components=1 
 			WORKING_DIRECTORY ${target_dir})
   else()
     message(FATAL_ERROR "finds no ${target_file}")
@@ -168,6 +188,8 @@ ENDFUNCTION()
 
 FUNCTION(autoinstall_llvm)
   configure_processor_count()
+  find_tar_xz()
+
   configure_autoinstall()
 
   # download llvm, clang and compiler-rt here.
