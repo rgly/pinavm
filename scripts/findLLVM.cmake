@@ -31,8 +31,7 @@ execute_process(COMMAND ${LLVM_CONFIG_EXE} --version
 
 
 # Check whether the LLVM version meets our requirement.
-if(  (${LLVM_VERSION} MATCHES ${LLVM_RECOMMAND_VERSION} )
-  OR (${LLVM_VERSION} MATCHES ${LLVM_RECOMMAND_VERSION}svn))
+if(${LLVM_VERSION} MATCHES ^${LLVM_RECOMMAND_VERSION})
   message(STATUS "LLVM version : ${LLVM_VERSION}")
 else()
   if(${AUTOINSTALL})
