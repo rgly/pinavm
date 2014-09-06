@@ -17,8 +17,9 @@ if(${LLVM_CONFIG_EXE} STREQUAL "LLVM_CONFIG_EXE-NOTFOUND")
     # on condition that finds no LLVM and user not specify AUTOINSTALL.
     message(FATAL_ERROR "\tfinds no LLVM in your system.\n"
       	"\tPlease manually install LLVM.\n"
-      	"\tOr (with root permission) :\n"
-      	"\t\"cmake /where/pinavm -DAUTOINSTALL=TRUE\"\n"
+      	"\tOr\n"
+      	"\t\"cmake /where/pinavm -DAUTOINSTALL=TRUE\n"
+	"\t\t-DLLVM_ROOT=/where/you/want/llvm/install/to\"\n"
       	"\twhich should automatically install LLVM for you"
       	" during cmake time.")
   endif()
