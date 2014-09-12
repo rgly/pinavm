@@ -1,7 +1,7 @@
 # Find a compiler which compiles c++ source into llvm assembly.
 # ====================== find CLANG ===================================
-find_program(CLANG "clang++-${LLVM_RECOMMAND_VERSION}"
-      	  NAMES clang++ 
+find_program(CLANG "clang++-${LLVM_PATCH_VERSION}"
+      	  NAMES "clang++-${LLVM_RECOMMAND_VERSION}" clang++ 
       	  HINTS ${LLVM_ROOT}/bin)
 
 if(NOT (${CLANG} STREQUAL "CLANG-NOTFOUND"))
