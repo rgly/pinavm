@@ -17,7 +17,7 @@ find_program(LLVM_CONFIG_EXE
 if(${LLVM_CONFIG_EXE} STREQUAL "LLVM_CONFIG_EXE-NOTFOUND")
   if(${AUTOINSTALL})
     # if AUTOINSTALL is explicitly set to true, then run installLLVM.
-    autoinstall_llvm()
+    autoinstall_llvm(${LLVM_RECOMMAND_VERSION} ${LLVM_ROOT})
   else()
     # on condition that finds no LLVM and user not specify AUTOINSTALL.
     message(FATAL_ERROR "\tfinds no LLVM in your system.\n"

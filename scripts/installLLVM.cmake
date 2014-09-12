@@ -5,6 +5,8 @@
 
 # NOTE that this script requires tar and make command in your OS.
 
+include(${CMAKE_SOURCE_DIR}/scripts/LLVM_MD5.cmake)
+include(${CMAKE_SOURCE_DIR}/scripts/LLVMPatchVersion.cmake)
 
 MACRO(configure_processor_count)
   # offer ProcessCount variable
@@ -18,14 +20,14 @@ MACRO(configure_processor_count)
   endif()
 ENDMACRO()
 
-
-
-MACRO(find_tar_xz)
+MACRO(find_tar)
   find_program(TAR_EXE NAMES tar)
   if(${TAR_EXE} STREQUAL "TAR_EXE-NOTFOUND")
     message(FATAL_ERROR "find no tar")
   endif()
+ENDMACRO()
 
+MACRO(find_xz TAR_EXE)
   execute_process(COMMAND ${TAR_EXE} --version
 		OUTPUT_VARIABLE TAR_VERSION
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -46,14 +48,26 @@ MACRO(find_tar_xz)
   endif()
 ENDMACRO()
 
+MACRO(llvm_install_assert_arg LLVM_RECOMMAND_VERSION_ARG LLVM_ROOT_ARG)
+  if (${LLVM_ROOT_ARG} STREQUAL "")
+    message(FATAL_ERROR "LLVM_ROOT empty")
+  endif()
+
+  if (${LLVM_RECOMMAND_VERSION_ARG} STREQUAL "")
+    message(FATAL_ERROR "LLVM_VERSION empty")
+  endif()
+
+  if (${LLVM_RECOMMAND_VERSION_ARG} VERSION_LESS 3.1)
+    message(FATAL_ERROR "Only Support LLVM version > 3.0, your version : "
+                         "${LLVM_RECOMMAND_VERSION_ARG}")
+  endif()
+ENDMACRO()
+
 MACRO(configure_autoinstall)
   # sets the md5 checksum for certain version.
-  include(${CMAKE_SOURCE_DIR}/scripts/LLVM_MD5.cmake)
-  decide_patch_version()
-
-  if(NOT DEFINED LLVM_RECOMMAND_VERSION)
-    message(FATAL_ERROR "finds no LLVM_RECOMMAND_VERSION")
-  endif()
+  decide_patch_version(${LLVM_RECOMMAND_VERSION_ARG})
+  set_llvm_md5()
+  find_tar()
 
   if(${TEST_CMAKE})
     # for test purpose, I don't want to waste bandwidth of llvm.org.
@@ -64,7 +78,22 @@ MACRO(configure_autoinstall)
   endif()
 
   SET(DOWNLOAD_DIR ${CMAKE_BINARY_DIR}/download)
-  SET(URL_SUFFIX src.tar.xz)
+
+  if (${LLVM_RECOMMAND_VERSION_ARG} VERSION_LESS "3.5")
+    SET(URL_SUFFIX src.tar.gz)
+    SET(COMPRESS_OPTION gzip)
+  else()
+    SET(URL_SUFFIX src.tar.xz)
+    SET(COMPRESS_OPTION xz)
+    find_xz(${TAR_EXE})
+  endif()
+
+  if (${LLVM_RECOMMAND_VERSION_ARG} VERSION_LESS "3.3")
+    SET(CLANG_NAME_SHORT clang)
+  else()
+    SET(CLANG_NAME_SHORT cfe)
+  endif()
+
 
   # set LLVM path names
   SET(LLVM_NAME         llvm-${LLVM_PATCH_VERSION}.${URL_SUFFIX})
@@ -73,15 +102,10 @@ MACRO(configure_autoinstall)
   SET(LLVM_SOURCE_DIR   ${CMAKE_BINARY_DIR}/llvm-source/llvm)
   SET(LLVM_MD5          ${LLVM_MD5_${LLVM_PATCH_VERSION}})
 
+
   # Clang uses cfe(C frontend) as its file name from version 3.3. In
   # order to make cmake of llvm automatically find and compile Clang,
   # a tools/clang directory is still needed.
-  if (${LLVM_RECOMMAND_VERSION} VERSION_LESS "3.3")
-    SET(CLANG_NAME_SHORT clang)
-  else()
-    SET(CLANG_NAME_SHORT cfe)
-  endif()
-
   SET(CLANG_NAME       ${CLANG_NAME_SHORT}-${CLANG_PATCH_VERSION}.${URL_SUFFIX})
   SET(CLANG_URL        ${SITE_URL}/${CLANG_PATCH_VERSION}/${CLANG_NAME})
   SET(CLANG_FILE       ${DOWNLOAD_DIR}/${CLANG_NAME})
@@ -146,8 +170,8 @@ FUNCTION(extract_file target_file target_dir)
   # Extract the archive. Note that CMake-built-in tar does not
   # support --strip-components.
   if(EXISTS ${target_file})
-    execute_process(COMMAND ${TAR_EXE} -x --xz -f ${target_file}
-			--strip-components=1 
+    execute_process(COMMAND ${TAR_EXE} -x --${COMPRESS_OPTION}
+			-f ${target_file} --strip-components=1 
 			WORKING_DIRECTORY ${target_dir})
   else()
     message(FATAL_ERROR "finds no ${target_file}")
@@ -158,8 +182,8 @@ ENDFUNCTION()
 FUNCTION(install_llvm)
   SET(llvm_build_dir ${CMAKE_BINARY_DIR}/build-llvm)
   # Create necessary directories.
-  if (NOT EXISTS ${LLVM_ROOT})
-    FILE(MAKE_DIRECTORY ${LLVM_ROOT})
+  if (NOT EXISTS ${LLVM_ROOT_ARG})
+    FILE(MAKE_DIRECTORY ${LLVM_ROOT_ARG})
   endif()
 
   if (NOT EXISTS ${llvm_build_dir})
@@ -168,7 +192,7 @@ FUNCTION(install_llvm)
 
   # This script configures llvm for you.
   execute_process(COMMAND ${CMAKE_COMMAND} ${LLVM_SOURCE_DIR}
-		  -DCMAKE_INSTALL_PREFIX=${LLVM_ROOT}
+		  -DCMAKE_INSTALL_PREFIX=${LLVM_ROOT_ARG}
 		  WORKING_DIRECTORY ${llvm_build_dir})
 
   message(STATUS "finish configure the source code.")
@@ -186,9 +210,14 @@ FUNCTION(install_llvm)
 		  WORKING_DIRECTORY ${llvm_build_dir})
 ENDFUNCTION()
 
-FUNCTION(autoinstall_llvm)
+FUNCTION(autoinstall_llvm LLVM_RECOMMAND_VERSION_ARG LLVM_ROOT_ARG)
+  if (NOT DEFINED TEST_CMAKE)
+    set(TEST_CMAKE false)
+  endif()
+
+  # check whether llvm version bigger 3.1
+  llvm_install_assert_arg(${LLVM_RECOMMAND_VERSION_ARG} ${LLVM_ROOT_ARG})
   configure_processor_count()
-  find_tar_xz()
 
   configure_autoinstall()
 
@@ -212,8 +241,8 @@ FUNCTION(autoinstall_llvm)
 
   # check whether llvm-config is installed again.
   find_program(llvm-config-temp
-	  NAMES "llvm-config-${LLVM_RECOMMAND_VERSION}" "llvm-config"
-	  HINTS ${LLVM_ROOT}/bin)
+	  NAMES "llvm-config-${LLVM_PATCH_VERSION}" "llvm-config"
+	  HINTS ${LLVM_ROOT_ARG}/bin)
 
   # llvm should exists in user's system.
   # if notfound, which means that install script failed, give an error.
@@ -226,13 +255,3 @@ FUNCTION(autoinstall_llvm)
     set(LLVM_CONFIG_EXE ${llvm-config-temp} PARENT_SCOPE)
   endif()
 ENDFUNCTION()
-
-
-# Currently we install llvm while cmake time, because we want to 
-# have llvm before configuring pinavm. The following suggestion
-# does not meet our requirement due to it installs llvm during build
-# time.
-
-# There is another way to implement autoinstall, but we need clang in
-# llvm/tools directory before build. I am not sure how to do that.
-#ExternalProject_Add( LLVM-${LLVM_RECOMMAND_VERSION} URL ${LLVM_URL} URL_MD5 ${LLVM_MD5}
