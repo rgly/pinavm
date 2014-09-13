@@ -57,6 +57,13 @@ MACRO(llvm_install_assert_arg LLVM_RECOMMAND_VERSION_ARG LLVM_ROOT_ARG)
     message(FATAL_ERROR "LLVM_VERSION empty")
   endif()
 
+  string(REPLACE "." ";" version_list "${LLVM_RECOMMAND_VERSION_ARG}")
+  list(LENGTH version_list version_len)
+
+  if(NOT (${version_len} EQUAL 2))
+    message(FATAL_ERROR "only accept LLVM_VERSION in X.Y form")
+  endif()
+
   if (${LLVM_RECOMMAND_VERSION_ARG} VERSION_LESS 3.1)
     message(FATAL_ERROR "Only Support LLVM version > 3.0, your version : "
                          "${LLVM_RECOMMAND_VERSION_ARG}")
@@ -210,6 +217,38 @@ FUNCTION(install_llvm)
 		  WORKING_DIRECTORY ${llvm_build_dir})
 ENDFUNCTION()
 
+
+
+MACRO(check_llvm_version)
+  # check whether llvm-config is installed again.
+  find_program(llvm-config-temp
+		NAMES "llvm-config-${LLVM_PATCH_VERSION}" "llvm-config"
+		HINTS ${LLVM_ROOT_ARG}/bin)
+
+  # llvm should exists in user's system.
+  # if notfound, which means that install script failed, give an error.
+  if (${llvm-config-temp} STREQUAL "llvm-config-temp-NOTFOUND")
+    message(FATAL_ERROR "This is a bug. Please contact developers.")
+  endif()
+
+  execute_process(COMMAND ${llvm-config-temp} --version
+		OUTPUT_VARIABLE LLVM_VERSION
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+  # Check whether the LLVM version meets our requirement.
+  if(${LLVM_VERSION} MATCHES ^${LLVM_RECOMMAND_VERSION_ARG})
+    # set LLVM_CONFIG_EXE for parent, so that not to find it in parent
+    # process again.
+    set(LLVM_CONFIG_EXE ${llvm-config-temp} PARENT_SCOPE)
+    message(STATUS "Finished installing LLVM.")
+  else()
+    message(FATAL_ERROR "wrong version of LLVM\n"
+			"This is a bug. Please contact developers.")
+  endif()
+ENDMACRO()
+
+
+
 FUNCTION(autoinstall_llvm LLVM_RECOMMAND_VERSION_ARG LLVM_ROOT_ARG)
   if (NOT DEFINED TEST_CMAKE)
     set(TEST_CMAKE false)
@@ -228,7 +267,6 @@ FUNCTION(autoinstall_llvm LLVM_RECOMMAND_VERSION_ARG LLVM_ROOT_ARG)
 
   message(STATUS "finish llvm source download.")
 
-
   # extract the source code. keep 2nd arg null means same with 1st arg.
   extract_file(${LLVM_FILE} ${LLVM_SOURCE_DIR})
   extract_file(${CLANG_FILE} ${CLANG_SOURCE_DIR})
@@ -238,20 +276,5 @@ FUNCTION(autoinstall_llvm LLVM_RECOMMAND_VERSION_ARG LLVM_ROOT_ARG)
 
   # temperary commement out this for test usage.
   install_llvm()
-
-  # check whether llvm-config is installed again.
-  find_program(llvm-config-temp
-	  NAMES "llvm-config-${LLVM_PATCH_VERSION}" "llvm-config"
-	  HINTS ${LLVM_ROOT_ARG}/bin)
-
-  # llvm should exists in user's system.
-  # if notfound, which means that install script failed, give an error.
-  if (${llvm-config-temp} STREQUAL "llvm-config-temp-NOTFOUND")
-    message(FATAL_ERROR "This is a bug. Please contact developers.")
-  else()
-    message(STATUS "Finished installing LLVM.")
-    # set LLVM_CONFIG_EXE for parent, so that not to find it in parent
-    # process again.
-    set(LLVM_CONFIG_EXE ${llvm-config-temp} PARENT_SCOPE)
-  endif()
+  check_llvm_version()
 ENDFUNCTION()
