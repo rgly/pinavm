@@ -166,7 +166,7 @@ private:
     // called after simulation ends
     void simulation_done();
 
-protected:
+public:
 
     sc_bind_info* m_bind_info;
 
@@ -623,6 +623,66 @@ sc_port_b<IF>::make_sensitive( sc_method_handle handle_p,
 //  N is the maximum number of channels (with interface IF) that can be bound
 //  to this port. N <= 0 means no maximum.
 // ----------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------
+//  STRUCT : sc_bind_ef
+// ----------------------------------------------------------------------------
+
+struct sc_bind_ef
+{
+    // constructor
+    sc_bind_ef( sc_process_b* , sc_event_finder* );
+
+    // destructor
+    ~sc_bind_ef();
+
+    sc_process_b* handle;
+    sc_event_finder* event_finder;
+};
+
+// ----------------------------------------------------------------------------
+//  STRUCT : sc_bind_elem
+// ----------------------------------------------------------------------------
+
+struct sc_bind_elem
+{
+    // constructors
+    sc_bind_elem();
+    explicit sc_bind_elem( sc_interface* interface_ );
+    explicit sc_bind_elem( sc_port_base* parent_ );
+
+    sc_interface* iface;
+    sc_port_base* parent;
+};
+
+// ----------------------------------------------------------------------------
+//  STRUCT : sc_bind_info
+// ----------------------------------------------------------------------------
+
+struct sc_bind_info
+{
+    // constructor
+    explicit sc_bind_info( int max_size_, 
+	sc_port_policy policy_=SC_ONE_OR_MORE_BOUND );
+
+    // destructor
+    ~sc_bind_info();
+
+    int            max_size() const;
+    sc_port_policy policy() const; 
+    int            size() const;
+
+    int                        m_max_size;
+    sc_port_policy             m_policy;
+    std::vector<sc_bind_elem*> vec;
+    bool                       has_parent;
+    int                        last_add;
+    bool                       is_leaf;
+    bool                       complete;
+
+    std::vector<sc_bind_ef*>   thread_vec;
+    std::vector<sc_bind_ef*>   method_vec;
+};
 
 } // namespace sc_core
 
