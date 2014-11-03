@@ -34,6 +34,7 @@
 #include "sysc/kernel/sc_sensitive.h"
 #include "sysc/kernel/sc_process_handle.h"
 #include "sysc/kernel/sc_event.h"
+#include "sysc/pinavm/permalloc.h"
 #include <sstream>
 
 namespace sc_core {
@@ -172,7 +173,7 @@ void sc_process_b::delete_process()
 
     if ( this != sc_get_current_process_b() )
     {
-        delete this;
+	    permalloc::safe_delete( this );
     }
   
     // Deferred deletion: note we set the reference count to one  for the call

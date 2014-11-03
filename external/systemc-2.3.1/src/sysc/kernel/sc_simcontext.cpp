@@ -58,6 +58,7 @@
 #include "sysc/utils/sc_mempool.h"
 #include "sysc/utils/sc_list.h"
 #include "sysc/utils/sc_utils_ids.h"
+#include "sysc/pinavm/permalloc.h"
 
 // DEBUGGING MACROS:
 //
@@ -389,7 +390,10 @@ sc_simcontext::clean()
     delete m_prim_channel_registry;
     delete m_phase_cb_registry;
     delete m_name_gen;
-    delete m_process_table;
+    if (permalloc::is_from (m_process_table))
+	    ; // permalloc is permanent
+    else
+	    delete m_process_table;
     m_child_objects.resize(0);
     m_delta_events.resize(0);
     delete m_timed_events;
@@ -1104,7 +1108,7 @@ sc_simcontext::create_cthread_process(
     sc_process_host* host_p, const sc_spawn_options* opt_p )
 {
     sc_thread_handle handle = 
-        new sc_cthread_process(name_p, free_host, method_p, host_p, opt_p);
+        permalloc::obj<sc_cthread_process>(name_p, free_host, method_p, host_p, opt_p);
     if ( m_ready_to_simulate ) 
     {
 	handle->prepare_for_simulation();
@@ -1121,7 +1125,7 @@ sc_simcontext::create_method_process(
     sc_process_host* host_p, const sc_spawn_options* opt_p )
 {
     sc_method_handle handle = 
-        new sc_method_process(name_p, free_host, method_p, host_p, opt_p);
+        permalloc::obj<sc_method_process>(name_p, free_host, method_p, host_p, opt_p);
     if ( m_ready_to_simulate ) { // dynamic process
 	if ( !handle->dont_initialize() )
         {
@@ -1161,7 +1165,7 @@ sc_simcontext::create_thread_process(
     sc_process_host* host_p, const sc_spawn_options* opt_p )
 {
     sc_thread_handle handle = 
-        new sc_thread_process(name_p, free_host, method_p, host_p, opt_p);
+        permalloc::obj<sc_thread_process>(name_p, free_host, method_p, host_p, opt_p);
     if ( m_ready_to_simulate ) { // dynamic process
 	handle->prepare_for_simulation();
         if ( !handle->dont_initialize() )

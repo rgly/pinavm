@@ -35,6 +35,7 @@
 #include "sysc/kernel/sc_object.h"
 #include "sysc/kernel/sc_kernel_ids.h"
 #include "sysc/communication/sc_export.h"
+#include "sysc/pinavm/permalloc.h"
 
 namespace llvm {
 	class Function;
@@ -292,6 +293,7 @@ class sc_process_b : public sc_object {
     friend sc_process_handle sc_get_current_process_handle();
     friend void sc_thread_cor_fn( void* arg );
     friend bool timed_out( sc_simcontext* );
+    friend void ::permalloc::safe_delete<sc_process_b> (sc_process_b*);
 
   public:
     enum process_throw_type {
