@@ -44,7 +44,8 @@ namespace sc_core {
 
 static
 const char systemc_version[] =
-    "SystemC " SC_VERSION " --- " __DATE__ " " __TIME__;
+    "SystemC " SC_VERSION " --- " __DATE__ " " __TIME__
+    " --- PATCHED FOR PinaVM --- ";
 
 const unsigned int sc_version_major = SC_VERSION_MAJOR;
 const unsigned int sc_version_minor = SC_VERSION_MINOR;
