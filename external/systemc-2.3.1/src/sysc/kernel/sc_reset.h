@@ -35,6 +35,7 @@ namespace sc_core {
 
 template<typename DATA> class sc_signal_in_if;
 template<typename IF, sc_writer_policy POL> class sc_signal;
+template<typename IF> class veri_signal;
 template<typename DATA> class sc_in;
 template<typename DATA> class sc_inout;
 template<typename DATA> class sc_out;
@@ -79,6 +80,7 @@ class sc_reset {
     friend class sc_signal<bool, SC_ONE_WRITER>;
     friend class sc_signal<bool, SC_MANY_WRITERS>;
     friend class sc_signal<bool, SC_UNCHECKED_WRITERS>;
+    friend class veri_signal<bool>;
     friend class sc_simcontext;
     template<typename SOURCE> friend class sc_spawn_reset;
     friend class sc_thread_process; 
