@@ -96,6 +96,10 @@
 #  define SC_SIMCONTEXT_TRACING_  1
 #endif
 
+// return to PinaVM
+extern "C" void
+pinavm_callback (sc_core::sc_simcontext*, const sc_core::sc_time&);
+
 namespace sc_core {
 
 sc_stop_mode stop_mode = SC_STOP_FINISH_DELTA;
@@ -1659,7 +1663,7 @@ sc_start( const sc_time& duration, sc_starvation_policy p )
 
     // If the simulation status is good perform the simulation:
 
-    context_p->simulate( duration );
+    pinavm_callback (context_p, duration);
 
     // Re-check the status:
 
