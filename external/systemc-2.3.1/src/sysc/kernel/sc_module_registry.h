@@ -76,7 +76,7 @@ private:
     void simulation_done();
 
 
-private:
+public:
 
     int                     m_construction_done;
     std::vector<sc_module*> m_module_vec;

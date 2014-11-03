@@ -142,7 +142,9 @@ class sc_method_process : public sc_process_b {
     inline bool run_process();
     virtual void kill_process(
         sc_descendant_inclusion_info descendants = SC_NO_DESCENDANTS );
+  public:
     sc_method_handle next_exist();
+  protected:
     sc_method_handle next_runnable();
     void clear_trigger();
     void next_trigger( const sc_event& );
