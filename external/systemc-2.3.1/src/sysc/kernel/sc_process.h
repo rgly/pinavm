@@ -36,6 +36,10 @@
 #include "sysc/kernel/sc_kernel_ids.h"
 #include "sysc/communication/sc_export.h"
 
+namespace llvm {
+	class Function;
+}
+
 namespace sc_core {
 
 // Forward declarations:
@@ -140,6 +144,7 @@ inline void sc_process_monitor::signal(sc_thread_handle , int ) {}
 #if defined(SC_USE_MEMBER_FUNC_PTR)
 
     typedef void (sc_process_host::*SC_ENTRY_FUNC)();
+    typedef void (*SC_ENTRY_FUNC_OPT)();
 #   define SC_DECL_HELPER_STRUCT(callback_tag, func) /*EMPTY*/
 #   define SC_MAKE_FUNC_PTR(callback_tag, func) \
         static_cast<sc_core::SC_ENTRY_FUNC>(&callback_tag::func)
@@ -427,10 +432,16 @@ class sc_process_b : public sc_object {
     sc_event*                    m_reset_event_p;   // reset event.
     sc_event*                    m_resume_event_p;  // resume event.
     sc_process_b*                m_runnable_p;      // sc_runnable link
+  public:
     sc_process_host*             m_semantics_host_p;   // host for semantics.
     SC_ENTRY_FUNC                m_semantics_method_p; // method for semantics.
+    SC_ENTRY_FUNC_OPT            m_semantics_p;     // method/host combination for semantics.
+    ::llvm::Function*            m_bc_semantics_p;  // llvm bitcode version of the former.
+  protected:
     int                          m_state;           // process state.
+  public:
     std::vector<const sc_event*> m_static_events;   // static events waiting on.
+  protected:
     bool                         m_sticky_reset;    // see note 3 above.
     sc_event*                    m_term_event_p;    // terminated event.
     sc_throw_it_helper*          m_throw_helper_p;  // what to throw.
@@ -442,6 +453,9 @@ class sc_process_b : public sc_object {
 
   protected:
     static sc_process_b* m_last_created_process_p; // Last process created.
+
+  public:
+    const char* func_process;
 };
 
 typedef sc_process_b sc_process_b;  // For compatibility.
@@ -665,7 +679,10 @@ inline void sc_process_b::semantics()
 #   ifndef SC_USE_MEMBER_FUNC_PTR
         m_semantics_method_p->invoke( m_semantics_host_p );
 #   else
-        (m_semantics_host_p->*m_semantics_method_p)(); 
+	if (m_semantics_p)
+		m_semantics_p();
+	else
+		(m_semantics_host_p->*m_semantics_method_p)(); 
 #   endif
 }
 

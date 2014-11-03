@@ -564,6 +564,8 @@ sc_process_b::sc_process_b( const char* name_p, bool is_thread, bool free_host,
     m_runnable_p(0),
     m_semantics_host_p( host_p ),
     m_semantics_method_p ( method_p ),
+    m_semantics_p( NULL ),
+    m_bc_semantics_p( NULL ),
     m_state(ps_normal),
     m_static_events(),
     m_sticky_reset(false),
@@ -573,7 +575,8 @@ sc_process_b::sc_process_b( const char* name_p, bool is_thread, bool free_host,
     m_timed_out(false),
     m_timeout_event_p(0),
     m_trigger_type(STATIC),
-    m_unwinding(false)
+    m_unwinding(false),
+    func_process( name_p )
 {
 
     // THIS OBJECT INSTANCE IS NOW THE LAST CREATED PROCESS:
