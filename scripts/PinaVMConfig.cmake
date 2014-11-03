@@ -2,6 +2,8 @@
 SET(LLVM_RECOMMAND_VERSION 3.5)
 SET(BACKENDS Tweto 42 Promela Simple Hello)
 
+SET(SYSTEMC_VERSION "2.3.1")
+
 # the llvm libraries which PinaVM need.
 SET(NEED_LLVM_LIB mcjit native bitwriter jit interpreter
 		nativecodegen linker irreader)

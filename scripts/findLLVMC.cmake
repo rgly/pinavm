@@ -65,8 +65,9 @@ else(${DRAGONEGG_FOUND})
   endif(${CLANG_FOUND})
 endif(${DRAGONEGG_FOUND})
 
-SET(LLVMC_INCLUDE_DIR "-I${CMAKE_SOURCE_DIR}/external/systemc-2.3.0/src/"
-                    "-I${CMAKE_SOURCE_DIR}/external/basic")
+SET(LLVMC_INCLUDE_DIR
+               "-I${CMAKE_SOURCE_DIR}/external/systemc-${SYSTEMC_VERSION}/src/"
+               "-I${CMAKE_SOURCE_DIR}/external/basic")
 
 # Generate llvm human readable assembly instead of llvm bitcode.
 # Quote from DragonEgg site:

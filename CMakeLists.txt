@@ -20,7 +20,7 @@ macro(needs_no_rtti FILE)
 endmacro()
 
 # subdirectories
-include_directories(${CMAKE_SOURCE_DIR}/external/systemc-2.3.0/src)
+include_directories(${CMAKE_SOURCE_DIR}/external/systemc-${SYSTEMC_VERSION}/src)
 include_directories(${CMAKE_SOURCE_DIR}/external/basic/)
 include_directories(${CMAKE_SOURCE_DIR}/utils)
 
