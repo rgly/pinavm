@@ -39,7 +39,7 @@ SCConstruct *WriteHandler::handle(Function * fct, BasicBlock * bb, Instruction* 
 		Type* valueType = po->getType();
 		std::string chTypeName = po->getChannel()->getTypeName();
 		TRACE_4("Attempting to retrieve value of write(), type is : " << chTypeName << "\n");
-		if (chTypeName == "N5sc_dt7sc_uintILi8") {
+		if (chTypeName == "N5sc_dt7sc_uintILi8EEE") {
 			TRACE_4("handling  uint\n");
 			sc_dt::sc_uint<8> intValue = this->scjit->jitPointedType<sc_dt::sc_uint<8> >(fct, callInst, value, &errb);
 			if (errb) {

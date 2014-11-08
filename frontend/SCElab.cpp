@@ -134,7 +134,7 @@ Port * SCElab::trySc_Signal(IRModule * mod,
 			itfType = Type::getInt32Ty(getGlobalContext());
 			if (itfType)
 				TRACE_4("Integer type found !\n");
-		} else if(variableTypeName == "N5sc_dt7sc_uintILi8") {
+		} else if(variableTypeName == "N5sc_dt7sc_uintILi8EEE") {
 			itfType = Type::getInt32Ty(getGlobalContext());
 			if (itfType)
 				TRACE_4("Unsigned integer type found !\n");
