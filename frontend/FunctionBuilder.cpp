@@ -132,12 +132,12 @@ FunctionBuilder::markUsefulInstructions()
 		PRINT_5(inst->dump());
 		
 		/********************* Visit each use  ***************/
-		Value::use_iterator I = inst->use_begin(), E = inst->use_end();
-		TRACE_6("> Visiting uses...\n");
+		Value::user_iterator I = inst->user_begin(), E = inst->user_end();
+		TRACE_6("> Visiting users...\n");
 		for (; I != E; ++I) {
 			Value *v = *I;
 			Instruction* vAsInst = dyn_cast<Instruction>(v);
-			TRACE_6("Use : " << v << "\n");
+			TRACE_6("User : " << v << "\n");
 			PRINT_5(v->dump());
 			/*** Mark the instruction and the associated basicblock as useful ***/
 			// MM: TODO: this should use
@@ -149,7 +149,7 @@ FunctionBuilder::markUsefulInstructions()
 				mark(v);
 			}
 		}
-		TRACE_6("> Uses visited\n");
+		TRACE_6("> Users visited\n");
 
 	
 		/*********** Visit each argument of the instruction ***********/
