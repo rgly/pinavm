@@ -51,10 +51,6 @@ bool FunctionBuilder::mark(Value * arg)
 	if (isa < Argument > (arg)) {
 		TRACE_5("Found argument: \n");
 		return false;
-//     if (argNb == 1) {
-//       TRACE_5("Arg is this \n");
-//     }
-
 	}
 
 
@@ -98,6 +94,25 @@ FunctionBuilder::isBeforeTargetInst(Value* v)
 	return std::find(this->predecessors->begin(), this->predecessors->end(), v) != this->predecessors->end();
 }
 
+bool FunctionBuilder::isPHINodeAfterTargetInst(Value* arg)
+{
+	if (isa<PHINode>(arg)) {
+		PHINode* pn = dyn_cast<PHINode>(arg);
+		unsigned int numIncoming = pn->getNumIncomingValues();
+		for (unsigned int i = 0; i < numIncoming; ++i) {
+			BasicBlock* incomingBB = pn->getIncomingBlock(i);
+			if (! isBeforeTargetInst(&incomingBB->front()))
+				return true;
+		}
+	}
+	return false;
+}
+
+bool FunctionBuilder::isStoreInstTo(Instruction* inst, Value* address)
+{
+	bool ret = (isa<StoreInst>(inst) && inst->getOperand(1) == address);
+	return ret;
+}
 
 // FIXME :: RGLY: this function finds the instructions which uses target Inst,
 //	and mark them, Then check all the operand of target Inst. If there
@@ -128,8 +143,8 @@ FunctionBuilder::markUsefulInstructions()
 			// MM: TODO: this should use
 			// MM: TODO: CallSite::getArgument instead. It's
 			// MM: TODO: probably broken.
-			if (isBeforeTargetInst(v) && ((isa<StoreInst>(v) && vAsInst->getOperand(1) == inst) ||
-							isa<CallInst>(v)))
+			if (isBeforeTargetInst(v) &&
+			(isStoreInstTo(vAsInst, inst) || isa<CallInst>(v)))
 			{
 				mark(v);
 			}
@@ -139,21 +154,15 @@ FunctionBuilder::markUsefulInstructions()
 	
 		/*********** Visit each argument of the instruction ***********/
 		TRACE_6("> Visiting args...\n");
-		User::op_iterator opit = inst->op_begin(), opend = inst->op_end();
-		Value *arg;
+		User::op_iterator opit = inst->op_begin();
+		User::op_iterator opend = inst->op_end();
 		for (; opit != opend; ++opit) {
-			arg = *opit;
+			Value *arg = *opit;
 			TRACE_6("Arg : " << arg << "\n");
 			PRINT_6(arg->dump());
 
-			if (isa<PHINode>(arg)) {
-				PHINode* pn = dyn_cast<PHINode>(arg);
-				int numIncoming = pn->getNumIncomingValues();
-				for (int i = 0; i < numIncoming; ++i) {
-					BasicBlock* incomingBB = pn->getIncomingBlock(i);
-					if (! isBeforeTargetInst(&incomingBB->front()))
-						return true;
-				}
+			if (isPHINodeAfterTargetInst(arg)) {
+				return true;
 			}
 			/*** Mark the instruction and the associated basicblock as useful ***/
 			if (isBeforeTargetInst(arg))

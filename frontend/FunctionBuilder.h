@@ -51,6 +51,9 @@ class FunctionBuilder {
 
   bool isMarked(Instruction*);
   bool isMarked(BasicBlock*);
+  // A PHINode which has at least one incoming basicblock after target Inst.
+  bool isPHINodeAfterTargetInst(Value*);
+  bool isStoreInstTo(Instruction* inst, Value* address);
 };
 
 #endif
