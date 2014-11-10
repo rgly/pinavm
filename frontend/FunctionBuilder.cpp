@@ -2,6 +2,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include <llvm/IR/CallSite.h>
 #include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/InstIterator.h"
 
 #include <algorithm>
 
@@ -197,19 +198,16 @@ std::vector<Instruction*>* FunctionBuilder::fillPredecessors(Function* origFct,
   Instruction* targetInst) {
 
 	std::vector<Instruction*>* ret = new std::vector<Instruction*>();
-	Function::iterator bb = origFct->begin();
-	Function::iterator be = origFct->end();
-
-	for (; bb != be; ++bb) {
-		BasicBlock::iterator i = bb->begin(), ie = bb->end();
-		for (; i != ie; ++i) {
-			Instruction* currentInst = &*i;
-			if (currentInst != targetInst)
-				ret->push_back(currentInst);
-			else
-				return ret;
-		}
+	inst_iterator i = inst_begin(origFct);
+	inst_iterator e = inst_end(origFct);
+	for ( i != e; ++i) {
+		Instruction* currentInst = &*i;
+		if (currentInst != targetInst)
+			ret->push_back(currentInst);
+		else
+			return ret;
 	}
+	llvm_unreachable("FunctionBuilder::fillPredecessors : should end with target Inst");
 	return NULL;
 }
 
