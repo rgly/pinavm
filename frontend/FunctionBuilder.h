@@ -20,6 +20,8 @@ class FunctionBuilder {
   std::vector<Instruction*> temp_queue;
   std::vector<Instruction*> used_insts;
   std::vector<BasicBlock*> used_bb;
+  // record the incoming BasicBlocks of marked PHINodes.
+  std::vector<BasicBlock*> used_phi_bb; 
   //  DenseMap<const Value*, Value*> ValueMap;
   ValueToValueMapTy ValueMap;
 
@@ -54,6 +56,8 @@ class FunctionBuilder {
   // A PHINode which has at least one incoming basicblock after target Inst.
   bool isPHINodeAfterTargetInst(Value*);
   bool isStoreInstTo(Instruction* inst, Value* address);
+  bool isMarkedAsPHINodeBB(BasicBlock* BB);
+  void markAsPHINodeBB(BasicBlock* BB);
 };
 
 #endif

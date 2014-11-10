@@ -89,6 +89,44 @@ bool FunctionBuilder::mark(Value * arg)
 	return true;
 }
 
+void FunctionBuilder::markAsPHINodeBB(BasicBlock* BB)
+{
+	if (isMarkedAsPHINodeBB(BB)) {
+		return;
+	}
+
+	assert(isMarked(BB));
+
+	this->used_phi_bb.push_back(BB);
+	Instruction* termInst = BB->getTerminator();
+	Value* condVal = NULL;
+	if (isa<BranchInst>(termInst)) {
+		BranchInst* ins = dyn_cast<BranchInst>(termInst);
+		if (ins->isConditional()) {
+			condVal = ins->getCondition();
+		}
+	} else if (isa<SwitchInst>(termInst)) {
+		SwitchInst* ins = dyn_cast<SwitchInst>(termInst);
+		condVal = ins->getCondition();
+	} else {
+		llvm_unreachable("Unknown TerminatorInst");
+	}
+
+	if (condVal) {
+		mark(condVal);
+	}
+}
+
+bool FunctionBuilder::isMarkedAsPHINodeBB(BasicBlock* BB)
+{
+	auto it = std::find(this->used_phi_bb.begin(), this->used_phi_bb.end(), BB);
+	if ( it != this->used_phi_bb.end()) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
 bool
 FunctionBuilder::isBeforeTargetInst(Value* v)
 {
@@ -115,11 +153,6 @@ bool FunctionBuilder::isStoreInstTo(Instruction* inst, Value* address)
 	return ret;
 }
 
-// FIXME :: RGLY: this function finds the instructions which uses target Inst,
-//	and mark them, Then check all the operand of target Inst. If there
-//	is a unwanted phinode there, This function don't mark the target Inst.
-//	How can this function marking those instructions which use target Inst
-//	without marking the target Inst?
 
 bool
 FunctionBuilder::markUsefulInstructions()
@@ -131,7 +164,21 @@ FunctionBuilder::markUsefulInstructions()
 
 		TRACE_5("Marking inst " << inst << "\n");
 		PRINT_5(inst->dump());
-		
+
+		/********************* check if inst is PHINode  *****/
+		if (isa<PHINode>(inst)) {
+			PHINode* phinode = dyn_cast<PHINode>(inst);
+			unsigned int Incoming_num = phinode->getNumIncomingValues();
+			for (unsigned int i = 0; i < Incoming_num; ++i) {
+				Value* Val = phinode->getIncomingValue(i);
+				BasicBlock* bb = phinode->getIncomingBlock(i);
+				// TODO : if SystemC IO, quit.
+				// also mark incomingBB, to keep BB graph
+				mark(Val);
+				markAsPHINodeBB(bb);
+			}
+			continue;
+		}
 		/********************* Visit each use  ***************/
 		Value::user_iterator I = inst->user_begin(), E = inst->user_end();
 		TRACE_6("> Visiting users...\n");
@@ -147,6 +194,7 @@ FunctionBuilder::markUsefulInstructions()
 			if (isBeforeTargetInst(v) &&
 			(isStoreInstTo(vAsInst, inst) || isa<CallInst>(v)))
 			{
+				// TODO : if SystemC IO, quit.
 				mark(v);
 			}
 		}
@@ -166,8 +214,10 @@ FunctionBuilder::markUsefulInstructions()
 				return true;
 			}
 			/*** Mark the instruction and the associated basicblock as useful ***/
-			if (isBeforeTargetInst(arg))
+			if (isBeforeTargetInst(arg)) {
+				// TODO : if SystemC IO, quit.
 				mark(arg);
+			}
 		}
 		TRACE_5("... marking done for inst : " << inst << "\n");
 	}
@@ -200,7 +250,7 @@ std::vector<Instruction*>* FunctionBuilder::fillPredecessors(Function* origFct,
 	std::vector<Instruction*>* ret = new std::vector<Instruction*>();
 	inst_iterator i = inst_begin(origFct);
 	inst_iterator e = inst_end(origFct);
-	for ( i != e; ++i) {
+	for (; i != e; ++i) {
 		Instruction* currentInst = &*i;
 		if (currentInst != targetInst)
 			ret->push_back(currentInst);
@@ -252,6 +302,7 @@ void FunctionBuilder::cloneArguments(Function* origFct, Function* fctToJit) {
 BasicBlock* FunctionBuilder::fillClonedBBWithMarkedInst() {
 	BasicBlock *lastBlock = NULL;
 	BasicBlock *oldCurrentBlock = NULL;
+	BasicBlock *oldOrigCurrentBlock = NULL;
 	Function::iterator origbb = this->origFct->begin();
 	Function::iterator origbe = this->origFct->end();
 
@@ -270,15 +321,22 @@ BasicBlock* FunctionBuilder::fillClonedBBWithMarkedInst() {
 		BasicBlock* NewBB = cast < BasicBlock > (this->ValueMap[currentBlock]);
 		TRACE_6("New block is " << NewBB << "\n");
 		
-		/*** Add branch instruction from the previous block to the current one ***/
-		// FIXME :: RGLY: no branch inst is marked in previous
-		//	procedure, the I guess that following code is under
-		//	assumption of BasicBlock is going without conditional
-		//	branch. so add branch automatically. It may hurt
-		//	the basicblock structure, should clone Terminator
-		//	Inst instead of unconditional branch.
+		// By default, PinaVM uses unconditional branch to make
+		// sure that program counter goes to target instruction.
+		// In some cases, instructions like PHINode require
+		// correct incoming BasicBlock, thus PinaVM copy the
+		// TerminatorInst of original function.
 		if (oldCurrentBlock != NULL) {
-			oldCurrentBlock->getInstList().push_back(BranchInst::Create(NewBB));
+			Instruction* terminator_ins;
+			if (isMarkedAsPHINodeBB(oldOrigCurrentBlock)) {
+				terminator_ins
+				  = oldOrigCurrentBlock->getTerminator()->clone();
+			} else {
+				terminator_ins = BranchInst::Create(NewBB);
+			}
+
+			oldCurrentBlock->getInstList().push_back(terminator_ins);
+
 			// DIRTY HACK -> the previous instruction puts a
 			// ref to a new block, which will
 			// not be remapped if we don't add it to
@@ -288,6 +346,7 @@ BasicBlock* FunctionBuilder::fillClonedBBWithMarkedInst() {
 
 		lastBlock = NewBB;
 		oldCurrentBlock = NewBB;
+		oldOrigCurrentBlock = currentBlock;
 		this->cloneEachInst(origbb, NewBB);
 	}
 	return lastBlock;
