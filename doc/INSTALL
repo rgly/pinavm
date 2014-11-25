@@ -107,9 +107,14 @@ ________________________________________________________________________
   Users can choose build type by assigning this parameter.  By default
   it is None. Debug level is set to -g3 if Debug is chosen.
 
+-DGEN_HEADER_DEPENDENCY=TRUE
+  Set this to TRUE to let CMake generate header dependencies of your
+  SystemC applications. This option may be useful if you frequently
+  modify source code of SystemC libraries or program. Turn on this
+  option may take about 10 seconds in CMake stage.
+
 -DTEST_CMAKE=TRUE
   CAUTION : You should not use it unless you know what cmake script
   actually doing. Only used when users testing cmake scripts. With this
   option, CMake downloads LLVM from local space instead of llvm.org
   and shows LLVM configurations.
-

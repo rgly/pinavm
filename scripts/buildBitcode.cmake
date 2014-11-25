@@ -28,8 +28,10 @@ macro(build_llvm_bc_object f_temp_src)
   STRING(REPLACE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} 
       	   f_temp_object ${f_temp_object})
 
-  # the macro to create header dependency.
-  collect_included_headers(${f_abso_temp_src})
+  if (${GEN_HEADER_DEPENDENCY})
+    # To generate header dependency for SystemC applications.
+    collect_included_headers(${f_abso_temp_src})
+  endif(${GEN_HEADER_DEPENDENCY})
 
   LIST(APPEND f_dep_var ${f_abso_temp_src})
 
