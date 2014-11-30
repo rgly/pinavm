@@ -24,6 +24,7 @@ class SCCFactory {
 	bool handle(Process* proc, llvm::Function * fct, BasicBlock * bb, Instruction* callInst, Function* calledFunction);
 	std::map <Instruction *, std::map<Process*, SCConstruct *> >* getConstructs();
 	bool handlerExists(llvm::Function * fct, BasicBlock * bb, Instruction* callInst, Function* calledFunction);
+	bool handlerExists(llvm::Function * calledFunction);
 };
 
 #endif

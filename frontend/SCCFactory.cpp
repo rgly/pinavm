@@ -71,5 +71,11 @@ SCCFactory::handle(Process* proc, llvm::Function * fct, BasicBlock * bb, Instruc
 bool
 SCCFactory::handlerExists(llvm::Function * fct, BasicBlock * bb, Instruction* callInst, Function* calledFunction)
 {
+	return this->handlerExists(calledFunction);
+}
+
+bool
+SCCFactory::handlerExists(llvm::Function* calledFunction)
+{
 	return this->scchandlers.find(calledFunction) != this->scchandlers.end();
 }
