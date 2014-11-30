@@ -2,6 +2,7 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/InstIterator.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 
 #include "Frontend.hpp"
@@ -123,38 +124,37 @@ bool Frontend::run()
 			TRACE_3("Parsing Function : " << F->getName().str() << "\n");
 
 		start_for:
-			for (Function::iterator bb = F->begin(), be = F->end(); bb != be; ++bb) {
-				BasicBlock::iterator i = bb->begin(), ie = bb->end();
-				while (i != ie) {
-					Function* calledFunction = NULL;
-					Instruction* currentInst = &*i;
-					bool isInvoke = false;
-					if (CallInst *callInst = dyn_cast < CallInst > (currentInst)) {
-						calledFunction =  callInst->getCalledFunction();
-					} else if(InvokeInst *invokeInst = dyn_cast < InvokeInst > (currentInst)) {
-						calledFunction =  invokeInst->getCalledFunction();
-						isInvoke = true;
-					} 
-					
-					if (! calledFunction) {
-						TRACE_6("Encountered call to function pointer. Not parsing it.\n");
-					} else if (! this->sccfactory->handlerExists(F, &*bb, currentInst, calledFunction)) {
-						TRACE_6("CallInst : " << currentInst << "\n");
-						TRACE_6("CalledFct : " << calledFunction << "\n");
-						PRINT_6(currentInst->dump());
-						TRACE_4("Call not handled : " << calledFunction->getName().str() << "\n");
-						TRACE_4("Inlining function : " << calledFunction->getName().str() << "\n");
-						isInlined = false;
-						llvm::InlineFunctionInfo ifi;
-						if (isInvoke)
-						  isInlined = llvm::InlineFunction(dyn_cast<InvokeInst>(currentInst), ifi);
-						else
-						  isInlined = llvm::InlineFunction(dyn_cast<CallInst>(currentInst), ifi);
-						// InlineFunction invalidates iterators => restart loop.
-						if (isInlined)
-							goto start_for;
+			for(inst_iterator i = inst_begin(F); i != inst_end(F); ++i) {
+				Function* calledFunction = NULL;
+				Instruction* currentInst = &*i;
+				BasicBlock* bb = currentInst->getParent();
+				bool isInvoke = false;
+				if (CallInst *callInst = dyn_cast < CallInst > (currentInst)) {
+					calledFunction =  callInst->getCalledFunction();
+				} else if(InvokeInst *invokeInst = dyn_cast < InvokeInst > (currentInst)) {
+					calledFunction =  invokeInst->getCalledFunction();
+					isInvoke = true;
+				} 
+
+				if (! calledFunction) {
+					TRACE_6("Encountered call to function pointer. Not parsing it.\n");
+				} else if (! this->sccfactory->handlerExists(F, bb, currentInst, calledFunction)) {
+					TRACE_6("CallInst : " << currentInst << "\n");
+					TRACE_6("CalledFct : " << calledFunction << "\n");
+					PRINT_6(currentInst->dump());
+					TRACE_4("Call not handled : " << calledFunction->getName().str() << "\n");
+					TRACE_4("Inlining function : " << calledFunction->getName().str() << "\n");
+					isInlined = false;
+					llvm::InlineFunctionInfo ifi;
+					if (isInvoke) {
+						isInlined = llvm::InlineFunction(dyn_cast<InvokeInst>(currentInst), ifi);
+					} else {
+						isInlined = llvm::InlineFunction(dyn_cast<CallInst>(currentInst), ifi);
 					}
-					++i;
+					// InlineFunction invalidates iterators => restart loop.
+					if (isInlined) {
+						goto start_for;
+					}
 				}
 			}
 		}
@@ -176,38 +176,35 @@ bool Frontend::run()
 			fctStack->pop_back();
 			TRACE_3("Parsing Function : " << F->getName().str() << "\n");
 			PRINT_3(F->dump());
-			for (Function::iterator bb = F->begin(), be = F->end(); bb != be; ++bb) {
-				BasicBlock::iterator i = bb->begin(), ie = bb->end();
-				bool callB; 
-				while (i != ie) {
-					callB = false;
-					Function* calledFunction = NULL;
-					Instruction* currentInst = &*i;
-					if (CallInst *callInst = dyn_cast < CallInst > (currentInst)) {
-						callB = true;
-						calledFunction =  callInst->getCalledFunction();
-					} else if(InvokeInst *invokeInst = dyn_cast < InvokeInst > (currentInst)) {
-						callB = true;
-						calledFunction =  invokeInst->getCalledFunction();
-					}
-					
-					if (! calledFunction) {
-						TRACE_6("Encountered call to function pointer. Not parsing it.\n");
-					} else if (! this->sccfactory->handle(proc, F, &*bb, currentInst, calledFunction)) {
-						TRACE_6("CallInst : " << currentInst << "\n");
-						TRACE_6("CalledFct : " << calledFunction << "\n");
-						PRINT_6(currentInst->dump());
-						TRACE_4("Call not handled : " << calledFunction->getName().str() << "\n");
-						fctStack->push_back(calledFunction);
-						proc->addUsedFunction(calledFunction);
-						
-					} else if (calledFunction->getIntrinsicID() != Intrinsic::not_intrinsic) {
-						TRACE_6("Encountered call to intrinsic function \"" << calledFunction->getName().str() << "\" (id = " << calledFunction->getIntrinsicID() << "). Not parsing it.\n");
-					}
-					if (! callB) {
-						fillGlobalVars(&*i);
-					}
-					++i;
+
+			for(inst_iterator i = inst_begin(F); i != inst_end(F); ++i) {
+				bool callB = false;
+				Function* calledFunction = NULL;
+				Instruction* currentInst = &*i;
+				BasicBlock* bb = currentInst->getParent();
+				if (CallInst *callInst = dyn_cast < CallInst > (currentInst)) {
+					callB = true;
+					calledFunction =  callInst->getCalledFunction();
+				} else if(InvokeInst *invokeInst = dyn_cast < InvokeInst > (currentInst)) {
+					callB = true;
+					calledFunction =  invokeInst->getCalledFunction();
+				}
+
+				if (! calledFunction) {
+					TRACE_6("Encountered call to function pointer. Not parsing it.\n");
+				} else if (! this->sccfactory->handle(proc, F, bb, currentInst, calledFunction)) {
+					TRACE_6("CallInst : " << currentInst << "\n");
+					TRACE_6("CalledFct : " << calledFunction << "\n");
+					PRINT_6(currentInst->dump());
+					TRACE_4("Call not handled : " << calledFunction->getName().str() << "\n");
+					fctStack->push_back(calledFunction);
+					proc->addUsedFunction(calledFunction);
+
+				} else if (calledFunction->getIntrinsicID() != Intrinsic::not_intrinsic) {
+					TRACE_6("Encountered call to intrinsic function \"" << calledFunction->getName().str() << "\" (id = " << calledFunction->getIntrinsicID() << "). Not parsing it.\n");
+				}
+				if (! callB) {
+					fillGlobalVars(&*i);
 				}
 			}
 		}
