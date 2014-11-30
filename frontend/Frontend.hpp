@@ -22,6 +22,12 @@ private:
   SCElab *elab;
   Module *llvmMod;
   bool inlineFunctions;
+  // if return true, means the function has been inlined.
+  bool inlineForProcessFct(Function* F);
+  void inlineProcessFct();
+  void handleFctConstruct_and_GV(Process* proc, Function* F,
+				std::vector<Function*>* fctStack);
+  void handleConstruct_and_GV();
 
 public:
    Frontend(Module * M);
