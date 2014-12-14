@@ -153,6 +153,8 @@ Function *SCJit::buildFct(Function * f, FunctionType * FT, Instruction* inst, Va
 	FunctionBuilder fb(f, fctToJit, inst, arg);
 	if (fb.buildFct() == NULL) {
 		TRACE_5("[WARNINING] Unable to build Function to Jit\n");
+		// delete function since it is empty.
+		fctToJit->eraseFromParent();
 		return NULL;
 	}
 
