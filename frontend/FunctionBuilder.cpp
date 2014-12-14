@@ -138,9 +138,16 @@ bool FunctionBuilder::isPHINodeAfterTargetInst(Value* arg)
 	if (isa<PHINode>(arg)) {
 		PHINode* pn = dyn_cast<PHINode>(arg);
 		unsigned int numIncoming = pn->getNumIncomingValues();
+
+		// May specify multiple instance with one instruction.
+		// if one of incoming value is invalid, the phiNode
+		// is invalid too. Cases like :
+		// for (i=0; i<4; ++i) {
+		//	port[i] = 3
+		// }
 		for (unsigned int i = 0; i < numIncoming; ++i) {
-			BasicBlock* incomingBB = pn->getIncomingBlock(i);
-			if (! isBeforeTargetInst(&incomingBB->front()))
+			Value* incomingVal = pn->getIncomingValue(i);
+			if (! isBeforeTargetInst(incomingVal))
 				return true;
 		}
 	}
@@ -430,8 +437,9 @@ Function *FunctionBuilder::buildFct()
 	TRACE_5("Marking useful basic blocks and instructions\n");
 	mark(res);
 	PRINT_5(res->dump());
-	if (markUsefulInstructions())
+	if (markUsefulInstructions()) {
 		return NULL;
+	}
 	
 	TRACE_5("Cloning basic blocks\n");
 	this->cloneBlocks();
