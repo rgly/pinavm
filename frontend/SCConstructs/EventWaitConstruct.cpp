@@ -26,5 +26,5 @@ std::string EventWaitConstruct::toString()
 	if (this->isStaticallyFound())
 		return "WAIT(" + this->event->getEventName() + ")";
 	else
-		return "WAIT(dynamic content)";
+		return "WAIT(dynamic event)";
 }

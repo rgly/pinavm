@@ -57,7 +57,7 @@ std::string WriteConstruct::toString()
 	else
 		portName = this->port->getName();
 
-	if (this->value != "")
+	if (! this->value.empty())
 		return "Write(" + this->value + ") to port : " + portName;
 	else
 		return "Write(? was not able to jit ?) to port " + portName;

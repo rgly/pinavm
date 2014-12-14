@@ -21,6 +21,9 @@ llvm::Value* TimeWaitConstruct::getMissingTime()
 
 std::string TimeWaitConstruct::toString()
 {
+	if (this->isStaticallyFound()) {
+		return "WAIT(dynamic time)";
+	}
 	// Print WAIT(ZERO_TIME) if time is zero
 	// Others print WAIT(35,NS) for example.
 	std::stringstream ss;
