@@ -1,10 +1,6 @@
-include(${CMAKE_SOURCE_DIR}/scripts/installLLVM.cmake)
-include(${CMAKE_SOURCE_DIR}/scripts/LLVMPatchVersion.cmake)
-
-decide_patch_version(${LLVM_RECOMMAND_VERSION})
-
 # find llvm-config. perfers to the one with version suffix, Ex:llvm-config-3.2
-find_program(LLVM_CONFIG_EXE
+FUNCTION(find_LLVM_CONFIG_EXE)
+  find_program(LLVM_CONFIG_EXE
   NAMES "${LLVM_ROOT}/bin/llvm-config-${LLVM_PATCH_VERSION}"
         "${LLVM_ROOT}/bin/llvm-config-${LLVM_RECOMMAND_VERSION}"
         "${LLVM_ROOT}/bin/llvm-config"
@@ -12,12 +8,18 @@ find_program(LLVM_CONFIG_EXE
         "llvm-config-${LLVM_RECOMMAND_VERSION}"
         "llvm-config"
 	)
+  set(LLVM_CONFIG_EXE ${LLVM_CONFIG_EXE} PARENT_SCOPE)
+ENDFUNCTION(find_LLVM_CONFIG_EXE)
+
+find_LLVM_CONFIG_EXE()
 
 # In case of finds no LLVM, give user a hint to install LLVM
 if(${LLVM_CONFIG_EXE} STREQUAL "LLVM_CONFIG_EXE-NOTFOUND")
   if(${AUTOINSTALL})
     # if AUTOINSTALL is explicitly set to true, then run installLLVM.
-    autoinstall_llvm(${LLVM_RECOMMAND_VERSION} ${LLVM_ROOT})
+    add_subdirectory(${CMAKE_SOURCE_DIR}/scripts/AutoInstaller)
+    set(AUTOINSTALL FALSE)
+    find_LLVM_CONFIG_EXE()
   else()
     # on condition that finds no LLVM and user not specify AUTOINSTALL.
     message(FATAL_ERROR "\tfinds no LLVM in your system.\n"
@@ -42,7 +44,7 @@ if(${LLVM_VERSION} MATCHES ^${LLVM_RECOMMAND_VERSION})
 else()
   if(${AUTOINSTALL})
     # if AUTOINSTALL is explicitly set to true, then run installLLVM.
-    autoinstall_llvm()
+    add_subdirectory(${CMAKE_SOURCE_DIR}/scripts/AutoInstaller)
   else()
     message(FATAL_ERROR "LLVM version is recommanded to be : "
          "${LLVM_RECOMMAND_VERSION}\n"
