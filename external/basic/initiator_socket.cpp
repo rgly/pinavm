@@ -16,10 +16,10 @@
 
 namespace basic {
 	template<>
-	void initiator_socket_base<true>::dummy() {};
+	void initiator_socket_base<true>::dummy() {}
 	
 	template<>
-	void initiator_socket_base<false>::dummy() {};
+	void initiator_socket_base<false>::dummy() {}
 
 #define CONSTRUCTORS(MULTIPORT)                 \
 	template<>                              \
@@ -38,7 +38,7 @@ namespace basic {
 		init();                         \
 	}
 
-	CONSTRUCTORS(true);
-	CONSTRUCTORS(false);
+	CONSTRUCTORS(true)
+	CONSTRUCTORS(false)
 
 }

@@ -14,5 +14,5 @@ void launch_promelabackend(Frontend * fe,
 {
     launch_promelabackend(fe, option.OutputFilename,
         option.EventsAsBool, option.RelativeClocks, option.Bug);
-};
+}
 #endif

@@ -15,8 +15,8 @@
 #include "target_socket.h"
 
 namespace basic {
-	target_module_base::target_module_base() {};
-	void target_module_base::dummy(){};
+	target_module_base::target_module_base() {}
+	void target_module_base::dummy(){}
 	
 #define CONSTRUCTORS(MULTIPORT)			\
 	template<>				\
@@ -24,7 +24,7 @@ namespace basic {
 		base_type(sc_core::sc_gen_unique_name(kind()))	\
 	{					\
 		init();				\
-	};					\
+	}					\
 						\
 	template<>				\
 	target_socket_base<MULTIPORT>::target_socket_base(const char* name) :	\
@@ -33,7 +33,7 @@ namespace basic {
 		init();				\
 	}					\
 
-	CONSTRUCTORS(true);
-	CONSTRUCTORS(false);
+	CONSTRUCTORS(true)
+	CONSTRUCTORS(false)
 	
-};
+}

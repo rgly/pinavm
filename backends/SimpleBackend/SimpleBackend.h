@@ -14,5 +14,5 @@ void launch_simplebackend(Frontend * fe,
 {
     launch_simplebackend(fe, option.OutputFilename,
         option.EventsAsBool, option.RelativeClocks);
-};
+}
 #endif
