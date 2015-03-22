@@ -84,7 +84,7 @@ MACRO(configure_autoinstall)
     SET(SITE_URL http://llvm.org/releases)
   endif()
 
-  SET(DOWNLOAD_DIR ${CMAKE_BINARY_DIR}/download)
+  SET(DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}/download)
 
   if (${LLVM_RECOMMAND_VERSION_ARG} VERSION_LESS "3.5")
     SET(URL_SUFFIX src.tar.gz)
@@ -106,7 +106,7 @@ MACRO(configure_autoinstall)
   SET(LLVM_NAME         llvm-${LLVM_PATCH_VERSION}.${URL_SUFFIX})
   SET(LLVM_URL          ${SITE_URL}/${LLVM_PATCH_VERSION}/${LLVM_NAME})
   SET(LLVM_FILE         ${DOWNLOAD_DIR}/${LLVM_NAME})
-  SET(LLVM_SOURCE_DIR   ${CMAKE_BINARY_DIR}/llvm-source/llvm)
+  SET(LLVM_SOURCE_DIR   ${CMAKE_CURRENT_BINARY_DIR}/llvm-source/llvm)
   SET(LLVM_MD5          ${LLVM_MD5_${LLVM_PATCH_VERSION}})
 
 
@@ -187,7 +187,7 @@ FUNCTION(extract_file target_file target_dir)
 ENDFUNCTION()
 
 FUNCTION(install_llvm)
-  SET(llvm_build_dir ${CMAKE_BINARY_DIR}/build-llvm)
+  SET(llvm_build_dir ${CMAKE_CURRENT_BINARY_DIR}/build-llvm)
   # Create necessary directories.
   if (NOT EXISTS ${LLVM_ROOT_ARG})
     FILE(MAKE_DIRECTORY ${LLVM_ROOT_ARG})
