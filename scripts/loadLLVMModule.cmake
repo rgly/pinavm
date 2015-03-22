@@ -1,3 +1,14 @@
+# Configure these CMake Variables from CMake module of LLVM package
+# 
+#    LLVM_LIBS
+#    LLVM_DEFINITIONS
+#    LLVM_FOUND
+#    LLVM_VERSION
+#    LLVM_INCLUDE_DIRS
+#    LLVM_LIBRARY_DIRS
+
+
+
 # Make sure there is a LLVM_CONFIG
 if(NOT DEFINED LLVM_ROOT)
   message(FATAL_ERROR "LLVM_ROOT should exists here. it is a bug."
@@ -8,8 +19,8 @@ endif()
 # Using include(foo.cmake) searches CMAKE_MODULE_PATH,
 # but find_package(bar) searches CMAKE_PREFIX_PATH
 # so we must append llvm cmake module dir to both variables.
-SET(CMAKE_MODULE_PATH ${LLVM_ROOT}/share/llvm/cmake)
-SET(CMAKE_PREFIX_PATH ${LLVM_ROOT}/share/llvm/cmake)
+SET(CMAKE_MODULE_PATH "${LLVM_ROOT}/share/llvm/cmake")
+SET(CMAKE_PREFIX_PATH "${LLVM_ROOT}/share/llvm/cmake")
 
 # Not using version check in find_package is that llvm version
 # is followed by "svn" for official release, which is different

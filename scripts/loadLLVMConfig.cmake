@@ -1,3 +1,12 @@
+# Configure these CMake Variables from llvm-config executable.
+# 
+#    LLVM_LIBS
+#    LLVM_DEFINITIONS
+#    LLVM_FOUND
+#    LLVM_VERSION
+#    LLVM_INCLUDE_DIRS
+#    LLVM_LIBRARY_DIRS
+
 # Make sure there is a LLVM_CONFIG
 if(NOT DEFINED LLVM_CONFIG_EXE)
   message(FATAL_ERROR "LLVM_CONFIG should exists here. it is a bug."
@@ -25,5 +34,5 @@ STRING(REPLACE " -l" ";" LLVM_LIBS "${LLVM_LIBS}")
 STRING(REPLACE "-l" "" LLVM_LIBS "${LLVM_LIBS}")
 LIST(APPEND LLVM_LIBS "dl" "pthread" "ffi")
 
-SET(LLVM_DEFINITIONS -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS)
+SET(LLVM_DEFINITIONS "-D__STDC_LIMIT_MACROS" "-D__STDC_CONSTANT_MACROS")
 SET(LLVM_FOUND TRUE)
