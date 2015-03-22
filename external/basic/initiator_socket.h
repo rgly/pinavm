@@ -145,7 +145,7 @@ namespace basic {
 			    public virtual sc_core::sc_interface {
    public:
       initiator_socket()
-	 : initiator_socket_base<MULTIPORT>(), sc_core::sc_interface() { /* */ }
+	 : sc_core::sc_interface(), initiator_socket_base<MULTIPORT>() { /* */ }
 
       explicit initiator_socket(const char* name)
 	 : initiator_socket_base<MULTIPORT>(name) { /* */ }
