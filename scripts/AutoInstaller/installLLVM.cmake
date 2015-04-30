@@ -70,7 +70,7 @@ MACRO(llvm_install_assert_arg LLVM_RECOMMAND_VERSION_ARG LLVM_ROOT_ARG)
   endif()
 ENDMACRO()
 
-MACRO(configure_autoinstall)
+MACRO(configure_autoinstall AUTOINSTALL_DIR)
   # sets the md5 checksum for certain version.
   decide_patch_version(${LLVM_RECOMMAND_VERSION_ARG})
   set_llvm_md5()
@@ -84,7 +84,7 @@ MACRO(configure_autoinstall)
     SET(SITE_URL http://llvm.org/releases)
   endif()
 
-  SET(DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}/download)
+  SET(DOWNLOAD_DIR ${AUTOINSTALL_DIR}/download)
 
   if (${LLVM_RECOMMAND_VERSION_ARG} VERSION_LESS "3.5")
     SET(URL_SUFFIX src.tar.gz)
@@ -106,7 +106,7 @@ MACRO(configure_autoinstall)
   SET(LLVM_NAME         llvm-${LLVM_PATCH_VERSION}.${URL_SUFFIX})
   SET(LLVM_URL          ${SITE_URL}/${LLVM_PATCH_VERSION}/${LLVM_NAME})
   SET(LLVM_FILE         ${DOWNLOAD_DIR}/${LLVM_NAME})
-  SET(LLVM_SOURCE_DIR   ${CMAKE_CURRENT_BINARY_DIR}/llvm-source/llvm)
+  SET(LLVM_SOURCE_DIR   ${AUTOINSTALL_DIR}/llvm-source/llvm)
   SET(LLVM_MD5          ${LLVM_MD5_${LLVM_PATCH_VERSION}})
 
 
@@ -186,8 +186,8 @@ FUNCTION(extract_file target_file target_dir)
 
 ENDFUNCTION()
 
-FUNCTION(install_llvm)
-  SET(llvm_build_dir ${CMAKE_CURRENT_BINARY_DIR}/build-llvm)
+FUNCTION(install_llvm AUTOINSTALL_DIR)
+  SET(llvm_build_dir ${AUTOINSTALL_DIR}/build-llvm)
   # Create necessary directories.
   if (NOT EXISTS ${LLVM_ROOT_ARG})
     FILE(MAKE_DIRECTORY ${LLVM_ROOT_ARG})
@@ -249,7 +249,7 @@ ENDMACRO()
 
 
 
-FUNCTION(autoinstall_llvm LLVM_RECOMMAND_VERSION_ARG LLVM_ROOT_ARG)
+FUNCTION(autoinstall_llvm LLVM_RECOMMAND_VERSION_ARG LLVM_ROOT_ARG AUTOINSTALL_DIR_ARG)
   if (NOT DEFINED TEST_CMAKE)
     set(TEST_CMAKE false)
   endif()
@@ -258,7 +258,7 @@ FUNCTION(autoinstall_llvm LLVM_RECOMMAND_VERSION_ARG LLVM_ROOT_ARG)
   llvm_install_assert_arg(${LLVM_RECOMMAND_VERSION_ARG} ${LLVM_ROOT_ARG})
   configure_processor_count()
 
-  configure_autoinstall()
+  configure_autoinstall(${AUTOINSTALL_DIR_ARG})
 
   # download llvm, clang and compiler-rt here.
   check_and_download(${LLVM_URL} ${LLVM_FILE} ${LLVM_MD5})
@@ -275,6 +275,6 @@ FUNCTION(autoinstall_llvm LLVM_RECOMMAND_VERSION_ARG LLVM_ROOT_ARG)
   message(STATUS "finish extraction for the source code.")
 
   # temperary commement out this for test usage.
-  install_llvm()
+  install_llvm(${AUTOINSTALL_DIR_ARG})
   check_llvm_version()
 ENDFUNCTION()
