@@ -1,6 +1,6 @@
 set(SCRIPT_DIR "${CMAKE_SOURCE_DIR}/scripts")
-include(${SCRIPT_DIR}/findLLVM.cmake)
-include(${SCRIPT_DIR}/findLLVMTools.cmake)
+include(${SCRIPT_DIR}/LLVMFinder/findLLVM.cmake)
+include(${SCRIPT_DIR}/LLVMFinder/findLLVMTools.cmake)
 include(${SCRIPT_DIR}/buildBitcode.cmake)
 
 # This function returns these variable

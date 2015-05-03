@@ -1,5 +1,5 @@
-include(${SCRIPT_DIR}/loadLLVMConfig.cmake)
-include(${SCRIPT_DIR}/loadLLVMModule.cmake)
+include(${SCRIPT_DIR}/LLVMFinder/loadLLVMConfig.cmake)
+include(${SCRIPT_DIR}/LLVMFinder/loadLLVMModule.cmake)
 
 set(AUTOINSTALLER_DIR ${SCRIPT_DIR}/AutoInstaller)
 include(${AUTOINSTALLER_DIR}/installLLVM.cmake)
