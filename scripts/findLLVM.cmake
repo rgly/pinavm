@@ -1,6 +1,9 @@
 include(${SCRIPT_DIR}/loadLLVMConfig.cmake)
 include(${SCRIPT_DIR}/loadLLVMModule.cmake)
 
+set(AUTOINSTALLER_DIR ${SCRIPT_DIR}/AutoInstaller)
+include(${AUTOINSTALLER_DIR}/installLLVM.cmake)
+
 # find llvm-config. perfers to the one with version suffix, Ex:llvm-config-3.2
 FUNCTION(find_LLVM_CONFIG_EXE LLVM_ROOT LLVM_RECOMMAND_VERSION)
   find_program(LLVM_CONFIG_EXE
@@ -23,7 +26,8 @@ FUNCTION(FIND_LLVM_CONFIG_EXE_OR_AUTOINSTALL LLVM_ROOT LLVM_RECOMMAND_VERSION
   if(${LLVM_CONFIG_EXE} STREQUAL "LLVM_CONFIG_EXE-NOTFOUND")
     if(${AUTOINSTALL})
       # if AUTOINSTALL is explicitly set to true, then run installLLVM.
-      add_subdirectory(${CMAKE_SOURCE_DIR}/scripts/AutoInstaller)
+      autoinstall_llvm(${LLVM_RECOMMAND_VERSION} ${LLVM_ROOT}
+                     "${CMAKE_BINARY_DIR}/autoinstaller")
       set(AUTOINSTALL FALSE)
       find_LLVM_CONFIG_EXE(${LLVM_ROOT} ${LLVM_RECOMMAND_VERSION})
     else()
@@ -56,7 +60,8 @@ FUNCTION(CHECK_LLVM_CONFIG_VERSION_OR_AUTOINSTALL LLVM_ROOT
   else()
     if(${AUTOINSTALL})
       # if AUTOINSTALL is explicitly set to true, then run installLLVM.
-      add_subdirectory(${CMAKE_SOURCE_DIR}/scripts/AutoInstaller)
+      autoinstall_llvm(${LLVM_RECOMMAND_VERSION} ${LLVM_ROOT}
+                     "${CMAKE_BINARY_DIR}/autoinstaller")
       set(AUTOINSTALL FALSE)
       find_LLVM_CONFIG_EXE(${LLVM_ROOT} ${LLVM_RECOMMAND_VERSION})
     else()

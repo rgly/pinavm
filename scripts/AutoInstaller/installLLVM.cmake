@@ -5,8 +5,8 @@
 
 # NOTE that this script requires tar and make command in your OS.
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/LLVM_MD5.cmake)
-include(${CMAKE_CURRENT_SOURCE_DIR}/LLVMPatchVersion.cmake)
+include(${AUTOINSTALLER_DIR}/LLVM_MD5.cmake)
+include(${AUTOINSTALLER_DIR}/LLVMPatchVersion.cmake)
 
 MACRO(configure_processor_count)
   # offer ProcessCount variable
