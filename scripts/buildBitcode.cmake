@@ -24,7 +24,7 @@ endmacro(collect_included_headers)
 macro(build_llvm_bc_object f_temp_src)
   get_filename_component(f_abso_temp_src ${f_temp_src} ABSOLUTE)
 
-  STRING(REPLACE ".cpp" ".s" f_temp_object ${f_abso_temp_src})
+  STRING(REPLACE ".cpp" ".obj.${LLVM_EXT}" f_temp_object ${f_abso_temp_src})
   STRING(REPLACE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} 
       	   f_temp_object ${f_temp_object})
 

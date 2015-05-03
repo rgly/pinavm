@@ -17,4 +17,4 @@ SET(LLVMC_INCLUDE_DIR
                "-I${CMAKE_SOURCE_DIR}/external/systemc-${SYSTEMC_VERSION}/src/"
                "-I${CMAKE_SOURCE_DIR}/external/basic")
 set(LLVMC_FLAGS -emit-llvm ${LLVM_DEFINITIONS} ${LLVMC_INCLUDE_DIR}
-	-std=c++0x -fno-inline-functions -fno-use-cxa-atexit -S )
+	-std=c++0x -fno-inline-functions -fno-use-cxa-atexit -c )
