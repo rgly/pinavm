@@ -2,6 +2,7 @@ set(SCRIPT_DIR "${CMAKE_SOURCE_DIR}/scripts")
 include(${SCRIPT_DIR}/LLVMFinder/findLLVM.cmake)
 include(${SCRIPT_DIR}/LLVMFinder/findLLVMTools.cmake)
 include(${SCRIPT_DIR}/buildBitcode.cmake)
+include(${SCRIPT_DIR}/buildTwetoBitcode.cmake)
 
 # This function returns these variable
 #
@@ -19,8 +20,9 @@ findLLVMTool(LLVM_COMPILER clang++)
 SET(LLVMC_INCLUDE_DIR
                "-I${CMAKE_SOURCE_DIR}/external/systemc-${SYSTEMC_VERSION}/src/"
                "-I${CMAKE_SOURCE_DIR}/external/basic")
-set(LLVMC_FLAGS -emit-llvm ${LLVM_DEFINITIONS} ${LLVMC_INCLUDE_DIR}
-	-std=c++0x -fno-inline-functions -fno-use-cxa-atexit -c )
+set(LLVMC_FLAGS ${LLVM_DEFINITIONS} ${LLVMC_INCLUDE_DIR}
+	-std=c++0x -fno-inline-functions -fno-use-cxa-atexit)
+set(LLVM_OPT_FLAGS -mem2reg)
 
 # Use settings from LLVM cmake module or llvm-config.
 include_directories( ${LLVM_INCLUDE_DIRS} )
