@@ -97,12 +97,6 @@ ________________________________________________________________________
   to specify the path where LLVM will be installed to. LLVM is installed
   to ./lib/llvm-3.2 if LLVM_ROOT is blank.
 
--DDRAGONEGG_GCC=g++-4.x
-  Dragonegg is a gcc plugin, so cmake script must know you gcc version
-  corresponding to your dragonegg. By setting this option, cmake script
-  will find the g++ and dragonegg. If nothing found, Clang will
-  substitute dragonegg and g++.  
-
 -DCMAKE_BUILD_TYPE=None,Debug,Release
   Users can choose build type by assigning this parameter.  By default
   it is None. Debug level is set to -g3 if Debug is chosen.
