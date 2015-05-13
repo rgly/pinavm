@@ -146,7 +146,7 @@ FUNCTION(check_and_download target_url target_file target_md5)
 
   # if file not exists, download it.
   if(NOT EXISTS ${target_file})
-    message(STATUS "finds no ${target_file}, so download it!")
+    message(STATUS "finds no ${target_file}, \n\tdownload ${target_url}")
     FILE(DOWNLOAD ${target_url} ${target_file} SHOW_PROGRESS
          EXPECTED_MD5 ${target_md5})
   else()
