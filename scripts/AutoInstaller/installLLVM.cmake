@@ -78,7 +78,7 @@ MACRO(configure_autoinstall AUTOINSTALL_DIR)
 
   if(${TEST_CMAKE})
     # for test purpose, I don't want to waste bandwidth of llvm.org.
-    SET(SITE_URL file://${CMAKE_SOURCE_DIR}/../source-tgz)
+    SET(SITE_URL file://${CMAKE_BINARY_DIR}/../source-tgz)
   else()
     # normal situation.
     SET(SITE_URL http://llvm.org/releases)
