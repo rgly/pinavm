@@ -27,7 +27,7 @@ ________________________________________________________________________
     LLVM is a collection of compiler libraries. The source code of
     PinaVM relies on LLVM.
     
-    Use of the LLVM version mentioned in the LLVM_RECOMMAND_VERSION
+    Use of the LLVM version mentioned in the LLVM_RECOMMEND_VERSION
     variable of scripts/PinaVMConfig.cmake is mandatory.
     
     The easiest way to install LLVM is via package manager. You can
