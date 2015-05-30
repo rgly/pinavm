@@ -32,7 +32,8 @@ MACRO(find_xz TAR_EXE)
 		OUTPUT_VARIABLE TAR_VERSION
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-  set(version_pattern "[0-9]*\\.[0-9]*\\.[0-9]*")
+  # This pattern matches either 1.x.y or 1.x
+  set(version_pattern "[0-9]*\\.[0-9]*(\\.[0-9]*)?")
   string(REGEX MATCH ${version_pattern} TAR_VERSION "${TAR_VERSION}")
 
   # tar version newer than 1.22 has support to xz compression
