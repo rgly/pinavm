@@ -200,8 +200,9 @@ FUNCTION(install_llvm AUTOINSTALL_DIR)
 
   # This script configures llvm for you.
   execute_process(COMMAND ${CMAKE_COMMAND} ${LLVM_SOURCE_DIR}
-		  -DCMAKE_INSTALL_PREFIX=${LLVM_ROOT_ARG}
-		  WORKING_DIRECTORY ${llvm_build_dir})
+                  -DCMAKE_INSTALL_PREFIX=${LLVM_ROOT_ARG}
+                  -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+                  WORKING_DIRECTORY ${llvm_build_dir})
 
   message(STATUS "finish configure the source code.")
   message(STATUS "Start to build and install LLVM, it may take tens of minutes."
