@@ -63,7 +63,7 @@ IRModule *SCElab::addModule(sc_core::sc_module * mod)
 {
 	const char *moduleType = typeid(*mod).name();
 	std::string moduleName = (std::string) mod->name();
-	IRModule *m = new IRModule(moduleType, moduleName);
+	IRModule *m = new IRModule(this, moduleType, moduleName);
 	this->modules.push_back(m);
 	this->modulesMap.insert(this->modulesMap.end(),
 				std::pair < sc_core::sc_module *,
@@ -458,9 +458,8 @@ IRModule *SCElab::getIRModule(void *moduleAddr)
 {
 	auto temp_Addr = static_cast<sc_core::sc_module*>(moduleAddr);
 	assert(temp_Addr);
-	auto it = this->modulesMap.find(temp_Addr);
-	assert(it != this->modulesMap.end() && "finds no ModuleAddr in SCElab");
-	return it->second;
+	assert(this->modulesMap.count(temp_Addr) && "finds no ModuleAddr in SCElab");
+	return this->modulesMap[temp_Addr];
 }
 
 Process *SCElab::getProcess(void *processAddr)

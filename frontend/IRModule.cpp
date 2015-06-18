@@ -4,9 +4,13 @@
 
 #include "config.h"
 
+#include "SCElab.h"
+#include "sysc/kernel/sc_module.h"
+
 using namespace llvm;
 
-IRModule::IRModule(std::string moduleType, std::string moduleName)
+IRModule::IRModule(const SCElab* el, std::string moduleType, std::string moduleName)
+	: ElabMember(el)
 {
 	this->typeName = moduleType;
 	this->name = moduleName;
@@ -75,6 +79,14 @@ void IRModule::printElab(int sep, std::string prefix)
 	std::vector < Port * >::iterator itPorts;
 	this->printPrefix(sep, prefix);
 	TRACE("Module : " << this->name << "\n");
+	auto sub_mods = this->getChildIRMod();
+
+	for (auto sub_mod : sub_mods) {
+		auto sub_name = sub_mod->getUniqueName();
+		this->printPrefix(sep+3, prefix);
+		TRACE(sub_name << "\n");
+	}
+
 	for (itPorts = this->ports.begin(); itPorts < this->ports.end(); ++itPorts) {
 		Port* port = *itPorts;
 		port->printElab(sep + 3, prefix);
@@ -84,4 +96,24 @@ void IRModule::printElab(int sep, std::string prefix)
 		Process *p = *itProcesses;
 		p->printElab(sep + 3, prefix);
 	}
+}
+
+std::vector<IRModule*> IRModule::getChildIRMod()
+{
+	SCElab* elab = const_cast<SCElab*>(this->getElab());
+	assert(elab);
+	std::vector<IRModule*> sub_irmods;
+	auto* sc_mod = elab->getSCModule(this);
+	assert(sc_mod);
+
+	auto& sub_mods = sc_mod->get_child_objects();
+	for (auto* sub_obj : sub_mods) {
+		auto* sub_mod = dynamic_cast<sc_core::sc_module*>(sub_obj);
+		if (sub_mod) {
+			IRModule* sub_irmod = elab->getIRModule(sub_mod);
+			assert(sub_irmod);
+			sub_irmods.push_back(sub_irmod);
+		}
+	}
+	return sub_irmods;
 }

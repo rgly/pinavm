@@ -15,6 +15,10 @@ class Port;
 class Event;
 class Process;
 
+namespace sc_core {
+	class sc_module;
+}
+
 class IRModule:public ElabMember {
 private:
   std::string name;
@@ -25,7 +29,7 @@ private:
   std::vector < GlobalVariable * >sharedVariables;
 
 public:
-  IRModule(std::string typeName, std::string moduleName);
+  IRModule(const SCElab* el, std::string typeName, std::string moduleName);
   std::vector < Process * >*getProcesses();
   void addProcess(Process * process);
   std::vector < Port * >*getPorts();
@@ -41,6 +45,7 @@ public:
   std::string getUniqueName();
 
   void printElab(int sep, std::string prefix);
+  std::vector<IRModule*> getChildIRMod();
 };
 
 #endif
