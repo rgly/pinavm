@@ -2,6 +2,7 @@
 #define _ELABMEMBER_HPP
 
 #include <string>
+#include <cassert>
 class SCElab;
 
 class ElabMember {
@@ -12,7 +13,11 @@ protected:
     virtual ~ElabMember() {};
     void printPrefix(int sep, std::string prefix);
     virtual void printElab(int sep, std::string prefix) = 0;
-    const SCElab* getElab() const {return this->elab;};
+    const SCElab* getElab() const
+    {
+         assert(elab);
+         return elab;
+    };
 private:
     const SCElab* elab;
 };
