@@ -198,10 +198,19 @@ FUNCTION(install_llvm AUTOINSTALL_DIR)
     FILE(MAKE_DIRECTORY ${llvm_build_dir})
   endif()
 
+  # If users set up some llvm install configurations
+  if (DEFINED GCC_INSTALL_PREFIX)
+    list(APPEND LLVM_BIULD_OPTIONS "-DGCC_INSTALL_PREFIX=${GCC_INSTALL_PREFIX}")
+  endif()
+
+  if (DEFINED CMAKE_PREFIX_PATH)
+    list(APPEND LLVM_BIULD_OPTIONS "-DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}")
+  endif()
+
   # This script configures llvm for you.
   execute_process(COMMAND ${CMAKE_COMMAND} ${LLVM_SOURCE_DIR}
+                  ${LLVM_BIULD_OPTIONS}
                   -DCMAKE_INSTALL_PREFIX=${LLVM_ROOT_ARG}
-                  -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
                   WORKING_DIRECTORY ${llvm_build_dir})
 
   message(STATUS "finish configure the source code.")
