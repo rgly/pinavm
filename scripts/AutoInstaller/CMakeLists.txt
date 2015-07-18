@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.8)
+cmake_minimum_required(VERSION 2.8.12)
 
 # GCC_INSTALL_PREFIX
 #   This flag denote the gcc installation to let Clang uses stdc++ from it.
